@@ -1,0 +1,1146 @@
+  server <- function(input, output, session) {
+    
+    # 0. Observe Events for Filters ----------------------------------------------------------------
+    observeEvent(input$selectedService2,{
+      metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
+      updatePickerInput(session,
+                        inputId = "selectedMetric2",
+                        choices = metric_choices,
+                        selected = metric_choices
+      )
+    },
+    ignoreInit = TRUE,
+    ignoreNULL = FALSE)
+    
+    observeEvent(input$selectedService3,{
+      metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService3, "Metric_Name"])
+      updatePickerInput(session,
+                        inputId = "selectedMetric3",
+                        choices = metric_choices,
+                        selected = metric_choices
+      )
+    },
+    ignoreInit = TRUE,
+    ignoreNULL = FALSE)
+    
+    # 1. Summary Tab Output ---------------------------------------------------------------------------------
+    output$siteSummary_title <- renderText({
+      paste0("MSHS ",input$selectedService, " Summary")
+    })
+    
+    output$siteSummary_table <- function(){
+      input$submit_prod
+      input$submit_engineering
+      input$submit_finance
+      
+      service_input <- input$selectedService
+      month_input <- input$selectedMonth
+
+      # service_input <- "Engineering"
+      # month_input <- "07-2021"
+
+      # Code Starts ---------------------------------------------------------------------------------
+      summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
+                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
+      
+      target_section_metrics <- unique((target_mapping %>%  #target_mapping is read in from excel sheet in target mapping file
+                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
+      
+      metric_targets <- target_mapping %>% filter(Service == service_input)
+      
+      # Variable setting
+      current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
+      fiscal_year <- format(current_period,  "%Y")
+      
+      # Filter data by service specific metris
+      data <- left_join(summary_tab_metrics, metrics_final_df, by = c("Service", "Metric_Group", "Metric_Name"))  ##extract selected service from metric_final_df
+      data <- data  %>% 
+        filter(Reporting_Month_Ref <= current_period) %>% #Ensure only selected service and all data before selected month is returned
+        filter(Service == service_input)
+      
+      # Data Period Filtering
+      period_filter <- data %>% 
+        group_by(Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>% 
+        summarise(total = n()) %>%                                                            #
+        arrange(Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
+        group_by(Metric_Group, Metric_Name) %>%
+        mutate(id = row_number())
+        
+      
+      # Current Period Table
+      current_summary_data <- left_join((period_filter %>% filter(id == 1)), data, by = c("Metric_Group","Metric_Name","Reporting_Month_Ref","Premier_Reporting_Period"))  #Take all most recent data (id = 1) and merge with all data 
+
+      current_summary <- current_summary_data %>%
+        mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+                                         paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period))  ## Create Current Period column if it's premier say when it ends
+      current_summary <- current_summary[,c("Metric_Group","Summary_Metric_Name","Current Period","Site","value_rounded")]
+      current_summary <- current_summary %>%
+        `colnames<-` (c("Section","Metric_Name","Current Period","Site","value_rounded")) %>%
+        mutate(Section = "Metrics") %>%
+        pivot_wider(names_from = Site, values_from = value_rounded) 
+
+      missing_sites <- setdiff(sites_inc, names(current_summary))
+      current_summary[missing_sites] <- NA
+      current_summary$NYEE <- as.numeric(current_summary$NYEE)
+      
+      # FYTD Period Filter 
+      fytd_period <- period_filter %>%        #Get all data from YTD
+        group_by(Metric_Group, Metric_Name) %>%
+        filter(total == max(total)) %>%
+        filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
+        group_by(Metric_Group, Metric_Name) %>%
+        mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+                                              paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
+                                              ifelse(which.max(id) == 1,
+                                                     Premier_Reporting_Period[which.min(id)],
+                                                     paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
+                                                            Premier_Reporting_Period[which.min(id)]))))
+      
+      
+      
+      # FYTD Summary Table - for total
+      fytd_summary_all <- left_join(fytd_period, data, by = c("Metric_Group","Metric_Name", "Reporting_Month_Ref","Premier_Reporting_Period"), all = TRUE)
+      
+      fytd_summary_total <- fytd_summary_all %>%
+        filter(Metric_Name %in% c("Budget to Actual MOM", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
+        mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
+        group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
+        summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE)))
+
+                  
+      # FYTD Summary Table - for average 
+      '%!in%' <<- function(x,y)!('%in%'(x,y))
+      fytd_summary_avg <- fytd_summary_all %>%
+        filter(Metric_Name %!in% c("Budget to Actual MOM", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
+        mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
+        group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
+        summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
+        mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc, round(value_rounded, 2), round(value_rounded)))
+    
+      # Merge for summary 
+      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg)
+      fytd_summary <- fytd_merged
+      fytd_summary$Metric_Name <- NULL
+      fytd_summary <- fytd_summary %>%
+        `colnames<-` (c("Site","Section","Metric_Name", "Fiscal Year to Date","value_rounded")) %>%
+        pivot_wider(names_from = Site, values_from = value_rounded) %>%
+        mutate(Section = "Metrics")
+
+      missing_sites <- setdiff(sites_inc, names(fytd_summary))
+      fytd_summary[missing_sites] <- NA
+      fytd_summary$NYEE <- as.numeric(fytd_summary$NYEE)
+      
+      
+      # Merge FYTD and Current Period Metrics Summary 
+      metrics_summary <- merge(fytd_summary, current_summary, by = c("Section","Metric_Name"), all = TRUE)
+      metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
+      
+      # Format units
+      metrics_summary$Metric_Unit <- metric_unit_filter_summary$Metric_Unit[match(metrics_summary$Metric_Name, 
+                                                                                  metric_unit_filter_summary$Summary_Metric_Name)]
+      
+      metrics_summary <- metrics_summary %>%
+        mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.), big.mark = ','),
+                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
+      
+      metrics_summary$Metric_Unit <- NULL
+      
+    
+      # Create and Format Comparison Table
+      metrics_summary[metrics_summary == "NA"] <- NA
+      metrics_summary[metrics_summary == "NaN"] <- NA
+      metrics_summary[metrics_summary == "NA%"] <- NA
+      metrics_summary[metrics_summary == "$NA"] <- NA
+      metrics_summary[metrics_summary == "NaN%"] <- NA
+      metrics_summary[metrics_summary == "$NaN"] <- NA
+      
+      metrics_summary[is.na(metrics_summary)] <- "-"
+      metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
+      row.names(metrics_summary) <- NULL
+      
+     # Current Period Target
+      current_target <- merge(target_section_metrics, current_summary_data, by = c("Metric_Group","Metric_Name"))
+      current_target <- current_target %>%
+        filter(!is.na(Status)) %>%
+        mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+                                         paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period)) %>%
+        select(Metric_Group, Summary_Metric_Name, `Current Period`, Site, Status) %>%
+        `colnames<-` (c("Section","Metric_Name","Current Period","Site","target")) %>%
+        mutate(Section = "Variance to Target") %>%
+        pivot_wider(names_from = Site, values_from = target) 
+      
+      missing_sites <- setdiff(sites_inc, names(current_target))
+      current_target[missing_sites] <- NA
+      
+      #FYTD Summary Target 
+      fytd_target_metrics <- merge(target_section_metrics, fytd_merged, 
+                                       by = c("Metric_Group","Metric_Name"))
+     
+      fytd_target <- merge(fytd_target_metrics, 
+                           metric_targets[,c("Site","Metric_Group","Metric_Name","Target","Range_1","Range_2","Status")], 
+                           by = c("Site","Metric_Group","Metric_Name"))
+      
+      if("Budget to Actual MOM" %in% as.vector(target_section_metrics$Metric_Name)){
+        
+        #Calculate FYTD Budget to Actual Targets
+        budget_to_actual_target <- metrics_final_df %>% 
+          filter((Service == service_input) & (Metric_Name %in% c("Budget_Total", "Budget to Actual MOM")) & 
+                   (Reporting_Month_Ref %in% unique((fytd_period %>% filter(Metric_Name == "Budget to Actual MOM"))$Reporting_Month_Ref))) %>%
+          group_by(Service, Site, Metric_Group, Metric_Name) %>%
+          summarise(value_rounded = sum(value_rounded)) %>%
+          pivot_wider(names_from = "Metric_Name",
+                      values_from = "value_rounded") %>%
+          mutate(Target = round(`Budget to Actual MOM`/ Budget_Total,2),
+                 Status = ifelse(Target >= 0, "Green", ifelse(Target < -0.02, "Red", "Yellow"))) %>%
+          pivot_longer(4:5,
+                       names_to = "Summary_Metric_Name",
+                       values_to = "value_rounded") %>%
+          filter(Summary_Metric_Name == "Budget to Actual MOM") %>%
+          mutate(Section = "Variance to Target")
+        
+        budget_to_actual_target <- budget_to_actual_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
+        budget_to_actual_target$`Fiscal Year to Date` <- fytd_target$`Fiscal Year to Date`[match(budget_to_actual_target$Summary_Metric_Name, fytd_target$Metric_Name)]
+      }else{
+        budget_to_actual_target <- data.frame(Section = c("NA"),
+                                                Summary_Metric_Name = c("NA"),
+                                                `Fiscal Year to Date` = c("NA"),
+                                                Site = c("NA"),
+                                                Status = c("NA"))
+        colnames(budget_to_actual_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
+      }
+      
+      if("Variance to Budget" %in% as.vector(target_section_metrics$Metric_Name)){
+        #Calculate FYTD Budget to Actual Targets
+        variance_to_budget_target <- metrics_final_df %>% 
+          filter((Service == service_input) & (Metric_Group == "Total Revenue to Budget Variance") &
+                   (Metric_Name %in% c("Budget", "Variance to Budget")) & 
+                   (Reporting_Month_Ref %in% unique((fytd_period %>% filter(Metric_Name == "Variance to Budget"))$Reporting_Month_Ref))) %>%
+          group_by(Service, Site, Metric_Group, Metric_Name) %>%
+          summarise(value_rounded = sum(value_rounded)) %>%
+          pivot_wider(names_from = "Metric_Name",
+                      values_from = "value_rounded") %>%
+          mutate(Target = round(`Variance to Budget`/ Budget,2),
+                 Status = ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow"))) %>%
+          pivot_longer(4:5,
+                       names_to = "Summary_Metric_Name",
+                       values_to = "value_rounded") %>%
+          filter(Summary_Metric_Name == "Variance to Budget") %>%
+          mutate(Section = "Variance to Target")
+        
+        variance_to_budget_target <- variance_to_budget_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
+        variance_to_budget_target$`Fiscal Year to Date` <- fytd_target$`Fiscal Year to Date`[match(variance_to_budget_target$Summary_Metric_Name, fytd_target$Metric_Name)]
+      } else{
+        variance_to_budget_target <- data.frame(Section = c("NA"),
+                                                   Summary_Metric_Name = c("NA"),
+                                                   `Fiscal Year to Date` = c("NA"),
+                                                   Site = c("NA"),
+                                                   Status = c("NA"))
+        colnames(variance_to_budget_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
+      }
+      
+      
+      # Merge with rest of the metrics 
+      fytd_target <- fytd_target %>%
+        mutate(Variance =  between(value_rounded, Range_1, Range_2)) %>%
+        filter(Variance == TRUE) %>%
+        mutate(Section = "Variance to Target") %>%
+        select(Section, Summary_Metric_Name, `Fiscal Year to Date`, Site, Status) 
+      
+      fytd_target <- bind_rows(fytd_target, budget_to_actual_target, variance_to_budget_target)
+      
+      fytd_target <- fytd_target %>%
+        filter(Section != "NA") %>%
+        pivot_wider(names_from = Site, values_from = Status)
+      names(fytd_target)[names(fytd_target) == 'Summary_Metric_Name'] <- 'Metric_Name'
+      
+      missing_sites <- setdiff(sites_inc, names(fytd_target))
+      fytd_target[missing_sites] <- NA
+
+      
+      # Merge FYTD and Current Period Targets
+      targets_summary <- left_join(fytd_target, current_target,by = c("Section", "Metric_Name"))
+      targets_summary <- targets_summary[order(factor(targets_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
+      targets_summary <- as.data.frame(targets_summary)
+      
+      # Create traffic lights for the targets
+      col_red <- which(targets_summary == "Red", arr.ind = TRUE)
+      col_red_rows <- as.integer(col_red[,1])
+      col_red_cols <- as.integer(col_red[,2])
+      col_yellow <- which(targets_summary == "Yellow", arr.ind = TRUE)
+      col_green <- which(targets_summary == "Green", arr.ind = TRUE)
+      
+      colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
+      
+      if(nrow(colors_comb) != 0){
+        for (i in 1:nrow(colors_comb)){
+          targets_summary[colors_comb[i,1],colors_comb[i,2]] <- fa('fas fa-circle')
+        }
+      }
+      
+      if(nrow(col_red) != 0){
+        for (i in 1:nrow(col_red)){
+          targets_summary[col_red[i,1],col_red[i,2]] <- cell_spec(targets_summary[col_red[i,1],col_red[i,2]], 'html', color = 'red', escape = FALSE)
+        }
+      }
+      
+      if(nrow(col_green) != 0){
+        for(i in 1:nrow(col_green)){
+          targets_summary[col_green[i,1],col_green[i,2]] <- cell_spec(targets_summary[col_green[i,1],col_green[i,2]], 'html', color = 'green', escape = FALSE)
+        }
+      }
+      
+      if(nrow(col_yellow != 0)){
+        for (i in 1:nrow(col_yellow)){
+          targets_summary[col_yellow[i,1],col_yellow[i,2]] <- cell_spec(targets_summary[col_yellow[i,1],col_yellow[i,2]], 'html', color = 'yellow', escape = FALSE)
+        }
+      }
+      
+      
+      summary_tab_tb <- rbind(metrics_summary, targets_summary[,1:18])
+      summary_tab_tb$NYEE <- NULL
+      
+      
+      # Create and Format Table
+      summary_tab_tb[summary_tab_tb == "NA"] <- NA
+      summary_tab_tb[summary_tab_tb == "NaN"] <- NA
+      summary_tab_tb[is.na(summary_tab_tb)] <- "-"
+      row.names(summary_tab_tb) <- NULL
+      colnames(summary_tab_tb) <- gsub("\\..*", " ", colnames(summary_tab_tb))
+      colnames(summary_tab_tb) <- gsub("_", " ", colnames(summary_tab_tb), fixed = TRUE)
+      
+      ## Create table output headers
+      header_above <- c(" " = 2, "ytd_header" = 7, " " = 1, "current_header" = 7)
+      names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
+      
+      kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE) %>%
+        pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
+        kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                      position = "center", row_label_position = "c", font_size = 16) %>%
+        # add_header_above(header_above,
+        #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
+        row_spec(0,  background = "#212070", color = "white") %>%
+        column_spec(1, bold = TRUE) %>%
+        column_spec(c(2, 10), italic = TRUE) %>%
+        column_spec(3:9, background = "#fee7f5") %>%
+        column_spec(11:17, background = "#E6F8FF") 
+    }
+    
+    
+    # 2. Comparison Tab Output -------------------------------------------------------------------------------
+    output$siteComp_title <- renderText({
+      paste0("MSHS ",input$selectedService2, " Key Metric Rollup")
+    })
+    
+    output$siteComp_table <- function(){
+      
+      service_input <- input$selectedService2
+      month_input <- input$selectedMonth2
+      site_input <- input$selectedCampus2
+      # 
+      # service_input <- "Food Services"
+      # month_input <- "04-2021"
+      # site_input <- "MSH"
+
+      # Code Starts ---------------------------------------------------------------------------------
+      summary_tab_metrics <- unique((summary_metric_filter %>%
+                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
+      
+      target_section_metrics <- unique((target_mapping %>%
+                                          filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
+      
+      metric_targets <- target_mapping %>% filter(Service == service_input)
+
+      current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
+      fiscal_year <- format(current_period,  "%Y")
+      
+      # Process data to include missing sites for each metric
+      data <- metrics_final_df %>% 
+        filter(Site %in% site_input) %>%
+        filter(Service == service_input) %>% # input$selectedService
+        filter(Reporting_Month_Ref <= current_period) %>%
+        arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
+        group_by(Site, Metric_Group, Metric_Name) %>%
+        mutate(id = row_number()) 
+      
+      data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
+                             by = c("Metric_Group","Metric_Name"))
+      
+      # Selected Month/Year Metric
+      # Current Period Table
+      current_breakdown <- data %>%
+        filter(Reporting_Month_Ref ==  current_period) %>%
+        mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+                                         paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period)) %>%
+        select(Metric_Group, Summary_Metric_Name, Site, value_rounded, Status, Target)
+
+      current_breakdown <- current_breakdown[,c("Metric_Group","Summary_Metric_Name","Site","value_rounded","Status","Target")]
+      current_breakdown <- as.data.frame(current_breakdown)
+      
+      ## Create target traffic lights for current month metrics
+      # Create traffic lights for the targets
+      col_red <- which(current_breakdown == "Red", arr.ind = TRUE)
+      col_red_rows <- as.integer(col_red[,1])
+      col_red_cols <- as.integer(col_red[,2])
+      col_yellow <- which(current_breakdown == "Yellow", arr.ind = TRUE)
+      col_green <- which(current_breakdown == "Green", arr.ind = TRUE)
+      
+      colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
+      
+      if(nrow(colors_comb) != 0){
+        for (i in 1:nrow(colors_comb)){
+          current_breakdown[colors_comb[i,1],colors_comb[i,2]] <- fa('fas fa-circle')
+        }
+      }
+      
+      if(nrow(col_red) != 0){
+        for (i in 1:nrow(col_red)){
+          current_breakdown[col_red[i,1],col_red[i,2]] <- cell_spec(current_breakdown[col_red[i,1],col_red[i,2]], 'html', color = 'red', escape = FALSE)
+        }
+      }
+      
+      if(nrow(col_green) != 0){
+        for(i in 1:nrow(col_green)){
+          current_breakdown[col_green[i,1],col_green[i,2]] <- cell_spec(current_breakdown[col_green[i,1],col_green[i,2]], 'html', color = 'green', escape = FALSE)
+        }
+      }
+      
+      if(nrow(col_yellow != 0)){
+        for (i in 1:nrow(col_yellow)){
+          current_breakdown[col_yellow[i,1],col_yellow[i,2]] <- cell_spec(current_breakdown[col_yellow[i,1],col_yellow[i,2]], 'html', color = 'yellow', escape = FALSE)
+        }
+      }
+      
+      
+      # Previous Months Summary
+      ## Past 12 months of Summary 
+      past_avg <- data %>%
+        filter(id >= 2 & id <= 13) %>%
+        group_by(Metric_Group, Summary_Metric_Name, Site) %>%
+        summarise(`Avg. of Past Months Shown` = round(mean(value_rounded, na.rm = TRUE),2))
+        # mutate_if(is.numeric, .funs=list(~prettyNum(.,big.mark=",")))
+      
+
+      ## Past 12 months of Breakout
+      past_breakdown <- data %>%
+        filter(id >= 2 & id <= 13) %>%
+        group_by(Metric_Group,Summary_Metric_Name, Site, Reporting_Month_Ref) %>%
+        summarise(value_rounded = round(mean(value_rounded, na.rm = TRUE),2)) %>%
+        arrange(Reporting_Month_Ref) %>%
+        mutate(Reporting_Month_Ref = format(as.Date(Reporting_Month_Ref, format = "%Y-%m-%d"),"%b-%Y")) %>%
+        pivot_wider(names_from = Reporting_Month_Ref, values_from = value_rounded) 
+        # mutate_if(is.numeric, .funs=list(~prettyNum(.,big.mark=",")))
+      
+      
+      # Merge Current and Previous Months Breakdown
+      breakdown_all <- merge(current_breakdown, past_avg, by = c("Metric_Group","Summary_Metric_Name","Site"))
+      breakdown_all <- merge(breakdown_all, past_breakdown, by = c("Metric_Group","Summary_Metric_Name","Site"))
+      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),]
+      metric_group_order <- as.vector(unique(breakdown_all$Metric_Group))
+      metric_name_order <- as.vector(unique(breakdown_all$Summary_Metric_Name))
+      names(breakdown_all)[names(breakdown_all) == 'value_rounded'] <- format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
+      
+      # Format units
+      breakdown_all <- merge(breakdown_all, metric_unit_filter,
+                    by.x = c("Metric_Group","Summary_Metric_Name"),
+                    by.y = c("Metric_Group","Metric_Name"))
+      
+      breakdown_all <- breakdown_all %>%
+        mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
+                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
+  
+      breakdown_all$Metric_Unit <- NULL
+      
+
+      # Create and Format Comparison Table
+      breakdown_all[breakdown_all == "NA"] <- NA
+      breakdown_all[breakdown_all == "NaN"] <- NA
+      breakdown_all[breakdown_all == "NA%"] <- NA
+      breakdown_all[breakdown_all == "$NA"] <- NA
+      breakdown_all[breakdown_all == "NaN%"] <- NA
+      breakdown_all[breakdown_all == "$NaN"] <- NA
+      
+      breakdown_all[is.na(breakdown_all)] <- "-"
+      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),]
+      row.names(breakdown_all) <- NULL
+      
+      breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Variance to Budget", "Budget to Actual MOM")] <- ">= Budget"
+      breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
+      
+    
+      breakdown_all[,3:length(breakdown_all)] %>%
+        kable(align = "l", escape = FALSE) %>%
+        # pack_rows(index = table(breakdown_all$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
+        pack_rows(index = table(breakdown_all$Summary_Metric_Name)[metric_name_order], label_row_css = "background-color: #212070; color: white;") %>%
+        kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                      position = "center", row_label_position = "c", font_size = 16) %>%
+        add_header_above(c(" " = 1, "Selected Month-Year" = 2, " " = 2, "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all)-7),
+                         font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>% 
+        row_spec(0,  background = "#212070", color = "white") %>%
+        column_spec(1, bold = TRUE) %>%
+        column_spec(2:3, background = "#fee7f5", bold = TRUE) %>%
+        column_spec(6:(length(breakdown_all)-2), 
+                    background = "#E6F8FF")
+
+    }
+    
+    
+    # 3. Breakout Tab Output -----------------3----------------------------------------------------------------
+    output$siteBreakout_title <- renderText({
+      paste0(input$selectedCampus3," ",input$selectedService3, " Breakout")
+    })
+    
+    output$siteBreakout_table <- function(){
+      
+      service_input <- input$selectedService3
+      month_input <- input$selectedMonth3
+      site_input <- input$selectedCampus3
+
+      # service_input <- "Food Services"
+      # month_input <- "07-2021"
+      # site_input <- "MSH"
+      # 
+      # Code Starts ---------------------------------------------------------------------------------
+      summary_tab_metrics <- unique((summary_metric_filter %>%
+                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
+      
+      target_section_metrics <- unique((target_mapping %>%
+                                          filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
+      
+      metric_targets <- target_mapping %>% filter(Service == service_input)
+      
+      current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
+      fiscal_year <- format(current_period,  "%Y")
+      
+      data <- metrics_final_df %>% 
+        filter(Service == service_input) %>% # input$selectedService
+        filter(Site == site_input) %>%
+        filter(Reporting_Month_Ref <= current_period) %>%
+        arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
+        group_by(Site, Metric_Group, Metric_Name) %>%
+        mutate(id = row_number()) 
+      
+      data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
+                    by = c("Metric_Group","Metric_Name"))
+      data$Metric_Name <- NULL
+      names(data)[names(data) == "Summary_Metric_Name"] <- "Metric_Name"
+      
+      # Selected Month/Year Metric
+      # Current Period Table
+      current_site_breakdown <- data %>%
+        filter(Reporting_Month_Ref ==  current_period) %>%
+        select(Metric_Group, Metric_Name, value_rounded, Status, Target) 
+        # mutate_if(is.numeric, .funs=list(~prettyNum(.,big.mark=",")))
+      
+      current_site_breakdown <- current_site_breakdown[,c("Metric_Group","Metric_Name","value_rounded","Status","Target")]
+      current_site_breakdown <- as.data.frame(current_site_breakdown)
+      
+      ## Create target traffic lights for current month metrics
+      # Create traffic lights for the targets
+      col_red <- which(current_site_breakdown == "Red", arr.ind = TRUE)
+      col_red_rows <- as.integer(col_red[,1])
+      col_red_cols <- as.integer(col_red[,2])
+      col_yellow <- which(current_site_breakdown == "Yellow", arr.ind = TRUE)
+      col_green <- which(current_site_breakdown == "Green", arr.ind = TRUE)
+      
+      colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
+      
+      if(nrow(colors_comb) != 0){
+        for (i in 1:nrow(colors_comb)){
+          current_site_breakdown[colors_comb[i,1],colors_comb[i,2]] <- fa('fas fa-circle')
+        }
+      }
+      
+      if(nrow(col_red) != 0){
+        for (i in 1:nrow(col_red)){
+          current_site_breakdown[col_red[i,1],col_red[i,2]] <- cell_spec(current_site_breakdown[col_red[i,1],col_red[i,2]], 'html', color = 'red', escape = FALSE)
+        }
+      }
+      
+      if(nrow(col_green) != 0){
+        for(i in 1:nrow(col_green)){
+          current_site_breakdown[col_green[i,1],col_green[i,2]] <- cell_spec(current_site_breakdown[col_green[i,1],col_green[i,2]], 'html', color = 'green', escape = FALSE)
+        }
+      }
+      
+      if(nrow(col_yellow != 0)){
+        for (i in 1:nrow(col_yellow)){
+          current_site_breakdown[col_yellow[i,1],col_yellow[i,2]] <- cell_spec(current_site_breakdown[col_yellow[i,1],col_yellow[i,2]], 'html', color = 'yellow', escape = FALSE)
+        }
+      }
+      
+      
+      # Previous Months Summary
+      ## Past 12 months of Summary 
+      past_avg_site <- data %>%
+        filter(id >= 2 & id <= 13) %>%
+        group_by(Metric_Group, Metric_Name) %>%
+        summarise(`Avg. of Past Months Shown` = mean(value_rounded, na.rm = TRUE))
+        # mutate_if(is.numeric, .funs=list(~prettyNum(.,big.mark=",")))
+      
+      ## Past 12 months of Breakout
+      past_site_breakdown <- data %>%
+        filter(id >= 2 & id <= 13) %>%
+        group_by(Metric_Group, Metric_Name, Reporting_Month_Ref) %>%
+        summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
+        arrange(Reporting_Month_Ref) %>%
+        mutate(Reporting_Month_Ref = format(as.Date(Reporting_Month_Ref, format = "%Y-%m-%d"),"%b-%Y")) %>%
+        pivot_wider(names_from = Reporting_Month_Ref, values_from = value_rounded)
+        # mutate_if(is.numeric, .funs=list(~prettyNum(.,big.mark=",")))
+      
+      
+      # Merge Current and Previous Months Breakdown
+      breakdown_all_site <- merge(current_site_breakdown, past_avg_site, by = c("Metric_Group","Metric_Name"), all = TRUE)
+      breakdown_all_site <- merge(breakdown_all_site, past_site_breakdown, by = c("Metric_Group","Metric_Name"))
+      breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),] 
+      metric_group_order <- as.vector(unique(breakdown_all_site$Metric_Group))
+      
+      names(breakdown_all_site)[names(breakdown_all_site) == 'value_rounded'] <- format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
+      
+      # Format units
+      breakdown_all_site <- merge(breakdown_all_site, metric_unit_filter,
+                             by.x = c("Metric_Group","Metric_Name"),
+                             by.y = c("Metric_Group","Metric_Name"))
+      
+      breakdown_all_site <- breakdown_all_site %>%
+        mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
+                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
+      
+      breakdown_all_site$Metric_Unit <- NULL
+      
+      # Create and Format Comparison Table
+      breakdown_all_site[breakdown_all_site == "NA"] <- NA
+      breakdown_all_site[breakdown_all_site == "NaN"] <- NA
+      breakdown_all_site[breakdown_all_site == "NA%"] <- NA
+      breakdown_all_site[breakdown_all_site == "$NA"] <- NA
+      breakdown_all_site[breakdown_all_site == "NaN%"] <- NA
+      breakdown_all_site[breakdown_all_site == "$NaN"] <- NA
+      
+      breakdown_all_site[is.na(breakdown_all_site)] <- "-"
+      breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),] 
+      row.names(breakdown_all_site) <- NULL
+      
+      breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Variance to Budget")] <- ">= Budget"
+      breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
+      
+      
+      breakdown_all_site[,2:length(breakdown_all_site)] %>%
+        kable(align = "l", escape = FALSE) %>%
+        # pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
+        pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
+        kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                      position = "center", row_label_position = "c", font_size = 16) %>%
+        add_header_above(c(" " = 1, "Selected Month-Year" = 2, " " = 2, "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all_site)-6),
+                         font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>% 
+        row_spec(0,  background = "#212070", color = "white") %>%
+        column_spec(1, bold = TRUE) %>%
+        column_spec(2:3, background = "#fee7f5", bold = TRUE) %>%
+        column_spec(6:(length(breakdown_all_site)-1), 
+                    background = "#E6F8FF")
+      
+    }
+    
+    
+    # 4. Data Tab Output -----------------3----------------------------------------------------------------
+    observeEvent(input$submit_finance,{
+      inFile_msh_msm_msq <- input$finance_msh_msm_msq
+      
+      
+      if (is.null(inFile_msh_msm_msq)) {
+        return(NULL)
+      }else{
+        sheet_names <- excel_sheets(inFile_msh_msm_msq$datapath)
+        sheet_names <- sheet_names[sheet_names != "Sheet3"]
+        for (i in 1:length(sheet_names)){
+          data <- read_excel(inFile_msh_msm_msq$datapath, sheet = sheet_names[i])
+          sheet_month <- colnames(data)[1]
+          data <- data %>% row_to_names(row_number = 1)
+          data$Month <- sheet_month
+          
+          if(i == 1){
+            prev <- data
+          } else{
+            data <- full_join(data,prev)
+          }
+          prev <- data
+        }
+        
+        exptrend_data <- exptrend_process(prev)
+      }
+      
+      metrics_final_df <<- budget_to_actual_process(exptrend_data)
+      
+    })
+    
+    observeEvent(input$submit_finance,{
+      
+      inFile_census <- input$finance_census
+
+      
+      
+      if (is.null(inFile_census)) {
+        return(NULL)
+      }else{
+        data_census <- read_excel(inFile_census$datapath)
+      }
+
+    })
+    
+    observeEvent(input$submit_finance,{
+
+      inFile_msbi_msb_msw <- input$finance_msbi_msb_msw
+
+      if (is.null(inFile_msbi_msb_msw)) {
+        return(NULL)
+      }else{
+        bislr_data <- read_excel(inFile_msbi_msb_msw$datapath)
+      }
+      
+      bislr_data <- bislr_preprocess(bislr_data)
+      metrics_final_df <<- budget_to_actual_process(bislr_data)
+      
+    })
+    
+    
+    ## Read in productivity data and process
+    observeEvent(input$submit_prod,{
+      inFile <- input$productiviy_data
+      inFile_nursing_radiology <- input$productiviy_data_nursing_radiology 
+      data <- read_excel(inFile$datapath)
+      data_nursing_radiology <- read_excel(inFile_nursing_radiology$datapath)
+      
+      #metrics_final_df <<- metrics_final_df %>% filter(!(Metric_Group %in% "Productivity"))
+      
+      
+      tryCatch({metrics_final_df <<- productivity_process(data,data_nursing_radiology)
+      showModal(modalDialog(
+        title = "Success",
+        paste0("The data has been imported succesfully"),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+      }, error = function(err){  showModal(modalDialog(
+        title = "Error",
+        paste0("There seems to be an issue with one of the files"),
+        easyClose = TRUE,
+        footer = NULL
+      ))})
+      
+      #tables <- dbGetQuery(con, 'SHOW TABLES FROM Scorecards')
+      
+      # if(any(tables == c("All Metrics"))){
+      #   dbRemoveTable(con, Id(schema = "Scorecards", table = "All Metrics"))
+      # }else{
+      #   dbWriteTable(con, Id(schema = "Scorecards", table = "All Metrics"), metrics_final_df)
+      # }
+      
+    })
+    
+    observeEvent(input$submit_food,{
+      print(input$name_1)
+      if(input$name_1 == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }
+      
+      census_data <- hot_to_r(input$food_census)
+      census_data <- transform_dt(census_data, "Month", "Census Days")
+      
+      food_budget_data <- hot_to_r(input$food_budget)
+      food_budget_data <- transform_dt(food_budget_data, "Month", "Revenue Budget")
+
+      food_actual_data <- hot_to_r(input$food_budget)
+      food_actual_data <- transform_dt(food_actual_data, "Month", "Actual Revenue")
+
+       data_join <- full_join(census_data,food_budget_data)
+       data_join <<- full_join(data_join,food_actual_data)
+      
+      
+    })
+    
+    
+    observeEvent(input$submit_engineering,{
+      print(input$name_1)
+      if(input$name_engineering_kpi == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }
+      
+      engineering_data <<- hot_to_r(input$engineering_kpi)
+      
+      metrics_final_df <<- cm_kpi(engineering_data)
+    
+    })
+    
+    
+    data_react <- reactive({
+      
+      data  <- operational_metrics %>% filter(`Revenue Type` == "Actual")
+      data <- data[order(data$Site),]
+      
+      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
+      
+      data <- data %>%
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+      
+      
+    })
+    
+    
+    output$hand_table <- renderRHandsontable({
+      unique_sites <- unique(data_react()$Site)
+      site_1 <- which(data_react()$Site == unique_sites[1])
+      site_2 <- which(data_react()$Site == unique_sites[2])
+      site_3 <- which(data_react()$Site == unique_sites[3])
+      site_4 <- which(data_react()$Site == unique_sites[4])
+      site_5 <- which(data_react()$Site == unique_sites[5])
+      site_6 <- which(data_react()$Site == unique_sites[6])
+      site_7 <- which(data_react()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- as.array(10:15)
+      
+      
+      rhandsontable(data_react(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = 0, col = 0, rowspan = nrow(data_react()), colspan = 1),
+          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
+    
+    
+    
+    
+    
+    data_food_budget <- reactive({
+      data  <- operational_metrics %>% filter(Service == "Food Services" &`Revenue Type` == "Budget" & `Metric Group` == "Cost and Revenue")
+      data <- data[order(data$Site),]
+      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
+
+      data <- data %>%
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+    })
+    
+    
+    output$food_budget <- renderRHandsontable({
+      unique_sites <- unique(data_food_budget()$Site)
+      site_1 <- which(data_food_budget()$Site == unique_sites[1])
+      site_2 <- which(data_food_budget()$Site == unique_sites[2])
+      site_3 <- which(data_food_budget()$Site == unique_sites[3])
+      site_4 <- which(data_food_budget()$Site == unique_sites[4])
+      site_5 <- which(data_food_budget()$Site == unique_sites[5])
+      site_6 <- which(data_food_budget()$Site == unique_sites[6])
+      site_7 <- which(data_food_budget()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- as.array(10:15)
+      
+      
+      rhandsontable(data_food_budget(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = 0, col = 0, rowspan = nrow(data_food_budget()), colspan = 1),
+          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
+    
+    data_food_census <- reactive({
+      
+      
+      
+      ### Census from template
+      data  <- operational_metrics %>% filter(Service == "Food Services" & Metric == "Census Days" & `Metric Group` == "Cost and Revenue")
+      data <- data[order(data$Site),]
+      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
+      
+      data <- data %>%
+        mutate_if(is.logical, as.character) %>%
+          mutate_if(is.double, as.character)
+      
+      
+    })
+    
+    
+    output$food_census <- renderRHandsontable({
+      unique_sites <- unique(data_food_census()$Site)
+      site_1 <- which(data_food_census()$Site == unique_sites[1])
+      site_2 <- which(data_food_census()$Site == unique_sites[2])
+      site_3 <- which(data_food_census()$Site == unique_sites[3])
+      site_4 <- which(data_food_census()$Site == unique_sites[4])
+      site_5 <- which(data_food_census()$Site == unique_sites[5])
+      site_6 <- which(data_food_census()$Site == unique_sites[6])
+      site_7 <- which(data_food_census()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- as.array(9:15)
+      
+      
+      rhandsontable(data_food_census(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = 0, col = 0, rowspan = nrow(data_food_census()), colspan = 1),
+          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
+    
+    
+    data_engineering_kpi <- reactive({
+      
+      
+      
+      ### Census from template
+      data  <- operational_metrics_engineering
+      data <- data[order(data$Site),]
+      data$`2021-07-01` <- ""
+
+      data <- data %>%
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+      
+    })
+    
+    
+    output$engineering_kpi <- renderRHandsontable({
+      unique_sites <- unique(data_engineering_kpi()$Site)
+      site_1 <- which(data_engineering_kpi()$Site == unique_sites[1])
+      site_2 <- which(data_engineering_kpi()$Site == unique_sites[2])
+      site_3 <- which(data_engineering_kpi()$Site == unique_sites[3])
+      site_4 <- which(data_engineering_kpi()$Site == unique_sites[4])
+      site_5 <- which(data_engineering_kpi()$Site == unique_sites[5])
+      site_6 <- which(data_engineering_kpi()$Site == unique_sites[6])
+      site_7 <- which(data_engineering_kpi()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- as.array(9:15)
+      
+      
+      rhandsontable(data_engineering_kpi(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
+    
+    
+    
+    data_environmental <- reactive({
+      
+      
+      
+      ### Census from template
+      data  <- operational_metrics_environmental
+      data <- data[order(data$Site),]
+      data$`2021-09-01` <- ""
+      
+      data <- data %>%
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+      
+    })
+    
+    
+    output$evs_tat <- renderRHandsontable({
+      unique_sites <- unique(data_environmental()$Site)
+      site_1 <- which(data_environmental()$Site == unique_sites[1])
+      site_2 <- which(data_environmental()$Site == unique_sites[2])
+      site_3 <- which(data_environmental()$Site == unique_sites[3])
+      site_4 <- which(data_environmental()$Site == unique_sites[4])
+      site_5 <- which(data_environmental()$Site == unique_sites[5])
+      site_6 <- which(data_environmental()$Site == unique_sites[6])
+      site_7 <- which(data_environmental()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- as.array(9:15)
+      
+      
+      rhandsontable(data_environmental(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
+    
+    
+    data_lab <- reactive({
+      
+      ### Census from template
+      data  <- operational_metrics_lab
+      data <- data[order(data$Site),]
+      #data$`2021-09-01` <- ""
+      
+      data <- data %>%
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+    })
+    
+    
+    output$lab_metrics <- renderRHandsontable({
+      unique_sites <- unique(data_lab()$Site)
+      site_1 <- which(data_lab()$Site == unique_sites[1])
+      site_2 <- which(data_lab()$Site == unique_sites[2])
+      site_3 <- which(data_lab()$Site == unique_sites[3])
+      site_4 <- which(data_lab()$Site == unique_sites[4])
+      site_5 <- which(data_lab()$Site == unique_sites[5])
+      site_6 <- which(data_lab()$Site == unique_sites[6])
+      site_7 <- which(data_lab()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- as.array(9:15)
+      
+      
+      rhandsontable(data_lab(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = 0, col = 0, rowspan = nrow(data_lab()), colspan = 1),
+          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
+    
+    
+  
+  
+} # Close Server
+
+
+
