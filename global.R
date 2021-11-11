@@ -250,15 +250,15 @@ dttm <- function(x) {
 
 # Import all reference / mapping files needed
 site_path <- here() # Set path to new data (raw data)
-site_mapping <- read_excel(paste0(site_path,"/MSHS Scorecards Target Mapping.xlsx"), 
+site_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
                            sheet = "Site_New",  col_names = TRUE, na = c("", "NA")) # Premier site-service mapping
 
-report_date_mapping <- read_excel(paste0(site_path,"/MSHS Scorecards Target Mapping.xlsx"), 
+report_date_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
                                   sheet = "Report Dates",  col_names = TRUE, na = c("", "NA")) # Premier reporting-dashboard date mapping 
 
 
 
-metric_group_mapping <- read_excel(paste0(site_path,"/MSHS Scorecards Target Mapping.xlsx"), 
+metric_group_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
                                    sheet = "Metric Group",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
   pivot_longer(
@@ -268,7 +268,7 @@ metric_group_mapping <- metric_group_mapping %>% # Processing metric group mappi
   ) %>%
   filter(!is.na(Inclusion))
 
-cost_rev_mapping <- read_excel(paste0(site_path,"/MSHS Scorecards Target Mapping.xlsx"), 
+cost_rev_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
                                sheet = "Cost and Rev Mapping",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 
 key_vol_mapping <- read_excel("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx",
@@ -463,7 +463,7 @@ labelMandatory <- function(label) {
 
 
 
-operational_metrics <- read_excel(here::here("Balanced Scorecards Data Input.xlsx"), sheet = "Sheet1", na = "")
+operational_metrics <- read_excel(here::here("Data/Balanced Scorecards Data Input.xlsx"), sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
   # dt <- data
@@ -555,7 +555,7 @@ operational_metrics_lab <- read_excel(here("Data/Other/Lab - Metrics.xlsx")) %>%
 
 
 ### Reading in Finance Data
-finance_bislr <- read_excel("Data/FTI/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
+finance_bislr <- read_excel("Data/Finance/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
 
 bislr_preprocess <- function(finance_bislr){
   ### Split out to actual data
@@ -689,7 +689,7 @@ exptrend_process <- function(finance_exptrend){
 
 
 ## Read in file for Census Days
-census_days <- read_excel("Data/FTI/Monthly Stats Summary for benchmarking 20211013.xlsx", sheet = "System Summary", col_types = "text")#, stringsAsFactors = F)
+census_days <- read_excel("Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx", sheet = "System Summary", col_types = "text")#, stringsAsFactors = F)
 census_days_index <- which(colnames(census_days) == "Census Days")
 census_days <- census_days[,c(1,census_days_index:(census_days_index+6))]
 
