@@ -23,7 +23,6 @@ suppressMessages({
   library(gridExtra)
   library(eeptools)
   library(ggQC)
-  library(zipcode)
   library(utils)
   library(scales)
   library(chron)
@@ -171,17 +170,29 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
     scale_fill_gradientn(colours = pal(256), ...)
   }
 }
-#### Filepaths
+#### Global Filepaths
+# budget_to_actual_path <- here::here("Data/Other/Budget to Actual.xlsx")
+# metrics_final_df_path <- here::here("Data/metrics_final_df.rds")
+# key_volume_mapping_path <- "J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx"
+# target_mapping_path <- here::here("Data/MSHS Scorecards Target Mapping.xlsx")
+# operational_metrics_path <- here::here("Data/Balanced Scorecards Data Input.xlsx")
+# operational_metrics_engineering_path <- here("Data/Other/CM KPI.xlsx")
+# operational_metrics_environmental_path <- here("Data/Other/TAT - EVS.xlsx")
+# census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
+# operational_metrics_lab_path <- here("Data/Other/Lab - Metrics.xlsx")
 
-budget_to_actual_path <- here::here("Data/Other/Budget to Actual.xlsx")
-metrics_final_df_path <- here::here("Data/metrics_final_df.rds")
-key_volume_mapping_path <- "J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx"
-target_mapping_path <- here::here("Data/MSHS Scorecards Target Mapping.xlsx")
-operational_metrics_path <- here::here("Data/Balanced Scorecards Data Input.xlsx")
-operational_metrics_engineering_path <- here("Data/Other/CM KPI.xlsx")
-operational_metrics_environmental_path <- here("Data/Other/TAT - EVS.xlsx")
-census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
-operational_metrics_lab_path <- here("Data/Other/Lab - Metrics.xlsx")
+#start <- "J:" #Comment when publishing to RConnect
+start <- "/SharedDrive/"  #Uncomment when publishing to RConnect
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
+budget_to_actual_path <- paste0(home_path, "Other/Budget to Actual.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
+operational_metrics_engineering_path <- paste0(home_path, 'Other/CM KPI.xlsx')
+operational_metrics_environmental_path <- paste0(home_path, "Other/TAT - EVS.xlsx")
+census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
+operational_metrics_lab_path <- paste0(home_path, "Other/Lab - Metrics.xlsx")
+key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
@@ -559,7 +570,7 @@ cm_kpi <- function(data){
 }
 
 
-operational_metrics_lab <- read_excel(operational_metric_lab_path) %>% filter(Month >= "2020-12-01") %>%
+operational_metrics_lab <- read_excel(operational_metrics_lab_path) %>% filter(Month >= "2020-12-01") %>%
                             mutate_if(is.logical, as.character) %>%
                             mutate_if(is.double, as.character) %>%
                             pivot_wider(names_from = "Month", values_from = Number)
