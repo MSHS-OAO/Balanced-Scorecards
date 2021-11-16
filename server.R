@@ -32,6 +32,7 @@
       input$submit_prod
       input$submit_engineering
       input$submit_finance
+      input$submit_food
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -693,12 +694,27 @@
         return(NULL)
       }else{
         bislr_data <- read_excel(inFile_msbi_msb_msw$datapath)
+        # bislr_data <- read_excel("Data/Finance/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
+        
       }
       
       bislr_data <- bislr_preprocess(bislr_data)
       metrics_final_df <<- budget_to_actual_process(bislr_data)
       
-    })
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      budget_to_actual_tbl <- read_excel(budget_to_actual_path)
+      
+      updated_rows <- unique(bislr_data[c("Service","Site","Cost Center2", "Account Category Desc2", "Month")])
+      updated_rows$Month <- as.Date(updated_rows$Month, "%Y-%m-%d")
+      budget_to_actual_tbl <- anti_join(budget_to_actual_tbl, updated_rows)
+      budget_to_actual_tbl <- budget_to_actual_tbl %>% filter(!is.na(Month))
+      
+      budget_to_actual_tbl <- full_join(budget_to_actual_tbl, bislr_data)
+      
+      write.xlsx(budget_to_actual_tbl, budget_to_actual_path, row.names = FALSE)
+      
+      })
     
     
     ## Read in productivity data and process
@@ -708,9 +724,7 @@
       data <- read_excel(inFile$datapath)
       data_nursing_radiology <- read_excel(inFile_nursing_radiology$datapath)
       
-      #metrics_final_df <<- metrics_final_df %>% filter(!(Metric_Group %in% "Productivity"))
-      
-      
+
       tryCatch({metrics_final_df <<- productivity_process(data,data_nursing_radiology)
       showModal(modalDialog(
         title = "Success",
@@ -724,14 +738,6 @@
         easyClose = TRUE,
         footer = NULL
       ))})
-      
-      #tables <- dbGetQuery(con, 'SHOW TABLES FROM Scorecards')
-      
-      # if(any(tables == c("All Metrics"))){
-      #   dbRemoveTable(con, Id(schema = "Scorecards", table = "All Metrics"))
-      # }else{
-      #   dbWriteTable(con, Id(schema = "Scorecards", table = "All Metrics"), metrics_final_df)
-      # }
       
     })
     
