@@ -338,8 +338,8 @@
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Food Services"
-      # month_input <- "04-2021"
+      # service_input <- "Engineering"
+      # month_input <- "06-2021"
       # site_input <- "MSH"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -467,11 +467,14 @@
       breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Variance to Budget", "Budget to Actual MOM")] <- ">= Budget"
       breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
       
-    
+      factor_ordering <- table(breakdown_all$Summary_Metric_Name)
+      factor_ordering <- factor_ordering[order(factor(names(factor_ordering), levels = metric_name_order))]
+      
       breakdown_all[,3:length(breakdown_all)] %>%
         kable(align = "l", escape = FALSE) %>%
-        # pack_rows(index = table(breakdown_all$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
-        pack_rows(index = table(breakdown_all$Summary_Metric_Name)[metric_name_order], label_row_css = "background-color: #212070; color: white;") %>%
+         #pack_rows(index = table(breakdown_all$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
+        #pack_rows(index = table(breakdown_all$Summary_Metric_Name)[metric_name_order], label_row_css = "background-color: #212070; color: white;") %>%
+        pack_rows(index = factor_ordering, label_row_css = "background-color: #212070; color: white;") %>%
         kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
                       position = "center", row_label_position = "c", font_size = 16) %>%
         add_header_above(c(" " = 1, "Selected Month-Year" = 2, " " = 2, "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all)-7),
@@ -669,6 +672,9 @@
       }
       
       metrics_final_df <<- budget_to_actual_process(exptrend_data)
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+
       
     })
     
@@ -694,7 +700,7 @@
         return(NULL)
       }else{
         bislr_data <- read_excel(inFile_msbi_msb_msw$datapath)
-        # bislr_data <- read_excel("Data/Finance/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
+        # bislr_data <- read_excel("Data_Dashboard/Finance/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
         
       }
       
@@ -710,8 +716,12 @@
       budget_to_actual_tbl <- anti_join(budget_to_actual_tbl, updated_rows)
       budget_to_actual_tbl <- budget_to_actual_tbl %>% filter(!is.na(Month))
       
+      bislr_data$Month <- as.Date(bislr_data$Month, "%Y-%m-%d")
+      bislr_data$`Month Actual` <- as.double(bislr_data$`Month Actual`)
       budget_to_actual_tbl <- full_join(budget_to_actual_tbl, bislr_data)
       
+      
+      budget_to_actual_tbl <- as.data.frame(budget_to_actual_tbl)
       write.xlsx(budget_to_actual_tbl, budget_to_actual_path, row.names = FALSE)
       
       })
@@ -782,6 +792,24 @@
       engineering_data <<- hot_to_r(input$engineering_kpi)
       
       metrics_final_df <<- cm_kpi(engineering_data)
+      saveRDS(metrics_final_df, metrics_final_df_path)
+
+
+      engineering_table <- read_excel(engineering_table_path)
+      engineering_data <- engineering_data_process(engineering_data)
+
+      updated_rows <- unique(engineering_data[c("Site", "Month")])
+      updated_rows$Month <- as.Date(updated_rows$Month, "%Y-%m-%d")
+      
+      engineering_table <- anti_join(engineering_table, updated_rows)
+      engineering_table <- engineering_table %>% filter(!is.na(Month))
+      
+      engineering_data$Month <- as.Date(engineering_data$Month, "%Y-%m-%d")
+      engineering_data$`Number of Work Orders Created with a Life Safety Priority` <- as.double(engineering_data$`Number of Work Orders Created with a Life Safety Priority`)
+      engineering_data$`EOC/Patient Care Work Orders Received` <- as.double(engineering_data$`EOC/Patient Care Work Orders Received`)
+      
+      
+      engineering_table <- full_join(engineering_table, engineering_data)
     
     })
     

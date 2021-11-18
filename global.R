@@ -1,5 +1,6 @@
 # Install and load packages ----------------------------------------
 suppressMessages({
+  library(xlsx)
   library(assertr)
   library(readxl)
   library(writexl)
@@ -181,8 +182,8 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 # census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
 # operational_metrics_lab_path <- here("Data/Other/Lab - Metrics.xlsx")
 
-#start <- "J:" #Comment when publishing to RConnect
-start <- "/SharedDrive/"  #Uncomment when publishing to RConnect
+start <- "J:" #Comment when publishing to RConnect
+#start <- "/SharedDrive/"  #Uncomment when publishing to RConnect
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Other/Budget to Actual.xlsx")
@@ -193,7 +194,7 @@ operational_metrics_environmental_path <- paste0(home_path, "Other/TAT - EVS.xls
 census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
 operational_metrics_lab_path <- paste0(home_path, "Other/Lab - Metrics.xlsx")
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
-
+engineering_table_path <- paste0(home_path, "Other/CM KPI.xlsx")
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
 data_path <- here()
@@ -789,4 +790,14 @@ budget_to_actual_process <- function(data){
   metrics_final_df <- full_join(metrics_final_df,budget_actual_df_merge)
   
   return(metrics_final_df)
+}
+
+
+engineering_data_process <- function(data){
+  engineering_data <- data %>%
+    pivot_longer(c(-Metric, -Site),
+                 names_to = "Month",
+                 values_to = "Value") %>%
+    pivot_wider(names_from = "Metric", values_from = Value)
+  
 }
