@@ -1,5 +1,7 @@
 # Install and load packages ----------------------------------------
 suppressMessages({
+  library(xlsx)
+  library(assertr)
   library(readxl)
   library(writexl)
   library(plyr)
@@ -170,16 +172,38 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
     scale_fill_gradientn(colours = pal(256), ...)
   }
 }
+#### Global Filepaths
+# budget_to_actual_path <- here::here("Data/Other/Budget to Actual.xlsx")
+# metrics_final_df_path <- here::here("Data/metrics_final_df.rds")
+# key_volume_mapping_path <- "J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx"
+# target_mapping_path <- here::here("Data/MSHS Scorecards Target Mapping.xlsx")
+# operational_metrics_path <- here::here("Data/Balanced Scorecards Data Input.xlsx")
+# operational_metrics_engineering_path <- here("Data/Other/CM KPI.xlsx")
+# operational_metrics_environmental_path <- here("Data/Other/TAT - EVS.xlsx")
+# census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
+# operational_metrics_lab_path <- here("Data/Other/Lab - Metrics.xlsx")
 
-
+start <- "J:" #Comment when publishing to RConnect
+#start <- "/SharedDrive/"  #Uncomment when publishing to RConnect
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
+budget_to_actual_path <- paste0(home_path, "Other/Budget to Actual.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
+operational_metrics_engineering_path <- paste0(home_path, 'Other/CM KPI.xlsx')
+operational_metrics_environmental_path <- paste0(home_path, "Other/TAT - EVS.xlsx")
+census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
+operational_metrics_lab_path <- paste0(home_path, "Other/Lab - Metrics.xlsx")
+key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
+engineering_table_path <- paste0(home_path, "Other/CM KPI.xlsx")
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
 data_path <- here()
-metrics_final_df <- readRDS(paste0(data_path,"/Data/metrics_final_df.rds")) # Load processed Premier productivity data 
+metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
-target_mapping <- read_excel(here::here("Data/MSHS Scorecards Target Mapping.xlsx"), sheet = "Target") # Import target mapping file
-metric_grouping <-  read_excel(here::here("Data/MSHS Scorecards Target Mapping.xlsx"), sheet = "Metric Group") # Import Metric Group
-summary_metrics <- read_excel(here::here("Data/MSHS Scorecards Target Mapping.xlsx"), sheet = "Summary Metrics") # Import Summary Metrics
+target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
+metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group") # Import Metric Group
+summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics") # Import Summary Metrics
 
 metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
 
@@ -250,15 +274,15 @@ dttm <- function(x) {
 
 # Import all reference / mapping files needed
 site_path <- here() # Set path to new data (raw data)
-site_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
+site_mapping <- read_excel(target_mapping_path, 
                            sheet = "Site_New",  col_names = TRUE, na = c("", "NA")) # Premier site-service mapping
 
-report_date_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
+report_date_mapping <- read_excel(target_mapping_path, 
                                   sheet = "Report Dates",  col_names = TRUE, na = c("", "NA")) # Premier reporting-dashboard date mapping 
 
 
 
-metric_group_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
+metric_group_mapping <- read_excel(target_mapping_path, 
                                    sheet = "Metric Group",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
   pivot_longer(
@@ -268,10 +292,10 @@ metric_group_mapping <- metric_group_mapping %>% # Processing metric group mappi
   ) %>%
   filter(!is.na(Inclusion))
 
-cost_rev_mapping <- read_excel(paste0(site_path,"/Data/MSHS Scorecards Target Mapping.xlsx"), 
+cost_rev_mapping <- read_excel(target_mapping_path, 
                                sheet = "Cost and Rev Mapping",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 
-key_vol_mapping <- read_excel("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx",
+key_vol_mapping <- read_excel(key_volume_mapping_path,
                               sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping  
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 
@@ -463,7 +487,7 @@ labelMandatory <- function(label) {
 
 
 
-operational_metrics <- read_excel(here::here("Data/Balanced Scorecards Data Input.xlsx"), sheet = "Sheet1", na = "")
+operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
   # dt <- data
@@ -476,7 +500,7 @@ transform_dt <- function(dt, names_to, values_to){
 }
 
 
-operational_metrics_engineering <- read_excel(here("Data/Other/CM KPI.xlsx")) %>% filter(Month >= "2020-12-01") %>%
+operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= "2020-12-01") %>%
                                     mutate_if(is.logical, as.character) %>%
                                     mutate_if(is.double, as.character) %>%
                                     select(-Hospital) %>%
@@ -486,7 +510,7 @@ operational_metrics_engineering <- read_excel(here("Data/Other/CM KPI.xlsx")) %>
                                     pivot_wider(names_from = "Month", values_from = Value)
 
 
-operational_metrics_environmental <- read_excel(here("Data/Other/TAT - EVS.xlsx")) %>% filter(Month >= "2020-12-01") %>%
+operational_metrics_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= "2020-12-01") %>%
                                       mutate_if(is.logical, as.character) %>%
                                       mutate_if(is.double, as.character) %>%
                                       select(-Hospital) %>%
@@ -548,14 +572,11 @@ cm_kpi <- function(data){
 }
 
 
-operational_metrics_lab <- read_excel(here("Data/Other/Lab - Metrics.xlsx")) %>% filter(Month >= "2020-12-01") %>%
+operational_metrics_lab <- read_excel(operational_metrics_lab_path) %>% filter(Month >= "2020-12-01") %>%
                             mutate_if(is.logical, as.character) %>%
                             mutate_if(is.double, as.character) %>%
                             pivot_wider(names_from = "Month", values_from = Number)
 
-
-### Reading in Finance Data
-finance_bislr <- read_excel("Data/Finance/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
 
 bislr_preprocess <- function(finance_bislr){
   ### Split out to actual data
@@ -689,7 +710,7 @@ exptrend_process <- function(finance_exptrend){
 
 
 ## Read in file for Census Days
-census_days <- read_excel("Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx", sheet = "System Summary", col_types = "text")#, stringsAsFactors = F)
+census_days <- read_excel(census_days_path, sheet = "System Summary", col_types = "text")#, stringsAsFactors = F)
 census_days_index <- which(colnames(census_days) == "Census Days")
 census_days <- census_days[,c(1,census_days_index:(census_days_index+6))]
 
@@ -770,4 +791,14 @@ budget_to_actual_process <- function(data){
   metrics_final_df <- full_join(metrics_final_df,budget_actual_df_merge)
   
   return(metrics_final_df)
+}
+
+
+engineering_data_process <- function(data){
+  engineering_data <- data %>%
+    pivot_longer(c(-Metric, -Site),
+                 names_to = "Month",
+                 values_to = "Value") %>%
+    pivot_wider(names_from = "Metric", values_from = Value)
+  
 }
