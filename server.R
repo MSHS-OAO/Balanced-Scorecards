@@ -339,7 +339,7 @@
       site_input <- input$selectedCampus2
       # 
       # service_input <- "Engineering"
-      # month_input <- "06-2021"
+      # month_input <- "08-2021"
       # site_input <- "MSH"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -626,11 +626,15 @@
       breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Variance to Budget")] <- ">= Budget"
       breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
       
+      factor_ordering <- table(breakdown_all_site$Metric_Group)
+      factor_ordering <- factor_ordering[order(factor(names(factor_ordering), levels = metric_group_order))]
+      
       
       breakdown_all_site[,2:length(breakdown_all_site)] %>%
         kable(align = "l", escape = FALSE) %>%
         # pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
-        pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
+        #pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
+        pack_rows(index = factor_ordering, label_row_css = "background-color: #212070; color: white;") %>%
         kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
                       position = "center", row_label_position = "c", font_size = 16) %>%
         add_header_above(c(" " = 1, "Selected Month-Year" = 2, " " = 2, "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all_site)-6),
