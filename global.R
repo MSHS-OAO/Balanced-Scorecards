@@ -1,6 +1,6 @@
 # Install and load packages ----------------------------------------
 suppressMessages({
-  library(xlsx)
+  # library(xlsx)
   library(assertr)
   library(readxl)
   library(writexl)
