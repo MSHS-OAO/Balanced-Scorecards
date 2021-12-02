@@ -90,20 +90,56 @@ fti_scc_comp <- read_excel(
          "/Soft Sites_Compiled_throughJuly2021.xlsx"),
   sheet = "Compiled Data"
 )
-  
-ref_file <- read_excel(
+
+lab_sites <- read_excel(
   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
          "/Projects/System Operations/Balanced Scorecards Automation",
          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-  sheet = "Lab Mapping"
+  sheet = "Lab_Sites"
+)
+
+lab_test_codes <- read_excel(
+  paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
+         "/Projects/System Operations/Balanced Scorecards Automation",
+         "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
+  sheet = "Lab_TestCodes"
+)
+  
+icu_mapping <- read_excel(
+  paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
+         "/Projects/System Operations/Balanced Scorecards Automation",
+         "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
+  sheet = "Lab_ICU"
 )
 
 # Select relevant columns from ICU mappings
-mshs_icu <- ref_file %>%
+mshs_icu <- icu_mapping %>%
   select(Hospital, LocCode, LocName) %>%
   mutate(HospLoc = paste(Hospital, LocCode))
 
-fti_sun_df <- fti_sun_comp %>%
+# Crosswalk sites
+fti_sun_df <- fti_sun_comp
+
+fti_sun_df <- left_join(fti_sun_df,
+                        lab_sites,
+                      by = c("HospCode" = "Data_Hosp"))
+
+fti_scc_df <- fti_scc_comp
+
+fti_scc_df <- left_join(fti_scc_df,
+                        lab_sites,
+                        by = c("SITE" = "Data_Hosp"))
+
+# Crosswalk test codes
+fti_sun_df <- left_join(fti_sun_df,
+                        lab_test_codes,
+                        by = c("TestCode" = "TestCode"))
+
+fti_scc_df <- left_join(fti_scc_df,
+                        lab_test_codes,
+                        by = c("TEST_ID" = "TestCode"))
+
+fti_sun_df <- fti_sun_df %>%
   mutate(
     # Remove columns FTI added
     File = NULL,
@@ -127,7 +163,7 @@ fti_sun_df <- fti_sun_comp %>%
                                   form = "%m/%d/%Y %H:%M:%S"),
     Result_DateTime = as.POSIXct(ResultDateTime,
                                  tz = "UTC",
-                                 format = "%m/%d/%Y %H:%M%S"),
+                                 format = "%m/%d/%Y %H:%M:%S"),
     # Calculate receive to result TAT
     ReceiveResultTAT = as.numeric(Result_DateTime - Receive_DateTime,
                                   units = "mins"),
@@ -138,11 +174,11 @@ fti_sun_df <- fti_sun_comp %>%
       # Include specimens with a valid TAT
       TATInclude &
       # Include HGB Stat labs or Troponin ED/ICU labs
-      ((TestCode == "HGB" & SpecimenPriority == "S") |
-         (TestCode == "TROP" & ED_ICU)),
+      ((Test == "HGB" & SpecimenPriority == "S") |
+         (Test == "Troponin" & ED_ICU)),
     # Determine target TAT based on specimen type
-    TargetTAT = case_when(TestCode == "HGB" ~ 60,
-                          TestCode == "TROP" ~ 50),
+    TargetTAT = case_when(Test == "HGB" ~ 60,
+                          Test == "Troponin" ~ 50),
     # Determine if lab meets target TAT
     ReceiveResultInTarget = ReceiveResultTAT <= TargetTAT,
     # Determine month and year of resulted lab
@@ -150,13 +186,10 @@ fti_sun_df <- fti_sun_comp %>%
       paste0(month(Result_DateTime), "/1/", year(Result_DateTime)),
       format = "%m/%d/%Y"),
     # Create a column with metric summary
-    Metric = case_when(
-      TestCode == "HGB" ~ paste0("HGB (<=", TargetTAT, " min)"),
-      TestCode == "TROP" ~ paste0("Troponin (<=", TargetTAT, " min)")
-    )
+    Metric = paste0(Test, " (<= ", TargetTAT, " min)")
   )
 
-fti_scc_df <- fti_scc_comp %>%
+fti_scc_df <- fti_scc_df %>%
   mutate(
     # Remove columns FTI added
     File = NULL,
@@ -167,9 +200,6 @@ fti_scc_df <- fti_scc_comp %>%
     `Receive to Result Target (<=50)` = NULL,
     `Time Stamp Calculated` = NULL,
     `Time Stamp Variance` = NULL,
-    # Create a column with site
-    Site = case_when(SITE == "Sinai" ~ "MSH",
-                     SITE == "Queens" ~ "MSQ"),
     # Create a column combining site, location code, and location name
     HospLoc = paste(Site, WARD),
     # Determine whether unit is an ICU
@@ -193,11 +223,11 @@ fti_scc_df <- fti_scc_comp %>%
       # Include specimens with a valid TAT
       TATInclude &
       # Include HGB Stat labs or Troponin ED/ICU labs
-      ((TEST_ID == "HGB" & PRIORITY == "S") |
-         (TEST_ID == "TROI" & ED_ICU)),
+      ((Test == "HGB" & PRIORITY == "S") |
+         (Test == "Troponin" & ED_ICU)),
     # Determine target TAT based on specimen type
-    TargetTAT = case_when(TEST_ID == "HGB" ~ 60,
-                          TEST_ID == "TROI" ~ 50),
+    TargetTAT = case_when(Test == "HGB" ~ 60,
+                          Test == "Troponin" ~ 50),
     # Determine if lab meets target TAT
     ReceiveResultInTarget = ReceiveResultTAT <= TargetTAT,
     # Determine month and year of resulted lab
@@ -205,40 +235,235 @@ fti_scc_df <- fti_scc_comp %>%
       paste0(month(Result_DateTime), "/1/", year(Result_DateTime)),
       format = "%m/%d/%Y"),
     # Create a column with metric summary
-    Metric = case_when(
-      TEST_ID == "HGB" ~ paste0("HGB (<=", TargetTAT, " min)"),
-      TEST_ID == "TROI" ~ paste0("Troponin (<=", TargetTAT, " min)")
-    )
+    Metric = paste0(Test, " (<= ", TargetTAT, " min)")
   )
 
 
-
-# Logic used by FTI:
-# HGB: Stat orders only, regardless of setting; exclude negative or blank TAT
-# Troponin: ED and Critical Care Units only; exclude negative or blank TAT
-
-sun_summary <- fti_sun_df %>%
-  filter(SpecimenInclude) %>%
-  group_by(HospCode,
-           TestCode,
-           ResultMonthYr,
-           Metric) %>%
-  summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
-            TotalLabs = n(),
-            PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01)) %>%
-  ungroup()
-
-scc_summary <- fti_scc_df %>%
+sun_summary_fti <- fti_sun_df %>%
   filter(SpecimenInclude) %>%
   group_by(Site,
-           TEST_ID,
+           Test,
            ResultMonthYr,
            Metric) %>%
   summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
             TotalLabs = n(),
-            PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.001)) %>%
+            PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
+            .groups = "keep") %>%
   ungroup()
 
+scc_summary_fti <- fti_scc_df %>%
+  filter(SpecimenInclude) %>%
+  group_by(Site,
+           Test,
+           ResultMonthYr,
+           Metric) %>%
+  summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
+            TotalLabs = n(),
+            PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.001),
+            .groups = "keep") %>%
+  ungroup()
 
+# Now import the monthly Sunquest and SCC files from OneDrive and compare to FTI's results
+scc_folder <- paste0("J:/deans/Presidents/HSPI-PM",
+                     "/Operations Analytics and Optimization/Projects",
+                     "/System Operations/Balanced Scorecards Automation",
+                     "/Data_Dashboard/Input Data Raw/Lab & Blood Bank/SCC")
 
+sun_folder <- paste0("J:/deans/Presidents/HSPI-PM",
+                     "/Operations Analytics and Optimization/Projects",
+                     "/System Operations/Balanced Scorecards Automation",
+                     "/Data_Dashboard/Input Data Raw/Lab & Blood Bank/SUNQUEST")
+
+scc_files <- list.files(scc_folder)
+sun_files <- list.files(sun_folder)
+
+scc_list <- lapply(scc_files,
+                   function(x) read_excel(
+                     paste0(scc_folder, "/", x)
+                   )
+)
+
+sun_list <- lapply(sun_files,
+                   function(x) read_excel(
+                     paste0(sun_folder, "/", x)
+                   )
+)
+
+process_scc <- function(scc_raw_data) {
+  scc_df <- scc_raw_data
   
+  # Crosswalk sites
+  scc_df <- left_join(scc_df,
+                      lab_sites,
+                      by = c("SITE" = "Data_Hosp"))
+  
+  # Crosswalk test codes
+  scc_df <- left_join(scc_df,
+                      lab_test_codes,
+                      by = c("TEST_ID" = "TestCode"))
+  
+  scc_df <- scc_df %>%
+    mutate(
+      # Create a column combining site, location code, and location name
+      HospLoc = paste(Site, WARD),
+      # Determine whether unit is an ICU
+      MSHS_ICU = HospLoc %in% mshs_icu$HospLoc,
+      # Determine if unit is an ICU or an ED to be used for Troponin analysis
+      ED_ICU = CLINCTYPE %in% "E" | MSHS_ICU,
+      # Convert timestamps to posix times
+      Receive_DateTime = as.POSIXct(RECEIVE_DT,
+                                    tz = "UTC",
+                                    form = "%Y-%m-%d %H:%M:%OS"),
+      Result_DateTime = as.POSIXct(VERIFIED_DT,
+                                   tz = "UTC",
+                                   format = "%Y-%m-%d %H:%M:%OS"),
+      # Calculate receive to result TAT
+      ReceiveResultTAT = as.numeric(Result_DateTime - Receive_DateTime,
+                                    units = "mins"),
+      # Determine whether or not to include TAT
+      TATInclude = !is.na(ReceiveResultTAT) & ReceiveResultTAT >= 0,
+      # Determine whether or not to include specimen in calculation based
+      SpecimenInclude = 
+        # Include specimens with a valid TAT
+        TATInclude &
+        # Include HGB Stat labs or Troponin ED/ICU labs
+        ((Test == "HGB" & PRIORITY == "S") |
+           (Test == "Troponin" & ED_ICU)),
+      # Determine target TAT based on specimen type
+      TargetTAT = case_when(Test == "HGB" ~ 60,
+                            Test == "Troponin" ~ 50),
+      # Determine if lab meets target TAT
+      ReceiveResultInTarget = ReceiveResultTAT <= TargetTAT,
+      # Determine month and year of resulted lab
+      ResultMonthYr = as.Date(
+        paste0(month(Result_DateTime), "/1/", year(Result_DateTime)),
+        format = "%m/%d/%Y"),
+      # Create a column with metric summary
+      Metric = paste0(Test, " (<= ", TargetTAT, " min)")
+    )
+  
+  scc_summary <- scc_df %>%
+    filter(SpecimenInclude) %>%
+    group_by(Site,
+             Test,
+             ResultMonthYr,
+             Metric) %>%
+    summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
+              TotalLabs = n(),
+              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.001),
+              .groups = "keep") %>%
+    ungroup()
+  
+  return(scc_summary)
+  
+}
+
+process_sun <- function(sun_raw_data) {
+  sun_df <- sun_raw_data
+  
+  # Crosswalk sites
+  sun_df <- left_join(sun_df,
+                      lab_sites,
+                      by = c("HospCode" = "Data_Hosp"))
+
+  # Crosswalk test codes
+  sun_df <- left_join(sun_df,
+                      lab_test_codes,
+                      by = c("TestCode" = "TestCode"))
+  
+  sun_df <- sun_df %>%
+    mutate(
+      # Create a column combining site, location code, and location name
+      HospLoc = paste(HospCode, LocCode),
+      # Determine whether unit is an ICU
+      MSHS_ICU = HospLoc %in% mshs_icu$HospLoc,
+      # Determine if unit is an ICU or an ED to be used for Troponin analysis
+      ED_ICU = LocType %in% "ER" | MSHS_ICU,
+      # Convert timestamps to posix times
+      Receive_DateTime = as.POSIXct(ReceiveDateTime,
+                                    tz = "UTC",
+                                    form = "%m/%d/%Y %H:%M:%S"),
+      Result_DateTime = as.POSIXct(ResultDateTime,
+                                   tz = "UTC",
+                                   format = "%m/%d/%Y %H:%M:%S"),
+      # Calculate receive to result TAT
+      ReceiveResultTAT = as.numeric(Result_DateTime - Receive_DateTime,
+                                    units = "mins"),
+      # Determine whether or not to include TAT
+      TATInclude = !is.na(ReceiveResultTAT) & ReceiveResultTAT >= 0,
+      # Determine whether or not to include specimen in calculation based
+      SpecimenInclude = 
+        # Include specimens with a valid TAT
+        TATInclude &
+        # Include HGB Stat labs or Troponin ED/ICU labs
+        ((Test == "HGB" & SpecimenPriority == "S") |
+           (Test == "Troponin" & ED_ICU)),
+      # Determine target TAT based on specimen type
+      TargetTAT = case_when(Test == "HGB" ~ 60,
+                            Test == "Troponin" ~ 50),
+      # Determine if lab meets target TAT
+      ReceiveResultInTarget = ReceiveResultTAT <= TargetTAT,
+      # Determine month and year of resulted lab
+      ResultMonthYr = as.Date(
+        paste0(month(Result_DateTime), "/1/", year(Result_DateTime)),
+        format = "%m/%d/%Y"),
+      # Create a column with metric summary
+      Metric = paste0(Test, " (<= ", TargetTAT, " min)")
+    )
+  
+  # Determine primary month of report and remove any incorrect data points
+  tests_by_month <- sun_df %>%
+    filter(SpecimenInclude) %>%
+    group_by(ResultMonthYr) %>%
+    summarize(Count = n()) %>%
+    arrange(-Count)
+  
+  primary_month <- tests_by_month$ResultMonthYr[1]
+  
+  sun_df <- sun_df %>%
+    filter(ResultMonthYr == primary_month)
+
+  sun_summary <- sun_df %>%
+    filter(SpecimenInclude) %>%
+    group_by(Site,
+             Test,
+             ResultMonthYr,
+             Metric) %>%
+    summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
+              TotalLabs = n(),
+              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
+              .groups = "keep") %>%
+    ungroup()
+  
+  return(sun_summary)
+  
+}
+
+scc_summary_stats <- bind_rows(lapply(scc_list, process_scc))
+sun_summary_stats <- (lapply(sun_list, process_sun))
+
+sun_summary_stats_v2 <- sun_summary_stats %>%
+  group_by(Site,
+           Test,
+           ResultMonthYr,
+           Metric) %>%
+  summarize(LabsWithinTarget = sum(LabsWithinTarget),
+            TotalLabs = sum(TotalLabs),
+            PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
+            .groups = "keep") %>%
+  ungroup()
+
+cp_summary_stats <- bind_rows(scc_summary_stats, sun_summary_stats)
+
+export_list <- list("SCC - FTI Method" = scc_summary_fti,
+                    "SUN - FTI Method" = sun_summary_fti,
+                    "SCC - OAO Code" = scc_summary_stats,
+                    "SUN - OAO Code" = sun_summary_stats)
+
+write_xlsx(export_list,
+           paste0("J:/deans/Presidents/HSPI-PM",
+                  "/Operations Analytics and Optimization/Projects",
+                  "/System Operations/Balanced Scorecards Automation",
+                  "/Data_Dashboard/HSO FTI Data Validation",
+                  "/Lab KPI Analysis Validation", Sys.Date(), ".xlsx")
+)
