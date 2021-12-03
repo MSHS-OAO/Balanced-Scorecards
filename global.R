@@ -1,6 +1,6 @@
 # Install and load packages ----------------------------------------
 suppressMessages({
-  library(xlsx)
+  # library(xlsx)
   library(assertr)
   library(readxl)
   library(writexl)
@@ -24,6 +24,7 @@ suppressMessages({
   library(gridExtra)
   library(eeptools)
   library(ggQC)
+  library(zipcodeR)
   library(utils)
   library(scales)
   library(chron)
