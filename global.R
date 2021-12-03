@@ -69,7 +69,7 @@ suppressMessages({
 })
 
 source("EVS.R")
-source("press_ganey.R")
+# source("press_ganey.R")
 # Maximize R Memory Size 
 memory.limit(size = 8000000)
 
@@ -191,7 +191,7 @@ start <- "J:" #Comment when publishing to RConnect
 #home_path <- "/data/Scorecards_Data/"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "Copy of MSHS Scorecards Target Mapping.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
@@ -307,6 +307,16 @@ processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Re
                        "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
 
 press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey")
+
+# Lab & Blood Bank reference data/mappings
+lab_sites <- read_excel(target_mapping_path,
+                        sheet = "Lab_Sites")
+
+lab_testcodes <- read_excel(target_mapping_path,
+                            sheet = "Lab_TestCodes")
+
+lab_icu <- read_excel(target_mapping_path,
+                      sheet = "Lab_ICU")
 
 ### Process Productivity Data 
 
