@@ -68,6 +68,8 @@ suppressMessages({
   library(stringr)
 })
 
+source("EVS.R")
+source("press_ganey.R")
 # Maximize R Memory Size 
 memory.limit(size = 8000000)
 
@@ -173,31 +175,31 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
   }
 }
 #### Global Filepaths
-# budget_to_actual_path <- here::here("Data/Other/Budget to Actual.xlsx")
+# budget_to_actual_path <- here::here("Data/Summary Repos/Budget to Actual.xlsx")
 # metrics_final_df_path <- here::here("Data/metrics_final_df.rds")
 # key_volume_mapping_path <- "J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx"
 # target_mapping_path <- here::here("Data/MSHS Scorecards Target Mapping.xlsx")
 # operational_metrics_path <- here::here("Data/Balanced Scorecards Data Input.xlsx")
-# operational_metrics_engineering_path <- here("Data/Other/CM KPI.xlsx")
-# operational_metrics_environmental_path <- here("Data/Other/TAT - EVS.xlsx")
+# operational_metrics_engineering_path <- here("Data/Summary Repos/CM KPI.xlsx")
+# operational_metrics_environmental_path <- here("Data/Summary Repos/TAT - EVS.xlsx")
 # census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
-# operational_metrics_lab_path <- here("Data/Other/Lab - Metrics.xlsx")
+# operational_metrics_lab_path <- here("Data/Summary Repos/Lab - Metrics.xlsx")
 
 start <- "J:" #Comment when publishing to RConnect
 # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
  home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 #home_path <- "/data/Scorecards_Data/"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
-budget_to_actual_path <- paste0(home_path, "Other/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
+target_mapping_path <- paste0(home_path, "Copy of MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
-operational_metrics_engineering_path <- paste0(home_path, 'Other/CM KPI.xlsx')
-operational_metrics_environmental_path <- paste0(home_path, "Other/TAT - EVS.xlsx")
+operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
+operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
-operational_metrics_lab_path <- paste0(home_path, "Other/Lab - Metrics.xlsx")
+operational_metrics_lab_path <- paste0(home_path, "Summary Repos/Lab - Metrics.xlsx")
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
-engineering_table_path <- paste0(home_path, "Other/CM KPI.xlsx")
-press_ganey_table_path <- paste0(home_path, "Other/Press Ganey.xlsx")
+engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
+press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
 data_path <- here()
@@ -807,112 +809,4 @@ engineering_data_process <- function(data){
   
 }
 
-test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Data from FTI/MSHS_BalancedScorecard_Dataasof202108/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")
-month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Data from FTI/MSHS_BalancedScorecard_Dataasof202108/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")[1]
-data <- test
 
-
-evs_file_process <- function(data, month){
-
-  data <- na.omit(data, na.action = "omit")  
-  
-  data <- data %>%
-            rename(`Non-Isolation Requests` = `Normal Requests`,
-                   `Non-Isolation  % > 90 mins` = `% > 90 mins...3`,
-                   `Non-IsolationAverage TAT` = TAT...4,
-                   `Isolation % > 90 mins` = `% > 90 mins...6`,
-                   `Isolation Average TAT` = TAT...7)
-  data$Month <- format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y")
-  data$Site <- ifelse(data$Hospital == "Mount Sinai Bi Brooklyn", "MSB",
-               ifelse(data$Hospital == "Mount Sinai Bi Petrie", "MSBI",
-               ifelse(data$Hospital == "Mount Sinai Queens Hospital", "MSQ",
-               ifelse(data$Hospital == "Mount Sinai St. Luke's", "MSM",
-               ifelse(data$Hospital == "Mount Sinai West", "MSW",
-               ifelse(data$Hospital == "The Mount Sinai Hospital", "MSH", NA))))))
-  data$Service <- "Environmental Services"
-  
-  data <- data %>% 
-          relocate(Service, .before = Hospital) %>%
-          relocate(Site, .after = Hospital) %>%
-          relocate(Month, .after = Site)
-}
-
-evs_process <- function(data){
-  raw_TAT_EVS_df <- data
-  ## TAT - EVS processing 
-  #raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)] <- sapply(raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)], as.numeric)
-  TAT_EVS_df <- raw_TAT_EVS_df %>%
-    mutate(`% Isolation Turns` = round(`Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`),2),
-           `% Non-Isolation Turns` = round(`Non-Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`),2)) %>%
-    pivot_longer(5:12,
-                 names_to = "Metric_Name_Submitted",
-                 values_to = "value_rounded") %>%
-    mutate(value_rounded = round(value_rounded),
-           Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
-           Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%m-%Y"))
-  
-  TAT_EVS_df <- merge(TAT_EVS_df, metric_group_mapping[c("Metric_Group","Metric_Name","Metric_Name_Submitted")],
-                      by = c("Metric_Name_Submitted"))
-  
-  ### Create Target Variance Column
-  TAT_EVS_target_status <- merge(TAT_EVS_df[, c("Service","Site","Metric_Group", "Metric_Name","Reporting_Month","value_rounded")],
-                                 target_mapping, 
-                                 by.x = c("Service","Site","Metric_Group", "Metric_Name"),
-                                 by.y = c("Service","Site","Metric_Group", "Metric_Name"),
-                                 all = TRUE)
-  
-  TAT_EVS_target_status <- TAT_EVS_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>% # Target mapping
-    filter(Variance == TRUE)
-  
-  TAT_EVS_df_final <- merge(TAT_EVS_df, 
-                            TAT_EVS_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
-                            all = FALSE)
-  
-  # Subset processed data for merge 
-  TAT_EVS_df_merge <- TAT_EVS_df_final[,processed_df_cols]
-  
-  compiled_data_list$TAT_EVS_df_merge <- TAT_EVS_df_merge
-}
-
-
-data <- read_csv("C:/Users/villea04/Documents/FTI Query Current Period Support Services_330071af-b60c-4946-8c61-e07b15cec632.csv")
-press_ganey_suppport_file <- function(data){
-  row_cutoff <- min(which(data$`REPORT TITLE` == "Inpatient"))-1
-  data <- data[row_cutoff:nrow(data),]
-  data <- data %>%
-            row_to_names(row_number = 1) %>%
-            select(-Service) %>%
-            select(-`Survey Type`) %>%
-            select(-`Top Box`) %>%
-            select(-`Benchmarking Option`)
-            
-  
-  data <- full_join(data,press_ganey_mapping)
-  data <- data %>%
-          filter(!is.na(Service))%>%
-          filter((Service != "Nursing")) %>%
-          filter(`My Sites` != "Total") %>%
-          filter(`My Sites` != "'Mount Sinai South Nassau'")
-
-  
-          data$Site <- ifelse(data$`My Sites` == "'Mount Sinai Brooklyn'", "MSB",
-                              ifelse(data$`My Sites` == "'Mount Sinai Beth Israel'", "MSBI",
-                                     ifelse(data$`My Sites` == "'Mount Sinai Queens'", "MSQ",
-                                            ifelse(data$`My Sites` == "'Mount Sinai St. Luke's'", "MSM",
-                                                   ifelse(data$`My Sites` == "'Mount Sinai West'", "MSW",
-                                                          ifelse(data$`My Sites` == "'The Mount Sinai Hospital'", "MSH", 
-                                                                 ifelse(data$`My Sites` == "'New York Eye & Ear Infirmary'", "NYEE",NA)))))))          
-          
-  data <- separate(data, col = `Benchmarking Period`, c("Month", "Reporting Closed Month"), sep = " - ")
-  
-  data <- data %>%
-          select(-`My Sites`) %>%
-          select(-Metric_Name) %>%
-          rename(KPI = Questions,
-                 `Site Mean` = Mean,
-                 `Site N` = n,
-                 `All N` = `All PG Database N`,
-                 `All Mean` = `All PG Database Score`,
-                 `All Rank` = `All PG Database Rank`)
-}

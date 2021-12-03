@@ -33,6 +33,7 @@
       input$submit_engineering
       input$submit_finance
       input$submit_food
+      input$submit_evs
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -334,12 +335,19 @@
     
     output$siteComp_table <- function(){
       
+      input$submit_prod
+      input$submit_engineering
+      input$submit_finance
+      input$submit_food
+      input$submit_evs
+      
+      
       service_input <- input$selectedService2
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Engineering"
-      # month_input <- "08-2021"
+      # service_input <- "Environmental Services"
+      # month_input <- "07-2021"
       # site_input <- "MSH"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -440,10 +448,13 @@
       metric_name_order <- as.vector(unique(breakdown_all$Summary_Metric_Name))
       names(breakdown_all)[names(breakdown_all) == 'value_rounded'] <- format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
       
+      #breakdown_all <- merge(breakdown_all, metric_grouping[,c("Metric_Group", "Metric_Name")])
+      
+      
       # Format units
-      breakdown_all <- merge(breakdown_all, metric_unit_filter,
-                    by.x = c("Metric_Group","Summary_Metric_Name"),
-                    by.y = c("Metric_Group","Metric_Name"))
+      breakdown_all <- merge(breakdown_all, metric_unit_filter_summary)#,
+                    # by.x = c("Metric_Group","Summary_Metric_Name"),
+                    # by.y = c("Metric_Group","Metric_Name"))
       
       breakdown_all <- breakdown_all %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
@@ -494,6 +505,13 @@
     })
     
     output$siteBreakout_table <- function(){
+      
+      input$submit_prod
+      input$submit_engineering
+      input$submit_finance
+      input$submit_food
+      input$submit_evs
+      
       
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
@@ -817,6 +835,31 @@
     
     })
     
+    
+    observeEvent(input$submit_evs,{
+      
+      evs_file <- input$evs_data
+      
+      if (is.null(evs_file)) {
+        return(NULL)
+      }else{
+        file_path <- evs_file$datapath
+        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        evs_data <- read_excel(file_path)
+        month <- excel_sheets(file_path)[1]
+      }
+      
+      evs_data <- evs_file_process(evs_data,month)
+      
+      metrics_final_df <<- evs_process(evs_data)
+      
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+      
+    })
     
     data_react <- reactive({
       
