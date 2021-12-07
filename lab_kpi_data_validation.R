@@ -105,7 +105,7 @@ lab_test_codes <- read_excel(
   sheet = "Lab_TestCodes"
 )
   
-icu_mapping <- read_excel(
+lab_icu <- read_excel(
   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
          "/Projects/System Operations/Balanced Scorecards Automation",
          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
@@ -363,9 +363,17 @@ process_scc <- function(scc_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.001),
+              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 1),
               .groups = "keep") %>%
-    ungroup()
+    ungroup() %>%
+    # Format for department summary repo structure
+    mutate(Service = "Lab",
+           LabsWithinTarget = NULL,
+           TotalLabs = NULL,
+           Test = NULL) %>%
+    rename(Month = ResultMonthYr,
+           Number = PercentInTarget) %>%
+    relocate(Service)
   
   return(scc_summary)
   
@@ -446,9 +454,17 @@ process_sun <- function(sun_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
+              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 1),
               .groups = "keep") %>%
-    ungroup()
+    ungroup() %>%
+    # Format for department summary repo structure
+    mutate(Service = "Lab",
+           LabsWithinTarget = NULL,
+           TotalLabs = NULL,
+           Test = NULL) %>%
+    rename(Month = ResultMonthYr,
+           Number = PercentInTarget) %>%
+    relocate(Service)
   
   return(sun_summary)
   
