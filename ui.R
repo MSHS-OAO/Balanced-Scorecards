@@ -207,7 +207,7 @@ ui <-
                                
                                  )
                         ),
-                        tabPanel("Press Ganey", value = "press_gainey",
+                        tabPanel("Press Ganey", value = "press_ganey",
                                  span("Press Ganey Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  fileInput("press_ed", label = "Please upload Press Ganey ED data"),

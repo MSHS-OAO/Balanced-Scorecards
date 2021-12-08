@@ -68,8 +68,8 @@ suppressMessages({
   library(stringr)
 })
 
-source("EVS.R")
-source("press_ganey.R")
+# source("EVS.R")
+# source("press_ganey.R")
 # Maximize R Memory Size 
 memory.limit(size = 8000000)
 
@@ -191,7 +191,7 @@ start <- "J:" #Comment when publishing to RConnect
 #home_path <- "/data/Scorecards_Data/"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "Copy of MSHS Scorecards Target Mapping.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
@@ -200,6 +200,7 @@ operational_metrics_lab_path <- paste0(home_path, "Summary Repos/Lab - Metrics.x
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
+evs_table_path <- paste0(home_path, "Summart Repos/TAT - EVS.xlsx")
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
 data_path <- here()
@@ -516,14 +517,7 @@ operational_metrics_engineering <- read_excel(operational_metrics_engineering_pa
                                     pivot_wider(names_from = "Month", values_from = Value)
 
 
-operational_metrics_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= "2020-12-01") %>%
-                                      mutate_if(is.logical, as.character) %>%
-                                      mutate_if(is.double, as.character) %>%
-                                      select(-Hospital) %>%
-                                      pivot_longer(cols = c(-Month, -Site, -Service),
-                                                   names_to = "Metric",
-                                                   values_to = "Value") %>%
-                                      pivot_wider(names_from = "Month", values_from = Value)
+
 
 cm_kpi <- function(data){
   
