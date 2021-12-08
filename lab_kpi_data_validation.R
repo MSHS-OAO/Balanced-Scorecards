@@ -470,6 +470,8 @@ process_sun <- function(sun_raw_data) {
   
 }
 
+test_output <- process_scc(scc_list)
+
 scc_summary_stats <- bind_rows(lapply(scc_list, process_scc))
 sun_summary_stats <- bind_rows(lapply(sun_list, process_sun))
 

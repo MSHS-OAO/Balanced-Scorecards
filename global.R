@@ -196,7 +196,12 @@ operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xl
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
-operational_metrics_lab_path <- paste0(home_path, "Summary Repos/Lab - Metrics.xlsx")
+
+# File path for Lab KPI metrics
+ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
+ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
+
+#
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
@@ -580,12 +585,6 @@ cm_kpi <- function(data){
   
   metrics_final_df <- full_join(metrics_final_df,cm_kpi_df_final)
 }
-
-
-operational_metrics_lab <- read_excel(operational_metrics_lab_path) %>% filter(Month >= "2020-12-01") %>%
-                            mutate_if(is.logical, as.character) %>%
-                            mutate_if(is.double, as.character) %>%
-                            pivot_wider(names_from = "Month", values_from = Number)
 
 
 bislr_preprocess <- function(finance_bislr){
