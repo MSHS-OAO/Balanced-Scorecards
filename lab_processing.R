@@ -116,7 +116,7 @@ lab_scc_tat_process <- function(scc_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 1),
+              PercentInTarget = LabsWithinTarget / TotalLabs,
               .groups = "keep") %>%
     ungroup() %>%
     # Format for department summary repo structure
@@ -208,7 +208,7 @@ lab_sun_tat_process <- function(sun_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 1),
+              PercentInTarget = LabsWithinTarget / TotalLabs,
               .groups = "keep") %>%
     ungroup() %>%
     # Format for department summary repo structure
@@ -240,19 +240,55 @@ sun_test_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
 scc_data <- read_excel(scc_test_file_path)
 sun_data <- read_excel(sun_test_file_path)
 
+# Process raw data using custom functions -----------------------
 scc_summary_data <- lab_scc_tat_process(scc_data)
 sun_summary_data <- lab_sun_tat_process(sun_data)
 
-scc_summary_data <- scc_summary_data %>%
-  mutate(Concate = paste(Site, Month, Metric))
+# Add new SCC data to existing repository -----------------------
+# First, identify the sites, months, and metrics in the new data
+scc_new_data <- unique(
+  scc_summary_data[  c("Service", "Site", "Month", "Metric")]
+)
 
-sun_summary_data <- sun_summary_data %>%
-  mutate(Concate = paste(Site, Month, Metric))
+# Second, remove these sites, months, and metrics from the historical data, if they exist there.
+# This allows us to ensure no duplicate entries for the same site, metric, and time period
+ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
+                                         scc_new_data,
+                                         by = c("Service" = "Service",
+                                                "Site" = "Site",
+                                                "Month" = "Month",
+                                                "Metric" = "Metric")
+)
 
+# Third, combine the updated historical data with the new data
+ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
+                                 scc_summary_data)
 
-ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-  mutate(Concate = paste(Site, Month, Metric),
-         Dupl = Concate %in% scc_summary_data$Concate)
+# Lastly, save the updated summary data
+write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+
+# Add new Sun data to existing repository ----------------------
+# First, identify the sites, months, and metrics in the new data
+sun_new_data <- unique(
+  sun_summary_data[c("Service", "Site", "Month", "Metric")]
+)
+
+# Second, remove these sites, months, and metrics from the historical data, if they exist there.
+# This allows us to ensure no duplicate entries for the same site, metric, and time period
+ops_metrics_labs_tat <- anti_join(ops_metrics_lab_tat,
+                                  sun_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Month" = "Month",
+                                         "Metric" = "Metric")
+)
+
+# Third, combine the updated historical data with the new data
+ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
+                                 sun_summary_data)
+
+# Lastly, save the updated summary data
+write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
 
 # Custom function for formatting SCC data into appropriate format for metrics_final_df.RDS structure
 lab_scc_metrics_final_processing <- function(scc_summary) {
