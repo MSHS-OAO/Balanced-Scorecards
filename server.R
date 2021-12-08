@@ -1218,6 +1218,46 @@
         hot_col(1:3, readOnly = T)
     })
     
+    # Lab KPI - Turnaround Time
+    observeEvent(input$submit_lab_tat,{
+      
+      # Read and process SCC data
+      scc_file <- input$lab_scc
+      
+      if (is.null(scc_file)) {
+        return(NULL)
+      }else{
+        scc_file_path <- scc_file$datapath
+        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        scc_data <- read_excel(scc_file_path)
+        # month <- excel_sheets(file_path)[1]
+      }
+      
+      scc_summary_data <- lab_scc_tat_process(scc_data)
+      
+      # Read and process Sunquest data
+      sun_file <- input$lab_sun
+      
+      if (is.null(sun_file)) {
+        return(NULL)
+      }else{
+        sun_file_path <- sun_file$datapath
+        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        sun_data <- read_excel(sun_file_path)
+        # month <- excel_sheets(file_path)[1]
+      }
+      
+      sun_summary_data <- lab_sun_tat_process(sun_data)
+      
+      # metrics_final_df <<- evs_process(evs_data)
+      
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+      
+    })
     
   
   
