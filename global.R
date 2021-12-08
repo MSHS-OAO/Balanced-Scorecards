@@ -68,8 +68,8 @@ suppressMessages({
   library(stringr)
 })
 
-# source("EVS.R")
-# source("press_ganey.R")
+source("EVS.R")
+source("press_ganey.R")
 # Maximize R Memory Size 
 memory.limit(size = 8000000)
 
@@ -308,6 +308,16 @@ processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Re
                        "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
 
 press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey")
+
+# Lab & Blood Bank reference data/mappings
+lab_sites <- read_excel(target_mapping_path,
+                        sheet = "Lab_Sites")
+
+lab_testcodes <- read_excel(target_mapping_path,
+                            sheet = "Lab_TestCodes")
+
+lab_icu <- read_excel(target_mapping_path,
+                      sheet = "Lab_ICU")
 
 ### Process Productivity Data 
 

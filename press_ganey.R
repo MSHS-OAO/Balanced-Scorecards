@@ -1,5 +1,3 @@
-#home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-
 press_ganey_ed <- function(data){
   # row_cutoff <- min(which(data$`REPORT TITLE` == "Emergency Department"))-1
   # data <- data[row_cutoff:nrow(data),]
@@ -189,12 +187,12 @@ press_ganey_processing <- function(data) {
 }
 
 
-data_support <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 09-2021.csv"))
-data_nursing <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 09-2021 Edited.csv"))
-data_ed <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
-
-test <- press_ganey_ed(data_ed)
-test <- press_ganey_processing(test)
-
-data <- press_ganey_suppport_file(data_support)
+# data_support <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 09-2021.csv"))
+# data_nursing <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 09-2021 Edited.csv"))
+# data_ed <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
+# 
+# test <- press_ganey_ed(data_ed)
+# test <- press_ganey_processing(test)
+# 
+# data <- press_ganey_suppport_file(data_support)
 

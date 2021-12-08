@@ -370,30 +370,46 @@ ui <-
                                  )
                                  
                         ),
-                        tabPanel("Operational Metrics - Lab", value = "evs",
-                                 span("Operational Metrics - Lab", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                        tabPanel("Operational Metrics - Lab", value = "lab",
+                                 span("Operational Metrics - Lab",
+                                      style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turn and Time", hr(),
+                                        tabPanel("Turnaround Time", hr(),
+                                                 fileInput("lab_scc", label = "Please upload SCC lab data"),
+                                                 fileInput("lab_sun", label = "Please upload Sunquest lab data"),
+                                                 actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
+                                                 ),
+                                        tabPanel("Proficiency Testing", hr(),
                                                  fluidRow(
-                                                   column(2,
-                                                          textInput("name_lab", (labelMandatory("1. Please enter name:"))),
-                                                          
-                                                   )
+                                                   column(12,
+                                                          div(
+                                                            id = "form",
+                                                            fluidRow(
+                                                              column(2,
+                                                                     textInput("lab_pt_username",
+                                                                               labelMandatory(
+                                                                                 "1. Please enter name:")
+                                                                               )
+                                                                     )
+                                                            ),
+                                                            h2("2. Please enter data in the tables below."),
+                                                            br(),
+                                                            div(id = "header_custom",
+                                                                h3("Please leave cell blank if data has not been received.")
+                                                                ),
+                                                            h2("3. Please click on Submit when finished."),
+                                                            hr(),
+                                                            h2("Lab & Blood Bank Proficiency Testing"),
+                                                            rHandsontableOutput("lab_prof_testing")
+                                                          ))
                                                  ),
-                                                 h2("2. Please enter data in the tables below"),
-                                                 br(),
-                                                 div(id = "header_custom_lab",
-                                                     h3("Please leave cell blank if data has not been recieved")
-                                                 ),
-                                                 h2("3. Once finished please click on the button below"),
-                                                 #####Enter datatables here
-                                                 h2("Enviromental Services - Turn Around Time"),
-                                                 rHandsontableOutput("lab_metrics"),
-                                                 hr(),
-                                                 actionButton("submit_lab", "Submit", class = "btn-primary"),
+                                                 actionButton("submit_lab_pt", "Submit", class = "btn-primary")
+                                                 )
                                         )
-                                 )
                         ),
                         tabPanel("Operational Metrics - Patient Transport",
                                  span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -490,14 +506,30 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
+ 
   tags$style(HTML("
         #submit_evs {
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
+ 
   tags$style(HTML("
         #submit_engineering {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
+ tags$style(HTML("
+        #submit_lab_tat {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
+ tags$style(HTML("
+        #submit_lab_pt {
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;

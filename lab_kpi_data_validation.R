@@ -105,7 +105,7 @@ lab_test_codes <- read_excel(
   sheet = "Lab_TestCodes"
 )
   
-icu_mapping <- read_excel(
+lab_icu <- read_excel(
   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
          "/Projects/System Operations/Balanced Scorecards Automation",
          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
@@ -342,6 +342,19 @@ process_scc <- function(scc_raw_data) {
       Metric = paste0(Test, " (<= ", TargetTAT, " min)")
     )
   
+  # Determine primary month of report and remove any labs resulted the following month.
+  scc_monthly_volume <- scc_df %>%
+    filter(SpecimenInclude) %>%
+    group_by(ResultMonthYr) %>%
+    summarize(Count = n()) %>%
+    arrange(-Count) %>%
+    ungroup()
+
+  scc_report_month <- scc_monthly_volume$ResultMonthYr[1]
+
+  scc_df <- scc_df %>%
+    filter(ResultMonthYr %in% scc_report_month)
+  
   scc_summary <- scc_df %>%
     filter(SpecimenInclude) %>%
     group_by(Site,
@@ -350,9 +363,17 @@ process_scc <- function(scc_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.001),
+              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 1),
               .groups = "keep") %>%
-    ungroup()
+    ungroup() %>%
+    # Format for department summary repo structure
+    mutate(Service = "Lab",
+           LabsWithinTarget = NULL,
+           TotalLabs = NULL,
+           Test = NULL) %>%
+    rename(Month = ResultMonthYr,
+           Number = PercentInTarget) %>%
+    relocate(Service)
   
   return(scc_summary)
   
@@ -411,17 +432,19 @@ process_sun <- function(sun_raw_data) {
       Metric = paste0(Test, " (<= ", TargetTAT, " min)")
     )
   
-  # Determine primary month of report and remove any incorrect data points
-  tests_by_month <- sun_df %>%
+  # Sunquest data often includes labs resulted the following day/month.
+  # Determine primary month of report and remove any labs resulted the following month.
+  sun_monthly_volume <- sun_df %>%
     filter(SpecimenInclude) %>%
     group_by(ResultMonthYr) %>%
     summarize(Count = n()) %>%
-    arrange(-Count)
-  
-  primary_month <- tests_by_month$ResultMonthYr[1]
-  
+    arrange(-Count) %>%
+    ungroup()
+
+  sun_report_month <- sun_monthly_volume$ResultMonthYr[1]
+
   sun_df <- sun_df %>%
-    filter(ResultMonthYr == primary_month)
+    filter(ResultMonthYr %in% sun_report_month)
 
   sun_summary <- sun_df %>%
     filter(SpecimenInclude) %>%
@@ -431,29 +454,37 @@ process_sun <- function(sun_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
+              PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 1),
               .groups = "keep") %>%
-    ungroup()
+    ungroup() %>%
+    # Format for department summary repo structure
+    mutate(Service = "Lab",
+           LabsWithinTarget = NULL,
+           TotalLabs = NULL,
+           Test = NULL) %>%
+    rename(Month = ResultMonthYr,
+           Number = PercentInTarget) %>%
+    relocate(Service)
   
   return(sun_summary)
   
 }
 
 scc_summary_stats <- bind_rows(lapply(scc_list, process_scc))
-sun_summary_stats <- (lapply(sun_list, process_sun))
+sun_summary_stats <- bind_rows(lapply(sun_list, process_sun))
 
-sun_summary_stats_v2 <- sun_summary_stats %>%
-  group_by(Site,
-           Test,
-           ResultMonthYr,
-           Metric) %>%
-  summarize(LabsWithinTarget = sum(LabsWithinTarget),
-            TotalLabs = sum(TotalLabs),
-            PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
-            .groups = "keep") %>%
-  ungroup()
+# sun_summary_stats_v2 <- sun_summary_stats %>%
+#   group_by(Site,
+#            Test,
+#            ResultMonthYr,
+#            Metric) %>%
+#   summarize(LabsWithinTarget = sum(LabsWithinTarget),
+#             TotalLabs = sum(TotalLabs),
+#             PercentInTarget = percent(LabsWithinTarget / TotalLabs, accuracy = 0.01),
+#             .groups = "keep") %>%
+#   ungroup()
 
-cp_summary_stats <- bind_rows(scc_summary_stats, sun_summary_stats)
+cp_summary_stats <- bind_rows(scc_summary_stats, sun_summary_stats_v2)
 
 export_list <- list("SCC - FTI Method" = scc_summary_fti,
                     "SUN - FTI Method" = sun_summary_fti,
@@ -465,5 +496,5 @@ write_xlsx(export_list,
                   "/Operations Analytics and Optimization/Projects",
                   "/System Operations/Balanced Scorecards Automation",
                   "/Data_Dashboard/HSO FTI Data Validation",
-                  "/Lab KPI Analysis Validation", Sys.Date(), ".xlsx")
+                  "/Lab KPI Analysis Validation Corrected ", Sys.Date(), ".xlsx")
 )
