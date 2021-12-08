@@ -745,7 +745,7 @@
       
       
       budget_to_actual_tbl <- as.data.frame(budget_to_actual_tbl)
-      write.xlsx(budget_to_actual_tbl, budget_to_actual_path, row.names = FALSE)
+      write_xlsx(budget_to_actual_tbl, budget_to_actual_path, row.names = FALSE)
       
       })
     
@@ -875,7 +875,7 @@
       
       evs_summary_repo <- full_join(evs_summary_repo, evs_data)
       evs_summary_repo <- as.data.frame(evs_summary_repo)
-      write.xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
+      write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
       
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
