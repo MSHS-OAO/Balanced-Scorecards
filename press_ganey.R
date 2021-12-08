@@ -1,4 +1,83 @@
-data <- read_csv("C:/Users/villea04/Documents/FTI Query Current Period Support Services_330071af-b60c-4946-8c61-e07b15cec632.csv")
+press_ganey_ed <- function(data){
+  # row_cutoff <- min(which(data$`REPORT TITLE` == "Emergency Department"))-1
+  # data <- data[row_cutoff:nrow(data),]
+  data <- data %>%
+    select(-`Survey Type`) %>%
+    select(-`Benchmarking Option`)
+  
+  data <- full_join(data, press_ganey_mapping)
+  
+  data <- data %>% filter(!is.na(Metric_Name)) %>%
+    filter(!is.na(`My Sites`)) %>%
+    filter(`My Sites` != "Total") 
+  
+  
+  data$Site <- ifelse(data$`My Sites` == "'Mount Sinai Brooklyn'", "MSB",
+                      ifelse(data$`My Sites` == "'Mount Sinai Beth Israel'", "MSBI",
+                             ifelse(data$`My Sites` == "'Mount Sinai Queens'", "MSQ",
+                                    ifelse(data$`My Sites` == "'Mount Sinai St. Luke's'", "MSM",
+                                           ifelse(data$`My Sites` == "'Mount Sinai West'", "MSW",
+                                                  ifelse(data$`My Sites` == "'The Mount Sinai Hospital'", "MSH", 
+                                                         ifelse(data$`My Sites` == "'New York Eye & Ear Infirmary'", "NYEE",
+                                                                ifelse(data$`My Sites` == "'Mount Sinai Hospital of Queens'", "MSQ",
+                                                                       ifelse(data$`My Sites` == "'Mount Sinai Medical Center'", "MSH",NA)))))))))   
+  
+  
+  data <- data %>% filter(!is.na(Site)) %>%
+    select(-`My Sites`)
+  
+  data <- separate(data, col = `Benchmarking Period`, c("Month", "Reporting Closed Month"), sep = " - ")
+  
+  
+  data <- data %>%
+    select(-Metric_Name) %>%
+    rename(KPI = Questions,
+           `Site Mean` = Mean,
+           `Site N` = n,
+           `All N` = `All PG Database N`,
+           `All Mean` = `All PG Database Score`,
+           `All Rank` = `All PG Database Rank`)
+  
+  
+}
+
+press_ganey_nursing <- function(data){
+  data <- data %>% filter(!is.na(Service)) %>%
+                  filter(Service != "DEMOGRAPHIC REPORT") %>%
+                  filter(Service != "Service") %>%
+                  select(-`Survey Type`) %>%
+                  select(-`Benchmarking Option`) %>%
+                  select(-Service)
+  
+  data <- full_join(data, press_ganey_mapping)
+  
+  data <- data %>% filter(!is.na(Metric_Name)) %>%
+                  filter(!is.na(`My Sites`)) %>%
+                  filter(`My Sites` != "Total") 
+  
+  data$Site <- ifelse(data$`My Sites` == "'Mount Sinai Brooklyn'", "MSB",
+                      ifelse(data$`My Sites` == "'Mount Sinai Beth Israel'", "MSBI",
+                             ifelse(data$`My Sites` == "'Mount Sinai Queens'", "MSQ",
+                                    ifelse(data$`My Sites` == "'Mount Sinai St. Luke's'", "MSM",
+                                           ifelse(data$`My Sites` == "'Mount Sinai West'", "MSW",
+                                                  ifelse(data$`My Sites` == "'The Mount Sinai Hospital'", "MSH", 
+                                                         ifelse(data$`My Sites` == "'New York Eye & Ear Infirmary'", "NYEE",NA)))))))   
+  
+  data <- data %>% filter(!is.na(Site)) %>%
+    select(-`My Sites`)
+  
+  data <- separate(data, col = `Benchmarking Period`, c("Month", "Reporting Closed Month"), sep = " - ")
+  
+  data <- data %>%
+    select(-Metric_Name) %>%
+    rename(KPI = Questions,
+           `Site Mean` = `Top Box`,
+           `Site N` = n,
+           `All N` = `All PG Database N`,
+           `All Mean` = `All PG Database Score`,
+           `All Rank` = `All PG Database Rank`)
+}
+
 press_ganey_suppport_file <- function(data){
   row_cutoff <- min(which(data$`REPORT TITLE` == "Inpatient"))-1
   data <- data[row_cutoff:nrow(data),]
@@ -41,10 +120,9 @@ press_ganey_suppport_file <- function(data){
     select(-`Top Box`)
 }
 
-data <- test
 press_ganey_processing <- function(data) {
   data <- full_join(data,press_ganey_mapping, by = c("KPI" = "Questions", "Service"))
-  data <- data %>% filter(Service != "Nursing")
+  data <- data %>% filter(!is.na(Month))
   data <- distinct(data)
   
   data$value_rounded <- ifelse(data$Metric_Name == "Score", data$`Site Mean`,
@@ -55,7 +133,17 @@ press_ganey_processing <- function(data) {
                                                            ifelse(data$Metric_Name == "Quality of Food", data$`Site Mean`,
                                                                   ifelse(data$Metric_Name == "Courtesy of person served food", data$`Site Mean`,
                                                                          ifelse(data$Metric_Name == "Staff transported you around hosp- Score", data$`Site Mean`,
-                                                                                ifelse(data$Metric_Name == "Rank - All Hospitals", data$`All Rank`, NA)))))))))
+                                                                                ifelse(data$Metric_Name == "Rank - All Hospitals", data$`All Rank`,
+                                                                                       ifelse(data$Metric_Name == "Nurse Communication - Score", data$`Site Mean`,
+                                                                                              ifelse(data$Metric_Name == "Nurse Communication Responses - N", data$`Site N`,
+                                                                                                     ifelse(data$`Metric_Name` == "Response of Staff - Score", data$`Site Mean`,
+                                                                                                            ifelse(data$`Metric_Name` == "Response of Staff - N", data$`Site N`,
+                                                                                                                   ifelse(data$Metric_Name == "Score - Staff Cared", data$`Site Mean`,
+                                                                                                                          ifelse(data$Metric_Name == "# of Respondents - Staff Cared", data$`Site N`,
+                                                                                                                                 ifelse(data$Metric_Name == "Score - Overall Care",data$`Site Mean`, 
+                                                                                                                                        ifelse(data$Metric_Name == "# of Respondents - Overall Care", data$`Site N`,
+                                                                                                                                               ifelse(data$Metric_Name == "Score - Staff Worked Together", data$`Site Mean`,
+                                                                                                                                                      ifelse(data$Metric_Name == "# of Respondents - Staff Worked Together", data$`Site N`,NA)))))))))))))))))))
   data <- data %>%
     select(-KPI, -`Site Mean`, -`Site N`,-`All Mean`, -`All Rank`, -`All N`)
   
@@ -64,7 +152,7 @@ press_ganey_processing <- function(data) {
   
   
   data_df <- data_df %>%
-    mutate(Reporting_Month = format(as.Date(`Reporting Closed Month`, "%m/%d/%Y") %m+% months(1), "%m-%Y")) %>%
+    mutate(Reporting_Month = format(as.Date(`Reporting Closed Month`, "%m/%d/%Y") %m+% months(2), "%m-%Y")) %>%
     mutate(Reporting_Month_Ref = format(as.Date(paste0(Reporting_Month, "-01"), "%m-%Y-%d"), "%Y-%m-%d"))  %>%
     mutate(Premier_Reporting_Period = format(as.Date(Reporting_Month_Ref), "%h %Y"))
   
@@ -97,3 +185,14 @@ press_ganey_processing <- function(data) {
   metrics_final_df <- full_join(metrics_final_df,data_df_final)
   
 }
+
+
+# data_support <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 09-2021.csv"))
+# data_nursing <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 09-2021 Edited.csv"))
+# data_ed <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
+# 
+# test <- press_ganey_ed(data_ed)
+# test <- press_ganey_processing(test)
+# 
+# data <- press_ganey_suppport_file(data_support)
+

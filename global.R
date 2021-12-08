@@ -69,7 +69,7 @@ suppressMessages({
 })
 
 source("EVS.R")
-# source("press_ganey.R")
+source("press_ganey.R")
 # Maximize R Memory Size 
 memory.limit(size = 8000000)
 
@@ -205,6 +205,7 @@ ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Test
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
+evs_table_path <- paste0(home_path, "Summart Repos/TAT - EVS.xlsx")
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
 data_path <- here()
@@ -531,14 +532,7 @@ operational_metrics_engineering <- read_excel(operational_metrics_engineering_pa
                                     pivot_wider(names_from = "Month", values_from = Value)
 
 
-operational_metrics_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= "2020-12-01") %>%
-                                      mutate_if(is.logical, as.character) %>%
-                                      mutate_if(is.double, as.character) %>%
-                                      select(-Hospital) %>%
-                                      pivot_longer(cols = c(-Month, -Site, -Service),
-                                                   names_to = "Metric",
-                                                   values_to = "Value") %>%
-                                      pivot_wider(names_from = "Month", values_from = Value)
+
 
 cm_kpi <- function(data){
   
@@ -818,4 +812,7 @@ engineering_data_process <- function(data){
   
 }
 
+
+source("EVS.R")
+source("press_ganey.R")
 

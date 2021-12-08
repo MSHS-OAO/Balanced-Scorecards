@@ -735,6 +735,7 @@
       
       updated_rows <- unique(bislr_data[c("Service","Site","Cost Center2", "Account Category Desc2", "Month")])
       updated_rows$Month <- as.Date(updated_rows$Month, "%Y-%m-%d")
+      
       budget_to_actual_tbl <- anti_join(budget_to_actual_tbl, updated_rows)
       budget_to_actual_tbl <- budget_to_actual_tbl %>% filter(!is.na(Month))
       
@@ -851,7 +852,30 @@
       
       evs_data <- evs_file_process(evs_data,month)
       
-      metrics_final_df <<- evs_process(evs_data)
+      metrics_final_df <<- evs__metrics_final_df_process(evs_data)
+      
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      evs_summary_repo <- read_excel(evs_table_path)
+      updated_rows <- unique(evs_data[c("Service","Site", "Month")])
+      updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
+      
+      evs_summary_repo <- anti_join(evs_summary_repo, updated_rows)
+      evs_summary_repo <- evs_summary_repo %>% filter(!is.na(Month))
+      
+      evs_data$Month <- as.Date(evs_data$Month, "%m/%d/%Y")
+      evs_data$`Non-Isolation Requests` <- as.character(evs_data$`Non-Isolation Requests`)
+      evs_data$`Non-Isolation  % > 90 mins` <- as.character(evs_data$`Non-Isolation  % > 90 mins`)
+      evs_data$`Non-IsolationAverage TAT` <- as.character(evs_data$`Non-IsolationAverage TAT`)
+      evs_data$`Isolation Requests` <- as.character(evs_data$`Isolation Requests`)
+      evs_data$`Isolation % > 90 mins` <- as.character(evs_data$`Isolation % > 90 mins`)
+      evs_data$`Isolation Average TAT` <- as.character(evs_data$`Isolation Average TAT`)
+      
+      
+      
+      evs_summary_repo <- full_join(evs_summary_repo, evs_data)
+      evs_summary_repo <- as.data.frame(evs_summary_repo)
+      write.xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
       
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1106,7 +1130,7 @@
       
       
       ### Census from template
-      data  <- operational_metrics_environmental
+      data  <- summary_repos_environmental
       data <- data[order(data$Site),]
       data$`2021-09-01` <- ""
       

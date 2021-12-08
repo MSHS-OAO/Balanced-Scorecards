@@ -1,3 +1,19 @@
+start <- "J:" #Comment when publishing to RConnect
+# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
+
+
+summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= max(Month) %m-% months(12)) %>%
+  mutate_if(is.logical, as.character) %>%
+  mutate_if(is.double, as.character) %>%
+  select(-Hospital) %>%
+  pivot_longer(cols = c(-Month, -Site, -Service),
+               names_to = "Metric",
+               values_to = "Value") %>%
+  pivot_wider(names_from = "Month", values_from = Value)
+
+
 evs_file_process <- function(data, month){
 
   
@@ -67,7 +83,7 @@ evs_file_process <- function(data, month){
 }
 
 
-evs_process <- function(data){
+evs__metrics_final_df_process <- function(data){
   raw_TAT_EVS_df <- data
   ## TAT - EVS processing 
   #raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)] <- sapply(raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)], as.numeric)
@@ -116,7 +132,7 @@ evs_process <- function(data){
 }
 
 
-test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")
-month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")[1]
-
-data <- evs_file_process(test,month)
+# test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")
+# month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")[1]
+# 
+# data <- evs_file_process(test,month)
