@@ -200,6 +200,7 @@ census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchma
 # File path for Lab KPI metrics
 ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
 ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
+lab_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 
 #
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
