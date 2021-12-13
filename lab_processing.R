@@ -5,35 +5,53 @@
 ops_metrics_lab_tat <- read_excel(ops_metrics_lab_tat_path)
 ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
 
+# # Fix format of imported data for easier exporting
+ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+  mutate(Month = format(Month, "%m/%d/%Y"))
+# ops_metrics_lab_tat_format <- ops_metrics_lab_tat %>%
+#   # filter(date(min(Month)) >= as.Date("12/1/2020", format("%m/%d/%Y"))) %>%
+#   # mutate_if(is.logical, as.character) %>%
+#   # mutate_if(is.double, as.character)
+#   mutate(Month = format(Month, "%m/%d/%Y"))
+
 # Change format of Lab Proficiency Testing historical daata for HandsOnTable and manual input formatting
 ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
-  filter(Month >= "2020-12-01") %>%
+  # filter(Month >= "2020-12-01") %>%
   mutate_if(is.logical, as.character) %>%
   mutate_if(is.double, as.character) %>%
   pivot_wider(names_from = "Month", values_from = Number)
 
 # Reference data --------------------------------
 # Reference data for site, test, and ICU mappings. This can be commented out when using global.R
-lab_sites <- read_excel(
-  paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
-         "/Projects/System Operations/Balanced Scorecards Automation",
-         "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-  sheet = "Lab_Sites"
-)
+# lab_sites <- read_excel(
+#   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
+#          "/Projects/System Operations/Balanced Scorecards Automation",
+#          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
+#   sheet = "Lab_Sites"
+# )
+# 
+# lab_test_codes <- read_excel(
+#   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
+#          "/Projects/System Operations/Balanced Scorecards Automation",
+#          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
+#   sheet = "Lab_TestCodes"
+# )
+# 
+# lab_icu <- read_excel(
+#   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
+#          "/Projects/System Operations/Balanced Scorecards Automation",
+#          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
+#   sheet = "Lab_ICU"
+# )
 
-lab_test_codes <- read_excel(
-  paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
-         "/Projects/System Operations/Balanced Scorecards Automation",
-         "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-  sheet = "Lab_TestCodes"
-)
+lab_sites <- read_excel(target_mapping_path,
+                        sheet = "Lab_Sites")
 
-lab_icu <- read_excel(
-  paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
-         "/Projects/System Operations/Balanced Scorecards Automation",
-         "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-  sheet = "Lab_ICU"
-)
+lab_test_codes <- read_excel(target_mapping_path,
+                            sheet = "Lab_TestCodes")
+
+lab_icu <- read_excel(target_mapping_path,
+                      sheet = "Lab_ICU")
 
 # Select relevant columns from ICU mappings
 mshs_icu <- lab_icu %>%
@@ -237,14 +255,27 @@ sun_test_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
                              "/Data_Dashboard/Input Data Raw/Lab & Blood Bank",
                              "/SUNQUEST/2021.03_SUNQ.xlsx")
 
+
+# SCC Data Processing and Appending --------------
+# Read in raw data Excel file
 scc_data <- read_excel(scc_test_file_path)
-sun_data <- read_excel(sun_test_file_path)
 
-# Process raw data using custom functions -----------------------
+# Save prior version of Lab TAT Dept Summary data in Hist Archive folder
+write_xlsx(ops_metrics_lab_tat,
+           paste0(hist_archive_path,
+                  "Lab TAT Metrics Pre-SCC Updates ",
+                  format(Sys.time(), "%Y%m%d_%H%M%S"),
+                  ".xlsx"))
+
+# Process raw data using custom functions
 scc_summary_data <- lab_scc_tat_process(scc_data)
-sun_summary_data <- lab_sun_tat_process(sun_data)
 
-# Add new SCC data to existing repository -----------------------
+# write_xlsx(scc_summary_data,
+#            paste0(hist_archive_path,
+#                   "Lab TAT Metrics Date Test",
+#                   ".xlsx"))
+
+# Add new SCC data to existing repository 
 # First, identify the sites, months, and metrics in the new data
 scc_new_data <- unique(
   scc_summary_data[  c("Service", "Site", "Month", "Metric")]
@@ -267,7 +298,17 @@ ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
 # Lastly, save the updated summary data
 write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
 
-# Add new Sun data to existing repository ----------------------
+# Sunquest Data Processing and Appending ----------------------
+# Read in raw data Excel file
+sun_data <- read_excel(sun_test_file_path)
+
+# Save prior version of Lab TAT Dept Summary data in Hist Archive folder
+write_xlsx(ops_metrics_lab_tat,
+           paste0(hist_archive_path,
+                  "Lab TAT Metrics Pre-Sun Updates ",
+                  format(Sys.time(), "%Y%m%d_%H%M%S"),
+                  ".xlsx"))
+
 # First, identify the sites, months, and metrics in the new data
 sun_new_data <- unique(
   sun_summary_data[c("Service", "Site", "Month", "Metric")]

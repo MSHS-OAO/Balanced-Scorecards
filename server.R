@@ -1185,67 +1185,68 @@
     })
     
     
-    data_lab <- reactive({
-      
-      ### Census from template
-      data  <- operational_metrics_lab
-      data <- data[order(data$Site),]
-      #data$`2021-09-01` <- ""
-      
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-    })
-    
-    
-    output$lab_metrics <- renderRHandsontable({
-      unique_sites <- unique(data_lab()$Site)
-      site_1 <- which(data_lab()$Site == unique_sites[1])
-      site_2 <- which(data_lab()$Site == unique_sites[2])
-      site_3 <- which(data_lab()$Site == unique_sites[3])
-      site_4 <- which(data_lab()$Site == unique_sites[4])
-      site_5 <- which(data_lab()$Site == unique_sites[5])
-      site_6 <- which(data_lab()$Site == unique_sites[6])
-      site_7 <- which(data_lab()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(9:15)
-      
-      
-      rhandsontable(data_lab(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_lab()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
+  #   data_lab <- reactive({
+  #     
+  #     ### Census from template
+  #     data  <- operational_metrics_lab
+  #     data <- data[order(data$Site),]
+  #     #data$`2021-09-01` <- ""
+  #     
+  #     data <- data %>%
+  #       mutate_if(is.logical, as.character) %>%
+  #       mutate_if(is.double, as.character)
+  #     
+  #   })
+  #   
+  #   
+  #   output$lab_metrics <- renderRHandsontable({
+  #     unique_sites <- unique(data_lab()$Site)
+  #     site_1 <- which(data_lab()$Site == unique_sites[1])
+  #     site_2 <- which(data_lab()$Site == unique_sites[2])
+  #     site_3 <- which(data_lab()$Site == unique_sites[3])
+  #     site_4 <- which(data_lab()$Site == unique_sites[4])
+  #     site_5 <- which(data_lab()$Site == unique_sites[5])
+  #     site_6 <- which(data_lab()$Site == unique_sites[6])
+  #     site_7 <- which(data_lab()$Site == unique_sites[7])
+  #     
+  #     rendederer_string <- "
+  #   function(instance, td, row, col, prop, value, cellProperties) {
+  #     Handsontable.renderers.NumericRenderer.apply(this, arguments);
+  # 
+  #     if (instance.params) {
+  #           hcols = instance.params.col_highlight;
+  #           hcols = hcols instanceof Array ? hcols : [hcols];
+  #         }
+  # 
+  #     if (instance.params && hcols.includes(col)) {
+  #       td.style.background = '#EEEDE7';
+  #     }
+  # }"
+  #     
+  #     
+  #     col_highlight <- as.array(9:15)
+  #     
+  #     
+  #     rhandsontable(data_lab(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+  #       hot_table(mergeCells = list(
+  #         list(row = 0, col = 0, rowspan = nrow(data_lab()), colspan = 1),
+  #         list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
+  #         list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
+  #         list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
+  #         list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
+  #         list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
+  #         list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
+  #         list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
+  #       )) %>%
+  #       hot_cols(renderer = rendederer_string)  %>%
+  #       hot_col(1:3, readOnly = T)
+  #   })
     
     # Lab KPI - Turnaround Time
     observeEvent(input$submit_lab_tat,{
       
-      # Read and process SCC data
+      # SCC Data --------------
+      # Name SCC file
       scc_file <- input$lab_scc
       
       if (is.null(scc_file)) {
@@ -1253,13 +1254,48 @@
       }else{
         scc_file_path <- scc_file$datapath
         #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        # Read in SCC file
         scc_data <- read_excel(scc_file_path)
         # month <- excel_sheets(file_path)[1]
       }
       
+      # Save prior version of Lab TAT Dept Summary data
+      write_xlsx(ops_metrics_lab_tat,
+                 paste0(hist_archive_path,
+                        "Lab TAT Metrics Pre-SCC Updates ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      
+      # Process SCC data
       scc_summary_data <- lab_scc_tat_process(scc_data)
       
-      # Read and process Sunquest data
+      # Append Lab TAT summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      scc_new_data <- unique(
+        scc_summary_data[  c("Service", "Site", "Month", "Metric")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
+                                       scc_new_data,
+                                       by = c("Service" = "Service",
+                                              "Site" = "Site",
+                                              "Month" = "Month",
+                                              "Metric" = "Metric")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
+                                       scc_summary_data)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+
+      
+      # Sunquest Data ------------------------
+      # Name Sunquest file
       sun_file <- input$lab_sun
       
       if (is.null(sun_file)) {
@@ -1271,7 +1307,39 @@
         # month <- excel_sheets(file_path)[1]
       }
       
+      # Save prior version of Lab TAT Dept Summary data
+      write_xlsx(ops_metrics_lab_tat,
+                 paste0(hist_archive_path,
+                        "Lab TAT Metrics Pre-Sun Updates ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process Sunquest data
       sun_summary_data <- lab_sun_tat_process(sun_data)
+      
+      # Append Lab TAT summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      sun_new_data <- unique(
+        sun_summary_data[  c("Service", "Site", "Month", "Metric")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
+                                       sun_new_data,
+                                       by = c("Service" = "Service",
+                                              "Site" = "Site",
+                                              "Month" = "Month",
+                                              "Metric" = "Metric")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
+                                       sun_summary_data)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+      
       
       # metrics_final_df <<- evs_process(evs_data)
       
