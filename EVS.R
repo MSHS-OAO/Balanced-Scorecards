@@ -110,8 +110,8 @@ evs__metrics_final_df_process <- function(data){
   
   TAT_EVS_target_status <- TAT_EVS_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>% # Target mapping
-    filter(!is.na(Reporting_Month))
-    #filter(Variance == TRUE)
+    filter(!is.na(Reporting_Month)) %>%
+    filter(!(Variance %in% FALSE))
   
   TAT_EVS_df_final <- merge(TAT_EVS_df, 
                             TAT_EVS_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],

@@ -193,18 +193,21 @@ ui <-
                         tabPanel("Finance",
                                  span("Finance Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                
                                         fluidRow(
                                           column(2,
                                                  textInput("name_finance", (labelMandatory("1. Please enter name:"))),
                                                  
                                           )
                                         ),
+                                 tabBox(title = NULL, id = "tabset8", width = "100%", type = "pills",
                                         tabPanel("Finance", br(),
                                                  fileInput("finance_census", label = "Please upload Census Days data"),
                                                  fileInput("finance_msh_msm_msq", label = "Please upload Finance data for MSH and MSQ"),
                                                  fileInput("finance_msbi_msb_msw", label = "Please upload Finance data for MSBI, MSB, MSM, and MSW"),
                                                  actionButton("submit_finance", label = "Submit")
                                
+                                      ) 
                                  )
                         ),
                         tabPanel("Press Ganey", value = "press_ganey",
