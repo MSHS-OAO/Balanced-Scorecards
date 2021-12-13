@@ -7,19 +7,14 @@ ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
 
 # # Fix format of imported data for easier exporting
 ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-  mutate(Month = format(Month, "%m/%d/%Y"))
-# ops_metrics_lab_tat_format <- ops_metrics_lab_tat %>%
-#   # filter(date(min(Month)) >= as.Date("12/1/2020", format("%m/%d/%Y"))) %>%
-#   # mutate_if(is.logical, as.character) %>%
-#   # mutate_if(is.double, as.character)
-#   mutate(Month = format(Month, "%m/%d/%Y"))
+  mutate(Month = date(Month))
 
 # Change format of Lab Proficiency Testing historical daata for HandsOnTable and manual input formatting
-ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
-  # filter(Month >= "2020-12-01") %>%
-  mutate_if(is.logical, as.character) %>%
-  mutate_if(is.double, as.character) %>%
-  pivot_wider(names_from = "Month", values_from = Number)
+# ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
+#   # filter(Month >= "2020-12-01") %>%
+#   mutate_if(is.logical, as.character) %>%
+#   mutate_if(is.double, as.character) %>%
+#   pivot_wider(names_from = "Month", values_from = Number)
 
 # Reference data --------------------------------
 # Reference data for site, test, and ICU mappings. This can be commented out when using global.R
@@ -57,6 +52,9 @@ lab_icu <- read_excel(target_mapping_path,
 mshs_icu <- lab_icu %>%
   select(Hospital, LocCode, LocName) %>%
   mutate(HospLoc = paste(Hospital, LocCode))
+
+# Create vector with order of sites for department summary output
+lab_sites_ordered <- c("MSH", "MSQ", "MSW", "MSM", "MSBI", "MSB")
 
 # Custom functions for processing raw TAT data from SCC and Sunquest --------------
 # Custom function for processing raw SCC data
@@ -134,7 +132,8 @@ lab_scc_tat_process <- function(scc_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = LabsWithinTarget / TotalLabs,
+              PercentInTarget = round(LabsWithinTarget / TotalLabs,
+                                      digits = 4),
               .groups = "keep") %>%
     ungroup() %>%
     # Format for department summary repo structure
@@ -165,6 +164,8 @@ lab_sun_tat_process <- function(sun_raw_data) {
                       by = c("TestCode" = "TestCode"))
   
   sun_df <- sun_df %>%
+    # Remove MSSN
+    filter(Site != "MSSN") %>%
     mutate(
       # Create a column combining site, location code, and location name
       HospLoc = paste(HospCode, LocCode),
@@ -226,7 +227,8 @@ lab_sun_tat_process <- function(sun_raw_data) {
              Metric) %>%
     summarize(LabsWithinTarget = sum(ReceiveResultInTarget),
               TotalLabs = n(),
-              PercentInTarget = LabsWithinTarget / TotalLabs,
+              PercentInTarget = round(LabsWithinTarget / TotalLabs,
+                                      digits = 4),
               .groups = "keep") %>%
     ungroup() %>%
     # Format for department summary repo structure
@@ -295,12 +297,21 @@ ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
 ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
                                  scc_summary_data)
 
+# Next, arrange the department summary by month, metric name, and site
+ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+  mutate(Site = factor(Site, levels = lab_sites_ordered, ordered = TRUE)) %>%
+  arrange(Month,
+          desc(Metric),
+          Site) %>%
+  mutate(Site = as.character(Site))
+
 # Lastly, save the updated summary data
 write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
 
 # Sunquest Data Processing and Appending ----------------------
 # Read in raw data Excel file
-sun_data <- read_excel(sun_test_file_path)
+sun_data <- read_excel(sun_test_file_path,
+                       col_types = "text")
 
 # Save prior version of Lab TAT Dept Summary data in Hist Archive folder
 write_xlsx(ops_metrics_lab_tat,
@@ -309,6 +320,9 @@ write_xlsx(ops_metrics_lab_tat,
                   format(Sys.time(), "%Y%m%d_%H%M%S"),
                   ".xlsx"))
 
+# Process raw data using custom function
+sun_summary_data <- lab_sun_tat_process(sun_data)
+
 # First, identify the sites, months, and metrics in the new data
 sun_new_data <- unique(
   sun_summary_data[c("Service", "Site", "Month", "Metric")]
@@ -316,7 +330,7 @@ sun_new_data <- unique(
 
 # Second, remove these sites, months, and metrics from the historical data, if they exist there.
 # This allows us to ensure no duplicate entries for the same site, metric, and time period
-ops_metrics_labs_tat <- anti_join(ops_metrics_lab_tat,
+ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
                                   sun_new_data,
                                   by = c("Service" = "Service",
                                          "Site" = "Site",
@@ -328,18 +342,206 @@ ops_metrics_labs_tat <- anti_join(ops_metrics_lab_tat,
 ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
                                  sun_summary_data)
 
+# Next, arrange the department summary by month, metric name, and site
+ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+  mutate(Site = factor(Site, levels = lab_sites_ordered, ordered = TRUE)) %>%
+  arrange(Month,
+          desc(Metric),
+          Site) %>%
+  mutate(Site = as.character(Site))
+
 # Lastly, save the updated summary data
 write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+
+
 
 # Custom function for formatting SCC data into appropriate format for metrics_final_df.RDS structure
 lab_scc_metrics_final_processing <- function(scc_summary) {
   
+  # Format for metrics_final_df
+  scc_tat_df <- scc_summary %>%
+    # Reorder for better visualization
+    mutate(Site = factor(Site,
+                         levels = lab_sites_ordered,
+                         ordered = TRUE)) %>%
+    arrange(Month,
+            desc(Metric),
+            Site) %>%
+    mutate(Site = as.character(Site)) %>%
+    # Start formatting for metrics_final_df format
+    rename(Metric_Name_Submitted = Metric) %>%
+    mutate(value_rounded = round(Number, digits = 2),
+           Premier_Reporting_Period = format(Month, "%b %Y"),
+           Reporting_Month = format(Month, "%m-%Y"),
+           Month = NULL,
+           Number = NULL)
   
+  # Merge with metric group mapping data for included metrics to get
+  # "Metric_Group" and "Metric_Name" columns
+  scc_tat_df <- merge(scc_tat_df,
+                      metric_group_mapping[c("Metric_Group",
+                                             "Metric_Name",
+                                             "Metric_Name_Submitted")],
+                      by = c("Metric_Name_Submitted"))
   
+  # Combine with target mapping to include status definitions and targets
+  scc_tat_target_status <- merge(scc_tat_df[, c("Service",
+                                                "Site",
+                                                "Metric_Group",
+                                                "Metric_Name",
+                                                "Reporting_Month",
+                                                "value_rounded")],
+                                 target_mapping,
+                                 by.x = c("Service",
+                                          "Site",
+                                          "Metric_Group",
+                                          "Metric_Name"),
+                                 by.y = c("Service",
+                                          "Site",
+                                          "Metric_Group",
+                                          "Metric_Name"),
+                                 all.x = TRUE)
   
+  # Determine status based on target ranges
+  scc_tat_target_status <- scc_tat_target_status %>%
+    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+    filter(!is.na(Reporting_Month) &
+             !(Variance %in% FALSE))
   
+  # Combine two dataframes
+  scc_tat_df_merge <- merge(scc_tat_df,
+                            scc_tat_target_status[, c("Service",
+                                                      "Site",
+                                                      "Metric_Group",
+                                                      "Metric_Name",
+                                                      "Reporting_Month",
+                                                      "Target",
+                                                      "Status")],
+                            all = FALSE)
   
+  # Select relevant columns
+  scc_tat_df_merge <- scc_tat_df_merge[, processed_df_cols]
   
+  # Add reporting month back in
+  scc_tat_df_merge <- scc_tat_df_merge %>%
+    mutate(Reporting_Month_Ref = as.Date(paste("01",
+                                               as.yearmon(Reporting_Month,
+                                                          "%m-%Y")),
+                                         format = "%d %b %Y"))
+  
+  new_rows <- unique(scc_tat_df_merge[, c("Metric_Name",
+                                          "Reporting_Month",
+                                          "Service",
+                                          "Site")])
+  
+  metrics_final_df <- anti_join(metrics_final_df,
+                                new_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,
+                                scc_tat_df_merge)
+  
+  metrics_final_df <- metrics_final_df %>%
+    arrange(Service,
+            Site,
+            Metric_Group,
+            Reporting_Month_Ref)
+  
+  return(metrics_final_df)
+
+}
+
+# Custom function for formatting Sunquest data into appropriate format for metrics_final_df.RDS structure
+lab_sun_metrics_final_processing <- function(sun_summary) {
+  
+  # Format for metrics_final_df
+  sun_tat_df <- sun_summary %>%
+    # Reorder for better visualization
+    mutate(Site = factor(Site,
+                         levels = lab_sites_ordered,
+                         ordered = TRUE)) %>%
+    arrange(Month,
+            desc(Metric),
+            Site) %>%
+    mutate(Site = as.character(Site)) %>%
+    # Start formatting for metrics_final_df format
+    rename(Metric_Name_Submitted = Metric) %>%
+    mutate(value_rounded = round(Number, digits = 2),
+           Premier_Reporting_Period = format(Month, "%b %Y"),
+           Reporting_Month = format(Month, "%m-%Y"),
+           Month = NULL,
+           Number = NULL)
+  
+  # Merge with metric group mapping data for included metrics to get
+  # "Metric_Group" and "Metric_Name" columns
+  sun_tat_df <- merge(sun_tat_df,
+                      metric_group_mapping[c("Metric_Group",
+                                             "Metric_Name",
+                                             "Metric_Name_Submitted")],
+                      by = c("Metric_Name_Submitted"))
+  
+  # Combine with target mapping to include status definitions and targets
+  sun_tat_target_status <- merge(sun_tat_df[, c("Service",
+                                                "Site",
+                                                "Metric_Group",
+                                                "Metric_Name",
+                                                "Reporting_Month",
+                                                "value_rounded")],
+                                 target_mapping,
+                                 by.x = c("Service",
+                                          "Site",
+                                          "Metric_Group",
+                                          "Metric_Name"),
+                                 by.y = c("Service",
+                                          "Site",
+                                          "Metric_Group",
+                                          "Metric_Name"),
+                                 all.x = TRUE)
+  
+  # Determine status based on target ranges
+  sun_tat_target_status <- sun_tat_target_status %>%
+    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+    filter(!is.na(Reporting_Month) &
+             !(Variance %in% FALSE))
+  
+  # Combine two dataframes
+  sun_tat_df_merge <- merge(sun_tat_df,
+                            sun_tat_target_status[, c("Service",
+                                                      "Site",
+                                                      "Metric_Group",
+                                                      "Metric_Name",
+                                                      "Reporting_Month",
+                                                      "Target",
+                                                      "Status")],
+                            all = FALSE)
+  
+  # Select relevant columns
+  sun_tat_df_merge <- sun_tat_df_merge[, processed_df_cols]
+  
+  # Add reporting month back in
+  sun_tat_df_merge <- sun_tat_df_merge %>%
+    mutate(Reporting_Month_Ref = as.Date(paste("01",
+                                               as.yearmon(Reporting_Month,
+                                                          "%m-%Y")),
+                                         format = "%d %b %Y"))
+  
+  new_rows <- unique(sun_tat_df_merge[, c("Metric_Name",
+                                          "Reporting_Month",
+                                          "Service",
+                                          "Site")])
+  
+  metrics_final_df <- anti_join(metrics_final_df,
+                                new_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,
+                                sun_tat_df_merge)
+  
+  metrics_final_df <- metrics_final_df %>%
+    arrange(Service,
+            Site,
+            Metric_Group,
+            Reporting_Month_Ref)
+  
+  return(metrics_final_df)
   
 }
 

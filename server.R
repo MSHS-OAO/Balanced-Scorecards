@@ -1290,8 +1290,24 @@
       ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
                                        scc_summary_data)
       
+      # Next, arrange the department summary by month, metric name, and site
+      ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+        mutate(Site = factor(Site,
+                             levels = lab_sites_ordered,
+                             ordered = TRUE)) %>%
+        arrange(Month,
+                desc(Metric),
+                Site) %>%
+        mutate(Site = as.character(Site))
+      
       # Lastly, save the updated summary data
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+      
+      # Update metrics_final_df with latest SCC data using custom function
+      metrics_final_df <- lab_scc_metrics_final_processing(scc_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
 
       
       # Sunquest Data ------------------------
