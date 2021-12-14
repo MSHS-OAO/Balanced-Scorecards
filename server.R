@@ -1242,10 +1242,10 @@
   #       hot_col(1:3, readOnly = T)
   #   })
     
-    # Lab KPI - Turnaround Time
+    # Lab KPI - Turnaround Time ------------
+    # SCC Data submission -----------------
     observeEvent(input$submit_lab_tat,{
-      
-      # SCC Data --------------
+
       # Name SCC file
       scc_file <- input$lab_scc
       
@@ -1308,9 +1308,18 @@
       
       # Save updated metrics_final_df
       saveRDS(metrics_final_df, metrics_final_df_path)
-
       
-      # Sunquest Data ------------------------
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    }
+    )
+    
+    # Sunquest data submission -------------------
+    observeEvent(input$submit_lab_tat,{
+      
       # Name Sunquest file
       sun_file <- input$lab_sun
       
@@ -1355,9 +1364,7 @@
       
       # Lastly, save the updated summary data
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-      
-      
-      # metrics_final_df <<- evs_process(evs_data)
+
       
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1365,7 +1372,8 @@
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       
       
-    })
+    }
+    )
     
   
   
