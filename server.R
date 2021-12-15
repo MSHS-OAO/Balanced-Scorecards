@@ -1350,7 +1350,64 @@
       
       
     })
-
+    
+    
+    
+    # 5. Overtime - Data Input -----------------3----------------------------------------------------------------
+    
+    observeEvent(input$submit_finance, {
+      overtime_file <- input$finance_overtime
+      
+      if(is.null(overtime_file)){
+        return(NULL)
+      } else{
+        overtime_file_path <- overtime_file$datapath
+        #overtime_file_path <- paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx")
+        overtime_data <- read_excel(overtime_file_path)
+      }
+      
+      # Save prior version of Lab TAT Dept Summary data
+      write_xlsx(summary_repos_overtime,
+                 paste0(hist_archive_path,
+                        "OVertime Historical ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process Overtime data
+      overtime_summary_data <- overtime_file_processs(overtime_data)
+      
+      # Append Overtime summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      overtime_new_data <- unique(
+        overtime_summary_data[  c("Service", "Site", "Associated Dashboard Month", "Metric_name")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      summary_repos_overtime <- anti_join(summary_repos_overtime,
+                                          overtime_new_data,
+                                       by = c("Service" = "Service",
+                                              "Site" = "Site",
+                                              "Associated Dashboard Month" = "Associated Dashboard Month",
+                                              "Metric_name" = "Metric_name")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      summary_repos_overtime <- full_join(summary_repos_overtime,
+                                          overtime_summary_data)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(summary_repos_overtime, summary_repos_overtime_path)
+      
+      #metrics_final_df <<- overtime_metrics_final_df_process(overtime_summary_data)
+      
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
+    
   
   
 } # Close Server

@@ -5,6 +5,9 @@ home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Op
 overtime_mapping_path <- paste0(home_path, "Copy of MSHS Scorecards Target Mapping.xlsx")
 overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
 
+summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
+summary_repos_overtime <- read_excel(summary_repos_overtime_path)
+
 data_raw <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
 
 overtime_file_processs <- function(data){
@@ -18,16 +21,19 @@ overtime_file_processs <- function(data){
                    `Associated Dashboard Month` = `Discharge Fisc Year-Period`)
   
   data <- data %>% group_by(Site, Service, `Associated Dashboard Month`) %>%
-          summarise(Value = round((sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`))*100,2))
+          summarise(Value = round((sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`)),4))
   
   data$`Associated Dashboard Month` <- as.Date(paste0(data$`Associated Dashboard Month`, "-01"), format = "%Y-%m-%d")
-  data$Metric_name <- "Overtime Dollars - % (Finance)"
+  data$Metric_Name <- "Overtime Dollars - % (Finance)"
   data$Premier_Reporting_Period <- "FINANCE DATA"
   data$Metric <- "FINANCE DATA"
+  
+  data$Value[is.nan(data$Value)] <- 0
   
   data
   
 }
+
 
 overtime_metrics_final_df_process <- function(data){
   
@@ -37,14 +43,14 @@ overtime_metrics_final_df_process <- function(data){
   ## Finance overtime data pre-processing 
   finance_df_final <- raw_finance_df %>%
     mutate(Reporting_Month = format(as.Date(`Associated Dashboard Month`, format = "%Y-%m-%d"),"%m-%Y"),
-           value_rounded = round(as.numeric(Value)),
+           value_rounded = round(as.numeric(Value),2),
            Metric_Group = "Overtime Hours")
   
   finance_target_status <- merge(finance_df_final, target_mapping, by = c("Service","Site","Metric_Name")) # Target mapping
   
   finance_target_status <- finance_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(Variance == TRUE) 
+    filter(!(Variance %in% FALSE))
   
   finance_df_final <- merge(finance_df_final, finance_target_status[,c("Service","Site","Metric_Name","Target","Status")],
                             all = TRUE)
@@ -56,6 +62,12 @@ overtime_metrics_final_df_process <- function(data){
   # Subset processed data for merge 
   finance_df_merge <- finance_df_final[,processed_df_cols] 
   
-  compiled_data_list$finance_df_merge <- finance_df_merge
+  finance_df_merge <- finance_df_merge %>%
+                      filter(value_rounded != "NaN")
+  
+  updated_rows <- unique(finance_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
+  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,finance_df_merge)
   
 }
