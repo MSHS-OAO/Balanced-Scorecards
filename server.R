@@ -1155,6 +1155,16 @@
       site_7 <- which(data_environmental()$Site == unique_sites[7])
       
       
+      
+      # unique_sites <- unique(data$Site)
+      # site_1 <- which(data$Site == unique_sites[1])
+      # site_2 <- which(data$Site == unique_sites[2])
+      # site_3 <- which(data$Site == unique_sites[3])
+      # site_4 <- which(data()$Site == unique_sites[4])
+      # site_5 <- which(data$Site == unique_sites[5])
+      # site_6 <- which(data$Site == unique_sites[6])
+      # site_7 <- which(data$Site == unique_sites[7])
+      
       ### String that is responsible for highlighting the data that has not been filled in
       rendederer_string <- "
     function(instance, td, row, col, prop, value, cellProperties) {
@@ -1174,7 +1184,7 @@
       col_highlight <- as.array(9:15)
       
       
-      rhandsontable(data_environmental(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
         hot_table(mergeCells = list(
           list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),  ### Using the indexes from above in order to group rows together
           list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
@@ -1183,7 +1193,7 @@
           list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
           list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
           list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-        )) %>%
+         )) %>%
         hot_cols(renderer = rendederer_string)  %>%
         hot_col(1:3, readOnly = T)
     })
