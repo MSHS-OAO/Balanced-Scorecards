@@ -212,7 +212,7 @@ ui <-
                                                actionButton("submit_finance", label = "Submit")
                                                ),
                                       tabPanel("Overtime", br(),
-                                               fileInput("finance_pvertime", label = "Please upload Overtime data"),
+                                               fileInput("finance_overtime", label = "Please upload Overtime data"),
                                                actionButton("submit_finance", label = "Submit")
                                                )
                                  )

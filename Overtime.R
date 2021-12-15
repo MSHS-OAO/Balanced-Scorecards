@@ -1,0 +1,61 @@
+start <- "J:" #Comment when publishing to RConnect
+# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+
+overtime_mapping_path <- paste0(home_path, "Copy of MSHS Scorecards Target Mapping.xlsx")
+overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
+
+data_raw <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
+
+overtime_file_processs <- function(data){
+  data <- full_join(data,overtime_mapping)  
+  
+  data <- data %>% 
+            filter(!(is.na(Service))) %>%
+            filter(!(is.na(`Discharge Fisc Year-Period`))) %>%
+            select(-Site,-VP,-`FLSA Category`, -`Uncontollable POT flag`)  %>%
+            rename(Site = `Site Abbr`,
+                   `Associated Dashboard Month` = `Discharge Fisc Year-Period`)
+  
+  data <- data %>% group_by(Site, Service, `Associated Dashboard Month`) %>%
+          summarise(Value = round((sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`))*100,2))
+  
+  data$`Associated Dashboard Month` <- as.Date(paste0(data$`Associated Dashboard Month`, "-01"), format = "%Y-%m-%d")
+  data$Metric_name <- "Overtime Dollars - % (Finance)"
+  data$Premier_Reporting_Period <- "FINANCE DATA"
+  data$Metric <- "FINANCE DATA"
+  
+  data
+  
+}
+
+overtime_metrics_final_df_process <- function(data){
+  
+  raw_finance_df <- data
+  
+  
+  ## Finance overtime data pre-processing 
+  finance_df_final <- raw_finance_df %>%
+    mutate(Reporting_Month = format(as.Date(`Associated Dashboard Month`, format = "%Y-%m-%d"),"%m-%Y"),
+           value_rounded = round(as.numeric(Value)),
+           Metric_Group = "Overtime Hours")
+  
+  finance_target_status <- merge(finance_df_final, target_mapping, by = c("Service","Site","Metric_Name")) # Target mapping
+  
+  finance_target_status <- finance_target_status %>%
+    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+    filter(Variance == TRUE) 
+  
+  finance_df_final <- merge(finance_df_final, finance_target_status[,c("Service","Site","Metric_Name","Target","Status")],
+                            all = TRUE)
+  
+  finance_df_final <- unique(finance_df_final) # Why are duplicates created from merging operation above?
+  
+  finance_df_final$Premier_Reporting_Period <- format(finance_df_final$`Associated Dashboard Month`, "%b %Y")
+  
+  # Subset processed data for merge 
+  finance_df_merge <- finance_df_final[,processed_df_cols] 
+  
+  compiled_data_list$finance_df_merge <- finance_df_merge
+  
+}
