@@ -1,27 +1,11 @@
 # Code for processing Lab KPI data
 
-# Import historical repositories -------------------------
-# Read in lab summary repos
-ops_metrics_lab_tat <- read_excel(ops_metrics_lab_tat_path)
-ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
-
-# # Fix format of imported data for easier exporting
-ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-  mutate(Month = date(Month))
-
-# Change format of Lab Proficiency Testing historical daata for HandsOnTable and manual input formatting
-# ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
-#   # filter(Month >= "2020-12-01") %>%
-#   mutate_if(is.logical, as.character) %>%
-#   mutate_if(is.double, as.character) %>%
-#   pivot_wider(names_from = "Month", values_from = Number)
-
 # Reference data --------------------------------
 lab_sites <- read_excel(target_mapping_path,
                         sheet = "Lab_Sites")
 
 lab_test_codes <- read_excel(target_mapping_path,
-                            sheet = "Lab_TestCodes")
+                             sheet = "Lab_TestCodes")
 
 lab_icu <- read_excel(target_mapping_path,
                       sheet = "Lab_ICU")
@@ -32,7 +16,44 @@ mshs_icu <- lab_icu %>%
   mutate(HospLoc = paste(Hospital, LocCode))
 
 # Create vector with order of sites for department summary output
-lab_sites_ordered <- c("MSH", "MSQ", "MSW", "MSM", "MSBI", "MSB")
+lab_sites_ordered <- c("MSH", "MSQ", "MSW", "MSM", "MSBI", "MSB", "NYEE")
+
+# Import historical repositories -------------------------
+# Read in lab department summary repos for both TAT and Proficiency testing
+ops_metrics_lab_tat <- read_excel(ops_metrics_lab_tat_path)
+ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
+
+# Fix format of imported data for easier exporting ------------
+# Reformat "Month" column in TAT data for merging
+ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+  mutate(Month = date(Month))
+
+prof_test_last_month <- max(ops_metrics_lab_pt$Month)
+prof_test_next_month <- format(
+  as.Date(paste0(month(prof_test_last_month) + 1,
+                 "/",
+                 day(prof_test_last_month),
+                 "/",
+                 year(prof_test_last_month)),
+          format = "%m/%d/%Y"),
+  "%m-%Y")
+
+# Reformat Proficiency Testing data into wider format for manual entries
+prof_test_manual_table <- ops_metrics_lab_pt %>%
+  select(-Service) %>%
+  filter(Month >= as.Date("12/1/2020", format("%m/%d/%Y"))) %>%
+  mutate(Number = percent(Number, 1)) %>%
+  arrange(Month,
+          Site) %>%
+  mutate(Month = format(Month, "%m-%Y")) %>%
+  pivot_wider(names_from = Month,
+              values_from = Number) %>%
+  # Add a column with the next month for the user to enter data
+  mutate(NextMonth = "")
+
+# Rename the new column with the appropriate month's name
+colnames(prof_test_manual_table)[ncol(prof_test_manual_table)] <- prof_test_next_month
+
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
@@ -414,6 +435,12 @@ lab_sun_metrics_final_processing <- function(sun_summary) {
   
 }
 
+
+# Proficiency Testing ----------------
+
+
+
+
 # # Code for testing custom functions and approach ----------------------
 # # Comment out code below here for deployed tool
 # # Reference data for site, test, and ICU mappings. This can be commented out when using global.R
@@ -553,9 +580,6 @@ lab_sun_metrics_final_processing <- function(sun_summary) {
 # 
 # # Update metrics_final_df with Sunquest data
 # metrics_final_df <- lab_sun_metrics_final_processing(sun_summary_data)
-
-
-# Proficiency Testing ----------------
 
 
 

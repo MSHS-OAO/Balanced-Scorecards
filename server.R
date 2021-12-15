@@ -1183,64 +1183,7 @@
         hot_cols(renderer = rendederer_string)  %>%
         hot_col(1:3, readOnly = T)
     })
-    
-    
-  #   data_lab <- reactive({
-  #     
-  #     ### Census from template
-  #     data  <- operational_metrics_lab
-  #     data <- data[order(data$Site),]
-  #     #data$`2021-09-01` <- ""
-  #     
-  #     data <- data %>%
-  #       mutate_if(is.logical, as.character) %>%
-  #       mutate_if(is.double, as.character)
-  #     
-  #   })
-  #   
-  #   
-  #   output$lab_metrics <- renderRHandsontable({
-  #     unique_sites <- unique(data_lab()$Site)
-  #     site_1 <- which(data_lab()$Site == unique_sites[1])
-  #     site_2 <- which(data_lab()$Site == unique_sites[2])
-  #     site_3 <- which(data_lab()$Site == unique_sites[3])
-  #     site_4 <- which(data_lab()$Site == unique_sites[4])
-  #     site_5 <- which(data_lab()$Site == unique_sites[5])
-  #     site_6 <- which(data_lab()$Site == unique_sites[6])
-  #     site_7 <- which(data_lab()$Site == unique_sites[7])
-  #     
-  #     rendederer_string <- "
-  #   function(instance, td, row, col, prop, value, cellProperties) {
-  #     Handsontable.renderers.NumericRenderer.apply(this, arguments);
-  # 
-  #     if (instance.params) {
-  #           hcols = instance.params.col_highlight;
-  #           hcols = hcols instanceof Array ? hcols : [hcols];
-  #         }
-  # 
-  #     if (instance.params && hcols.includes(col)) {
-  #       td.style.background = '#EEEDE7';
-  #     }
-  # }"
-  #     
-  #     
-  #     col_highlight <- as.array(9:15)
-  #     
-  #     
-  #     rhandsontable(data_lab(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-  #       hot_table(mergeCells = list(
-  #         list(row = 0, col = 0, rowspan = nrow(data_lab()), colspan = 1),
-  #         list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-  #         list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-  #         list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-  #         list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-  #         list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-  #         list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-  #         list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-  #       )) %>%
-  #       hot_cols(renderer = rendederer_string)  %>%
-  #       hot_col(1:3, readOnly = T)
-  #   })
+
     
     # Lab KPI - Turnaround Time ------------
     # SCC Data submission -----------------
@@ -1374,6 +1317,78 @@
       
     }
     )
+    
+    # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
+    # Create reactive data table for manual entry
+    data_lab_prof_test <- reactive({
+      
+      data <- prof_test_manual_table
+      
+      # Arrange by sites in alphabetical order
+      data <- data %>%
+        arrange(Site)
+    }
+    )
+    
+    output$lab_prof_test <- renderRHandsontable({
+      
+      unique_sites <- unique(data_lab_prof_test()$Site)
+      
+      site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
+      site_2 <- which(data_lab_prof_test()$Site == unique_sites[2])
+      site_3 <- which(data_lab_prof_test()$Site == unique_sites[3])
+      site_4 <- which(data_lab_prof_test()$Site == unique_sites[4])
+      site_5 <- which(data_lab_prof_test()$Site == unique_sites[5])
+      site_6 <- which(data_lab_prof_test()$Site == unique_sites[6])
+      site_7 <- which(data_lab_prof_test()$Site == unique_sites[7])
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      col_hightlight <- as.array(9:15)
+      
+      rhandsontable(data_lab_prof_test(),
+                    overflow = 'visible',
+                    col_highlight = col_highlight,
+                    rowHeaders = FALSE,
+                    readOnly = FALSE) %>%
+        hot_table(mergeCells =
+                    list(
+                      list(row = min(site_1) - 1, col = 0,
+                           rowspan = length(site_1), colspan = 1),
+                      list(row = min(site_2) - 1, col = 0,
+                           rowspan = length(site_2), colspan = 1),
+                      list(row = min(site_3) - 1, col = 0,
+                           rowspan = length(site_3), colspan = 1),
+                      list(row = min(site_4) - 1, col = 0,
+                           rowspan = length(site_4), colspan = 1),
+                      list(row = min(site_5) - 1, col = 0,
+                           rowspan = length(site_5), colspan = 1),
+                      list(row = min(site_6) - 1, col = 0,
+                           rowspan = length(site_6), colspan = 1),
+                      list(row = min(site_7) - 1, col = 0,
+                           rowspan = length(site_7), colspan = 1)
+                    )) %>%
+        hot_cols(renderer = renderer_string) %>%
+        hot_col(1:2, readOnly = TRUE)
+
+    })
+    
+    # Create observe event actions for manual data submission
+    
+    
+    
     
   
   
