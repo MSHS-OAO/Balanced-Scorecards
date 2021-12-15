@@ -1235,7 +1235,7 @@
       
       # Second, remove these sites, months, and metrics from the historical data, if they exist there.
       # This allows us to ensure no duplicate entries for the same site, metric, and time period
-      ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
+      ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
                                        scc_new_data,
                                        by = c("Service" = "Service",
                                               "Site" = "Site",
@@ -1244,11 +1244,11 @@
       )
       
       # Third, combine the updated historical data with the new data
-      ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
+      ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
                                        scc_summary_data)
       
       # Next, arrange the department summary by month, metric name, and site
-      ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+      ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
         mutate(Site = factor(Site,
                              levels = lab_sites_ordered,
                              ordered = TRUE)) %>%
@@ -1261,11 +1261,12 @@
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
       
       # Update metrics_final_df with latest SCC data using custom function
-      metrics_final_df <- lab_scc_metrics_final_processing(scc_summary_data)
+      metrics_final_df <<- lab_scc_metrics_final_processing(scc_summary_data)
       
       # Save updated metrics_final_df
       saveRDS(metrics_final_df, metrics_final_df_path)
       
+      # Update "Reporting Month" drop down in each tab
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1307,7 +1308,7 @@
       
       # Second, remove these sites, months, and metrics from the historical data, if they exist there.
       # This allows us to ensure no duplicate entries for the same site, metric, and time period
-      ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
+      ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
                                        sun_new_data,
                                        by = c("Service" = "Service",
                                               "Site" = "Site",
@@ -1316,11 +1317,27 @@
       )
       
       # Third, combine the updated historical data with the new data
-      ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
+      ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
                                        sun_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
+        mutate(Site = factor(Site,
+                             levels = lab_sites_ordered,
+                             ordered = TRUE)) %>%
+        arrange(Month,
+                desc(Metric),
+                Site) %>%
+        mutate(Site = as.character(Site))
       
       # Lastly, save the updated summary data
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+      
+      # Update metrics_final_df with latest Sunquest data using custom function
+      metrics_final_df <<- lab_sun_metrics_final_processing(sun_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
 
       
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
@@ -1402,8 +1419,10 @@
     
     output$lab_prof_test <- renderRHandsontable({
       
-      unique_sites <- unique(data_lab_prof_test()$Site)
       
+      
+      unique_sites <- unique(data_lab_prof_test()$Site)
+
       site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
       site_2 <- which(data_lab_prof_test()$Site == unique_sites[2])
       site_3 <- which(data_lab_prof_test()$Site == unique_sites[3])
@@ -1412,7 +1431,22 @@
       site_6 <- which(data_lab_prof_test()$Site == unique_sites[6])
       site_7 <- which(data_lab_prof_test()$Site == unique_sites[7])
       
-      rendederer_string <- "
+      # # Code for testing manual entry table without reactive data
+      # data_lab_prof_test <- data
+      # 
+      # unique_sites <- unique(data_lab_prof_test$Site)
+      # 
+      # site_1 <- which(data_lab_prof_test$Site == unique_sites[1])
+      # site_2 <- which(data_lab_prof_test$Site == unique_sites[2])
+      # site_3 <- which(data_lab_prof_test$Site == unique_sites[3])
+      # site_4 <- which(data_lab_prof_test$Site == unique_sites[4])
+      # site_5 <- which(data_lab_prof_test$Site == unique_sites[5])
+      # site_6 <- which(data_lab_prof_test$Site == unique_sites[6])
+      # site_7 <- which(data_lab_prof_test$Site == unique_sites[7])
+      # 
+      # col_highlight <- ncol(data_lab_prof_test) - 1
+      
+      renderer_string <- "
     function(instance, td, row, col, prop, value, cellProperties) {
       Handsontable.renderers.NumericRenderer.apply(this, arguments);
 
@@ -1426,9 +1460,11 @@
       }
   }"
       
-      col_hightlight <- as.array(9:15)
+      col_highlight <- ncol(data_lab_prof_test()) - 1
       
       rhandsontable(data_lab_prof_test(),
+                    # # Dataframe for non-reactive testing
+                    # data_lab_prof_test,
                     overflow = 'visible',
                     col_highlight = col_highlight,
                     rowHeaders = FALSE,
@@ -1454,9 +1490,31 @@
         hot_col(1:2, readOnly = TRUE)
 
     })
+
     
     # Create observe event actions for manual data submission
-    
+    observeEvent(input$submit_lab_pt, {
+      print(input$name_1)
+      if(input$lab_pt_username == "") {
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }
+      
+      # Convert rhandsontable to R object
+      prof_test_new_data <<- hot_to_r(input$lab_prof_test)
+      
+      # Reformat data from manual input table into department summary format
+      lab_prof_test_updated_df <-
+        lab_prof_test_dept_summ_process(lab_prof_test_new_df)
+      
+      
+      
+      
+    })
     
     
     

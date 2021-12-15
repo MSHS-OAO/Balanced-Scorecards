@@ -42,10 +42,11 @@ prof_test_next_month <- format(
 prof_test_manual_table <- ops_metrics_lab_pt %>%
   select(-Service) %>%
   filter(Month >= as.Date("12/1/2020", format("%m/%d/%Y"))) %>%
-  mutate(Number = percent(Number, 1)) %>%
+  # mutate(Number = percent(Number, 1)) %>%
   arrange(Month,
           Site) %>%
-  mutate(Month = format(Month, "%m-%Y")) %>%
+  mutate(Month = format(Month, "%m-%Y"),
+         Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
               values_from = Number) %>%
   # Add a column with the next month for the user to enter data
@@ -437,8 +438,24 @@ lab_sun_metrics_final_processing <- function(sun_summary) {
 
 
 # Proficiency Testing ----------------
-
-
+lab_prof_test_dept_summ_process <- function(data) {
+  prof_test_summary <- data %>%
+    # Convert from wide to long format for consistency with department summary
+    pivot_longer(cols = c(-Metric, -Site),
+                 names_to = "Month",
+                 values_to = "Number") %>%
+    mutate(
+      # Change format to be consistent with dept summary repo
+      Number = as.numeric(Number),
+      Month = as.Date(my(Month)),
+      Service = "Lab") %>%
+    # Reorder columns
+    relocate(Service) %>%
+    relocate(Month, .before = Metric)
+  
+  return(prof_test_summary)
+  
+}
 
 
 # # Code for testing custom functions and approach ----------------------
