@@ -1242,10 +1242,10 @@
   #       hot_col(1:3, readOnly = T)
   #   })
     
-    # Lab KPI - Turnaround Time
+    # Lab KPI - Turnaround Time ------------
+    # SCC Data submission -----------------
     observeEvent(input$submit_lab_tat,{
-      
-      # SCC Data --------------
+
       # Name SCC file
       scc_file <- input$lab_scc
       
@@ -1290,11 +1290,36 @@
       ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
                                        scc_summary_data)
       
+      # Next, arrange the department summary by month, metric name, and site
+      ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+        mutate(Site = factor(Site,
+                             levels = lab_sites_ordered,
+                             ordered = TRUE)) %>%
+        arrange(Month,
+                desc(Metric),
+                Site) %>%
+        mutate(Site = as.character(Site))
+      
       # Lastly, save the updated summary data
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-
       
-      # Sunquest Data ------------------------
+      # Update metrics_final_df with latest SCC data using custom function
+      metrics_final_df <- lab_scc_metrics_final_processing(scc_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    }
+    )
+    
+    # Sunquest data submission -------------------
+    observeEvent(input$submit_lab_tat,{
+      
       # Name Sunquest file
       sun_file <- input$lab_sun
       
@@ -1339,9 +1364,7 @@
       
       # Lastly, save the updated summary data
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-      
-      
-      # metrics_final_df <<- evs_process(evs_data)
+
       
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1349,7 +1372,8 @@
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       
       
-    })
+    }
+    )
     
     
     
