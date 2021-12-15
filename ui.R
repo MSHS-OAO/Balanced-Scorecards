@@ -303,22 +303,6 @@ ui <-
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
                                         tabPanel("Turn around Time", hr(),
-                                                 # fluidRow(
-                                                 #   column(2,
-                                                 #          textInput("name_evs", (labelMandatory("1. Please enter name:"))),
-                                                 #          
-                                                 #   )
-                                                 # ),
-                                                 # h2("2. Please enter data in the tables below"),
-                                                 # br(),
-                                                 # div(id = "header_custom_evs",
-                                                 #     h3("Please leave cell blank if data has not been recieved")
-                                                 # ),
-                                                 # h2("3. Once finished please click on the button below"),
-                                                 # #####Enter datatables here
-                                                 # h2("Enviromental Services - Turn Around Time"),
-                                                 # rHandsontableOutput("evs_tat"),
-                                                 # hr(),
                                                  fileInput("evs_data", label = "Please upload Environmental Services data"),
                                                  actionButton("submit_evs", "Submit", class = "btn-primary"),
                                         )

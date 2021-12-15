@@ -1143,6 +1143,8 @@
     
     
     output$evs_tat <- renderRHandsontable({
+      #33Find out the index of where each site begins (from reactive dataset above) so we can group rows together to prevent repeating site names 
+      
       unique_sites <- unique(data_environmental()$Site)
       site_1 <- which(data_environmental()$Site == unique_sites[1])
       site_2 <- which(data_environmental()$Site == unique_sites[2])
@@ -1152,6 +1154,8 @@
       site_6 <- which(data_environmental()$Site == unique_sites[6])
       site_7 <- which(data_environmental()$Site == unique_sites[7])
       
+      
+      ### String that is responsible for highlighting the data that has not been filled in
       rendederer_string <- "
     function(instance, td, row, col, prop, value, cellProperties) {
       Handsontable.renderers.NumericRenderer.apply(this, arguments);
@@ -1166,13 +1170,13 @@
       }
   }"
       
-      
+      ### COlumns ot highlight (needs to be made more dynamic)
       col_highlight <- as.array(9:15)
       
       
       rhandsontable(data_environmental(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
         hot_table(mergeCells = list(
-          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),  ### Using the indexes from above in order to group rows together
           list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
           list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
           list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
