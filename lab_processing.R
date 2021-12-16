@@ -28,6 +28,10 @@ ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
 ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
   mutate(Month = date(Month))
 
+# Reformat "Month" column in Proficiency Testing data for merging
+ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
+  mutate(Month = date(Month))
+
 prof_test_last_month <- max(ops_metrics_lab_pt$Month)
 next_month <- prof_test_last_month + months(1)
 
