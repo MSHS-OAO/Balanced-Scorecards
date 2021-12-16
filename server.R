@@ -1225,7 +1225,7 @@
       
       
       # Process SCC data
-      scc_summary_data <- lab_scc_tat_process(scc_data)
+      scc_summary_data <- lab_scc_tat_dept_summ_processing(scc_data)
       
       # Append Lab TAT summary with new data
       # First, identify the sites, months, and metrics in the new data
@@ -1298,7 +1298,7 @@
                         ".xlsx"))
       
       # Process Sunquest data
-      sun_summary_data <- lab_sun_tat_process(sun_data)
+      sun_summary_data <- lab_sun_tat_dept_summ_processing(sun_data)
       
       # Append Lab TAT summary with new data
       # First, identify the sites, months, and metrics in the new data
