@@ -29,14 +29,7 @@ ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
   mutate(Month = date(Month))
 
 prof_test_last_month <- max(ops_metrics_lab_pt$Month)
-prof_test_next_month <- format(
-  as.Date(paste0(month(prof_test_last_month) + 1,
-                 "/",
-                 day(prof_test_last_month),
-                 "/",
-                 year(prof_test_last_month)),
-          format = "%m/%d/%Y"),
-  "%m-%Y")
+next_month <- prof_test_last_month + months(1)
 
 # Reformat Proficiency Testing data into wider format for manual entries
 prof_test_manual_table <- ops_metrics_lab_pt %>%
@@ -50,15 +43,12 @@ prof_test_manual_table <- ops_metrics_lab_pt %>%
   pivot_wider(names_from = Month,
               values_from = Number) %>%
   # Add a column with the next month for the user to enter data
-  mutate(NextMonth = "")
-
-# Rename the new column with the appropriate month's name
-colnames(prof_test_manual_table)[ncol(prof_test_manual_table)] <- prof_test_next_month
+  mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
 
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
-lab_scc_tat_process <- function(scc_raw_data) {
+lab_scc_tat_dept_summ_processing <- function(scc_raw_data) {
   scc_df <- scc_raw_data
   
   # Crosswalk sites
@@ -150,7 +140,7 @@ lab_scc_tat_process <- function(scc_raw_data) {
 }
 
 # Custom function for processing raw Sunquest data
-lab_sun_tat_process <- function(sun_raw_data) {
+lab_sun_tat_dept_summ_processing <- function(sun_raw_data) {
   sun_df <- sun_raw_data
   
   # Crosswalk sites
@@ -438,7 +428,7 @@ lab_sun_metrics_final_processing <- function(sun_summary) {
 
 
 # Proficiency Testing ----------------
-lab_prof_test_dept_summ_process <- function(data) {
+lab_prof_test_dept_summ_processing <- function(data) {
   prof_test_summary <- data %>%
     # Convert from wide to long format for consistency with department summary
     pivot_longer(cols = c(-Metric, -Site),
