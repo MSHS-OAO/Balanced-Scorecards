@@ -48,7 +48,7 @@ prof_test_manual_table <- ops_metrics_lab_pt %>%
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
-lab_scc_tat_dept_summ_processing <- function(scc_raw_data) {
+lab_scc_tat_dept_summary <- function(scc_raw_data) {
   scc_df <- scc_raw_data
   
   # Crosswalk sites
@@ -140,7 +140,7 @@ lab_scc_tat_dept_summ_processing <- function(scc_raw_data) {
 }
 
 # Custom function for processing raw Sunquest data
-lab_sun_tat_dept_summ_processing <- function(sun_raw_data) {
+lab_sun_tat_dept_summary <- function(sun_raw_data) {
   sun_df <- sun_raw_data
   
   # Crosswalk sites
@@ -237,7 +237,7 @@ lab_sun_tat_dept_summ_processing <- function(sun_raw_data) {
 
 # Custom functions for formatting summarized data into metrics_final_df structure -------------------
 # Custom function for SCC data
-lab_scc_metrics_final_processing <- function(scc_summary) {
+lab_scc_tat_metrics_final_df <- function(scc_summary) {
   
   # Format for metrics_final_df
   scc_tat_df <- scc_summary %>%
@@ -332,7 +332,7 @@ lab_scc_metrics_final_processing <- function(scc_summary) {
 }
 
 # Custom function for Sunquest data
-lab_sun_metrics_final_processing <- function(sun_summary) {
+lab_sun_tat_metrics_final_df <- function(sun_summary) {
   
   # Format for metrics_final_df
   sun_tat_df <- sun_summary %>%
@@ -428,7 +428,7 @@ lab_sun_metrics_final_processing <- function(sun_summary) {
 
 
 # Proficiency Testing ----------------
-lab_prof_test_dept_summ_processing <- function(data) {
+lab_prof_test_dept_summary <- function(data) {
   prof_test_summary <- data %>%
     # Convert from wide to long format for consistency with department summary
     pivot_longer(cols = c(-Metric, -Site),

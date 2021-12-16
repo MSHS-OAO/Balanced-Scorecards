@@ -66,6 +66,7 @@ suppressMessages({
   library(rhandsontable)
   library(janitor)
   library(stringr)
+  library(glue)
 })
 
 source("EVS.R")
