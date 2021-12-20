@@ -69,10 +69,13 @@ suppressMessages({
   library(glue)
 })
 
-source("EVS.R")
-source("press_ganey.R")
+# source("EVS.R")
+# source("press_ganey.R")
 # Maximize R Memory Size 
 memory.limit(size = 8000000)
+
+# # Increase allowable file size (Sunquest monthly files are too large for default)
+# if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
 # Set aesthetics theme -----------------------------------------------------------------------------
 

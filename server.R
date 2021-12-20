@@ -1,3 +1,7 @@
+# Increase allowable file size (Sunquest monthly files are too large for default)
+if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
+
+
   server <- function(input, output, session) {
     
     # 0. Observe Events for Filters ----------------------------------------------------------------
@@ -1265,7 +1269,7 @@
       write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
       
       # Update metrics_final_df with latest Sunquest data using custom function
-      metrics_final_df <<- lab_sun_metrics_final_df(sun_summary_data)
+      metrics_final_df <<- lab_sun_tat_metrics_final_df(sun_summary_data)
       
       # Save updated metrics_final_df
       saveRDS(metrics_final_df, metrics_final_df_path)
@@ -1391,8 +1395,8 @@
       
       # Reformat data from manual input table into department summary format
       prof_test_summary_data <-
-        lab_prof_test_dept_summary(prof_test_manual_table)
-        # lab_prof_test_dept_summary(prof_test_manual_updates)
+        # lab_prof_test_dept_summary(prof_test_manual_table)
+        lab_prof_test_dept_summary(prof_test_manual_updates)
       
       
       # Append Lab Proficiency Testing summary with new data
