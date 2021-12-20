@@ -33,12 +33,12 @@ ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
   mutate(Month = date(Month))
 
 prof_test_last_month <- max(ops_metrics_lab_pt$Month)
-next_month <- prof_test_last_month + months(1)
+# next_month <- prof_test_last_month + months(1)
 
 # Reformat Proficiency Testing data into wider format for manual entries
 prof_test_manual_table <- ops_metrics_lab_pt %>%
   select(-Service) %>%
-  filter(Month >= as.Date("12/1/2020", format("%m/%d/%Y"))) %>%
+  filter(Month >= prof_test_last_month - months(7)) %>%
   # mutate(Number = percent(Number, 1)) %>%
   arrange(Month,
           Site) %>%

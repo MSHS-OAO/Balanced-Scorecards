@@ -205,6 +205,12 @@ census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchma
 ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
 ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
 
+# File path for Security KPI metrics
+security_incident_reports_path <- paste0(home_path,
+                                           "Summary Repos/",
+                                           "Security Incident Reports.xlsx")
+
+
 # File path for saving the prior version of Dept Summary data
 hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 
