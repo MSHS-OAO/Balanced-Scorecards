@@ -2,7 +2,7 @@ start <- "J:" #Comment when publishing to RConnect
 # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 
-overtime_mapping_path <- paste0(home_path, "Copy of MSHS Scorecards Target Mapping.xlsx")
+overtime_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
 overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
 
 summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
@@ -65,9 +65,9 @@ overtime_metrics_final_df_process <- function(data){
   finance_df_merge <- finance_df_merge %>%
                       filter(value_rounded != "NaN")
   
-  updated_rows <- unique(finance_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
-  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-  
-  metrics_final_df <- full_join(metrics_final_df,finance_df_merge)
+  # updated_rows <- unique(finance_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
+  # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  # 
+  # metrics_final_df <- full_join(metrics_final_df,finance_df_merge)
   
 }

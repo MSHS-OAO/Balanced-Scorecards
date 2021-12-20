@@ -38,8 +38,8 @@
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 
-      # service_input <- "Engineering"
-      # month_input <- "07-2021"
+      # service_input <- "Environmental Services"
+      # month_input <- "09-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -83,7 +83,7 @@
 
       missing_sites <- setdiff(sites_inc, names(current_summary))
       current_summary[missing_sites] <- NA
-      current_summary$NYEE <- as.numeric(current_summary$NYEE)
+      #current_summary$NYEE <- as.numeric(current_summary$NYEE)
       
       # FYTD Period Filter 
       fytd_period <- period_filter %>%        #Get all data from YTD
@@ -815,7 +815,7 @@
       engineering_data <<- hot_to_r(input$engineering_kpi)
       
       metrics_final_df <<- cm_kpi(engineering_data)
-      saveRDS(metrics_final_df, metrics_final_df_path)
+      #saveRDS(metrics_final_df, metrics_final_df_path)
 
 
       engineering_table <- read_excel(engineering_table_path)
@@ -1082,14 +1082,20 @@
     
     
     output$engineering_kpi <- renderRHandsontable({
-      unique_sites <- unique(data_engineering_kpi()$Site)
-      site_1 <- which(data_engineering_kpi()$Site == unique_sites[1])
-      site_2 <- which(data_engineering_kpi()$Site == unique_sites[2])
-      site_3 <- which(data_engineering_kpi()$Site == unique_sites[3])
-      site_4 <- which(data_engineering_kpi()$Site == unique_sites[4])
-      site_5 <- which(data_engineering_kpi()$Site == unique_sites[5])
-      site_6 <- which(data_engineering_kpi()$Site == unique_sites[6])
-      site_7 <- which(data_engineering_kpi()$Site == unique_sites[7])
+      #data <- data
+      data <- data_engineering_kpi()
+      
+      
+      
+      unique_sites <- unique(data$Site)
+      site_1 <- which(data$Site == unique_sites[1])
+      site_2 <- which(data$Site == unique_sites[2])
+      site_3 <- which(data$Site == unique_sites[3])
+      site_4 <- which(data$Site == unique_sites[4])
+      site_5 <- which(data$Site == unique_sites[5])
+      site_6 <- which(data$Site == unique_sites[6])
+      site_7 <- which(data$Site == unique_sites[7])
+      
       
       rendederer_string <- "
     function(instance, td, row, col, prop, value, cellProperties) {
@@ -1106,10 +1112,10 @@
   }"
       
       
-      col_highlight <- as.array(9:15)
+      col_highlight <- ncol(data) - 1
       
       
-      rhandsontable(data_engineering_kpi(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
         hot_table(mergeCells = list(
           list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
           list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
@@ -1122,83 +1128,8 @@
         hot_cols(renderer = rendederer_string)  %>%
         hot_col(1:3, readOnly = T)
     })
-    
-    
-    
-    data_environmental <- reactive({
-      
-      
-      
-      ### Census from template
-      data  <- summary_repos_environmental
-      data <- data[order(data$Site),]
-      data$`2021-09-01` <- ""
-      
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-      
-    })
-    
-    
-    output$evs_tat <- renderRHandsontable({
-      #33Find out the index of where each site begins (from reactive dataset above) so we can group rows together to prevent repeating site names 
-      
-      unique_sites <- unique(data_environmental()$Site)
-      site_1 <- which(data_environmental()$Site == unique_sites[1])
-      site_2 <- which(data_environmental()$Site == unique_sites[2])
-      site_3 <- which(data_environmental()$Site == unique_sites[3])
-      site_4 <- which(data_environmental()$Site == unique_sites[4])
-      site_5 <- which(data_environmental()$Site == unique_sites[5])
-      site_6 <- which(data_environmental()$Site == unique_sites[6])
-      site_7 <- which(data_environmental()$Site == unique_sites[7])
-      
-      
-      
-      # unique_sites <- unique(data$Site)
-      # site_1 <- which(data$Site == unique_sites[1])
-      # site_2 <- which(data$Site == unique_sites[2])
-      # site_3 <- which(data$Site == unique_sites[3])
-      # site_4 <- which(data()$Site == unique_sites[4])
-      # site_5 <- which(data$Site == unique_sites[5])
-      # site_6 <- which(data$Site == unique_sites[6])
-      # site_7 <- which(data$Site == unique_sites[7])
-      
-      ### String that is responsible for highlighting the data that has not been filled in
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
 
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      ### COlumns ot highlight (needs to be made more dynamic)
-      col_highlight <- as.array(9:15)
-      
-      
-      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),  ### Using the indexes from above in order to group rows together
-          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-         )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-
-    
+   
     # Lab KPI - Turnaround Time ------------
     # SCC Data submission -----------------
     observeEvent(input$submit_lab_tat,{
