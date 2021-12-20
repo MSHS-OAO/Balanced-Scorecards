@@ -274,10 +274,6 @@ summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of 
 
 
 
-# Source files for processing service line data
-source("lab_processing.R")
-
-
 library(DBI)
  #con <- dbConnect(odbc::odbc(), "OAO_Data", timeout = 30)
 
@@ -808,7 +804,8 @@ engineering_data_process <- function(data){
   
 }
 
-
+# Source files for processing service line data -------------------
+source("lab_processing.R")
 source("EVS.R")
 source("press_ganey.R")
 
