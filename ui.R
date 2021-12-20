@@ -301,6 +301,12 @@ ui <-
                         tabPanel("Operational Metrics - Environmental Services", value = "evs",
                                  span("Operational Metrics - Environmental Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                 fluidRow(
+                                   column(2,
+                                          textInput("name_evs", (labelMandatory("1. Please enter name:"))),
+                                          
+                                   )
+                                 ),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
                                         tabPanel("Turn around Time", hr(),
                                                  fileInput("evs_data", label = "Please upload Environmental Services data"),
