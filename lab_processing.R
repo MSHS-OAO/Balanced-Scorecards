@@ -28,36 +28,31 @@ ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
 ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
   mutate(Month = date(Month))
 
+# Reformat "Month" column in Proficiency Testing data for merging
+ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
+  mutate(Month = date(Month))
+
 prof_test_last_month <- max(ops_metrics_lab_pt$Month)
-prof_test_next_month <- format(
-  as.Date(paste0(month(prof_test_last_month) + 1,
-                 "/",
-                 day(prof_test_last_month),
-                 "/",
-                 year(prof_test_last_month)),
-          format = "%m/%d/%Y"),
-  "%m-%Y")
+next_month <- prof_test_last_month + months(1)
 
 # Reformat Proficiency Testing data into wider format for manual entries
 prof_test_manual_table <- ops_metrics_lab_pt %>%
   select(-Service) %>%
   filter(Month >= as.Date("12/1/2020", format("%m/%d/%Y"))) %>%
-  mutate(Number = percent(Number, 1)) %>%
+  # mutate(Number = percent(Number, 1)) %>%
   arrange(Month,
           Site) %>%
-  mutate(Month = format(Month, "%m-%Y")) %>%
+  mutate(Month = format(Month, "%m-%Y"),
+         Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
               values_from = Number) %>%
   # Add a column with the next month for the user to enter data
-  mutate(NextMonth = "")
-
-# Rename the new column with the appropriate month's name
-colnames(prof_test_manual_table)[ncol(prof_test_manual_table)] <- prof_test_next_month
+  mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
 
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
-lab_scc_tat_process <- function(scc_raw_data) {
+lab_scc_tat_dept_summary <- function(scc_raw_data) {
   scc_df <- scc_raw_data
   
   # Crosswalk sites
@@ -149,7 +144,7 @@ lab_scc_tat_process <- function(scc_raw_data) {
 }
 
 # Custom function for processing raw Sunquest data
-lab_sun_tat_process <- function(sun_raw_data) {
+lab_sun_tat_dept_summary <- function(sun_raw_data) {
   sun_df <- sun_raw_data
   
   # Crosswalk sites
@@ -246,7 +241,7 @@ lab_sun_tat_process <- function(sun_raw_data) {
 
 # Custom functions for formatting summarized data into metrics_final_df structure -------------------
 # Custom function for SCC data
-lab_scc_metrics_final_processing <- function(scc_summary) {
+lab_scc_tat_metrics_final_df <- function(scc_summary) {
   
   # Format for metrics_final_df
   scc_tat_df <- scc_summary %>%
@@ -341,7 +336,7 @@ lab_scc_metrics_final_processing <- function(scc_summary) {
 }
 
 # Custom function for Sunquest data
-lab_sun_metrics_final_processing <- function(sun_summary) {
+lab_sun_tat_metrics_final_df <- function(sun_summary) {
   
   # Format for metrics_final_df
   sun_tat_df <- sun_summary %>%
@@ -437,6 +432,122 @@ lab_sun_metrics_final_processing <- function(sun_summary) {
 
 
 # Proficiency Testing ----------------
+# Custom function for processing and formatting manual inputs into department summary format
+lab_prof_test_dept_summary <- function(data) {
+  prof_test_summary <- data %>%
+    # Convert from wide to long format for consistency with department summary
+    pivot_longer(cols = c(-Metric, -Site),
+                 names_to = "Month",
+                 values_to = "Number") %>%
+    mutate(
+      # Change format to be consistent with dept summary repo
+      Number = as.numeric(Number),
+      Month = as.Date(my(Month)),
+      Service = "Lab") %>%
+    # Reorder columns
+    relocate(Service) %>%
+    relocate(Month, .before = Metric)
+  
+  return(prof_test_summary)
+  
+}
+
+# Custom function for processing and formatting department summary into metrics_final_df format
+lab_prof_test_metrics_final_df <- function(prof_test_summary) {
+  
+  # Format for metrics_final_df
+  prof_test_df <- prof_test_summary %>%
+    # Remove empty metrics
+    filter(!is.na(Number)) %>%
+    # Reorder for better visualization
+    # mutate(Site = factor(Site,
+    #                      levels = lab_sites_ordered,
+    #                      ordered = TRUE)) %>%
+    arrange(Month,
+            desc(Metric),
+            Site) %>%
+    # mutate(Site = as.character(Site)) %>%
+    # Start formatting for metrics_final_df format
+    rename(Metric_Name_Submitted = Metric) %>%
+    mutate(value_rounded = round(Number, digits = 2),
+           Premier_Reporting_Period = format(Month, "%b %Y"),
+           Reporting_Month = format(Month, "%m-%Y"),
+           Month = NULL,
+           Number = NULL)
+  
+  # Merge with metric group mapping data for included metrics to get
+  # "Metric_Group" and "Metric_Name" columns
+  prof_test_df <- merge(prof_test_df,
+                      metric_group_mapping[c("Metric_Group",
+                                             "Metric_Name",
+                                             "Metric_Name_Submitted")],
+                      by = c("Metric_Name_Submitted"))
+  
+  # Combine with target mapping to include status definitions and targets
+  prof_test_target_status <- merge(prof_test_df[, c("Service",
+                                                "Site",
+                                                "Metric_Group",
+                                                "Metric_Name",
+                                                "Reporting_Month",
+                                                "value_rounded")],
+                                 target_mapping,
+                                 by.x = c("Service",
+                                          "Site",
+                                          "Metric_Group",
+                                          "Metric_Name"),
+                                 by.y = c("Service",
+                                          "Site",
+                                          "Metric_Group",
+                                          "Metric_Name"),
+                                 all.x = TRUE)
+  
+  # Determine status based on target ranges
+  prof_test_target_status <- prof_test_target_status %>%
+    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+    filter(!is.na(Reporting_Month) &
+             !(Variance %in% FALSE))
+  
+  # Combine two dataframes
+  prof_test_df_merge <- merge(prof_test_df,
+                              prof_test_target_status[, c("Service",
+                                                      "Site",
+                                                      "Metric_Group",
+                                                      "Metric_Name",
+                                                      "Reporting_Month",
+                                                      "Target",
+                                                      "Status")],
+                            all = FALSE)
+  
+  # Select relevant columns
+  prof_test_df_merge <- prof_test_df_merge[, processed_df_cols]
+  
+  # Add reporting month back in
+  prof_test_df_merge <- prof_test_df_merge %>%
+    mutate(Reporting_Month_Ref = as.Date(paste("01",
+                                               as.yearmon(Reporting_Month,
+                                                          "%m-%Y")),
+                                         format = "%d %b %Y"))
+  
+  new_rows <- unique(prof_test_df_merge[, c("Metric_Name",
+                                          "Reporting_Month",
+                                          "Service",
+                                          "Site")])
+  
+  metrics_final_df <- anti_join(metrics_final_df,
+                                new_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,
+                                prof_test_df_merge)
+  
+  metrics_final_df <- metrics_final_df %>%
+    arrange(Service,
+            Site,
+            Metric_Group,
+            Reporting_Month_Ref)
+  
+  return(metrics_final_df)
+  
+}
 
 
 

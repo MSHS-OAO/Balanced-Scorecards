@@ -404,7 +404,7 @@ ui <-
                                                             h2("3. Please click on Submit when finished."),
                                                             hr(),
                                                             h2("Lab & Blood Bank Proficiency Testing"),
-                                                            rHandsontableOutput("lab_prof_testing")
+                                                            rHandsontableOutput("lab_prof_test")
                                                           ))
                                                  ),
                                                  actionButton("submit_lab_pt", "Submit", class = "btn-primary")

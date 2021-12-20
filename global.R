@@ -66,6 +66,7 @@ suppressMessages({
   library(rhandsontable)
   library(janitor)
   library(stringr)
+  library(glue)
 })
 
 source("EVS.R")
@@ -273,6 +274,8 @@ summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of 
 
 
 
+# Source files for processing service line data
+source("lab_processing.R")
 
 
 library(DBI)
