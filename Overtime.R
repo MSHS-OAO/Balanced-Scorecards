@@ -65,9 +65,9 @@ overtime_metrics_final_df_process <- function(data){
   finance_df_merge <- finance_df_merge %>%
                       filter(value_rounded != "NaN")
   
-  # updated_rows <- unique(finance_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
-  # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-  # 
-  # metrics_final_df <- full_join(metrics_final_df,finance_df_merge)
+  updated_rows <- unique(finance_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
+  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+
+  metrics_final_df <- full_join(metrics_final_df,finance_df_merge)
   
 }
