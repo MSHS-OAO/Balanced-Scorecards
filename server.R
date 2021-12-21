@@ -1348,23 +1348,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                     col_highlight = col_highlight,
                     rowHeaders = FALSE,
                     readOnly = FALSE) %>%
-        hot_table(mergeCells =
-                    list(
-                      list(row = min(site_1) - 1, col = 0,
-                           rowspan = length(site_1), colspan = 1),
-                      list(row = min(site_2) - 1, col = 0,
-                           rowspan = length(site_2), colspan = 1),
-                      list(row = min(site_3) - 1, col = 0,
-                           rowspan = length(site_3), colspan = 1),
-                      list(row = min(site_4) - 1, col = 0,
-                           rowspan = length(site_4), colspan = 1),
-                      list(row = min(site_5) - 1, col = 0,
-                           rowspan = length(site_5), colspan = 1),
-                      list(row = min(site_6) - 1, col = 0,
-                           rowspan = length(site_6), colspan = 1),
-                      list(row = min(site_7) - 1, col = 0,
-                           rowspan = length(site_7), colspan = 1)
-                    )) %>%
         hot_cols(renderer = renderer_string) %>%
         hot_col(1:2, readOnly = TRUE)
       
@@ -1377,34 +1360,34 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(input$lab_pt_username == "") {
         showModal(modalDialog(
           title = "Error",
-          paste0("Please fill in the required fields"),
+          "Please fill in the required fields",
           easyClose = TRUE,
           footer = NULL
         ))
       }
-      
+
       # Convert rhandsontable to R object
       prof_test_manual_updates <<- hot_to_r(input$lab_prof_test)
-      
+
       # Save prior version of Lab Proficiency Testing Dept Summary data
       write_xlsx(ops_metrics_lab_pt,
                  paste0(hist_archive_path,
                         "Lab Prof Testing Metrics Pre Updates ",
                         format(Sys.time(), "%Y%m%d_%H%M%S"),
                         ".xlsx"))
-      
+
       # Reformat data from manual input table into department summary format
       prof_test_summary_data <-
         # lab_prof_test_dept_summary(prof_test_manual_table)
         lab_prof_test_dept_summary(prof_test_manual_updates)
-      
-      
+
+
       # Append Lab Proficiency Testing summary with new data
       # First, identify the sites, months, and metrics in the new data
       prof_test_new_data <- unique(
         prof_test_summary_data[, c("Service", "Site", "Month", "Metric")]
       )
-      
+
       # Second, remove these sites, months, and metrics from the historical data, if they exist there
       # This allows us to ensure no duplicate entries for the same site, metric, and time period
       ops_metrics_lab_pt <<- anti_join(ops_metrics_lab_pt,
@@ -1413,11 +1396,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                               "Site" = "Site",
                                               "Month" = "Month",
                                               "Metric" = "Metric"))
-      
+
       # Third, combine the updated historical data with the new data
       ops_metrics_lab_pt <<- full_join(ops_metrics_lab_pt,
                                        prof_test_summary_data)
-      
+
       # Next, arrange the proficiency test summary data by month, metric name, and site
       ops_metrics_lab_pt <<- ops_metrics_lab_pt %>%
         mutate(Site = factor(Site,
@@ -1427,22 +1410,24 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 desc(Metric),
                 Site) %>%
         mutate(Site = as.character(Site))
-      
+
       # Lastly, save the updated summary data
       write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
-      
-      # Update metrics_final_df with latest Sunquest data using custom function
+
+      # Update metrics_final_df with latest Proficiency Testing data using custom function
       metrics_final_df <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
-      
+
       # Save updated metrics_final_df
       saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      
+
+
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       
+    })
+
       
       # Security Metrics - Incident Reports (Manual Entry) -----------------------
       # Create reactive data table for manual entry
@@ -1508,25 +1493,73 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       col_highlight = col_highlight,
                       rowHeaders = FALSE,
                       readOnly = FALSE) %>%
-          hot_table(mergeCells =
-                      list(
-                        list(row = min(site_1) - 1, col = 0,
-                             rowspan = length(site_1), colspan = 1),
-                        list(row = min(site_2) - 1, col = 0,
-                             rowspan = length(site_2), colspan = 1),
-                        list(row = min(site_3) - 1, col = 0,
-                             rowspan = length(site_3), colspan = 1),
-                        list(row = min(site_4) - 1, col = 0,
-                             rowspan = length(site_4), colspan = 1),
-                        list(row = min(site_5) - 1, col = 0,
-                             rowspan = length(site_5), colspan = 1),
-                        list(row = min(site_6) - 1, col = 0,
-                             rowspan = length(site_6), colspan = 1),
-                        list(row = min(site_7) - 1, col = 0,
-                             rowspan = length(site_7), colspan = 1)
-                      )) %>%
           hot_cols(renderer = renderer_string) %>%
           hot_col(1:2, readOnly = TRUE)
+        
+      })
+      
+      # Create observer event actions for manual data submission
+      observeEvent(input$submit_sec_inc_rpts, {
+        # print(input$name_sec_inc)
+        if(input$sec_inc_rpts_username == "") {
+          showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields.",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        
+        # Convert rhandsontable to R object
+        sec_inc_rpts_manual_updates <<- hot_to_r(input$sec_inc_rpts)
+        
+        # Save prior version of Security Incident Reports Dept Summary data
+        write_xlsx(security_incident_reports,
+                   paste0(hist_archive_path,
+                          "Security Incident Reports Pre Updates ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
+        # Reformat data from manual input table into department summary format
+        sec_inc_rpts_summary_data <-
+          sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates)
+        
+        # Append Security Incident Reports summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        sec_inc_rpts_new_data <- unique(
+          sec_inc_rpts_summary_data[, c("Service", "Site", "Month", "Metric")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data,
+        # if they exist there. This allows us to ensure no duplicate entries for
+        # the same site, metric, and time period.
+        security_incident_reports <<- anti_join(security_incident_reports,
+                                                sec_inc_rpts_new_data,
+                                                by = c("Service" = "Service",
+                                                       "Site" = "Site",
+                                                       "Month" = "Month",
+                                                       "Metric" = "Metric"))
+        
+        # Third, combine the updated historical data with the new data
+        security_incident_reports <<- full_join(security_incident_reports,
+                                                sec_inc_rpts_summary_data)
+        
+        # Next, arrange the incident reports summary data by month, metric, and site
+        security_incident_reports <<- security_incident_reports %>%
+          arrange(Month,
+                  desc(Metric),
+                  Site)
+        
+        # Lastly, save the updated summary data
+        write_xlsx(security_incident_reports, security_incident_reports_path)
+        
+        # Update metrics_final_df with latest data using custom function
+        metrics_final_df <<- sec_inc_rpts_metrics_final_df(sec_inc_rpts_summary_data)
+
+        metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
+        
+        # Save updates metrics_final_df
+        saveRDS(metrics_final_df, metrics_final_df_path)
         
       })
       
@@ -1595,7 +1628,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       
-    })
+    # })
     
     
     
