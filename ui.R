@@ -415,20 +415,37 @@ ui <-
                                  span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
-                                        tabPanel("TAT - Transport", hr(),
+                                        tabPanel("Turnaround Time-Non Patient Transport", hr(),
+                                                 fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
+                                                 actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
+                                        ),
+                                        tabPanel("Turnaround Time-Patient Transport", hr(),
                                                  fluidRow(
                                                    column(12,
                                                           div(
-                                                            id = "form_transport",
+                                                            id = "form",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_transport", (labelMandatory("Name:")), "")
+                                                                     textInput("transport_pt_username",
+                                                                               labelMandatory(
+                                                                                 "1. Please enter name:")
+                                                                     )
                                                               )
-                                                            )
-                                                            #####Enter datatables here
-                                                          )
-                                                   )
-                                                 ))
+                                                            ),
+                                                            h2("2. Please enter data in the tables below."),
+                                                            br(),
+                                                            div(id = "header_custom",
+                                                                h3("Please leave cell blank if data has not been received.")
+                                                            ),
+                                                            h2("3. Please click on Submit when finished."),
+                                                            hr(),
+                                                            h2("Lab & Blood Bank Proficiency Testing"),
+                                                            #rHandsontableOutput("lab_prof_test")
+                                                          ))
+                                                 ),
+                                                 actionButton("submit_patient_tat", "Submit", class = "btn-primary")
+                                        )
+                                        
                                  )
                         ),
                         tabPanel("Operational Metrics - Security",
