@@ -210,6 +210,10 @@ security_incident_reports_path <- paste0(home_path,
                                            "Summary Repos/",
                                            "Security Incident Reports.xlsx")
 
+security_events_path <- paste0(home_path,
+                               "Summary Repos/",
+                               "Security Monthly Events.xlsx")
+
 
 # File path for saving the prior version of Dept Summary data
 hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
