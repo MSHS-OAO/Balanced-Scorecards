@@ -431,20 +431,33 @@ ui <-
                                  span("Operational Metrics - Security", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills', 
-                                        tabPanel("Incidents Metric", hr(),
+                                        tabPanel("Incident Reports", hr(),
                                                  fluidRow(
                                                    column(12,
                                                           div(
-                                                            id = "form_security_incidents",
+                                                            id = "form",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_security_incidents", (labelMandatory("Name:")), "")
-                                                              )
-                                                            )
-                                                            #####Enter datatables here
+                                                                     textInput("sec_inc_rpts_username",
+                                                                               labelMandatory(
+                                                                                 "1. Please enter name:")
+                                                                                )
+                                                                     )
+                                                              ),
+                                                            h2("2. Please enter data in the table below."),
+                                                            br(),
+                                                            div(id = "header_custom",
+                                                                h3("Please leave cell blank if data has not been received.")
+                                                                ),
+                                                            h2("3. Please click Submit when finished."),
+                                                            hr(),
+                                                            h2("Security Incident Reports"),
+                                                            rHandsontableOutput("sec_inc_rpts")
                                                           )
                                                    )
-                                                 )),
+                                                   ),
+                                                 actionButton("submit_sec_inc_rpts", "Submit", class = "btn-primary")
+                                        ),
                                         tabPanel("Security Events", hr(),
                                                  fluidRow(
                                                    column(12,
@@ -532,6 +545,13 @@ ui <-
  
  tags$style(HTML("
         #submit_lab_pt {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
+ tags$style(HTML("
+        #submit_sec_inc_rpts {
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
