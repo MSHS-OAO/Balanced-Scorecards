@@ -415,20 +415,16 @@ ui <-
                                  span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
-                                        tabPanel("TAT - Transport", hr(),
-                                                 fluidRow(
-                                                   column(12,
-                                                          div(
-                                                            id = "form_transport",
-                                                            fluidRow(
-                                                              column(2,
-                                                                     textInput("name_transport", (labelMandatory("Name:")), "")
-                                                              )
-                                                            )
-                                                            #####Enter datatables here
-                                                          )
-                                                   )
-                                                 ))
+                                        tabPanel("Turnaround Time-Non Patient Transport", hr(),
+                                                 fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
+                                                 actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
+                                        ),
+                                        tabPanel("Turnaround Time-Patient Transport", hr(),
+                                                 fileInput("patient_transport", label = "Please upload PTET Metrics data"),
+                                                 actionButton("submit_pt_tat", "Submit", class = "btn-primary"),
+                                        )
+                                        
+                    
                                  )
                         ),
                         tabPanel("Operational Metrics - Security",
