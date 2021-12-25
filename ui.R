@@ -417,35 +417,14 @@ ui <-
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
                                         tabPanel("Turnaround Time-Non Patient Transport", hr(),
                                                  fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
-                                                 actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
+                                                 actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
                                         ),
                                         tabPanel("Turnaround Time-Patient Transport", hr(),
-                                                 fluidRow(
-                                                   column(12,
-                                                          div(
-                                                            id = "form",
-                                                            fluidRow(
-                                                              column(2,
-                                                                     textInput("transport_pt_username",
-                                                                               labelMandatory(
-                                                                                 "1. Please enter name:")
-                                                                     )
-                                                              )
-                                                            ),
-                                                            h2("2. Please enter data in the tables below."),
-                                                            br(),
-                                                            div(id = "header_custom",
-                                                                h3("Please leave cell blank if data has not been received.")
-                                                            ),
-                                                            h2("3. Please click on Submit when finished."),
-                                                            hr(),
-                                                            h2("Lab & Blood Bank Proficiency Testing"),
-                                                            #rHandsontableOutput("lab_prof_test")
-                                                          ))
-                                                 ),
-                                                 actionButton("submit_patient_tat", "Submit", class = "btn-primary")
+                                                 fileInput("patient_transport", label = "Please upload PTET Metrics data"),
+                                                 actionButton("submit_pt_tat", "Submit", class = "btn-primary"),
                                         )
                                         
+                    
                                  )
                         ),
                         tabPanel("Operational Metrics - Security",
