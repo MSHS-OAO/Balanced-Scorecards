@@ -21,8 +21,7 @@ process_PT_data <- function(operational_metrics_transport_path){
   
   rows <- nrow(pt_data_raw)
 
-  print(rows)
-  
+
   # pt_data_raw <- pt_data_raw %>%
   #   slice(3:end)
   
