@@ -26,5 +26,13 @@ census_days_file_process <- function(data){
   
   data$Date <- as.Date(paste0(data$Date,"-01"), format = "%B %Y-%d")
   
+  data$Date <- format(data$Date, "%Y-%m-%d")
+  
+  data
   
 }
+
+
+##### Testing to read in Cost and Revenue from Summary Repos
+census_days <- census_days_file_process(data_raw)
+cost_and_revenue_repo <- read_excel(paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
