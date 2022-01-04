@@ -245,7 +245,7 @@ metric_grouping_filter <- metric_grouping %>%
 
 summary_metric_filter <- summary_metrics %>%
   pivot_longer(
-    7:length(metric_grouping),
+    7:length(summary_metrics),
     names_to = "Service",
     values_to = "Order"
   ) %>%
