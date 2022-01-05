@@ -362,7 +362,8 @@ ui <-
                                                             h2("3. Please click on Submit when finished."),
                                                             hr(),
                                                             h2("Lab & Blood Bank Proficiency Testing"),
-                                                            rHandsontableOutput("lab_prof_test")
+                                                            rHandsontableOutput("lab_prof_test"),
+                                                            hr()
                                                           ))
                                                  ),
                                                  actionButton("submit_lab_pt", "Submit", class = "btn-primary")
@@ -410,7 +411,8 @@ ui <-
                                                             h2("3. Please click Submit when finished."),
                                                             hr(),
                                                             h2("Security Incident Reports"),
-                                                            rHandsontableOutput("sec_inc_rpts")
+                                                            rHandsontableOutput("sec_inc_rpts"),
+                                                            hr()
                                                           )
                                                    )
                                                    ),
@@ -423,16 +425,31 @@ ui <-
                                                             id = "form_security_events",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_security_events", (labelMandatory("Name:")), "")
-                                                              )
-                                                            )
-                                                            #####Enter datatables here
+                                                                     textInput("sec_events_username",
+                                                                               labelMandatory(
+                                                                                 "1. Please enter name:")
+                                                                               )
+                                                                     )
+                                                              ),
+                                                            h2("2. Please enter data in the table below."),
+                                                            br(),
+                                                            div(id = "header_custom",
+                                                                h3("Please leave cell blank if data has not been received.")
+                                                                ),
+                                                            h2("3. Please click submit when finished."),
+                                                            hr(),
+                                                            h2("Security Events"),
+                                                            rHandsontableOutput("sec_events"),
+                                                            hr()
                                                           )
                                                    )
-                                                 ))
+                                                 ),
+                                                 actionButton("submit_sec_events", "Submit", class = "btn-primary")
+                                        )
                                  )
                         )
-             )# Close tabPanel Breakdout
+                        
+             )# Close tabPanel Breakout
              
           ), # Close NavBar
           
@@ -514,6 +531,13 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
+ tags$style(HTML("
+        #submit_sec_events {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")), 
+
   
   tags$style(HTML("
         #submit_press {

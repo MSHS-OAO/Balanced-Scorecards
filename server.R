@@ -1455,6 +1455,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         site_6 <- which(data_sec_inc_rpts()$Site == unique_sites[6])
         site_7 <- which(data_sec_inc_rpts()$Site == unique_sites[7])
         
+        col_highlight <- ncol(data_sec_inc_rpts()) - 1
+        
         # # Code for testing manual entry table without reactive data
         # data_sec_inc_rpts <- data
         # 
@@ -1484,8 +1486,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
   }"
         
-        col_highlight <- ncol(data_sec_inc_rpts()) - 1
-        
         rhandsontable(data_sec_inc_rpts(),
                       # # Dataframe for non-reactive testing
                       # data_sec_inc_rpts,
@@ -1500,7 +1500,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission
       observeEvent(input$submit_sec_inc_rpts, {
-        # print(input$name_sec_inc)
         if(input$sec_inc_rpts_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -1555,18 +1554,149 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Update metrics_final_df with latest data using custom function
         metrics_final_df <<- sec_inc_rpts_metrics_final_df(sec_inc_rpts_summary_data)
-
-        metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
+        
+        # # Code for running entire department summary into metrics_final_df
+        # metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
         
         # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
+        # saveRDS(metrics_final_df, metrics_final_df_path)
         
       })
       
-      
-      
+      # Security Metrics - Security Events (Manual Entry) -------------------
+      # Create reactive data table for manual entry
+      data_sec_events <- reactive({
         
-    
+        data <- sec_events_manual_table
+        
+        # Arrange by sites in alphabetical order
+        data <- data %>%
+          arrange(Site)
+        
+      }
+      )
+      
+      output$sec_events <- renderRHandsontable({
+        
+        unique_sites <- unique(data_sec_events()$Site)
+        
+        site_1 <- which(data_sec_events()$Site == unique_sites[1])
+        site_2 <- which(data_sec_events()$Site == unique_sites[2])
+        site_3 <- which(data_sec_events()$Site == unique_sites[3])
+        site_4 <- which(data_sec_events()$Site == unique_sites[4])
+        site_5 <- which(data_sec_events()$Site == unique_sites[5])
+        site_6 <- which(data_sec_events()$Site == unique_sites[6])
+        site_7 <- which(data_sec_events()$Site == unique_sites[7])
+        
+        col_highlight <- ncol(data_sec_events()) - 1
+        
+        # # Code for testing manual entry table without reactive data
+        # data_sec_events <- data
+        # 
+        # unique_sites <- unique(data_sec_events$Site)
+        # 
+        # site_1 <- which(data_sec_events$Site == unique_sites[1])
+        # site_2 <- which(data_sec_events$Site == unique_sites[2])
+        # site_3 <- which(data_sec_events$Site == unique_sites[3])
+        # site_4 <- which(data_sec_events$Site == unique_sites[4])
+        # site_5 <- which(data_sec_events$Site == unique_sites[5])
+        # site_6 <- which(data_sec_events$Site == unique_sites[6])
+        # site_7 <- which(data_sec_events$Site == unique_sites[7])
+        #
+        # col_highlight <- ncol(data_sec_events) - 1
+        
+        renderer_string <- "
+        function(instance, td, row, col, prop, value, cellProperties) {
+        Handsontable.renderers.NumericRenderer.apply(this, arguments);
+        
+        if (instance.params) {
+        hcols = instance.params.col_highlight;
+        hcols = hcols instanceof Array ? hcols : [hcols];
+        }
+        
+        if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+        }
+        }"
+        
+        rhandsontable(data_sec_events(),
+                      # # Dataframe for non-reactive testing
+                      # data_sec_events,
+                      overflow = 'visible',
+                      col_highlight = col_highlight,
+                      rowHeaders = FALSE,
+                      readOnly = FALSE) %>%
+          hot_cols(renderer = renderer_string) %>%
+          hot_col(1:2, readOnly = TRUE)
+        
+      }
+      )
+      
+      # Create observe event actions for manual data submission
+      observeEvent(input$submit_sec_events, {
+        if(input$sec_events_username == "") {
+          showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields.",
+            easyClose = TRUE,
+            footer = NULL
+          )
+          )
+        }
+        
+        # Convert rhandsontable to R object
+        sec_events_manual_updates <<- hot_to_r(input$sec_events)
+        
+        # Save prior version of Monthly Security Events Dept Summary data
+        # write_xlsx(security_events,
+        #            paste0(hist_archive_path,
+        #                   "Security Events Monthly Pre Updates ",
+        #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+        #                   ".xlsx"))
+        
+        # Reformat data from manual input table into department summary format
+        sec_events_summary_data <-
+          sec_events_dept_summary(sec_events_manual_updates)
+        
+        # Append Security Events Monthly summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        sec_events_new_data <- unique(
+          sec_events_summary_data[, c("Service", "Site", "Month", "Metric")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data,
+        # if they exist there. This allows us to ensure no duplicate entries for
+        # the same site, metric, or time period.
+        security_events <<- anti_join(security_events,
+                                      sec_events_new_data,
+                                      by = c("Service" = "Service",
+                                                "Site" = "Site",
+                                                "Month" = "Month",
+                                                "Metric" = "Metric"))
+        
+        # Third, combine the updated historical data with the new data
+        security_events <<- full_join(security_events,
+                                      sec_events_summary_data)
+        
+        # Next, arrance the security events summary data by month, metric, and site
+        security_events <<- security_events %>%
+          arrange(Month,
+                  desc(Metric),
+                  Site)
+        
+        # Lastly, save the updated summary data
+        # write_xlsx(security_events, security_events_path)
+        
+        # Update metrics_final_df with the latest data using custom function
+        # metrics_final_df <<- sec_events_metrics_final_df(sec_events_summary_data)
+        
+        # # Code for running entire department summary history into metrics_final_df
+        # metrics_final_df <<- sec_events_metrics_final_df(security_events)
+        
+        # Save updated metrics_final_df
+        # saveRDS(metrics_final_df, metrics_final_df_path)
+
+      })
 
     # 5. Overtime - Data Input -----------------3----------------------------------------------------------------
     
