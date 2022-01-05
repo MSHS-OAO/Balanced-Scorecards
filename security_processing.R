@@ -166,7 +166,7 @@ sec_events_manual_table <- security_events %>%
 
 # Custom function for converting data from manual table input to Security Events Dept Summary format
 sec_events_dept_summary <- function(data) {
-  sec_events_summary <- data %>%
+  sec_events_monthly_totals <- data %>%
     # Convert from wide to long format for consistency with department summary
     pivot_longer(cols = c(-Metric, -Site),
                  names_to = "Month",
@@ -179,6 +179,43 @@ sec_events_dept_summary <- function(data) {
     # Reorder columns
     relocate(Service) %>%
     relocate(Month, .before = Metric)
+  
+  # Calculate 12-mo rolling sum for data in tables ---------------
+  # Find the months included in the manual table data
+  manual_table_months <- sort(unique(sec_events_monthly_totals$Month))
+  
+    # Start by finding total security events for months not included in manual table
+  # This is needed to calculate 12-month rolling sum
+  sec_events_prior_months <- security_events %>%
+    filter(!(Month %in% manual_table_months) &
+             Metric %in% c("Total Security Events"))
+  
+  # Combine total security events from manual table and prior months
+  total_monthly_sec_events <- rbind(sec_events_monthly_totals,
+                                    sec_events_prior_months)
+  
+  # Split data frame into list of dataframes with last 12 months in each list item
+  sec_events_12mo_rolling <- map(
+    .x = manual_table_months,
+    .f = ~total_monthly_sec_events %>%
+      filter(Month >= (.x - months(11)) &
+               Month <= .x) %>%
+      dplyr::group_by(Site) %>%
+      dplyr::summarize(Month = max(Month),
+                       TotalSecurityEvents_12mo = sum(Number))) %>%
+    # Combine list of dataframes into single dataframe
+    bind_rows() %>%
+    # Add relevant columns and reorder
+    mutate(Service = "Security",
+           Metric = "Total Security Events (12-mo Rolling)") %>%
+    rename(Number = TotalSecurityEvents_12mo) %>%
+    relocate(Service) %>%
+    relocate(Metric, .before = Number)
+  
+  sec_events_summary <- rbind(sec_events_monthly_totals,
+                              sec_events_12mo_rolling)
+  
+  return(sec_events_summary)
   
 }
 

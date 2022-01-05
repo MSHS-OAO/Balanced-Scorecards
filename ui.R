@@ -231,8 +231,8 @@ ui <-
                                  fileInput("productiviy_data_nursing_radiology", label = "Please upload Nursing and Radiology Productivity data"),
                                  actionButton("submit_prod", label = "Submit")
                         ),
-                        tabPanel("Operational Metrics - Biomed/Clinical Eningeering",
-                                 span("Operational Metrics - Biomed/Clinical Eningeering", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                        tabPanel("Operational Metrics - Biomed/Clinical Engineering",
+                                 span("Operational Metrics - Biomed/Clinical Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
                                         tabPanel("Disruptions and Issues", hr(),
@@ -268,7 +268,7 @@ ui <-
                                  
                         ),
                         tabPanel("Operational Metrics - Engineering",
-                                 span("Operational Metrics - Eningeering", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                 span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset10", width = "100%", type = 'pills', 
                                         tabPanel("CM KPI", hr(),
@@ -285,7 +285,7 @@ ui <-
                                                             h2("2. Please enter data in the tables below"),
                                                             br(),
                                                             div(id = "header_custom_engineer",
-                                                                h3("Please leave cell blank if data has not been recieved")
+                                                                h3("Please leave cell blank if data has not been received")
                                                             ),
                                                             h2("3. Once finished please click on the button below"),
                                                             #####Enter datatables here
@@ -298,19 +298,21 @@ ui <-
                                                  ))
                                  )
                         ),
-                        tabPanel("Operational Metrics - Environmental Services", value = "evs",
-                                 span("Operational Metrics - Environmental Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
-                                 fluidRow(
-                                   column(2,
-                                          textInput("name_evs", (labelMandatory("1. Please enter name:"))),
-                                          
-                                   )
-                                 ),
-                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turn around Time", hr(),
-                                                 fileInput("evs_data", label = "Please upload Environmental Services data"),
-                                                 actionButton("submit_evs", "Submit", class = "btn-primary"),
+                        tabPanel("Operational Metrics - Environmental Services",
+                                 value = "evs",
+                                 span("Operational Metrics - Environmental Services",
+                                      style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), br(), hr(),
+                                 tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
+                                        tabPanel("Turnaround Time",
+                                                 hr(),
+                                                 fileInput("evs_data",
+                                                           label = "Please upload Environmental Services data"),
+                                                 hr(),
+                                                 actionButton("submit_evs",
+                                                              "Submit",
+                                                              class = "btn-primary"),
                                         )
                                  )
                                  ),
@@ -334,7 +336,7 @@ ui <-
                                                             h2("2. Please enter data in the tables below"),
                                                             br(),
                                                             div(id = "header_custom",
-                                                            h3("Please leave cell blank if data has not been recieved")
+                                                            h3("Please leave cell blank if data has not been received")
                                                             ),
                                                             h2("3. Once finished please click on the button below"),
                                                             hr(),
@@ -378,9 +380,12 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turnaround Time", hr(),
+                                        tabPanel("Turnaround Time",
+                                                 hr(),
                                                  fileInput("lab_scc", label = "Please upload SCC lab data"),
+                                                 hr(),
                                                  fileInput("lab_sun", label = "Please upload Sunquest lab data"),
+                                                 hr(),
                                                  actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
                                                  ),
                                         tabPanel("Proficiency Testing", hr(),
