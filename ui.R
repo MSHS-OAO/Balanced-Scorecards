@@ -320,52 +320,10 @@ ui <-
                                  shinyjs::inlineCSS(appCSS),
                                  span("Operational Metrics - Food Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
-                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Cost and Revenue", hr(),
-                                                 fluidRow(
-                                                   column(12,
-                                                          div(
-                                                            id = "form",
-                                                            fluidRow(
-                                                              column(2,
-                                                                     textInput("name_1", labelMandatory("1. Please enter name:"))
-                                                              )
-                                                            ),
-                                                            h2("2. Please enter data in the tables below"),
-                                                            br(),
-                                                            div(id = "header_custom",
-                                                            h3("Please leave cell blank if data has not been recieved")
-                                                            ),
-                                                            h2("3. Once finished please click on the button below"),
-                                                            hr(),
-                                                            h2("Food Services - Census Days"),
-                                                            rHandsontableOutput("food_census"),
-                                                            hr(),
-                                                            h2("Food Services - Budget Revenue"),
-                                                            rHandsontableOutput("food_budget"),
-                                                            hr(),
-                                                            h2("Food Services - Actual Revenue"),
-                                                            rHandsontableOutput("hand_table"),
-                                                            hr(),
-                                                            hr(),
-                                                            actionButton("submit_food", "Submit", class = "btn-primary"),
-                                                            br(),
-                                                            shinyjs::hidden(
-                                                              span(id = "submit_msg", "Submitting..."),
-                                                              div(id = "error",
-                                                                  div(br(), tags$b("Error: "), span(id = "error_msg"))
-                                                              )
-                                                            )
-                                                          ),
-                                                          
-                                                          shinyjs::hidden(
-                                                            div(
-                                                              id = "thankyou_msg",
-                                                              h3("Your metric was submitted successfully."),
-                                                              actionLink("submit_another", "Submit another response")
-                                                            )
-                                                          )
-                                                   ))
+                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
+                                        tabPanel("Cost and Revenue", br(),
+                                                 fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
+                                                 actionButton("submit_food", label = "Submit")
                                         )
                                  )
                                  
