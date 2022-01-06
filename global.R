@@ -223,6 +223,8 @@ key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Produc
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
+transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
+
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ===================================================================================
 data_path <- here()

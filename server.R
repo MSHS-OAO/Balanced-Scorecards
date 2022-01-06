@@ -1631,8 +1631,88 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # })
     
     # Transport Metrics - Patient Data (Manual Entry) -----------------------
-    # Create reactive data table for manual entry
-    
+      observeEvent(input$submit_npt_tat,{
+        
+        npt_file <- input$non_patient_transport
+        
+        if (is.null(npt_file)) {
+          return(NULL)
+        }else{
+          file_path <- npt_file$datapath
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          npt_data <- read_excel(file_path)
+        }
+        
+        data <- process_NPT_raw_data(npt_data)
+        
+        npt_data <- data[[1]]
+        
+        summary_repo_format <- data[[2]]
+        
+        
+        metrics_final_df <<- transport__metrics_final_df_process(npt_data)
+        
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        transport_summary_repo <- read_excel(transport_table_path)
+        updated_rows <- unique(summary_repo_format[c("Service","Site", "Month")])
+        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
+        
+        transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
+        transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
+        transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
+        transport_summary_repo <- as.data.frame(transport_summary_repo)
+        write_xlsx(transport_summary_repo, transport_table_path, row.names = FALSE)
+        
+        picker_choices <-  unique(metrics_final_df$Reporting_Month)
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+      })
+      
+      observeEvent(input$submit_pt_tat,{
+        
+        pt_file <- input$patient_transport
+        
+        if (is.null(patient_transport)) {
+          return(NULL)
+        }else{
+          file_path <- pt_file$datapath
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          pt_data <- read_excel(file_path)
+        }
+        
+        data <- process_PT_data(npt_data)
+        
+        pt_data <- data[[1]]
+        
+        summary_repo_format <- data[[2]]
+        
+        metrics_final_df <<- transport__metrics_final_df_process(pt_data)
+        
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        transport_summary_repo <- read_excel(transport_table_path)
+        updated_rows <- unique(summary_repo_format[c("Service","Site", "Month")])
+        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
+        
+        transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
+        transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
+        transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
+        transport_summary_repo <- as.data.frame(transport_summary_repo)
+        write_xlsx(transport_summary_repo, transport_table_path, row.names = FALSE)
+        
+        picker_choices <-  unique(metrics_final_df$Reporting_Month)
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+      })
+      
+      
     
 
   
