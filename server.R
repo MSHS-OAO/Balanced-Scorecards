@@ -445,9 +445,25 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Merge Current and Previous Months Breakdown
-      breakdown_all <- merge(current_breakdown, past_avg, by = c("Metric_Group","Summary_Metric_Name","Site"))
-      breakdown_all <- merge(breakdown_all, past_breakdown, by = c("Metric_Group","Summary_Metric_Name","Site"))
-      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),]
+      breakdown_all <- merge(current_breakdown, past_avg, by = c("Metric_Group","Summary_Metric_Name","Site"),
+                             sort = FALSE)
+      breakdown_all <- merge(breakdown_all, past_breakdown, by = c("Metric_Group","Summary_Metric_Name","Site"),
+                             sort = FALSE)
+      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group,
+                                                  levels=unique(summary_tab_metrics$Metric_Group))),]
+
+      # breakdown_all <- breakdown_all %>%
+      #   mutate(Metric_Group = factor(Metric_Group,
+      #                                levels = unique(summary_tab_metrics$Metric_Group),
+      #                                ordered = TRUE),
+      #          Summary_Metric_Name = factor(Summary_Metric_Name,
+      #                                       levels = unique(summary_tab_metrics$Summary_Metric_Name),
+      #                                       ordered = TRUE)) %>%
+      #   arrange(Metric_Group,
+      #           Summary_Metric_Name) %>%
+      #   mutate(Metric_Group = as.character(Metric_Group),
+      #          Summary_Metric_Name = as.character(Summary_Metric_Name))
+
       metric_group_order <- as.vector(unique(breakdown_all$Metric_Group))
       metric_name_order <- as.vector(unique(breakdown_all$Summary_Metric_Name))
       names(breakdown_all)[names(breakdown_all) == 'value_rounded'] <- format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
@@ -456,7 +472,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Format units
-      breakdown_all <- merge(breakdown_all, metric_unit_filter_summary)#,
+      breakdown_all <- merge(breakdown_all, metric_unit_filter_summary,
+                             sort = FALSE)#,
                     # by.x = c("Metric_Group","Summary_Metric_Name"),
                     # by.y = c("Metric_Group","Metric_Name"))
       
@@ -542,8 +559,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Site == site_input) %>%
         filter(Reporting_Month_Ref <= current_period) %>%
         arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
-        group_by(Site, Metric_Group, Metric_Name) %>%
-        mutate(id = row_number()) 
+        group_by(Site, Metric_Group, Metric_Name) #%>%
+        # mutate(id = row_number()) 
+      
+      months <- metrics_final_df %>% 
+        filter(Service == service_input) %>% # input$selectedService
+        filter(Site == site_input) %>%
+        filter(Reporting_Month_Ref <= current_period) %>%
+        distinct(Reporting_Month_Ref) %>%
+        arrange(desc(Reporting_Month_Ref)) %>%
+        mutate(id = row_number())
+      
+      data <- left_join(data, months,
+                        by = c("Reporting_Month_Ref" = "Reporting_Month_Ref"))
+
       
       data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
                     by = c("Metric_Group","Metric_Name"))

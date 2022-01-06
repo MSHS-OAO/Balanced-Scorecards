@@ -192,7 +192,14 @@ ui <-
              navbarMenu("Data",
                         tabPanel("Finance",
                                  span("Finance Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                 
                                         fluidRow(
                                           column(2,
@@ -219,21 +226,42 @@ ui <-
                         ),
                         tabPanel("Press Ganey", value = "press_ganey",
                                  span("Press Ganey Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  fileInput("press_ed", label = "Please upload Press Ganey ED data"),
                                  fileInput("press_nursing", label = "Please upload Press Ganey Nursing data"),
                                  fileInput("press_support", label = "Please upload Press Ganey Support Services data"),
                                  actionButton("submit_press", label = "Submit")),
                         tabPanel("Productivity", value = "productivity",
                                  span("Productivity Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  fileInput("productiviy_data", label = "Please upload Productivity data"), br(),
                                  fileInput("productiviy_data_nursing_radiology", label = "Please upload Nursing and Radiology Productivity data"),
                                  actionButton("submit_prod", label = "Submit")
                         ),
                         tabPanel("Operational Metrics - Biomed/Clinical Engineering",
                                  span("Operational Metrics - Biomed/Clinical Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
                                         tabPanel("Disruptions and Issues", hr(),
                                                  fluidRow(
@@ -269,7 +297,14 @@ ui <-
                         ),
                         tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset10", width = "100%", type = 'pills', 
                                         tabPanel("CM KPI", hr(),
                                                  fluidRow(
@@ -303,7 +338,13 @@ ui <-
                                  span("Operational Metrics - Environmental Services",
                                       style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
-                                 br(), br(), hr(),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
                                         tabPanel("Turnaround Time",
                                                  hr(),
@@ -321,7 +362,14 @@ ui <-
                                  shinyjs::useShinyjs(),
                                  shinyjs::inlineCSS(appCSS),
                                  span("Operational Metrics - Food Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
                                         tabPanel("Cost and Revenue", br(),
                                                  fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
@@ -341,7 +389,11 @@ ui <-
                                  span("Operational Metrics - Lab",
                                       style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
-                                 br(),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
@@ -384,7 +436,14 @@ ui <-
                         ),
                         tabPanel("Operational Metrics - Patient Transport",
                                  span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
                                         tabPanel("Turnaround Time-Non Patient Transport", hr(),
                                                  fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
@@ -400,7 +459,14 @@ ui <-
                         ),
                         tabPanel("Operational Metrics - Security",
                                  span("Operational Metrics - Security", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills', 
                                         tabPanel("Incident Reports", hr(),
                                                  fluidRow(
