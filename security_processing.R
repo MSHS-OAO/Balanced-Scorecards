@@ -11,7 +11,6 @@ security_incident_reports <- security_incident_reports %>%
 
 # Determine last month and next month for Security Incident Reports
 sec_inc_rpts_last_month <- max(security_incident_reports$Month)
-sec_next_month <- sec_inc_rpts_last_month + months(1)
 
 # Reformat Security Incident Reports data into wider format for manual entries
 sec_inc_rpts_manual_table <- security_incident_reports %>%
@@ -154,7 +153,8 @@ sec_events_last_month <- max(security_events$Month)
 # Reformat Security Incident Reports data into wider format for manual entries
 sec_events_manual_table <- security_events %>%
   select(-Service) %>%
-  filter(Month >= sec_events_last_month - months(7)) %>%
+  filter(Month >= sec_events_last_month - months(7) &
+           !(Metric %in% c("Total Security Events (12-mo Rolling)"))) %>%
   arrange(Month,
           Site) %>%
   mutate(Month = format(Month, "%m-%Y"),
@@ -166,7 +166,7 @@ sec_events_manual_table <- security_events %>%
 
 # Custom function for converting data from manual table input to Security Events Dept Summary format
 sec_events_dept_summary <- function(data) {
-  sec_events_summary <- data %>%
+  sec_events_monthly_totals <- data %>%
     # Convert from wide to long format for consistency with department summary
     pivot_longer(cols = c(-Metric, -Site),
                  names_to = "Month",
@@ -179,6 +179,43 @@ sec_events_dept_summary <- function(data) {
     # Reorder columns
     relocate(Service) %>%
     relocate(Month, .before = Metric)
+  
+  # Calculate 12-mo rolling sum for data in tables ---------------
+  # Find the months included in the manual table data
+  manual_table_months <- sort(unique(sec_events_monthly_totals$Month))
+  
+    # Start by finding total security events for months not included in manual table
+  # This is needed to calculate 12-month rolling sum
+  sec_events_prior_months <- security_events %>%
+    filter(!(Month %in% manual_table_months) &
+             Metric %in% c("Total Security Events"))
+  
+  # Combine total security events from manual table and prior months
+  total_monthly_sec_events <- rbind(sec_events_monthly_totals,
+                                    sec_events_prior_months)
+  
+  # Split data frame into list of dataframes with last 12 months in each list item
+  sec_events_12mo_rolling <- map(
+    .x = manual_table_months,
+    .f = ~total_monthly_sec_events %>%
+      filter(Month >= (.x - months(11)) &
+               Month <= .x) %>%
+      dplyr::group_by(Site) %>%
+      dplyr::summarize(Month = max(Month),
+                       TotalSecurityEvents_12mo = sum(Number))) %>%
+    # Combine list of dataframes into single dataframe
+    bind_rows() %>%
+    # Add relevant columns and reorder
+    mutate(Service = "Security",
+           Metric = "Total Security Events (12-mo Rolling)") %>%
+    rename(Number = TotalSecurityEvents_12mo) %>%
+    relocate(Service) %>%
+    relocate(Metric, .before = Number)
+  
+  sec_events_summary <- rbind(sec_events_monthly_totals,
+                              sec_events_12mo_rolling)
+  
+  return(sec_events_summary)
   
 }
 
@@ -233,36 +270,36 @@ sec_events_metrics_final_df <- function(sec_events_summary) {
              !(Variance %in% FALSE))
   
   # Combine two dataframes
-  sec_inc_rpts_df_merge <- merge(sec_inc_rpts_df,
-                                 sec_inc_rpts_target_status[, c("Service",
+  sec_events_df_merge <- merge(sec_events_df,
+                               sec_events_target_status[, c("Service",
                                                                 "Site",
                                                                 "Metric_Group",
                                                                 "Metric_Name",
                                                                 "Reporting_Month",
                                                                 "Target",
                                                                 "Status")],
-                                 all = FALSE)
+                               all = FALSE)
   
   # Select relevant columns
-  sec_inc_rpts_df_merge <- sec_inc_rpts_df_merge[, processed_df_cols]
+  sec_events_df_merge <- sec_events_df_merge[, processed_df_cols]
   
   # Add reporting month back in
-  sec_inc_rpts_df_merge <- sec_inc_rpts_df_merge %>%
+  sec_events_df_merge <- sec_events_df_merge %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(sec_inc_rpts_df_merge[, c("Metric_Name",
-                                               "Reporting_Month",
-                                               "Service",
-                                               "Site")])
+  new_rows <- unique(sec_events_df_merge[, c("Metric_Name",
+                                             "Reporting_Month",
+                                             "Service",
+                                             "Site")])
   
   metrics_final_df <- anti_join(metrics_final_df,
                                 new_rows)
   
   metrics_final_df <- full_join(metrics_final_df,
-                                sec_inc_rpts_df_merge)
+                                sec_events_df_merge)
   
   metrics_final_df <- metrics_final_df %>%
     arrange(Service,
@@ -273,3 +310,68 @@ sec_events_metrics_final_df <- function(sec_events_summary) {
   return(metrics_final_df)
   
 }
+
+
+
+# # Calculate 12 month rolling sum for security events
+# sec_events_rolling_df <- security_events %>%
+#   filter(Site == "MSH") %>%
+#   mutate(Month_12mo = Month - months(11),
+#          RollSumFunction = rollsum(Number,
+#                                    k = 2,
+#                                    fill = NA))
+# 
+# sec_events_rolling_df$RollingSum <- sapply(1:nrow(sec_events_rolling_df),
+#                                           # 1,
+#                                           function(x) {
+#                                             # paste(x)
+#                                             # paste(sec_events_rolling_df$Month_12mo[x])
+#                                             
+#                                             
+#                                             sum(sec_events_rolling_df$Number[which(sec_events_rolling_df$Month >= sec_events_rolling_df$Month_12mo[x] &
+#                                                           sec_events_rolling_df$Month <= sec_events_rolling_df$Month[x])],
+#                                                 na.rm = TRUE)
+#                                           },
+#                                           simplify = FALSE)
+# 
+# 
+# for(i in 1:nrow(sec_events_rolling_df)) {
+#   print(i)
+#   sec_events_rolling_df$RollingSum[i] <- sum(
+#     sec_events_rolling_df$Number[which(sec_events_rolling_df$Month >= sec_events_rolling_df$Month_12mo[i] &
+#                                        sec_events_rolling_df$Month <= sec_events_rolling_df$Month[i])],
+#     na.rm = TRUE)
+# }
+
+
+# # Code for  calculating Total Security Events 12-mo Rolling Sum for all historical data
+# # Note: This should only need to be completed once and then updated each time
+# # the user enters data.
+# sec_events_split_df <- unique(security_events$Month) %>%
+#   map(~security_events %>%
+#         filter(Month >= (.x - months(11)) &
+#                  Month <= .x) %>%
+#         dplyr::group_by(Site) %>%
+#         dplyr::summarize(Month = max(Month),
+#                          TotalSecurityEvents_12mo = sum(Number))
+#       ) %>%
+#   bind_rows() %>%
+#   mutate(Service = "Security",
+#          Metric = "Total Security Events (12-mo Rolling)") %>%
+#   rename(Number = TotalSecurityEvents_12mo) %>%
+#   relocate(Service) %>%
+#   relocate(Metric, .before = Number)
+# 
+# # Add rolling sum to existing historical data
+# security_events <- rbind(security_events,
+#                          sec_events_split_df)
+# 
+# # Save to department summary
+# write_xlsx(security_events, security_events_path)
+
+
+
+
+
+
+

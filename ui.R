@@ -231,8 +231,8 @@ ui <-
                                  fileInput("productiviy_data_nursing_radiology", label = "Please upload Nursing and Radiology Productivity data"),
                                  actionButton("submit_prod", label = "Submit")
                         ),
-                        tabPanel("Operational Metrics - Biomed/Clinical Eningeering",
-                                 span("Operational Metrics - Biomed/Clinical Eningeering", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                        tabPanel("Operational Metrics - Biomed/Clinical Engineering",
+                                 span("Operational Metrics - Biomed/Clinical Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
                                         tabPanel("Disruptions and Issues", hr(),
@@ -268,7 +268,7 @@ ui <-
                                  
                         ),
                         tabPanel("Operational Metrics - Engineering",
-                                 span("Operational Metrics - Eningeering", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                 span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
                                  tabBox(title = NULL, id = "tabset10", width = "100%", type = 'pills', 
                                         tabPanel("CM KPI", hr(),
@@ -285,7 +285,7 @@ ui <-
                                                             h2("2. Please enter data in the tables below"),
                                                             br(),
                                                             div(id = "header_custom_engineer",
-                                                                h3("Please leave cell blank if data has not been recieved")
+                                                                h3("Please leave cell blank if data has not been received")
                                                             ),
                                                             h2("3. Once finished please click on the button below"),
                                                             #####Enter datatables here
@@ -298,19 +298,21 @@ ui <-
                                                  ))
                                  )
                         ),
-                        tabPanel("Operational Metrics - Environmental Services", value = "evs",
-                                 span("Operational Metrics - Environmental Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
-                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
-                                 fluidRow(
-                                   column(2,
-                                          textInput("name_evs", (labelMandatory("1. Please enter name:"))),
-                                          
-                                   )
-                                 ),
-                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turn around Time", hr(),
-                                                 fileInput("evs_data", label = "Please upload Environmental Services data"),
-                                                 actionButton("submit_evs", "Submit", class = "btn-primary"),
+                        tabPanel("Operational Metrics - Environmental Services",
+                                 value = "evs",
+                                 span("Operational Metrics - Environmental Services",
+                                      style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), br(), hr(),
+                                 tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
+                                        tabPanel("Turnaround Time",
+                                                 hr(),
+                                                 fileInput("evs_data",
+                                                           label = "Please upload Environmental Services data"),
+                                                 hr(),
+                                                 actionButton("submit_evs",
+                                                              "Submit",
+                                                              class = "btn-primary"),
                                         )
                                  )
                                  ),
@@ -320,54 +322,19 @@ ui <-
                                  shinyjs::inlineCSS(appCSS),
                                  span("Operational Metrics - Food Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"), br(), br(), hr(),
-                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Cost and Revenue", hr(),
-                                                 fluidRow(
-                                                   column(12,
-                                                          div(
-                                                            id = "form",
-                                                            fluidRow(
-                                                              column(2,
-                                                                     textInput("name_1", labelMandatory("1. Please enter name:"))
-                                                              )
-                                                            ),
-                                                            h2("2. Please enter data in the tables below"),
-                                                            br(),
-                                                            div(id = "header_custom",
-                                                            h3("Please leave cell blank if data has not been recieved")
-                                                            ),
-                                                            h2("3. Once finished please click on the button below"),
-                                                            hr(),
-                                                            h2("Food Services - Census Days"),
-                                                            rHandsontableOutput("food_census"),
-                                                            hr(),
-                                                            h2("Food Services - Budget Revenue"),
-                                                            rHandsontableOutput("food_budget"),
-                                                            hr(),
-                                                            h2("Food Services - Actual Revenue"),
-                                                            rHandsontableOutput("hand_table"),
-                                                            hr(),
-                                                            hr(),
-                                                            actionButton("submit_food", "Submit", class = "btn-primary"),
-                                                            br(),
-                                                            shinyjs::hidden(
-                                                              span(id = "submit_msg", "Submitting..."),
-                                                              div(id = "error",
-                                                                  div(br(), tags$b("Error: "), span(id = "error_msg"))
-                                                              )
-                                                            )
-                                                          ),
-                                                          
-                                                          shinyjs::hidden(
-                                                            div(
-                                                              id = "thankyou_msg",
-                                                              h3("Your metric was submitted successfully."),
-                                                              actionLink("submit_another", "Submit another response")
-                                                            )
-                                                          )
-                                                   ))
+                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
+                                        tabPanel("Cost and Revenue", br(),
+                                                 fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
+                                                 actionButton("submit_food", label = "Submit")
                                         )
                                  )
+                                 # shinyjs::hidden(
+                                 #   div(
+                                 #     id = "thankyou_msg",
+                                 #     h3("Your metric was submitted successfully."),
+                                 #     actionLink("submit_another", "Submit another response")
+                                 #   )
+                                 # )
                                  
                         ),
                         tabPanel("Operational Metrics - Lab", value = "lab",
@@ -378,9 +345,12 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turnaround Time", hr(),
+                                        tabPanel("Turnaround Time",
+                                                 hr(),
                                                  fileInput("lab_scc", label = "Please upload SCC lab data"),
+                                                 hr(),
                                                  fileInput("lab_sun", label = "Please upload Sunquest lab data"),
+                                                 hr(),
                                                  actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
                                                  ),
                                         tabPanel("Proficiency Testing", hr(),
