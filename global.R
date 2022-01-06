@@ -190,9 +190,9 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 # operational_metrics_lab_path <- here("Data/Summary Repos/Lab - Metrics.xlsx")
 
 start <- "J:" #Comment when publishing to RConnect
-# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
- home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-#home_path <- "/data/Scorecards_Data/"
+ # start <- "/data"  #Uncomment when publishing to RConnect
+ # home_path <- paste0(start,"/Scorecards/")
+home_path <- "/data/Scorecards_Data/"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
 target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
@@ -219,7 +219,7 @@ security_events_path <- paste0(home_path,
 hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 
 #
-key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
+key_volume_mapping_path <- paste0("/SharedDrive/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")

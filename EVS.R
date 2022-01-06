@@ -1,7 +1,7 @@
-start <- "J:" #Comment when publishing to RConnect
-# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
+# start <- "J:" #Comment when publishing to RConnect
+# # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
+# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+# operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 
 
 summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= max(Month) %m-% months(12)) %>%

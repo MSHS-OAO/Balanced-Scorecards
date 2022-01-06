@@ -41,7 +41,6 @@ census_days_file_process <- function(data){
 }
 
 
-data_raw_cost <- read_excel(paste0(home_path, "Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"), sheet = "Cost and Revenue")
 
 cost_and_revenue_file_process <- function(data){
   
@@ -105,6 +104,9 @@ cost_and_revenue_file_process <- function(data){
   
 
 }
+
+
 ##### Testing to read in Cost and Revenue from Summary Repos
 census_days <- census_days_file_process(data_raw)
+data_raw_cost <- read_excel(paste0(home_path, "Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"), sheet = "Cost and Revenue")
 cost_and_revenue_repo <- read_excel(paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
