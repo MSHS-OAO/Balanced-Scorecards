@@ -7,8 +7,11 @@ default_campus <- sort(unique(metrics_final_df$Site))
 campus_choices <- sort(unique(metrics_final_df$Site))
 default_service <- sort(unique(metrics_final_df$Service))[1]
 service_choices <- sort(unique(metrics_final_df$Service))
-default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
-month_choices <- unique(metrics_final_df$Reporting_Month)
+# default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
+# month_choices <- unique(metrics_final_df$Reporting_Month)
+default_month <- format(max(metrics_final_df$Reporting_Month_Ref, na.rm = TRUE), "%m-%Y")
+month_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+
 
 
 ui <- 
