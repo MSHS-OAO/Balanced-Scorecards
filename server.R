@@ -445,45 +445,24 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Merge Current and Previous Months Breakdown
-      breakdown_all <- merge(current_breakdown, past_avg, by = c("Metric_Group","Summary_Metric_Name","Site"),
-                             sort = FALSE)
-      breakdown_all <- merge(breakdown_all, past_breakdown, by = c("Metric_Group","Summary_Metric_Name","Site"),
-                             sort = FALSE)
-      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group,
-                                                  levels=unique(summary_tab_metrics$Metric_Group))),]
-
-      # breakdown_all <- breakdown_all %>%
-      #   mutate(Metric_Group = factor(Metric_Group,
-      #                                levels = unique(summary_tab_metrics$Metric_Group),
-      #                                ordered = TRUE),
-      #          Summary_Metric_Name = factor(Summary_Metric_Name,
-      #                                       levels = unique(summary_tab_metrics$Summary_Metric_Name),
-      #                                       ordered = TRUE)) %>%
-      #   arrange(Metric_Group,
-      #           Summary_Metric_Name) %>%
-      #   mutate(Metric_Group = as.character(Metric_Group),
-      #          Summary_Metric_Name = as.character(Summary_Metric_Name))
-
-      metric_group_order <- as.vector(unique(breakdown_all$Metric_Group))
-      metric_name_order <- as.vector(unique(breakdown_all$Summary_Metric_Name))
+      breakdown_all <- merge(current_breakdown, past_avg, by = c("Metric_Group","Summary_Metric_Name","Site"))
+      breakdown_all <- merge(breakdown_all, past_breakdown, by = c("Metric_Group","Summary_Metric_Name","Site"))
+      
+      
+      # Rename column "value rounded" column with current period selected
       names(breakdown_all)[names(breakdown_all) == 'value_rounded'] <- format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
       
-      #breakdown_all <- merge(breakdown_all, metric_grouping[,c("Metric_Group", "Metric_Name")])
-      
-      
       # Format units
-      breakdown_all <- merge(breakdown_all, metric_unit_filter_summary,
-                             sort = FALSE)#,
-                    # by.x = c("Metric_Group","Summary_Metric_Name"),
-                    # by.y = c("Metric_Group","Metric_Name"))
+      breakdown_all <- merge(breakdown_all, metric_unit_filter_summary)#,
+      # by.x = c("Metric_Group","Summary_Metric_Name"),
+      # by.y = c("Metric_Group","Metric_Name"))
       
       breakdown_all <- breakdown_all %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
                                           ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
-  
+      
       breakdown_all$Metric_Unit <- NULL
       
-
       # Create and Format Comparison Table
       breakdown_all[breakdown_all == "NA"] <- NA
       breakdown_all[breakdown_all == "NaN"] <- NA
@@ -493,12 +472,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       breakdown_all[breakdown_all == "$NaN"] <- NA
       
       breakdown_all[is.na(breakdown_all)] <- "-"
-      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),]
-      row.names(breakdown_all) <- NULL
+
+      
+      
+      breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group,
+                                                  levels=unique(summary_tab_metrics$Metric_Group))),]
       
       breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Variance to Budget", "Budget to Actual MOM")] <- ">= Budget"
       breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
       
+      # Set metric groups and metric names as factors and reorder dataframe accordingly
+      breakdown_all <- breakdown_all %>%
+        mutate(Metric_Group = factor(Metric_Group,
+                                     levels = unique(summary_tab_metrics$Metric_Group),
+                                     ordered = TRUE),
+               Summary_Metric_Name = factor(Summary_Metric_Name,
+                                            levels = unique(summary_tab_metrics$Summary_Metric_Name),
+                                            ordered = TRUE)) %>%
+        arrange(Metric_Group,
+                Summary_Metric_Name,
+                Site) %>%
+        mutate(Metric_Group = as.character(Metric_Group),
+               Summary_Metric_Name = as.character(Summary_Metric_Name))
+      
+      row.names(breakdown_all) <- NULL
+      
+      metric_group_order <- as.vector(unique(breakdown_all$Metric_Group))
+      metric_name_order <- as.vector(unique(breakdown_all$Summary_Metric_Name))
+      
+      #breakdown_all <- merge(breakdown_all, metric_grouping[,c("Metric_Group", "Metric_Name")])
+      
+      # breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),]
+      
+      
+            
       factor_ordering <- table(breakdown_all$Summary_Metric_Name)
       factor_ordering <- factor_ordering[order(factor(names(factor_ordering), levels = metric_name_order))]
       
@@ -1738,6 +1745,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         overtime_file_path <- overtime_file$datapath
         #overtime_file_path <- paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx")
         overtime_data <- read_excel(overtime_file_path)
+        
       }
       
       # Save prior version of Lab TAT Dept Summary data
@@ -1808,20 +1816,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         summary_repo_format <- data[[2]]
         
-        
         metrics_final_df <<- transport__metrics_final_df_process(npt_data)
         
         saveRDS(metrics_final_df, metrics_final_df_path)
         
         transport_summary_repo <- read_excel(transport_table_path)
-        updated_rows <- unique(summary_repo_format[c("Service","Site", "Month")])
+        transport_summary_repo$Date <- format(as.Date(transport_summary_repo$Date),"%d/%m/%Y")
+        transport_summary_repo$Month <- format(as.Date(transport_summary_repo$Month),"%d/%m/%Y")
+        
+        updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
         updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
         
         transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
         transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
         transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
         transport_summary_repo <- as.data.frame(transport_summary_repo)
-        write_xlsx(transport_summary_repo, transport_table_path, row.names = FALSE)
+        write_xlsx(transport_summary_repo, transport_table_path)
         
         picker_choices <-  unique(metrics_final_df$Reporting_Month)
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1835,15 +1845,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         pt_file <- input$patient_transport
         
-        if (is.null(patient_transport)) {
+        if (is.null(pt_file)) {
           return(NULL)
         }else{
           file_path <- pt_file$datapath
           #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-          pt_data <- read_excel(file_path)
+          #pt_data <- read_excel(file_path)
+
         }
         
-        data <- process_PT_data(npt_data)
+        data <- process_PT_data(file_path)
         
         pt_data <- data[[1]]
         
@@ -1854,14 +1865,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         saveRDS(metrics_final_df, metrics_final_df_path)
         
         transport_summary_repo <- read_excel(transport_table_path)
-        updated_rows <- unique(summary_repo_format[c("Service","Site", "Month")])
+        transport_summary_repo$Date <- format(as.Date(transport_summary_repo$Date),"%d/%m/%Y")
+        transport_summary_repo$Month <- format(as.Date(transport_summary_repo$Month),"%d/%m/%Y")
+        
+        updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
         updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
         
         transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
         transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
         transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
         transport_summary_repo <- as.data.frame(transport_summary_repo)
-        write_xlsx(transport_summary_repo, transport_table_path, row.names = FALSE)
+        write_xlsx(transport_summary_repo, transport_table_path)
         
         picker_choices <-  unique(metrics_final_df$Reporting_Month)
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])

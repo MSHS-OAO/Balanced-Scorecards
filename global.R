@@ -67,6 +67,7 @@ suppressMessages({
   library(janitor)
   library(stringr)
   library(glue)
+  library(magrittr)
 })
 
 # source("EVS.R")
@@ -328,8 +329,6 @@ key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 
 processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Reporting_Period",
                        "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
-
-press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey")
 
 ### Process Productivity Data 
 
