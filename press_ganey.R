@@ -1,3 +1,38 @@
+# Source code for Press Ganey
+
+# Import historical summary
+press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey")
+
+# Import current data for testing
+data_ed <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
+data_nursing <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 08-2021.csv"))
+data_support <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 08-2021.csv"))
+
+data <- data_ed
+
+# 
+# test <- press_ganey_ed(data_ed)
+# test <- press_ganey_processing(test)
+# 
+# data <- press_ganey_suppport_file(data_support)
+
+data_reporting_month <- data[(which(data$`REPORT TITLE` == "Service Date")+1), 2]
+colnames(data_reporting_month) <- "ReportingMo"
+
+data_reporting_month <- data_reporting_month$ReportingMo[1]
+
+data_reporting_month <- as.Date(str_extract(data_reporting_month, ".*(?=\\s\\-)"),
+                format = "%m/%d/%Y")
+
+# Find the rows where Press Ganey data is located
+pg_data_start <- which(data$`REPORT TITLE` %in% "Service")[1] + 1
+pg_data_end <- ifelse(sum(data$`REPORT TITLE` %in% "DEMOGRAPHIC REPORT") > 0,
+                      which(data$`REPORT TITLE` %in% "DEMOGRAPHIC REPORT") - 1,
+                      nrow(data))
+
+# Subset raw data for rows of interest
+data_pg <- data[pg_data_start:pg_data_end, ]
+
 press_ganey_ed <- function(data){
   # row_cutoff <- min(which(data$`REPORT TITLE` == "Emergency Department"))-1
   # data <- data[row_cutoff:nrow(data),]
@@ -187,12 +222,4 @@ press_ganey_processing <- function(data) {
 }
 
 
-# data_support <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 09-2021.csv"))
-# data_nursing <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 09-2021 Edited.csv"))
-# data_ed <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
-# 
-# test <- press_ganey_ed(data_ed)
-# test <- press_ganey_processing(test)
-# 
-# data <- press_ganey_suppport_file(data_support)
 
