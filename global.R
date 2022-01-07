@@ -67,6 +67,7 @@ suppressMessages({
   library(janitor)
   library(stringr)
   library(glue)
+  library(magrittr)
 })
 
 # source("EVS.R")

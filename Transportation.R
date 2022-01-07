@@ -1,7 +1,7 @@
 # start <- "J:" #Comment when publishing to RConnect
 # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/Support Services Data Collection Template.xlsx")
+# pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/PTET.xlsx")
 
 
 
@@ -24,8 +24,9 @@ process_PT_data <- function(pt_data_raw){
 
   # pt_data_raw <- pt_data_raw %>%
   #   slice(3:end)
+  pt_data_raw <- read_excel(pt_data_raw)
   
-  hospitals_in_data <- c(unique(pull(pt_data_raw[,`...1`])))
+  hospitals_in_data <- c(unique(pull(pt_data_raw[,"...1"])))
   
   mask <- hospitals_in_data %in% hospitals
   
@@ -34,9 +35,10 @@ process_PT_data <- function(pt_data_raw){
 
   rownums <- c()
   
+  
   for (hospital in hospitals_in_data){
     
-    rownums <- append(rownums,which(pt_data_raw[`...1`] == hospital))
+    rownums <- append(rownums,which(pt_data_raw["...1"] == hospital))
     
   }
   
@@ -58,6 +60,7 @@ process_PT_data <- function(pt_data_raw){
       pivot_longer(cols =-Metric_Group,
                     names_to = "Day",
                     values_to = "value_rounded") %>%
+      drop_na(value_rounded) %>%
       mutate(Day =  as.Date(as.numeric(as.character(Day)),origin= "1899-12-30"),
              Site = hospital,
              Service = "Patient Transport",
@@ -71,7 +74,7 @@ process_PT_data <- function(pt_data_raw){
                 "Turnaround Time" = mean(`Avg TAT`,na.rm=TRUE),
                 transportsMoreThan45min = sum(`PT TAT >45 min #`,na.rm=TRUE)) %>%
      ungroup() %>%
-     mutate("% of Trips Over 45 Minutes" = transportsMoreThan45min*100/totalTransports) %>%
+     mutate("% of Trips Over 45 Minutes" = round(transportsMoreThan45min/totalTransports,2)) %>%
      select(-totalTransports,-transportsMoreThan45min) %>%
      pivot_longer(cols = c(-Site,-Premier_Reporting_Period,-Reporting_Month,-Service),
                   names_to = "Metric_Group",
@@ -88,9 +91,9 @@ process_PT_data <- function(pt_data_raw){
    
   processed_data <- bind_rows(processed_data)
   
+
   ## code for summary repo ---
   summary_repo <- list()
-  
   
   for(hospital in names(rownums)){
     
@@ -105,17 +108,18 @@ process_PT_data <- function(pt_data_raw){
       pivot_longer(cols =-Metric_Group,
                    names_to = "Date",
                    values_to = "value_rounded")  %>%
+      drop_na(value_rounded) %>%
     mutate(Date =  as.Date(as.numeric(as.character(Date)),origin= "1899-12-30"),
-           Site = hospital,
-           `Transport Type` = "Patient",
-           Month = floor_date(Date,"month"),
-           Date = format(Date,"%m/%d/%Y"),
-           Month = format(Month,"%m/%d/%Y"),
            value_rounded = as.numeric(value_rounded)) %>%
     pivot_wider(names_from = "Metric_Group",values_from = "value_rounded",values_fill=0) %>%
+    mutate(Site = hospital,
+          `Transport Type` = "Patient",
+           Month = floor_date(Date,"month"),
+           Date = format(Date,"%m/%d/%Y"),
+           Month = format(Month,"%m/%d/%Y")) %>%
     rename("Total Transports" = `# Transports`,
-            "PT TAT >45 min"=`PT TAT >45 min #`) %>%
-     select(Site,Date,Month,`Total Transports`,`Avg TAT`,`PT TAT >45 min`,`Transport Type`)
+           "PT TAT > 45 min"=`PT TAT >45 min #`) %>%
+    select(Site,Date,Month,`Total Transports`,`Avg TAT`,`PT TAT > 45 min`,`Transport Type`)
     
     summary_repo[[hospital]] <- datas
       
@@ -128,7 +132,7 @@ process_PT_data <- function(pt_data_raw){
 
 }
 
-# summary_repos_transport <- process_PT_data(pt_raw_data)
+#summary_repos_transport <- process_PT_data(pt_raw_data)
 
 
 
@@ -168,7 +172,7 @@ process_NPT_raw_data <- function(data){
                                                   ifelse(data$Site == "MSH Region", "MSH", NA))))))
   
   data_metrics <- data%>%
-    mutate(`% of Trips Over 45 Minutes` = round((`No of Trips Over 45 Minutes`)*100/`No of Transports`,2),
+    mutate(`% of Trips Over 45 Minutes` = round((`No of Trips Over 45 Minutes`)/`No of Transports`,2),
            Month = format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y"),
            Service = "Patient Transport") %>%
     mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
@@ -182,12 +186,12 @@ process_NPT_raw_data <- function(data){
   
   summary_repo <- data%>%
     mutate(Month = format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y"),
-           Date = NA,
+           Date = " ",
            "Transport Type" = "Non-Patient") %>%
-    rename("PT TAT >45 min" = "No of Trips Over 45 Minutes",
+    rename("PT TAT > 45 min" = "No of Trips Over 45 Minutes",
            "Total Transports" ="No of Transports",
            "Avg TAT" = "Turnaround Time") %>%
-    select(Site,Date,Month,`Total Transports`,`Avg TAT`,`PT TAT >45 min`,`Transport Type`)
+    select(Site,Date,Month,`Total Transports`,`Avg TAT`,`PT TAT > 45 min`,`Transport Type`)
   
   
   
@@ -199,37 +203,34 @@ transport__metrics_final_df_process <- function(data){
   TAT_Transport_target_status <- left_join(data[, c("Service","Site","Metric_Group", "Metric_Name","Reporting_Month","value_rounded")],
                                      target_mapping, 
                                      by = c("Service","Site","Metric_Group", "Metric_Name"))
-  
 
   TAT_Transport_target_status <- TAT_Transport_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
     filter(Variance == TRUE)
-  
-  
+
   TAT_Transport_df_final <- merge(data, 
                             TAT_Transport_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
                             all = TRUE)
-  
-  print(TAT_Transport_df_final)
   
   TAT_Transport_df_merge <- TAT_Transport_df_final[,processed_df_cols]
   
   
   TAT_Transport_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(TAT_Transport_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
   
+
   updated_rows <- unique(TAT_Transport_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
   
   
   metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+
+  metrics_final_df <- full_join(metrics_final_df,TAT_Transport_df_merge)
   
-  metrics_final_df <- full_join(metrics_final_df,updated_rows)
 }
 
 
 # NPT_Data <- paste0(home_path,"Input Data Raw/Transport/MSHS_Transport_Metrics_Report.xlsx")
 # npt_data <- read_excel(NPT_Data)
-
-
+# # 
+# # 
 # npt_datasum <- process_NPT_raw_data(npt_data)
-# 
 # transport__metrics_final_df_process(npt_datasum[[1]])
