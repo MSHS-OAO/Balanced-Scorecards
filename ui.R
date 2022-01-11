@@ -237,10 +237,25 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
-                                 fileInput("press_ed", label = "Please upload Press Ganey ED data"),
-                                 fileInput("press_nursing", label = "Please upload Press Ganey Nursing data"),
-                                 fileInput("press_support", label = "Please upload Press Ganey Support Services data"),
-                                 actionButton("submit_press", label = "Submit")),
+                                 tabBox(title = NULL, id = "tabset20", width = "100%", type = 'pills',
+                                        tabPanel("Monthly Data",
+                                                 hr(),
+                                                 fileInput("pg_ed_monthly", label = "Please upload monthly Press Ganey ED data"),
+                                                 hr(),
+                                                 fileInput("pg_nursing_monthly", label = "Please upload monthly Press Ganey Nursing data"),
+                                                 hr(),
+                                                 fileInput("pg_support_monthly", label = "Please upload monthly Press Ganey Support Services data"),
+                                                 actionButton("submit_monthly_press_ganey", label = "Submit")),
+                                        tabPanel("YTD Data",
+                                                 hr(),
+                                                 fileInput("pg_ed_ytd", label = "Please upload YTD Press Ganey ED data"),
+                                                 hr(),
+                                                 fileInput("pg_nursing_ytd", label = "Please upload YTD Press Ganey Nursing data"),
+                                                 hr(),
+                                                 fileInput("pg_support_ytd", label = "Please upload YTD Press Ganey Support Services data"),
+                                                 actionButton("submit_ytd_press_ganey", label = "Submit"))
+                                 )
+                        ),
                         tabPanel("Productivity", value = "productivity",
                                  span("Productivity Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -621,7 +636,13 @@ ui <-
 
   
   tags$style(HTML("
-        #submit_press {
+        #submit_monthly_press_ganey {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ 
+ tags$style(HTML("
+        #submit_ytd_press_ganey {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
