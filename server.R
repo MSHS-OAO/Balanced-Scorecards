@@ -142,6 +142,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       metrics_summary <- merge(fytd_summary, current_summary, by = c("Section","Metric_Name"), all = TRUE)
       metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
       
+      
+
       # Format units
       metrics_summary$Metric_Unit <- metric_unit_filter_summary$Metric_Unit[match(metrics_summary$Metric_Name, 
                                                                                   metric_unit_filter_summary$Summary_Metric_Name)]
@@ -1736,7 +1738,65 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
 
     # 5. Overtime - Data Input -----------------3----------------------------------------------------------------
+    observeEvent(input$submit_finance, {
+      census_file <- input$finance_census
+      
+      if(is.null(census_file)){
+        return(NULL)
+      }else{
+        census_filepath <- census_file$datapath
+        #census_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"
+        #Read in census file
+        census_data <- read_excel(census_filepath)
+      }
+      
+      # Save prior version of COst and Revenue Summary data
+      write_xlsx(cost_and_revenue_repo,
+                 paste0(hist_archive_path,
+                        "Cost and Revenue ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      ## Process Census Data
+      census_summary_data <- census_days_file_process(census_data)
+      
+      # Append Lab TAT summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      census_new_data <- unique(
+        census_summary_data[  c("Service", "Site", "Month")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
+                                          census_new_data,
+                                          by = c("Service" = "Service",
+                                                 "Site" = "Site",
+                                                 "Month" = "Month"))
+      
+      
+      # Third, combine the updated historical data with the new data
+      cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
+                                        census_summary_data)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
+      
+      # Update metrics_final_df with latest SCC data using custom function
+      metrics_final_df <<- census_days_metrics_final_process(census_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
     
+      
     observeEvent(input$submit_finance, {
       overtime_file <- input$finance_overtime
       
