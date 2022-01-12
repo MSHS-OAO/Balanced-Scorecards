@@ -1821,8 +1821,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         saveRDS(metrics_final_df, metrics_final_df_path)
         
         transport_summary_repo <- read_excel(transport_table_path)
-        transport_summary_repo$Date <- format(as.Date(transport_summary_repo$Date),"%d/%m/%Y")
-        transport_summary_repo$Month <- format(as.Date(transport_summary_repo$Month),"%d/%m/%Y")
+        transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
         
         updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
         updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
@@ -1865,11 +1864,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         saveRDS(metrics_final_df, metrics_final_df_path)
         
         transport_summary_repo <- read_excel(transport_table_path)
-        transport_summary_repo$Date <- format(as.Date(transport_summary_repo$Date),"%d/%m/%Y")
-        transport_summary_repo$Month <- format(as.Date(transport_summary_repo$Month),"%d/%m/%Y")
-        
+        transport_summary_repo$Date <- as.Date(transport_summary_repo$Date)
+        transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
         updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
-        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
         
         transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
         transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
