@@ -67,6 +67,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Data Period Filtering
       period_filter <- data %>% 
         group_by(Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>% 
+        #distinct() %>%
         summarise(total = n()) %>%                                                            #
         arrange(Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
         group_by(Metric_Group, Metric_Name) %>%
@@ -894,7 +895,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_final_df <<- evs__metrics_final_df_process(evs_data)
       
-      saveRDS(metrics_final_df, metrics_final_df_path)
+      #saveRDS(metrics_final_df, metrics_final_df_path)
       
       evs_summary_repo <- read_excel(evs_table_path)
       updated_rows <- unique(evs_data[c("Service","Site", "Month")])
@@ -915,7 +916,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       evs_summary_repo <- full_join(evs_summary_repo, evs_data)
       evs_summary_repo <- as.data.frame(evs_summary_repo)
-      write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
+      #write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
       
       picker_choices <-  unique(metrics_final_df$Reporting_Month)
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])

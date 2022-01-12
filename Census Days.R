@@ -1,9 +1,3 @@
-start <- "J:" #Comment when publishing to RConnect
-# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-
-data_raw <- read_excel(paste0(home_path, "Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"))
-
 census_days_file_process <- function(data){
   start_index <- which(colnames(data) == "Census Days") 
   end_index <- which(colnames(data) == "Nursery Days")-3 
@@ -106,7 +100,52 @@ cost_and_revenue_file_process <- function(data){
 }
 
 
+census_days_metrics_final_process <- function(data) {
+  raw_cost_rev_df <- data
+  
+  
+  # Cost and Revenue data pre-processing
+  cost_rev_df <- raw_cost_rev_df %>%
+    select(-Notes) %>%
+    mutate(
+      `Actual Revenue` = as.numeric(`Actual Revenue`),
+      rev_per_census = round(`Actual Revenue`/`Census Days`, 2),
+      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(`Revenue Budget` - `Actual Revenue`, 2))),
+      Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
+      Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
+    pivot_longer(
+      6:9,
+      names_to = "Metric_Name_Submitted",
+      values_to = "value") %>%
+    mutate(
+      Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
+      Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y"),
+      value_rounded = round(value, 2))
+  
+  cost_rev_df_final <- merge(cost_rev_df, cost_rev_mapping, 
+                             by = c("Metric", "Metric_Name_Submitted"))
+  
+  
+  # Subset processed data for merge 
+  cost_rev_df_merge <- cost_rev_df_final[,processed_df_cols] 
+  cost_rev_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(cost_rev_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
+  
+  
+  updated_rows <- unique(cost_rev_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
+  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  
+  cost_rev_df_merge$Target <- as.numeric(cost_rev_df_merge$Target)
+  metrics_final_df <- full_join(metrics_final_df,cost_rev_df_merge)
+  
+  }
+
 ##### Testing to read in Cost and Revenue from Summary Repos
+start <- "J:" #Comment when publishing to RConnect
+# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+
+data_raw <- read_excel(paste0(home_path, "Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"))
+
 census_days <- census_days_file_process(data_raw)
 data_raw_cost <- read_excel(paste0(home_path, "Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"), sheet = "Cost and Revenue")
 cost_and_revenue_repo <- read_excel(paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))

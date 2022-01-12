@@ -84,22 +84,28 @@ evs_file_process <- function(data, month){
 
 
 evs__metrics_final_df_process <- function(data){
+  
   raw_TAT_EVS_df <- data
+  
+  
   ## TAT - EVS processing 
-  #raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)] <- sapply(raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)], as.numeric)
+  raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)] <- sapply(raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)], as.numeric)
   TAT_EVS_df <- raw_TAT_EVS_df %>%
-    mutate(`% Isolation Turns` = round((`Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`)),2),
-           `% Non-Isolation Turns` = round((`Non-Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`)),2)) %>%
+    mutate(`% Isolation Turns` = round(`Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`),2),
+           `% Non-Isolation Turns` = round(`Non-Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`),2)) %>%
     pivot_longer(4:11,
                  names_to = "Metric_Name_Submitted",
                  values_to = "value_rounded") %>%
-    mutate(value_rounded = round(value_rounded,2),
-           Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
-           Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%m-%Y")) %>%
-           select(-Month)
+    mutate(#value_rounded = round(value_rounded),
+      Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
+      Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%m-%Y"))
   
   TAT_EVS_df <- merge(TAT_EVS_df, metric_group_mapping[c("Metric_Group","Metric_Name","Metric_Name_Submitted")],
                       by = c("Metric_Name_Submitted"))
+  
+  # TAT_EVS_df <- TAT_EVS_df %>% select(-Metric_Group.y,-Metric_Name.y) %>%
+  #                               rename(Metric_Group.x = Metric_Group,
+  #                                       Metric_Name.x = Metric_Name)
   
   ### Create Target Variance Column
   TAT_EVS_target_status <- merge(TAT_EVS_df[, c("Service","Site","Metric_Group", "Metric_Name","Reporting_Month","value_rounded")],
@@ -110,13 +116,11 @@ evs__metrics_final_df_process <- function(data){
   
   TAT_EVS_target_status <- TAT_EVS_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>% # Target mapping
-    filter(!is.na(Reporting_Month)) %>%
     filter(!(Variance %in% FALSE))
   
   TAT_EVS_df_final <- merge(TAT_EVS_df, 
                             TAT_EVS_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
                             all = FALSE)
-  
   
   # Subset processed data for merge 
   TAT_EVS_df_merge <- TAT_EVS_df_final[,processed_df_cols]
@@ -132,7 +136,10 @@ evs__metrics_final_df_process <- function(data){
 }
 
 
-# test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")
-# month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT_March21.xlsx")[1]
+
+
+
+# test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx")
+# month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx")[1]
 # 
 # data <- evs_file_process(test,month)
