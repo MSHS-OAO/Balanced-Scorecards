@@ -548,10 +548,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      service_input <- "Security"
-      month_input <- "10-2021"
-      site_input <- "MSH"
-      # 
+      # service_input <- "Security"
+      # month_input <- "10-2021"
+      # site_input <- "MSH"
+
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>%
                                        filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
@@ -644,7 +644,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       ## Past 12 months of Breakout
       past_site_breakdown <- data %>%
-        filter(id >= 2 & id <= 13) #%>%
+        filter(id >= 2 & id <= 13) %>%
         group_by(Metric_Group, Metric_Name, Reporting_Month_Ref) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
         arrange(Reporting_Month_Ref) %>%
