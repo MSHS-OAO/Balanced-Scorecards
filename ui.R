@@ -633,7 +633,21 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")), 
-
+ 
+ tags$style(HTML("
+        #submit_npt_tat {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
+ tags$style(HTML("
+        #submit_pt_tat {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
   
   tags$style(HTML("
         #submit_monthly_press_ganey {
