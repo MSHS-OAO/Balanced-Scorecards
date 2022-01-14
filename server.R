@@ -1598,7 +1598,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
         
         # Save updates metrics_final_df
-        # saveRDS(metrics_final_df, metrics_final_df_path)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         
       })
       
@@ -1687,11 +1687,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         sec_events_manual_updates <<- hot_to_r(input$sec_events)
         
         # Save prior version of Monthly Security Events Dept Summary data
-        # write_xlsx(security_events,
-        #            paste0(hist_archive_path,
-        #                   "Security Events Monthly Pre Updates ",
-        #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-        #                   ".xlsx"))
+        write_xlsx(security_events,
+                   paste0(hist_archive_path,
+                          "Security Events Monthly Pre Updates ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
         
         # Reformat data from manual input table into department summary format
         sec_events_summary_data <-
