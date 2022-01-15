@@ -28,7 +28,7 @@ disruptions_issues_reports_ui <- disruptions_issues_reports %>%
 
 # KPIs Biomed -------------
 # Import historical summary
-kpibme_reports <- read_excel(bmekpi_table_path)
+kpibme_reports <- read_excel(bmekpi_table_path,sheet = "KPIs")
 
 # Reformat "Month" column in KPIs for merging
 kpibme_reports <- kpibme_reports %>%
@@ -39,6 +39,7 @@ kpibme_last_month <- max(kpibme_reports$Month)
 
 # Transform data to UI form
 kpibme_reports_ui <- kpibme_reports %>%
+  select(-Service) %>%
   filter(Month >= kpibme_last_month - months(7)) %>%
   mutate(Month = format(Month, "%m-%Y"),
          Number = round(as.numeric(Number),2),
@@ -47,3 +48,15 @@ kpibme_reports_ui <- kpibme_reports %>%
   group_by(Site) %>%
   mutate('{format(kpibme_last_month + months(1), "%m-%Y")}' := "") %>%
   arrange(Site)
+
+# function to append the new data to summary repo- KPIs & Disruptions and Issues -----
+process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
+  
+  
+  
+}
+# function to append data into metrics_final_df- KPIs & Disruptions and Issues -----
+biomed__metrics_final_df_process <- function(data){
+  
+}
+
