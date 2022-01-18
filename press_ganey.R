@@ -7,9 +7,9 @@ press_ganey_data <- read_excel(press_ganey_table_path)
 press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey v2")
 
 # Import current data for testing
-raw_data_ed <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
-raw_data_nursing <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 08-2021.csv"))
-raw_data_support <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 08-2021.csv"))
+data_ed_monthly <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
+data_nursing_monthly <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 08-2021.csv"))
+data_support_monthly <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 08-2021.csv"))
 # 
 data <- raw_data_support
 
