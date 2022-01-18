@@ -2,34 +2,65 @@
 
 # Import historical summary
 press_ganey_data <- read_excel(press_ganey_table_path)
+press_ganey_data <- press_ganey_data %>%
+  mutate(Reporting_Date_Start = as.Date(Reporting_Date_Start),
+         Reporting_Date_End = as.Date(Reporting_Date_End)) %>%
+  filter(!(Site %in% "All"))
 
 # Import mapping file
 press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey v2")
 
 # Import current data for testing
-data_ed_monthly <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/ED 09-2021.csv"))
-data_nursing_monthly <- read_csv(paste0(home_path, "Input Data Raw/Press Ganey/Nursing 08-2021.csv"))
-data_support_monthly <- read_csv(paste0(home_path,"Input Data Raw/Press Ganey/Support Services 08-2021.csv"))
+# Import monthly data
+data_ed_monthly <- read_csv(paste0(home_path,
+                                   "Input Data Raw/Press Ganey/",
+                                   "ED 09-2021.csv"),
+                            show_col_types = FALSE)
+data_nursing_monthly <- read_csv(paste0(home_path,
+                                        "Input Data Raw/Press Ganey/",
+                                        "Nursing 08-2021.csv"),
+                                 show_col_types = FALSE)
+data_support_monthly <- read_csv(paste0(home_path,
+                                        "Input Data Raw/Press Ganey/",
+                                        "Support Services 08-2021.csv"),
+                                 show_col_types = FALSE)
 # 
-data <- raw_data_support
+# Import YTD data
+data_ed_ytd <- read_csv(paste0(home_path,
+                               "Input Data Raw/Press Ganey/",
+                               "ED YTD 012021 to 092021.csv"),
+                        show_col_types = FALSE)
+data_nursing_ytd <- read_csv(paste0(home_path,
+                                    "Input Data Raw/Press Ganey/",
+                                    "Nursing YTD 012021 to 082021.csv"),
+                             show_col_types = FALSE)
+data_support_ytd <- read_csv(paste0(home_path,
+                                    "Input Data Raw/Press Ganey/",
+                                    "Support Services YTD 012021 to 082021.csv"),
+                             show_col_types = FALSE)
 
-#
-# test <- press_ganey_ed(data_ed)
-# test <- press_ganey_processing(test)
-#
-# data <- press_ganey_suppport_file(data_support)
+
+
+data <- data_ed_monthly
+
 
 
 # Custom function for processing Press Ganey data
 press_ganey_dept_summary <- function(data) {
 
-  data_reporting_month <- data[(which(data$`REPORT TITLE` == "Service Date")+1), 2]
-  colnames(data_reporting_month) <- "ReportingMo"
+  data_reporting_period <- data[(which(data$`REPORT TITLE` == "Service Date")+1), 2]
+  colnames(data_reporting_period) <- "ReportingPeriod"
 
-  data_reporting_month <- data_reporting_month$ReportingMo[1]
+  data_reporting_period <- data_reporting_period$ReportingPeriod[1]
 
-  data_reporting_month <- as.Date(str_extract(data_reporting_month, ".*(?=\\s\\-)"),
+  reporting_start <- as.Date(str_extract(data_reporting_period, ".*(?=\\s\\-)"),
                                   format = "%m/%d/%Y")
+  reporting_end <- as.Date(str_extract(data_reporting_period, "(?<=\\- ).*"),
+                           format = "%m/%d/%Y")
+  
+  reporting_type <- ifelse(month(reporting_start) == month(reporting_end) &
+                             year(reporting_start) == year(reporting_end),
+                           "Monthly", "YTD")
 
   # Find the rows where Press Ganey data is located
   pg_data_start <- which(data$`REPORT TITLE` %in% "Service")[1] + 1
@@ -56,7 +87,9 @@ press_ganey_dept_summary <- function(data) {
       str_detect(`My Sites`, "West") ~ "MSW",
       str_detect(`My Sites`, "New York Eye & Ear Infirmary") ~ "NYEE",
       str_detect(`My Sites`, "Total") ~ "MSHS"),
-      Month = data_reporting_month
+      ReportingType = reporting_type,
+      Reporting_Date_Start = reporting_start,
+      Reporting_Date_End = reporting_end
     )
 
   pg_data_split <- pg_data_split %>%
@@ -98,18 +131,26 @@ press_ganey_dept_summary <- function(data) {
            All_PG_Database_Mean = `All PG Database Score`,
            All_PG_Database_Rank = `All PG Database Rank`,
            All_PG_Database_N = `All PG Database N`) %>%
+    mutate_at(vars(c(contains("Site_"),
+                     contains("All_PG_Database_"))),
+              as.numeric) %>%
+    mutate_at(vars(contains("_Mean")),
+              round, digits = 2) %>%
     select(Service,
            Site,
-           Month,
            Question_Clean,
+           ReportingType,
+           Reporting_Date_Start,
+           Reporting_Date_End,
            Site_Mean,
            Site_N,
            All_PG_Database_Mean,
            All_PG_Database_N,
            All_PG_Database_Rank) %>%
-    arrange(Month,
-            Service,
-            Site)
+    arrange(Service,
+            Site,
+            ReportingType,
+            Reporting_Date_End)
 
 
 
@@ -118,9 +159,118 @@ press_ganey_dept_summary <- function(data) {
 
 }
 
-test_function_support <- press_ganey_dept_summary(data = data_support)
-test_function_nursing <- press_ganey_dept_summary(data = data_nursing)
-test_function_ed <- press_ganey_dept_summary(data = data_ed)
+pg_metrics_final_df <- press_ganey_data %>%
+  filter(ReportingType %in% "Monthly")
+
+pg_mapping_clean <- press_ganey_mapping %>%
+  select(-Questions)
+
+pg_metrics_final_df <- left_join(pg_metrics_final_df,
+                                 pg_mapping_clean,
+                                 by = c("Service" = "Service",
+                                        "Question_Clean" = "Question_Clean"))
+
+pg_metrics_final_df2 <- pg_metrics_final_df %>%
+  pivot_longer(cols = c(contains("Site_"),
+                        contains("All_PG_Database_")),
+               names_to = "Metric") %>%
+  mutate(Metric_Name_Submitted = ifelse(Metric %in% "Site_Mean",
+                                paste0(Question_Clean, " - Score"),
+                                ifelse(Metric %in% "Site_N" & Incl_N,
+                                       paste0(Question_Clean, " - N"),
+                                       ifelse(Metric %in% "All_PG_Database_Rank" &
+                                                Incl_AllHosp_Rank,
+                                              "Rank - All Hospitals", NA)))) %>%
+  filter(!is.na(Metric_Name_Submitted)) %>%
+  rename(value_rounded = value) %>%
+  mutate(Premier_Reporting_Period = format(Reporting_Date_Start, "%b %Y"),
+         Reporting_Month = format(Reporting_Date_Start, "%m-%Y"),
+         Question_Clean = NULL,
+         ReportingType = NULL,
+         Reporting_Date_Start = NULL,
+         Reporting_Date_End = NULL,
+         Incl_N = NULL,
+         Incl_AllHosp_Rank = NULL,
+         Metric = NULL)
+
+# test <- unique(pg_metrics_final_df2[c("Service", "Metric_Name_Submitted")])
+# 
+# test$Check <- test$Metric_Name_Submitted %in% metric_grouping_filter$Metric_Name_Submitted
+
+pg_metrics_final_df2 <- merge(pg_metrics_final_df2,
+                             metric_group_mapping[c("Metric_Group",
+                                                    "Metric_Name",
+                                                    "Metric_Name_Submitted")],
+                             by = c("Metric_Name_Submitted"))
+
+pg_metrics_target_status <- merge(pg_metrics_final_df2[, c("Service",
+                                                            "Site",
+                                                            "Metric_Group",
+                                                            "Metric_Name",
+                                                            "Reporting_Month",
+                                                            "value_rounded")],
+                                   target_mapping,
+                                   by.x = c("Service",
+                                            "Site",
+                                            "Metric_Group",
+                                            "Metric_Name"),
+                                   by.y = c("Service",
+                                            "Site",
+                                            "Metric_Group",
+                                            "Metric_Name"),
+                                   all.x = TRUE)
+
+pg_metrics_target_status <- pg_metrics_target_status %>%
+  mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+  filter(!is.na(Reporting_Month) &
+           !(Variance %in% FALSE))
+
+pg_metrics_df_merge <- merge(pg_metrics_final_df2,
+                             pg_metrics_target_status[, c("Service",
+                                                          "Site",
+                                                          "Metric_Group",
+                                                          "Metric_Name",
+                                                          "Reporting_Month",
+                                                          "Target",
+                                                          "Status")],
+                             all = FALSE)
+
+# Add reporting month back in
+pg_metrics_df_merge <- pg_metrics_df_merge %>%
+  mutate(Reporting_Month_Ref = as.Date(paste("01",
+                                             as.yearmon(Reporting_Month,
+                                                        "%m-%Y")),
+                                       format = "%d %b %Y"))
+
+pg_metrics_df_merge <- pg_metrics_df_merge[, processed_df_cols]
+
+new_rows <- unique(pg_metrics_df_merge[, c("Metric_Name",
+                                           "Reporting_Month",
+                                           "Service",
+                                           "Site")])
+
+metrics_final_df <- anti_join(metrics_final_df,
+                              new_rows)
+
+metrics_final_df <- full_join(metrics_final_df,
+                              pg_metrics_df_merge)
+
+# saveRDS(metrics_final_df, metrics_final_df_path)
+
+test_ed_monthly <- press_ganey_dept_summary(data = data_ed_monthly)
+test_ed_ytd <- press_ganey_dept_summary(data = data_ed_ytd)
+
+test_nursing_monthly <- press_ganey_dept_summary(data = data_nursing_monthly)
+test_nursing_ytd <- press_ganey_dept_summary(data = data_nursing_ytd)
+
+test_support_monthly <- press_ganey_dept_summary(data = data_support_monthly)
+test_support_ytd <- press_ganey_dept_summary(data = data_support_ytd)
+
+
+
+
+
+
 
 # press_ganey_ed <- function(data){
 #   # row_cutoff <- min(which(data$`REPORT TITLE` == "Emergency Department"))-1

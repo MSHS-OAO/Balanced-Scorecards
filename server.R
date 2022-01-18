@@ -793,6 +793,76 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
     
     
+    ## Read in Press Ganey data -----------------------------------
+    # ED Monthly Data Observe Event -------------------
+    observeEvent(input$submit_monthly_press_ganey, {
+      
+      # Name ED monthly data
+      ed_monthly <- input$pg_ed_monthly
+      
+      if (is.null(data_ed_monthly)) {
+        return(NULL)
+      } else {
+        ed_monthly_filepath <- ed_monthly$datapath
+        
+        ed_monthly_filepath <- paste0(home_path,
+                                      "Input Data Raw/Press Ganey/",
+                                      "ED 09-2021.csv")
+        
+        data_ed_monthly <- read_csv(ed_monthly_filepath,
+                                    show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-ED Monthly ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process ED monthly data
+      pg_ed_monthly_summary_data <- press_ganey_dept_summary(data_ed_monthly)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_ed_monthly_summary_data[c("Service",
+                                       "Site",
+                                       "ReportingType",
+                                       "Reporting_Date_Start",
+                                       "Reporting_Date_End",
+                                       "Question_Clean")]
+        )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                        pg_new_data,
+                                        by = c("Service" = "Service",
+                                               "Site" = "Site",
+                                               "Question_Clean" = "Question_Clean",
+                                               "ReportingType" = "ReportingType",
+                                               "Reporting_Date_Start" = "Reporting_Date_Start",
+                                               "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_ed_monthly_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+
+    })
+    
+    
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
       inFile <- input$productiviy_data
