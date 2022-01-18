@@ -288,7 +288,7 @@ ui <-
                                                             id = "form_biomed_disruptions",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_biomed_distruptions", (labelMandatory("Name:")), "")
+                                                                     textInput("name_biomed_distruptions", (labelMandatory("1. Please enter Name:")), "")
                                                               )
                                                             )
                                                             ,
@@ -315,7 +315,7 @@ ui <-
                                                             id = "form_biomed_kpi",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_biomed_kpi", (labelMandatory("Name:")), "")
+                                                                     textInput("name_biomed_kpi", (labelMandatory("1. Please enter Name:")), "")
                                                               )
                                                             ),
                                                             h2("2. Please enter data in the tables below"),

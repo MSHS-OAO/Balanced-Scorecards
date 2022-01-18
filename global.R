@@ -205,7 +205,7 @@ census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchma
 
 # File path for BME/CE KPI metrics
 bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
-bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssues.xlsx")
+bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssuesMonthly.xlsx")
 
 
 # File path for Lab KPI metrics
