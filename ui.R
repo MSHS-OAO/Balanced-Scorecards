@@ -291,7 +291,19 @@ ui <-
                                                                      textInput("name_biomed_distruptions", (labelMandatory("Name:")), "")
                                                               )
                                                             )
+                                                            ,
+                                                            h2("2. Please enter data in the tables below"),
+                                                            br(),
+                                                            div(id = "header_custom_biomed",
+                                                                h3("Please leave cell blank if data has not been received")
+                                                            ),
+                                                            h2("3. Once finished please click on the button below"),
                                                             #####Enter datatables here
+                                                            h2("Biomed/Clinical Engineering - Disruptions and Issues"),
+                                                            
+                                                            rHandsontableOutput("bimoed_di"),
+                                                            hr(),
+                                                            actionButton("submit_biomeddi", "Submit", class = "btn-primary")
                                                           )
                                                    )
                                                  )
@@ -305,8 +317,20 @@ ui <-
                                                               column(2,
                                                                      textInput("name_biomed_kpi", (labelMandatory("Name:")), "")
                                                               )
-                                                            )
+                                                            ),
+                                                            h2("2. Please enter data in the tables below"),
+                                                            br(),
+                                                            div(id = "header_custom_biomed",
+                                                                h3("Please leave cell blank if data has not been received")
+                                                            ),
+                                                            h2("3. Once finished please click on the button below"),
                                                             #####Enter datatables here
+                                                            h2("Biomed/Clinical Engineering - KPIs"),
+                                                            
+                                                            rHandsontableOutput("biomed_kpi"),
+                                                            hr(),
+                                                            actionButton("submit_biomedkpis", "Submit", class = "btn-primary")
+                      
                                                           )
                                                    )
                                                  ))
@@ -633,7 +657,21 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")), 
-
+ 
+ tags$style(HTML("
+        #submit_npt_tat {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
+ tags$style(HTML("
+        #submit_pt_tat {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
   
   tags$style(HTML("
         #submit_monthly_press_ganey {
@@ -658,6 +696,17 @@ ui <-
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
+ tags$style(HTML("
+        #submit_biomedkpis {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ tags$style(HTML("
+        #submit_biomeddi {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ 
   tags$style(HTML("
         #header_custom {
           color: #ff0000;
@@ -668,6 +717,12 @@ ui <-
           color: #ff0000;
           margin-left: 50px;
         }")),
+ tags$style(HTML("
+        #header_custom_biomed {
+          color: #ff0000;
+          margin-left: 50px;
+        }")),
+ 
   tags$style(HTML("
         #header_custom_evs {
           color: #ff0000;

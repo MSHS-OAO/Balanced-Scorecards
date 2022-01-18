@@ -202,6 +202,12 @@ operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
 
+
+# File path for BME/CE KPI metrics
+bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
+bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssues.xlsx")
+
+
 # File path for Lab KPI metrics
 ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
 ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
@@ -824,4 +830,5 @@ source("EVS.R")
 # source("press_ganey.R")
 source("security_processing.R")
 source("Transportation.R")
+source("biomed.R")
 
