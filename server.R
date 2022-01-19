@@ -553,7 +553,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # site_input <- "MSH"
 
       # Code Starts ---------------------------------------------------------------------------------
-      summary_tab_metrics <- unique((metric_grouping_filter %>%
+      breakout_tab_metrics <- unique((metric_grouping_filter %>%
                                        filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Metric_Name_Submitted")]) # Filter out summary tab metrics only
       
       target_section_metrics <- unique((target_mapping %>%
@@ -584,7 +584,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         by = c("Reporting_Month_Ref" = "Reporting_Month_Ref"))
 
       
-      data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Metric_Name_Submitted")], 
+      data <- merge(data, breakout_tab_metrics[,c("Metric_Group","Metric_Name","Metric_Name_Submitted")], 
                     by = c("Metric_Group","Metric_Name"))
       data$Metric_Name <- NULL
       names(data)[names(data) == "Metric_Name_Submitted"] <- "Metric_Name"
