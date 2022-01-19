@@ -194,8 +194,111 @@ nursing_pg_monthly <- nursing_pg %>%
   mutate(`Reporting Month Close` = as.Date(`Reporting Month Close`),
          Reporting_Date_Start =
            as.Date(as.numeric(Month), origin = "1899-12-30"),
-         Reporting_Date_End = Reporting_Date_Start + months(1) - 1,
-         Test = `Reporting Month Close` - Reporting_Date_Start)
+         Reporting_Date_End = Reporting_Date_Start + months(1) - 1)
+
+nursing_pg_ytd <- nursing_pg %>%
+  filter(ReportingType %in% "YTD") %>%
+  mutate(`Reporting Month Close` = as.Date(`Reporting Month Close`),
+         Reporting_Date_Start = as.Date(ifelse(str_detect(Month, "Dec 2020"),
+                                       "10/1/2020", "1/1/2021"),
+                                       format = "%m/%d/%Y"),
+         Reporting_Date_End = as.Date(ifelse(
+           str_detect(Month, "Dec 2020"), "12/31/2020",
+           format(as.Date(parse_date_time(
+             str_extract(Month, "(?<=\\- ).+(?=\\))"),
+             orders = c("%b %y", "%B %y")) +
+               months(1) - 1), "%m/%d/%Y")),
+           format = "%m/%d/%Y"))
+
+nursing_pg_repo <- rbind(nursing_pg_monthly, nursing_pg_ytd)
+           
+# Map questions
+nursing_pg_repo <- left_join(nursing_pg_repo,
+                             press_ganey_mapping[c("Service",
+                                                   "Questions",
+                                                   "Question_Clean")],
+                             by = c("KPI" = "Questions"))
+
+nursing_pg_repo <- nursing_pg_repo %>%
+  filter(!is.na(Question_Clean)) %>%
+  mutate(Month = NULL,
+         `Reporting Month Close` = NULL,
+         KPI = NULL,
+         `Clean KPI` = NULL) %>%
+  relocate(Service) %>%
+  relocate(Question_Clean, .after = Site) %>%
+  relocate(ReportingType, .after = Question_Clean) %>%
+  relocate(Reporting_Date_Start, .after = ReportingType) %>%
+  relocate(Reporting_Date_End, .after = Reporting_Date_Start) %>%
+  rename(Site_Mean = `Site Mean`,
+         Site_N = `Site N`,
+         All_PG_Database_Mean = `All PG Database Score`,
+         All_PG_Database_N = `All PG Database N`,
+         All_PG_Database_Rank = `All PG Database Rank`) %>%
+  mutate_at(vars(c(contains("Site_"),
+                   contains("All_PG_"))),
+            str_replace, "N/A", NA_character_) %>%
+  mutate_at(vars(c(contains("Site_"),
+                   contains("All_PG_"))),
+            as.numeric) %>%
+  mutate_at(vars(contains("Site_")),
+            round, digits = 2) %>%
+  relocate(All_PG_Database_Rank, .after = All_PG_Database_N)
+
+# Process ED data from FTI ----------------------------
+ed_pg <- ed_pg %>%
+  mutate(ReportingType = ifelse(str_detect(Date, "Rollup"), "YTD", "Monthly"))
+
+ed_pg_repo <- ed_pg %>%
+  mutate(Reporting_Date_Start = as.Date(str_extract(`Visit Date`,
+                                                    ".+(?=\\ -)"),
+                                        format = "%m/%d/%Y"),
+         Reporting_Date_End = as.Date(str_extract(`Visit Date`,
+                                                  "(?<=\\- ).+"),
+                                      format = "%m/%d/%Y"))
+
+ed_pg_repo <- left_join(ed_pg_repo,
+                        press_ganey_mapping[c("Service",
+                                              "Questions",
+                                              "Question_Clean")],
+                        by = c("Questions" = "Questions"))
+
+ed_pg_repo <- ed_pg_repo %>%
+  mutate(`Visit Date` = NULL,
+         Date = NULL,
+         `My Sites` = NULL,
+         Questions = NULL,
+         `Metric Name` = NULL,
+         All_PG_Database_Mean = as.numeric(NA),
+         All_PG_Database_N = as.numeric(NA),
+         All_PG_Database_Rank = as.numeric(NA)) %>%
+  rename(Site = `FTI Site`,
+         Site_Mean = Mean,
+         Site_N = n) %>%
+  relocate(Service) %>%
+  relocate(Site, .after = Service) %>%
+  relocate(Question_Clean, .after = Site) %>%
+  relocate(Site_Mean, .after = Reporting_Date_End) %>%
+  relocate(Site_N, .after = Site_Mean) %>%
+  mutate_at(vars(contains("_Mean")), round, digits = 2)
+  
+
+reformatted_pg_repo <- rbind(food_pg_repo,
+                             transport_pg_repo,
+                             evs_pg_repo,
+                             nursing_pg_repo,
+                             ed_pg_repo)
+
+reformatted_pg_repo <- reformatted_pg_repo %>%
+  filter(!Site %in% "All")
+
+
+new_pg_path <- paste0("J:/deans/Presidents/HSPI-PM/",
+                      "Operations Analytics and Optimization/Projects/",
+                      "System Operations/Balanced Scorecards Automation/",
+                      "Data_Dashboard/Summary Repos/Press Ganey New.xlsx")
+
+write_xlsx(reformatted_pg_repo, new_pg_path)
 
 # # Rename columns
 # reformat_pg_summary_repo <- pg_summary_repo %>%

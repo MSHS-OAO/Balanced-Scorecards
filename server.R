@@ -793,6 +793,76 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
     
     
+    ## Read in Press Ganey data -----------------------------------
+    # ED Monthly Data Observe Event -------------------
+    observeEvent(input$submit_monthly_press_ganey, {
+      
+      # Name ED monthly data
+      ed_monthly <- input$pg_ed_monthly
+      
+      if (is.null(data_ed_monthly)) {
+        return(NULL)
+      } else {
+        ed_monthly_filepath <- ed_monthly$datapath
+        
+        ed_monthly_filepath <- paste0(home_path,
+                                      "Input Data Raw/Press Ganey/",
+                                      "ED 09-2021.csv")
+        
+        data_ed_monthly <- read_csv(ed_monthly_filepath,
+                                    show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-ED Monthly ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process ED monthly data
+      pg_ed_monthly_summary_data <- press_ganey_dept_summary(data_ed_monthly)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_ed_monthly_summary_data[c("Service",
+                                       "Site",
+                                       "ReportingType",
+                                       "Reporting_Date_Start",
+                                       "Reporting_Date_End",
+                                       "Question_Clean")]
+        )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                        pg_new_data,
+                                        by = c("Service" = "Service",
+                                               "Site" = "Site",
+                                               "Question_Clean" = "Question_Clean",
+                                               "ReportingType" = "ReportingType",
+                                               "Reporting_Date_Start" = "Reporting_Date_Start",
+                                               "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_ed_monthly_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+
+    })
+    
+    
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
       inFile <- input$productiviy_data
@@ -1943,8 +2013,242 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
       
+      # Biomed KPI Outout Table -------
       
-    
+      data_bimoed_kpi <- reactive({
+        data  <- kpibme_reports_ui
+      })
+      
+      
+      output$biomed_kpi <- renderRHandsontable({
+        #data <- data
+        data <- data_bimoed_kpi()
+        
+        
+        
+        unique_sites <- unique(data$Site)
+        site_1 <- which(data$Site == unique_sites[1])
+        site_2 <- which(data$Site == unique_sites[2])
+        site_3 <- which(data$Site == unique_sites[3])
+        site_4 <- which(data$Site == unique_sites[4])
+        site_5 <- which(data$Site == unique_sites[5])
+        site_6 <- which(data$Site == unique_sites[6])
+        site_7 <- which(data$Site == unique_sites[7])
+        
+        
+        rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+        
+        
+        col_highlight <- ncol(data) - 1
+        
+        
+        rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+          hot_table(mergeCells = list(
+            list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+            list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+            list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+            list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+            list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+            list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+            list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+          )) %>%
+          hot_cols(renderer = rendederer_string)  %>%
+          hot_col(1:3, readOnly = T)
+      })
+      
+      # Biomed Disruptions and Issues Outout Table -------
+      
+      data_bimoed_di <- reactive({
+        data  <- disruptions_issues_reports_ui
+      })
+      
+      
+      output$bimoed_di <- renderRHandsontable({
+        #data <- data
+        data <- data_bimoed_di()
+        
+        
+        
+        unique_sites <- unique(data$Site)
+        site_1 <- which(data$Site == unique_sites[1])
+        site_2 <- which(data$Site == unique_sites[2])
+        site_3 <- which(data$Site == unique_sites[3])
+        site_4 <- which(data$Site == unique_sites[4])
+        site_5 <- which(data$Site == unique_sites[5])
+        site_6 <- which(data$Site == unique_sites[6])
+        site_7 <- which(data$Site == unique_sites[7])
+        
+        
+        rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+        
+        
+        col_highlight <- ncol(data) - 1
+        
+        
+        rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+          hot_table(mergeCells = list(
+            list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+            list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+            list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+            list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+            list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+            list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+            list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+          )) %>%
+          hot_cols(renderer = rendederer_string)  %>%
+          hot_col(1:3, readOnly = T)
+      })
+      
+      # Create observer event actions for manual data submission KPIs Biomed ----- 
+      observeEvent(input$submit_biomedkpis, {
+        if(input$sec_inc_rpts_username == "") {
+          showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields.",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        
+        # Convert rhandsontable to R object
+        bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
+        
+        # Save prior version of Security Incident Reports Dept Summary data
+        write_xlsx(kpibme_reports,
+                   paste0(hist_archive_path,
+                          "KPIs Biomed and Clinical Engineering ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
+        # Reformat data from manual input table into summary repo format
+        bme_kpi_summary_data <-
+          process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+        
+        # Append Security Incident Reports summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        bme_kpi_new_data <- unique(
+          bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data,
+        # if they exist there. This allows us to ensure no duplicate entries for
+        # the same site, metric, and time period.
+        kpi_bme <<- anti_join(kpibme_reports,
+                              bme_kpi_new_data,
+                              by = c("Service" = "Service",
+                                     "Site" = "Site",
+                                     "Month" = "Month",
+                                     "Metric" = "Metric"))
+        
+        # Third, combine the updated historical data with the new data
+        kpibme_reports <<- full_join(kpibme_reports,
+                                                kpi_bme)
+        
+        # Next, arrange the incident reports summary data by month, metric, and site
+        kpibme_reports <<- kpibme_reports %>%
+          arrange(Month,
+                  desc(Metric),
+                  Site)
+        
+        # Lastly, save the updated summary data
+        write_xlsx(kpibme_reports, bmekpi_table_path)
+        
+        # Update metrics_final_df with latest data using custom function
+        # metrics_final_df <<- biomed__metrics_final_df_process(sec_inc_rpts_summary_data)
+        
+        # Save updates metrics_final_df
+        # saveRDS(metrics_final_df, metrics_final_df_path)
+        
+      })
+      
+      # Create observer event actions for manual data submission D&I Biomed ----- 
+      observeEvent(input$submit_biomeddi, {
+        if(input$sec_inc_rpts_username == "") {
+          showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields.",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        
+        # Convert rhandsontable to R object
+        bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
+        
+        # Save prior version of Security Incident Reports Dept Summary data
+        write_xlsx(disruptions_issues_reports,
+                   paste0(hist_archive_path,
+                          "DI Biomed and Clinical Engineering ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
+        # Reformat data from manual input table into summary repo format
+        bme_di_summary_data <-
+          process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+        
+        # Append Security Incident Reports summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        bme_di_new_data <- unique(
+          bme_di_summary_data[, c("Service", "Site", "Month", "Metric")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data,
+        # if they exist there. This allows us to ensure no duplicate entries for
+        # the same site, metric, and time period.
+        di_bme <<- anti_join(disruptions_issues_reports,
+                             bme_di_new_data,
+                              by = c("Service" = "Service",
+                                     "Site" = "Site",
+                                     "Month" = "Month",
+                                     "Metric" = "Metric"))
+        
+        # Third, combine the updated historical data with the new data
+        disruptions_issues_reports <<- full_join(disruptions_issues_reports,
+                                     di_bme)
+        
+        # Next, arrange the incident reports summary data by month, metric, and site
+        disruptions_issues_reports <<- disruptions_issues_reports %>%
+          arrange(Month,
+                  Site)
+        
+        # Lastly, save the updated summary data
+        write_xlsx(disruptions_issues_reports, bmedi_table_path)
+        
+        # Update metrics_final_df with latest data using custom function
+        # metrics_final_df <<- biomed__metrics_final_df_process(sec_inc_rpts_summary_data)
+        
+        # Save updates metrics_final_df
+        # saveRDS(metrics_final_df, metrics_final_df_path)
+        
+      })
+      
+      
+      
+      
 
   
 } # Close Server

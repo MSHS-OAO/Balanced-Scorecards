@@ -202,6 +202,12 @@ operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
 
+
+# File path for BME/CE KPI metrics
+bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
+bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssuesMonthly.xlsx")
+
+
 # File path for Lab KPI metrics
 ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
 ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
@@ -232,8 +238,8 @@ data_path <- here()
 metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
 target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
-metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group") # Import Metric Group
-summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics") # Import Summary Metrics
+metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
+summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 
 metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
 
@@ -311,7 +317,7 @@ report_date_mapping <- read_excel(target_mapping_path,
 
 
 metric_group_mapping <- read_excel(target_mapping_path, 
-                                   sheet = "Metric Group",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
+                                   sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
   pivot_longer(
     6:length(metric_group_mapping),
@@ -824,4 +830,5 @@ source("EVS.R")
 # source("press_ganey.R")
 source("security_processing.R")
 source("Transportation.R")
+source("biomed.R")
 
