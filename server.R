@@ -548,13 +548,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      # service_input <- "Security"
-      # month_input <- "10-2021"
+      # service_input <- "Food Services"
+      # month_input <- "08-2021"
       # site_input <- "MSH"
 
       # Code Starts ---------------------------------------------------------------------------------
-      summary_tab_metrics <- unique((summary_metric_filter %>%
-                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
+      summary_tab_metrics <- unique((metric_grouping_filter %>%
+                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Metric_Name_Submitted")]) # Filter out summary tab metrics only
       
       target_section_metrics <- unique((target_mapping %>%
                                           filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
@@ -584,10 +584,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         by = c("Reporting_Month_Ref" = "Reporting_Month_Ref"))
 
       
-      data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
+      data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Metric_Name_Submitted")], 
                     by = c("Metric_Group","Metric_Name"))
       data$Metric_Name <- NULL
-      names(data)[names(data) == "Summary_Metric_Name"] <- "Metric_Name"
+      names(data)[names(data) == "Metric_Name_Submitted"] <- "Metric_Name"
       
       # Selected Month/Year Metric
       # Current Period Table
