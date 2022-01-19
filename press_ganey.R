@@ -10,40 +10,34 @@ press_ganey_data <- press_ganey_data %>%
 # Import mapping file
 press_ganey_mapping <- read_excel(target_mapping_path, sheet = "Press Ganey v2")
 
-# Import current data for testing
-# Import monthly data
-data_ed_monthly <- read_csv(paste0(home_path,
-                                   "Input Data Raw/Press Ganey/",
-                                   "ED 09-2021.csv"),
-                            show_col_types = FALSE)
-data_nursing_monthly <- read_csv(paste0(home_path,
-                                        "Input Data Raw/Press Ganey/",
-                                        "Nursing 08-2021.csv"),
-                                 show_col_types = FALSE)
-data_support_monthly <- read_csv(paste0(home_path,
-                                        "Input Data Raw/Press Ganey/",
-                                        "Support Services 08-2021.csv"),
-                                 show_col_types = FALSE)
-# 
-# Import YTD data
-data_ed_ytd <- read_csv(paste0(home_path,
-                               "Input Data Raw/Press Ganey/",
-                               "ED YTD 012021 to 092021.csv"),
-                        show_col_types = FALSE)
-data_nursing_ytd <- read_csv(paste0(home_path,
-                                    "Input Data Raw/Press Ganey/",
-                                    "Nursing YTD 012021 to 082021.csv"),
-                             show_col_types = FALSE)
-data_support_ytd <- read_csv(paste0(home_path,
-                                    "Input Data Raw/Press Ganey/",
-                                    "Support Services YTD 012021 to 082021.csv"),
-                             show_col_types = FALSE)
-
-
-
-data <- data_ed_monthly
-
-
+# # Import current data for testing
+# # Import monthly data
+# data_ed_monthly <- read_csv(paste0(home_path,
+#                                    "Input Data Raw/Press Ganey/",
+#                                    "ED 09-2021.csv"),
+#                             show_col_types = FALSE)
+# data_nursing_monthly <- read_csv(paste0(home_path,
+#                                         "Input Data Raw/Press Ganey/",
+#                                         "Nursing 08-2021.csv"),
+#                                  show_col_types = FALSE)
+# data_support_monthly <- read_csv(paste0(home_path,
+#                                         "Input Data Raw/Press Ganey/",
+#                                         "Support Services 08-2021.csv"),
+#                                  show_col_types = FALSE)
+# # 
+# # Import YTD data
+# data_ed_ytd <- read_csv(paste0(home_path,
+#                                "Input Data Raw/Press Ganey/",
+#                                "ED YTD 012021 to 092021.csv"),
+#                         show_col_types = FALSE)
+# data_nursing_ytd <- read_csv(paste0(home_path,
+#                                     "Input Data Raw/Press Ganey/",
+#                                     "Nursing YTD 012021 to 082021.csv"),
+#                              show_col_types = FALSE)
+# data_support_ytd <- read_csv(paste0(home_path,
+#                                     "Input Data Raw/Press Ganey/",
+#                                     "Support Services YTD 012021 to 082021.csv"),
+#                              show_col_types = FALSE)
 
 # Custom function for processing Press Ganey data
 press_ganey_dept_summary <- function(data) {
@@ -159,119 +153,223 @@ press_ganey_dept_summary <- function(data) {
 
 }
 
-pg_metrics_final_df <- press_ganey_data %>%
-  filter(ReportingType %in% "Monthly")
-
-pg_mapping_clean <- press_ganey_mapping %>%
-  select(-Questions)
-
-pg_metrics_final_df <- left_join(pg_metrics_final_df,
-                                 pg_mapping_clean,
-                                 by = c("Service" = "Service",
-                                        "Question_Clean" = "Question_Clean"))
-
-pg_metrics_final_df2 <- pg_metrics_final_df %>%
-  pivot_longer(cols = c(contains("Site_"),
-                        contains("All_PG_Database_")),
-               names_to = "Metric") %>%
-  mutate(Metric_Name_Submitted = ifelse(Metric %in% "Site_Mean",
-                                paste0(Question_Clean, " - Score"),
-                                ifelse(Metric %in% "Site_N" & Incl_N,
-                                       paste0(Question_Clean, " - N"),
-                                       ifelse(Metric %in% "All_PG_Database_Rank" &
-                                                Incl_AllHosp_Rank,
-                                              "Rank - All Hospitals", NA)))) %>%
-  filter(!is.na(Metric_Name_Submitted)) %>%
-  rename(value_rounded = value) %>%
-  mutate(Premier_Reporting_Period = format(Reporting_Date_Start, "%b %Y"),
-         Reporting_Month = format(Reporting_Date_Start, "%m-%Y"),
-         Question_Clean = NULL,
-         ReportingType = NULL,
-         Reporting_Date_Start = NULL,
-         Reporting_Date_End = NULL,
-         Incl_N = NULL,
-         Incl_AllHosp_Rank = NULL,
-         Metric = NULL)
-
-# test <- unique(pg_metrics_final_df2[c("Service", "Metric_Name_Submitted")])
-# 
-# test$Check <- test$Metric_Name_Submitted %in% metric_grouping_filter$Metric_Name_Submitted
-
-pg_metrics_final_df2 <- merge(pg_metrics_final_df2,
-                             metric_group_mapping[c("Metric_Group",
-                                                    "Metric_Name",
-                                                    "Metric_Name_Submitted")],
-                             by = c("Metric_Name_Submitted"))
-
-pg_metrics_target_status <- merge(pg_metrics_final_df2[, c("Service",
+# Custom function for formatting Press Ganey data for metrics_final_df ---------
+press_ganey_metrics_final_df <- function(press_ganey_summary) {
+  
+  # Filter out YTD data
+  pg_metrics_final_df <- press_ganey_summary %>%
+    filter(ReportingType %in% "Monthly")
+  
+  # Update Press Ganey mapping file used to determine which metrics to include
+  pg_mapping_simple <- press_ganey_mapping %>%
+    select(-Questions)
+  
+  # Crosswalk Press Ganey data with mapping file to determine which metrics to include
+  pg_metrics_final_df <- left_join(pg_metrics_final_df,
+                                   pg_mapping_simple,
+                                   by = c("Service" = "Service",
+                                          "Question_Clean" = "Question_Clean"))
+  
+  pg_metrics_final_df <- pg_metrics_final_df %>%
+    # Convert to longer format
+    pivot_longer(cols = c(contains("Site_"),
+                          contains("All_PG_Database_")),
+                 names_to = "Metric") %>%
+    # Update metric names
+    mutate(Metric_Name_Submitted = ifelse(Metric %in% "Site_Mean",
+                                          paste0(Question_Clean, " - Score"),
+                                          ifelse(Metric %in% "Site_N" & Incl_N,
+                                                 paste0(Question_Clean, " - N"),
+                                                 ifelse(Metric %in% "All_PG_Database_Rank" &
+                                                          Incl_AllHosp_Rank,
+                                                        "Rank - All Hospitals",
+                                                        NA)))) %>%
+    # Remove metrics that are not included in reporting from metrics_final_df
+    # (ie, sample size not reported for all metrics, not all service lines report hospital ranking)
+    filter(!is.na(Metric_Name_Submitted)) %>%
+    rename(value_rounded = value) %>%
+    mutate(Premier_Reporting_Period = format(Reporting_Date_Start, "%b %Y"),
+           Reporting_Month = format(Reporting_Date_Start, "%m-%Y"),
+           Question_Clean = NULL,
+           ReportingType = NULL,
+           Reporting_Date_Start = NULL,
+           Reporting_Date_End = NULL,
+           Incl_N = NULL,
+           Incl_AllHosp_Rank = NULL,
+           Metric = NULL)
+  
+  # Crosswalk with metric grouping
+  pg_metrics_final_df <- merge(pg_metrics_final_df,
+                               metric_group_mapping[c("Metric_Group",
+                                                      "Metric_Name",
+                                                      "Metric_Name_Submitted")],
+                               by = c("Metric_Name_Submitted"))
+  
+  # Crosswalk with targets
+  pg_metrics_target_status <- merge(pg_metrics_final_df[, c("Service",
+                                                             "Site",
+                                                             "Metric_Group",
+                                                             "Metric_Name",
+                                                             "Reporting_Month",
+                                                             "value_rounded")],
+                                    target_mapping,
+                                    by.x = c("Service",
+                                             "Site",
+                                             "Metric_Group",
+                                             "Metric_Name"),
+                                    by.y = c("Service",
+                                             "Site",
+                                             "Metric_Group",
+                                             "Metric_Name"),
+                                    all.x = TRUE)
+  
+  pg_metrics_target_status <- pg_metrics_target_status %>%
+    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+    filter(!is.na(Reporting_Month) &
+             !(Variance %in% FALSE))
+  
+  # Combine the two dataframes
+  pg_metrics_df_merge <- merge(pg_metrics_final_df,
+                               pg_metrics_target_status[, c("Service",
                                                             "Site",
                                                             "Metric_Group",
                                                             "Metric_Name",
                                                             "Reporting_Month",
-                                                            "value_rounded")],
-                                   target_mapping,
-                                   by.x = c("Service",
-                                            "Site",
-                                            "Metric_Group",
-                                            "Metric_Name"),
-                                   by.y = c("Service",
-                                            "Site",
-                                            "Metric_Group",
-                                            "Metric_Name"),
-                                   all.x = TRUE)
+                                                            "Target",
+                                                            "Status")],
+                               all = FALSE)
 
-pg_metrics_target_status <- pg_metrics_target_status %>%
-  mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-  filter(!is.na(Reporting_Month) &
-           !(Variance %in% FALSE))
+  pg_metrics_df_merge <- pg_metrics_df_merge[, processed_df_cols]  
+    
+  # Add reporting month back in
+  pg_metrics_df_merge <- pg_metrics_df_merge %>%
+    mutate(Reporting_Month_Ref = as.Date(paste("01",
+                                               as.yearmon(Reporting_Month,
+                                                          "%m-%Y")),
+                                         format = "%d %b %Y"))
+  
+  new_rows <- unique(pg_metrics_df_merge[, c("Metric_Name",
+                                             "Reporting_Month",
+                                             "Service",
+                                             "Site")])
+  
+  metrics_final_df <- anti_join(metrics_final_df,
+                                new_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,
+                                pg_metrics_df_merge)
+  
+  return(metrics_final_df)
+  
+}
 
-pg_metrics_df_merge <- merge(pg_metrics_final_df2,
-                             pg_metrics_target_status[, c("Service",
-                                                          "Site",
-                                                          "Metric_Group",
-                                                          "Metric_Name",
-                                                          "Reporting_Month",
-                                                          "Target",
-                                                          "Status")],
-                             all = FALSE)
-
-# Add reporting month back in
-pg_metrics_df_merge <- pg_metrics_df_merge %>%
-  mutate(Reporting_Month_Ref = as.Date(paste("01",
-                                             as.yearmon(Reporting_Month,
-                                                        "%m-%Y")),
-                                       format = "%d %b %Y"))
-
-pg_metrics_df_merge <- pg_metrics_df_merge[, processed_df_cols]
-
-new_rows <- unique(pg_metrics_df_merge[, c("Metric_Name",
-                                           "Reporting_Month",
-                                           "Service",
-                                           "Site")])
-
-metrics_final_df <- anti_join(metrics_final_df,
-                              new_rows)
-
-metrics_final_df <- full_join(metrics_final_df,
-                              pg_metrics_df_merge)
-
-# saveRDS(metrics_final_df, metrics_final_df_path)
-
-test_ed_monthly <- press_ganey_dept_summary(data = data_ed_monthly)
-test_ed_ytd <- press_ganey_dept_summary(data = data_ed_ytd)
-
-test_nursing_monthly <- press_ganey_dept_summary(data = data_nursing_monthly)
-test_nursing_ytd <- press_ganey_dept_summary(data = data_nursing_ytd)
-
-test_support_monthly <- press_ganey_dept_summary(data = data_support_monthly)
-test_support_ytd <- press_ganey_dept_summary(data = data_support_ytd)
-
-
-
-
-
-
-
+# pg_metrics_final_df <- press_ganey_data %>%
+#   filter(ReportingType %in% "Monthly")
+# 
+# pg_mapping_clean <- press_ganey_mapping %>%
+#   select(-Questions)
+# 
+# pg_metrics_final_df <- left_join(pg_metrics_final_df,
+#                                  pg_mapping_clean,
+#                                  by = c("Service" = "Service",
+#                                         "Question_Clean" = "Question_Clean"))
+# 
+# pg_metrics_final_df2 <- pg_metrics_final_df %>%
+#   pivot_longer(cols = c(contains("Site_"),
+#                         contains("All_PG_Database_")),
+#                names_to = "Metric") %>%
+#   mutate(Metric_Name_Submitted = ifelse(Metric %in% "Site_Mean",
+#                                 paste0(Question_Clean, " - Score"),
+#                                 ifelse(Metric %in% "Site_N" & Incl_N,
+#                                        paste0(Question_Clean, " - N"),
+#                                        ifelse(Metric %in% "All_PG_Database_Rank" &
+#                                                 Incl_AllHosp_Rank,
+#                                               "Rank - All Hospitals", NA)))) %>%
+#   filter(!is.na(Metric_Name_Submitted)) %>%
+#   rename(value_rounded = value) %>%
+#   mutate(Premier_Reporting_Period = format(Reporting_Date_Start, "%b %Y"),
+#          Reporting_Month = format(Reporting_Date_Start, "%m-%Y"),
+#          Question_Clean = NULL,
+#          ReportingType = NULL,
+#          Reporting_Date_Start = NULL,
+#          Reporting_Date_End = NULL,
+#          Incl_N = NULL,
+#          Incl_AllHosp_Rank = NULL,
+#          Metric = NULL)
+# 
+# # test <- unique(pg_metrics_final_df2[c("Service", "Metric_Name_Submitted")])
+# # 
+# # test$Check <- test$Metric_Name_Submitted %in% metric_grouping_filter$Metric_Name_Submitted
+# 
+# pg_metrics_final_df2 <- merge(pg_metrics_final_df2,
+#                              metric_group_mapping[c("Metric_Group",
+#                                                     "Metric_Name",
+#                                                     "Metric_Name_Submitted")],
+#                              by = c("Metric_Name_Submitted"))
+# 
+# pg_metrics_target_status <- merge(pg_metrics_final_df2[, c("Service",
+#                                                             "Site",
+#                                                             "Metric_Group",
+#                                                             "Metric_Name",
+#                                                             "Reporting_Month",
+#                                                             "value_rounded")],
+#                                    target_mapping,
+#                                    by.x = c("Service",
+#                                             "Site",
+#                                             "Metric_Group",
+#                                             "Metric_Name"),
+#                                    by.y = c("Service",
+#                                             "Site",
+#                                             "Metric_Group",
+#                                             "Metric_Name"),
+#                                    all.x = TRUE)
+# 
+# pg_metrics_target_status <- pg_metrics_target_status %>%
+#   mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+#   filter(!is.na(Reporting_Month) &
+#            !(Variance %in% FALSE))
+# 
+# pg_metrics_df_merge <- merge(pg_metrics_final_df2,
+#                              pg_metrics_target_status[, c("Service",
+#                                                           "Site",
+#                                                           "Metric_Group",
+#                                                           "Metric_Name",
+#                                                           "Reporting_Month",
+#                                                           "Target",
+#                                                           "Status")],
+#                              all = FALSE)
+# 
+# # Add reporting month back in
+# pg_metrics_df_merge <- pg_metrics_df_merge %>%
+#   mutate(Reporting_Month_Ref = as.Date(paste("01",
+#                                              as.yearmon(Reporting_Month,
+#                                                         "%m-%Y")),
+#                                        format = "%d %b %Y"))
+# 
+# pg_metrics_df_merge <- pg_metrics_df_merge[, processed_df_cols]
+# 
+# new_rows <- unique(pg_metrics_df_merge[, c("Metric_Name",
+#                                            "Reporting_Month",
+#                                            "Service",
+#                                            "Site")])
+# 
+# metrics_final_df <- anti_join(metrics_final_df,
+#                               new_rows)
+# 
+# metrics_final_df <- full_join(metrics_final_df,
+#                               pg_metrics_df_merge)
+# 
+# # saveRDS(metrics_final_df, metrics_final_df_path)
+# 
+# test_ed_monthly <- press_ganey_dept_summary(data = data_ed_monthly)
+# test_ed_ytd <- press_ganey_dept_summary(data = data_ed_ytd)
+# 
+# test_nursing_monthly <- press_ganey_dept_summary(data = data_nursing_monthly)
+# test_nursing_ytd <- press_ganey_dept_summary(data = data_nursing_ytd)
+# 
+# test_support_monthly <- press_ganey_dept_summary(data = data_support_monthly)
+# test_support_ytd <- press_ganey_dept_summary(data = data_support_ytd)
+#
 # press_ganey_ed <- function(data){
 #   # row_cutoff <- min(which(data$`REPORT TITLE` == "Emergency Department"))-1
 #   # data <- data[row_cutoff:nrow(data),]
@@ -459,6 +557,26 @@ test_support_ytd <- press_ganey_dept_summary(data = data_support_ytd)
 #   metrics_final_df <- full_join(metrics_final_df,data_df_final)
 #   
 # }
-
-
+# 
+# press_ganey_data <- press_ganey_data %>%
+#   filter(!((Service %in% c("Nursing",
+#                            "Food Services",
+#                            "Patient Transport",
+#                            "Environmental Services") &
+#               year(Reporting_Date_End) == 2021 & month(Reporting_Date_End) == 8) |
+#              (Service %in% c("Emergency Department") &
+#                 year(Reporting_Date_End) == 2021 & month(Reporting_Date_End) == 9)))
+# 
+# metrics_final_df <- metrics_final_df %>%
+#   filter(!((Service %in% c("Nursing",
+#                            "Food Services",
+#                            "Patient Transport",
+#                            "Environmental Services") &
+#               Reporting_Month_Ref == as.Date("8/1/21", format = "%m/%d/%y")) |
+#              (Service %in% c("Emergency Department") &
+#                 Reporting_Month_Ref == as.Date("9/1/21", format = "%m/%d/%y"))))
+# 
+# write_xlsx(press_ganey_data, press_ganey_table_path)
+# 
+# saveRDS(metrics_final_df, metrics_final_df_path)
 
