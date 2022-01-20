@@ -800,7 +800,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Name ED monthly data
       ed_monthly <- input$pg_ed_monthly
       
-      if (is.null(data_ed_monthly)) {
+      if (is.null(ed_monthly)) {
         return(NULL)
       } else {
         ed_monthly_filepath <- ed_monthly$datapath
@@ -808,7 +808,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ed_monthly_filepath <- paste0(home_path,
                                       "Input Data Raw/Press Ganey/",
                                       "ED 09-2021.csv")
-        
+
         data_ed_monthly <- read_csv(ed_monthly_filepath,
                                     show_col_types = FALSE)
       }
@@ -827,11 +827,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # First, identify the sites, months, and metrics in the new data
       pg_new_data <- unique(
         pg_ed_monthly_summary_data[c("Service",
-                                       "Site",
-                                       "ReportingType",
-                                       "Reporting_Date_Start",
-                                       "Reporting_Date_End",
-                                       "Question_Clean")]
+                                     "Site",
+                                     "ReportingType",
+                                     "Reporting_Date_Start",
+                                     "Reporting_Date_End",
+                                     "Question_Clean")]
         )
       
       # Second, remove these sites, months, and metrics from the historical data, if they exist there.
@@ -859,10 +859,406 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Lastly, save the updated summary data
       write_xlsx(press_ganey_data, press_ganey_table_path)
+      
+      # Update metrics_final_df with latest ED Press Ganey data using custom function
+      metrics_final_df <<- press_ganey_metrics_final_df(pg_ed_monthly_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
 
     })
     
+    # Nursing Press Ganey Monthly Data Observe Event -------------------
+    observeEvent(input$submit_monthly_press_ganey, {
+      
+      # Name Nursing monthly data
+      nursing_monthly <- input$pg_nursing_monthly
+      
+      if (is.null(nursing_monthly)) {
+        return(NULL)
+      } else {
+        nursing_monthly_filepath <- nursing_monthly$datapath
+        
+        # nursing_monthly_filepath <- paste0(home_path,
+        #                               "Input Data Raw/Press Ganey/",
+        #                               "Nursing 08-2021.csv")
+        
+        data_nursing_monthly <- read_csv(nursing_monthly_filepath,
+                                         show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-RN Monthly ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process Nursing monthly data
+      pg_nursing_monthly_summary_data <- press_ganey_dept_summary(data_nursing_monthly)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_nursing_monthly_summary_data[c("Service",
+                                          "Site",
+                                          "ReportingType",
+                                          "Reporting_Date_Start",
+                                          "Reporting_Date_End",
+                                          "Question_Clean")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                     pg_new_data,
+                                     by = c("Service" = "Service",
+                                            "Site" = "Site",
+                                            "Question_Clean" = "Question_Clean",
+                                            "ReportingType" = "ReportingType",
+                                            "Reporting_Date_Start" = "Reporting_Date_Start",
+                                            "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_nursing_monthly_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+      
+      # Update metrics_final_df with latest Nursing Press Ganey data using custom function
+      metrics_final_df <<- press_ganey_metrics_final_df(pg_nursing_monthly_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
     
+    # Support Services Press Ganey Monthly Data Observe Event -------------------
+    observeEvent(input$submit_monthly_press_ganey, {
+      
+      # Name Support Services monthly data
+      support_monthly <- input$pg_support_monthly
+      
+      if (is.null(support_monthly)) {
+        return(NULL)
+      } else {
+        support_monthly_filepath <- support_monthly$datapath
+        
+        # support_monthly_filepath <- paste0(home_path,
+        #                                    "Input Data Raw/Press Ganey/",
+        #                                    "Support Services 08-2021.csv")
+        
+        data_support_monthly <- read_csv(support_monthly_filepath,
+                                         show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-Support Monthly ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process Support Services monthly data
+      pg_support_monthly_summary_data <- press_ganey_dept_summary(data_support_monthly)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_support_monthly_summary_data[c("Service",
+                                          "Site",
+                                          "ReportingType",
+                                          "Reporting_Date_Start",
+                                          "Reporting_Date_End",
+                                          "Question_Clean")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                     pg_new_data,
+                                     by = c("Service" = "Service",
+                                            "Site" = "Site",
+                                            "Question_Clean" = "Question_Clean",
+                                            "ReportingType" = "ReportingType",
+                                            "Reporting_Date_Start" = "Reporting_Date_Start",
+                                            "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_support_monthly_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+      
+      # Update metrics_final_df with latest Support Services Press Ganey data using custom function
+      metrics_final_df <<- press_ganey_metrics_final_df(pg_support_monthly_summary_data)
+      
+      # Save updated metrics_final_df
+      saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
+    
+    
+    # ED YTD Data Observe Event -------------------
+    observeEvent(input$submit_ytd_press_ganey, {
+      
+      # Name ED YTD data
+      ed_ytd <- input$pg_ed_ytd
+      
+      if (is.null(ed_ytd)) {
+        return(NULL)
+      } else {
+        ed_ytd_filepath <- ed_ytd$datapath
+        
+        # ed_ytd_filepath <- paste0(home_path,
+        #                               "Input Data Raw/Press Ganey/",
+        #                               "ED YTD 012021 to 092021.csv")
+        
+        data_ed_ytd <- read_csv(ed_ytd_filepath,
+                                show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-ED YTD ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process ED YTD data
+      pg_ed_ytd_summary_data <- press_ganey_dept_summary(data_ed_ytd)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_ed_ytd_summary_data[c("Service",
+                                 "Site",
+                                 "ReportingType",
+                                 "Reporting_Date_Start",
+                                 "Reporting_Date_End",
+                                 "Question_Clean")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                     pg_new_data,
+                                     by = c("Service" = "Service",
+                                            "Site" = "Site",
+                                            "Question_Clean" = "Question_Clean",
+                                            "ReportingType" = "ReportingType",
+                                            "Reporting_Date_Start" = "Reporting_Date_Start",
+                                            "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_ed_ytd_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
+    
+    # Nursing YTD Data Observe Event -------------------
+    observeEvent(input$submit_ytd_press_ganey, {
+      
+      # Name Nursing YTD data
+      nursing_ytd <- input$pg_nursing_ytd
+      
+      if (is.null(nursing_ytd)) {
+        return(NULL)
+      } else {
+        nursing_ytd_filepath <- nursing_ytd$datapath
+        
+        # nursing_ytd_filepath <- paste0(home_path,
+        #                               "Input Data Raw/Press Ganey/",
+        #                               "Nursing YTD 012021 to 082021.csv")
+        
+        data_nursing_ytd <- read_csv(nursing_ytd_filepath,
+                                     show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-RN YTD ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process Nursing YTD data
+      pg_nursing_ytd_summary_data <- press_ganey_dept_summary(data_nursing_ytd)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_nursing_ytd_summary_data[c("Service",
+                                      "Site",
+                                      "ReportingType",
+                                      "Reporting_Date_Start",
+                                      "Reporting_Date_End",
+                                      "Question_Clean")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                     pg_new_data,
+                                     by = c("Service" = "Service",
+                                            "Site" = "Site",
+                                            "Question_Clean" = "Question_Clean",
+                                            "ReportingType" = "ReportingType",
+                                            "Reporting_Date_Start" = "Reporting_Date_Start",
+                                            "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_nursing_ytd_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
+    
+    # Support Services YTD Data Observe Event -------------------
+    observeEvent(input$submit_ytd_press_ganey, {
+      
+      # Name Support Services YTD data
+      support_ytd <- input$pg_support_ytd
+      
+      if (is.null(support_ytd)) {
+        return(NULL)
+      } else {
+        support_ytd_filepath <- support_ytd$datapath
+        
+        # support_ytd_filepath <- paste0(home_path,
+        #                               "Input Data Raw/Press Ganey/",
+        #                               "Support Services YTD 012021 to 082021.csv")
+        
+        data_support_ytd <- read_csv(support_ytd_filepath,
+                                     show_col_types = FALSE)
+      }
+      
+      # Save prior version of Press Ganey Dept Summary data
+      write_xlsx(press_ganey_data,
+                 paste0(hist_archive_path,
+                        "Press Ganey Pre-Support YTD ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      # Process Support Services YTD data
+      pg_support_ytd_summary_data <- press_ganey_dept_summary(data_support_ytd)
+      
+      # Append Press Ganey summary with new data
+      # First, identify the sites, months, and metrics in the new data
+      pg_new_data <- unique(
+        pg_support_ytd_summary_data[c("Service",
+                                      "Site",
+                                      "ReportingType",
+                                      "Reporting_Date_Start",
+                                      "Reporting_Date_End",
+                                      "Question_Clean")]
+      )
+      
+      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+      # This allows us to ensure no duplicate entries for the same site, metric, and time period
+      press_ganey_data <<- anti_join(press_ganey_data,
+                                     pg_new_data,
+                                     by = c("Service" = "Service",
+                                            "Site" = "Site",
+                                            "Question_Clean" = "Question_Clean",
+                                            "ReportingType" = "ReportingType",
+                                            "Reporting_Date_Start" = "Reporting_Date_Start",
+                                            "Reporting_Date_End" = "Reporting_Date_End")
+      )
+      
+      # Third, combine the updated historical data with the new data
+      press_ganey_data <<- full_join(press_ganey_data,
+                                     pg_support_ytd_summary_data)
+      
+      # Next, arrange the department summary by month, metric name, and site
+      press_ganey_data <<- press_ganey_data %>%
+        arrange(Service,
+                Site,
+                ReportingType,
+                Reporting_Date_End)
+      
+      # Lastly, save the updated summary data
+      write_xlsx(press_ganey_data, press_ganey_table_path)
+      
+      # Update "Reporting Month" drop down in each tab
+      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+    })
+    
+    
+    ## Productivity data --------------------------------
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
       inFile <- input$productiviy_data
