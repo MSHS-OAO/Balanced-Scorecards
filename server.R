@@ -662,7 +662,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Merge Current and Previous Months Breakdown
       breakdown_all_site <- merge(current_site_breakdown, past_avg_site, by = c("Metric_Group","Metric_Name"), all = TRUE)
       breakdown_all_site <- merge(breakdown_all_site, past_site_breakdown, by = c("Metric_Group","Metric_Name"))
-      breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),] 
+      breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(breakout_tab_metrics$Metric_Group))),] 
       metric_group_order <- as.vector(unique(breakdown_all_site$Metric_Group))
       
       names(breakdown_all_site)[names(breakdown_all_site) == 'value_rounded'] <- format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
@@ -687,7 +687,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       breakdown_all_site[breakdown_all_site == "$NaN"] <- NA
       
       breakdown_all_site[is.na(breakdown_all_site)] <- "-"
-      breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),] 
+      breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(breakout_tab_metrics$Metric_Group))),] 
       row.names(breakdown_all_site) <- NULL
       
       breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Variance to Budget")] <- ">= Budget"
