@@ -215,7 +215,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
       # Merge for summary 
 
-      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, fytd_press_ganey)
+      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pg_ytd_reformat)
       fytd_summary <- fytd_merged
       fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
