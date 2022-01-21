@@ -58,7 +58,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
-      # Filter data by service specific metris
+      # Filter data by service specific metrics
       data <- left_join(summary_tab_metrics, metrics_final_df, by = c("Service", "Metric_Group", "Metric_Name"))  ##extract selected service from metric_final_df
       data <- data  %>% 
         filter(Reporting_Month_Ref <= current_period) %>% #Ensure only selected service and all data before selected month is returned
@@ -120,13 +120,90 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE)))
       
-      # Press Ganey and HCAHPS YTD
-      pg_ytd_reformat <- press_ganey_data %>%
+      # FYTD Summary Table - for Press Ganey
+      # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
+      press_ganey_ytd <- press_ganey_data %>%
+        # Add logic to include Jan data in YTD data
+        mutate(ReportingType = ifelse(month(Reporting_Date_Start) == 1 &
+                                        month(Reporting_Date_End) == 1,
+                                      "YTD", ReportingType)) %>%
+        # Filter on YTD data and selected service
         filter(ReportingType %in% "YTD" &
                  Service %in% service_input) %>%
-        mutate(Reporting_Month_Ref = Reporting_Date_End + months(1))
-
-                  
+        mutate(Reporting_Month_Ref = floor_date(Reporting_Date_End,
+                                                unit = "month")) %>%
+        filter(Reporting_Month_Ref <= current_period)
+      
+      # Press Ganey mapping for metrics
+      pg_mapping_simple <- press_ganey_mapping %>%
+        select(-Questions)
+      
+      # Crosswalk PG YTD data with mapping
+      press_ganey_ytd <- left_join(press_ganey_ytd,
+                                   pg_mapping_simple,
+                                   by = c("Service" = "Service",
+                                          "Question_Clean" = "Question_Clean"))
+      
+      # Begin reformatting Press Ganey YTD data
+      pg_ytd_reformat <- press_ganey_ytd %>%
+        # Convert to longer format
+        pivot_longer(cols = c(contains("Site_"),
+                              contains("All_PG_Database_")),
+                     names_to = "Metric") %>%
+        # Update metric names
+        mutate(Metric_Name_Submitted = ifelse(Metric %in% "Site_Mean",
+                                              paste0(Question_Clean, " - Score"),
+                                              ifelse(Metric %in% "Site_N" & Incl_N,
+                                                     paste0(Question_Clean, " - N"),
+                                                     ifelse(Metric %in% "All_PG_Database_Rank" &
+                                                              Incl_AllHosp_Rank,
+                                                            "Rank - All Hospitals",
+                                                            NA)))) %>%
+        # Remove unused metrics
+        filter(!is.na(Metric_Name_Submitted)) %>%
+        # Remove unused columns
+        select(-Question_Clean,
+               -ReportingType,
+               -Incl_N,
+               -Incl_AllHosp_Rank,
+               -Metric) %>%
+        # Rename value column for consistency
+        rename(value_rounded = value)
+      
+      # Identify Press Ganey metrics to include in Summary tab
+      pg_summary_tab_metrics <- summary_metric_filter %>%
+        filter(Service %in% service_input) %>%
+        select(Service,
+               Metric_Group,
+               Metric_Name,
+               Metric_Name_Submitted,
+               Summary_Metric_Name)
+      
+      # Crosswalk Press Ganey YTD data with Summary tab metrics
+      pg_ytd_reformat <- left_join(pg_ytd_reformat,
+                                   pg_summary_tab_metrics,
+                                   by = c("Service" = "Service",
+                                          "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+      
+      pg_ytd_reformat <- pg_ytd_reformat %>%
+        # Filter on 
+        filter(!is.na(Summary_Metric_Name) &
+                 Reporting_Month_Ref == max(Reporting_Month_Ref)) %>%
+        mutate(`Fiscal Year to Date` = ifelse(month(Reporting_Month_Ref) == 1 &
+                                                month(Reporting_Date_Start) == 1,
+                                              format(Reporting_Month_Ref, "%b %Y"),
+                                              paste0(
+                                                format(Reporting_Date_Start, "%b"),
+                                                " - ",
+                                                format(Reporting_Month_Ref, "%b %Y"),
+                                                " Average"))) %>%
+        select(-Service,
+               -Reporting_Date_Start,
+               -Reporting_Date_End,
+               -Reporting_Month_Ref,
+               -Metric_Name_Submitted) %>%
+        relocate(value_rounded, .after = `Fiscal Year to Date`)
+                    
       # FYTD Summary Table - for average 
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
@@ -137,7 +214,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc, round(value_rounded, 2), round(value_rounded)))
     
       # Merge for summary 
-      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg)
+
+      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, fytd_press_ganey)
       fytd_summary <- fytd_merged
       fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
@@ -152,7 +230,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Merge FYTD and Current Period Metrics Summary 
       metrics_summary <- merge(fytd_summary, current_summary, by = c("Section","Metric_Name"), all = TRUE)
-      metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
+      # metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
+      metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Summary_Metric_Name))),] 
       
       
 
