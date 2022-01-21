@@ -179,6 +179,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                Metric_Name_Submitted,
                Summary_Metric_Name)
       
+      
+      
       # Crosswalk Press Ganey YTD data with Summary tab metrics
       pg_ytd_reformat <- left_join(pg_ytd_reformat,
                                    pg_summary_tab_metrics,
