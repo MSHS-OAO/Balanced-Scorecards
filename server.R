@@ -81,10 +81,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
                                          paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period))  ## Create Current Period column if it's premier say when it ends
       current_summary <- current_summary[,c("Metric_Group","Summary_Metric_Name","Current Period","Site","value_rounded")]
+      
+      # Remove any duplicates
+      current_summary <- unique(current_summary)
+      
       current_summary <- current_summary %>%
         `colnames<-` (c("Section","Metric_Name","Current Period","Site","value_rounded")) %>%
         mutate(Section = "Metrics") %>%
-        pivot_wider(names_from = Site, values_from = value_rounded) 
+        pivot_wider(names_from = Site, values_from = value_rounded)
 
       missing_sites <- setdiff(sites_inc, names(current_summary))
       current_summary[missing_sites] <- NA
@@ -92,6 +96,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # FYTD Period Filter 
       fytd_period <- period_filter %>%        #Get all data from YTD
+        # Remove monthly Press Ganey and HCAHPS data from YTD sections since there is separate YTD data for this
+        filter(!(Metric_Group %in% c("Press Ganey Score", "HCAHPS (60 day lag)"))) %>%
         group_by(Metric_Group, Metric_Name) %>%
         filter(total == max(total)) %>%
         filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
@@ -113,6 +119,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE)))
+      
+      # Press Ganey and HCAHPS YTD
+      pg_ytd_reformat <- press_ganey_data %>%
+        filter(ReportingType %in% "YTD" &
+                 Service %in% service_input) %>%
+        mutate(Reporting_Month_Ref = Reporting_Date_End + months(1))
 
                   
       # FYTD Summary Table - for average 
