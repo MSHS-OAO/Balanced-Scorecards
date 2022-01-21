@@ -7,7 +7,6 @@
 summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= max(Month) %m-% months(12)) %>%
   mutate_if(is.logical, as.character) %>%
   mutate_if(is.double, as.character) %>%
-  select(-Hospital) %>%
   pivot_longer(cols = c(-Month, -Site, -Service),
                names_to = "Metric",
                values_to = "Value") %>%
