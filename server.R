@@ -99,7 +99,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Remove monthly Press Ganey and HCAHPS data from YTD sections since there is separate YTD data for this
         filter(!(Metric_Group %in% c("Press Ganey Score", "HCAHPS (60 day lag)"))) %>%
         group_by(Metric_Group, Metric_Name) %>%
-        filter(total == max(total)) %>%
+        #filter(total == max(total)) %>%
         filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
         group_by(Metric_Group, Metric_Name) %>%
         mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 

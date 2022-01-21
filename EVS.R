@@ -89,7 +89,7 @@ evs__metrics_final_df_process <- function(data){
   
   
   ## TAT - EVS processing 
-  raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)] <- sapply(raw_TAT_EVS_df[,5:length(raw_TAT_EVS_df)], as.numeric)
+  raw_TAT_EVS_df[,4:length(raw_TAT_EVS_df)] <- sapply(raw_TAT_EVS_df[,4:length(raw_TAT_EVS_df)], as.numeric)
   TAT_EVS_df <- raw_TAT_EVS_df %>%
     mutate(`% Isolation Turns` = round(`Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`),2),
            `% Non-Isolation Turns` = round(`Non-Isolation Requests` / (`Isolation Requests` + `Non-Isolation Requests`),2)) %>%
@@ -143,3 +143,5 @@ evs__metrics_final_df_process <- function(data){
 # month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx")[1]
 # 
 # data <- evs_file_process(test,month)
+# 
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Summary Repos/TAT - EVS.xlsx")
