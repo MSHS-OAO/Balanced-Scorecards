@@ -548,7 +548,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      # service_input <- "Food Services"
+      # service_input <- "Environmental Services"
       # month_input <- "08-2021"
       # site_input <- "MSH"
 
@@ -664,7 +664,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Format units
       breakdown_all_site <- merge(breakdown_all_site, metric_unit_filter,
                              by.x = c("Metric_Group","Metric_Name"),
-                             by.y = c("Metric_Group","Metric_Name"))
+                             by.y = c("Metric_Group","Metric_Name"),
+                             all.x = TRUE)
       
       breakdown_all_site <- breakdown_all_site %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
