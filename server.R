@@ -119,6 +119,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE)))
+      
+      # Press Ganey and HCAHPS YTD
+      pg_ytd_reformat <- press_ganey_data %>%
+        filter(ReportingType %in% "YTD" &
+                 Service %in% service_input) %>%
+        mutate(Reporting_Month_Ref = Reporting_Date_End + months(1))
 
                   
       # FYTD Summary Table - for average 
