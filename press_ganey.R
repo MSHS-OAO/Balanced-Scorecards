@@ -263,6 +263,113 @@ press_ganey_metrics_final_df <- function(press_ganey_summary) {
   
 }
 
+# Custom function to format Press Ganey YTD data for Summary Tab
+reformat_pg_fytd <- function(data) {
+  
+  press_ganey_ytd <- press_ganey_data %>%
+    # Add logic to include Jan data in YTD data
+    mutate(ReportingType = ifelse(month(Reporting_Date_Start) == 1 &
+                                    month(Reporting_Date_End) == 1,
+                                  "YTD", ReportingType)) %>%
+    # Filter on YTD data and selected service
+    filter(ReportingType %in% "YTD" &
+             Service %in% service_input) %>%
+    mutate(Reporting_Month_Ref = floor_date(Reporting_Date_End,
+                                            unit = "month")) %>%
+    filter(Reporting_Month_Ref <= current_period)
+  
+  # Press Ganey mapping for metrics
+  pg_mapping_simple <- press_ganey_mapping %>%
+    select(-Questions)
+  
+  # Crosswalk PG YTD data with mapping
+  press_ganey_ytd <- left_join(press_ganey_ytd,
+                               pg_mapping_simple,
+                               by = c("Service" = "Service",
+                                      "Question_Clean" = "Question_Clean"))
+  
+  # Begin reformatting Press Ganey YTD data
+  pg_ytd_reformat <- press_ganey_ytd %>%
+    # Convert to longer format
+    pivot_longer(cols = c(contains("Site_"),
+                          contains("All_PG_Database_")),
+                 names_to = "Metric") %>%
+    # Update metric names
+    mutate(Metric_Name_Submitted = ifelse(Metric %in% "Site_Mean",
+                                          paste0(Question_Clean, " - Score"),
+                                          ifelse(Metric %in% "Site_N" & Incl_N,
+                                                 paste0(Question_Clean, " - N"),
+                                                 ifelse(Metric %in% "All_PG_Database_Rank" &
+                                                          Incl_AllHosp_Rank,
+                                                        "Rank - All Hospitals",
+                                                        NA)))) %>%
+    # Remove unused metrics
+    filter(!is.na(Metric_Name_Submitted)) %>%
+    # Remove unused columns
+    select(-Question_Clean,
+           -ReportingType,
+           -Incl_N,
+           -Incl_AllHosp_Rank,
+           -Metric) %>%
+    # Rename value column for consistency
+    rename(value_rounded = value)
+  
+  # Identify Press Ganey metrics to include in Summary tab
+  pg_summary_tab_metrics <- summary_metric_filter %>%
+    filter(Service %in% service_input) %>%
+    select(Service,
+           Metric_Group,
+           Metric_Name,
+           Metric_Name_Submitted,
+           Summary_Metric_Name)
+  
+  # Crosswalk Press Ganey YTD data with Summary tab metrics
+  pg_ytd_reformat <- left_join(pg_ytd_reformat,
+                               pg_summary_tab_metrics,
+                               by = c("Service" = "Service",
+                                      "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+  
+  pg_ytd_reformat <- pg_ytd_reformat %>%
+    # Filter on 
+    filter(!is.na(Summary_Metric_Name) &
+             Reporting_Month_Ref == max(Reporting_Month_Ref)) %>%
+    mutate(`Fiscal Year to Date` = ifelse(month(Reporting_Month_Ref) == 1 &
+                                            month(Reporting_Date_Start) == 1,
+                                          format(Reporting_Month_Ref, "%b %Y"),
+                                          paste0(
+                                            format(Reporting_Date_Start, "%b"),
+                                            " - ",
+                                            format(Reporting_Month_Ref, "%b %Y"),
+                                            " Average"))) %>%
+    select(-Service,
+           -Reporting_Date_Start,
+           -Reporting_Date_End,
+           -Reporting_Month_Ref,
+           -Metric_Name_Submitted) %>%
+    relocate(value_rounded, .after = `Fiscal Year to Date`)
+  
+  return(pg_ytd_reformat)
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
 # pg_metrics_final_df <- press_ganey_data %>%
 #   filter(ReportingType %in% "Monthly")
 # 
