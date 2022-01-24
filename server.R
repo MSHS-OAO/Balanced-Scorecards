@@ -118,7 +118,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Metric_Name %in% c("Budget to Actual MOM", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
-        summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE)))
+        summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
+        ungroup()
       
       # FYTD Summary Table - for Press Ganey
       # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
@@ -213,7 +214,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
-        mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc, round(value_rounded, 2), round(value_rounded)))
+        mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc, round(value_rounded, 2), round(value_rounded))) %>%
+        ungroup()
     
       # Merge for summary 
 
@@ -1453,11 +1455,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         month <- excel_sheets(file_path)[1]
       }
       
+      # Save prior version of Lab TAT Dept Summary data
+      write_xlsx(summary_repos_environmental,
+                 paste0(hist_archive_path,
+                        "EVS historical ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
       evs_data <- evs_file_process(evs_data,month)
       
       metrics_final_df <<- evs__metrics_final_df_process(evs_data)
       
-      #saveRDS(metrics_final_df, metrics_final_df_path)
+      saveRDS(metrics_final_df, metrics_final_df_path)
       
       evs_summary_repo <- read_excel(evs_table_path)
       updated_rows <- unique(evs_data[c("Service","Site", "Month")])
