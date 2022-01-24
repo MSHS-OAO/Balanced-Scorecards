@@ -4,13 +4,8 @@
 # operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 
 
-summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>% filter(Month >= max(Month) %m-% months(12)) %>%
-  mutate_if(is.logical, as.character) %>%
-  mutate_if(is.double, as.character) %>%
-  pivot_longer(cols = c(-Month, -Site, -Service),
-               names_to = "Metric",
-               values_to = "Value") %>%
-  pivot_wider(names_from = "Month", values_from = Value)
+summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>%
+  mutate_if(is.logical, as.character)
 
 
 evs_file_process <- function(data, month){
@@ -75,9 +70,7 @@ evs_file_process <- function(data, month){
     relocate(Month, .after = Site) %>%  
     select(-Hospital)
   
-  data$`Non-Isolation  % > 90 mins` <- data$`Non-Isolation  % > 90 mins`*100
-  data$`Isolation % > 90 mins` <- data$`Isolation % > 90 mins`*100
-  
+
   data
 }
 
@@ -119,7 +112,7 @@ evs__metrics_final_df_process <- function(data){
   
   TAT_EVS_df_final <- merge(TAT_EVS_df, 
                             TAT_EVS_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
-                            all = FALSE)
+                            all.x = TRUE)
   
   # Subset processed data for merge 
   TAT_EVS_df_merge <- TAT_EVS_df_final[,processed_df_cols]
@@ -137,10 +130,9 @@ evs__metrics_final_df_process <- function(data){
 
 
 
+# test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT October.xlsx")
+# month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT October.xlsx")[1]
 
-# test <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx")
-# month <- excel_sheets("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx")[1]
-# 
 # data <- evs_file_process(test,month)
 # 
 # data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Summary Repos/TAT - EVS.xlsx")
