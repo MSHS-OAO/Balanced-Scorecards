@@ -427,6 +427,27 @@ ui <-
                                  # )
                                  
                         ),
+                        
+                        tabPanel("Operational Metrics - Imaging", value = "operational",
+                                 shinyjs::useShinyjs(),
+                                 shinyjs::inlineCSS(appCSS),
+                                 span("Operational Metrics - Imagings", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
+                                        tabPanel("Imaging - IR", br(),
+                                                 fileInput("imagin_IR", label = "Please upload Imaging ineterventional radiology data"),
+                                                 actionButton("submit_imaging", label = "Submit")
+                                        )
+                                 )
+  
+                        ),
                         tabPanel("Operational Metrics - Lab", value = "lab",
                                  span("Operational Metrics - Lab",
                                       style = "color: #black; font-family:Calibri; font-weight: bold; 
