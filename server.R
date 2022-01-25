@@ -421,7 +421,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       header_above <- c(" " = 2, "ytd_header" = 7, " " = 1, "current_header" = 7)
       names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
       
-      kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE) %>%
+      kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
+      
+      kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
+            col.names = kable_col_names) %>%
         pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
         kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
                       position = "center", row_label_position = "c", font_size = 16) %>%
