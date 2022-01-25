@@ -12,10 +12,18 @@ security_incident_reports <- security_incident_reports %>%
 # Determine last month and next month for Security Incident Reports
 sec_inc_rpts_last_month <- max(security_incident_reports$Month)
 
+# Identify Security Incident Report metrics to include in KPI breakout tab
+sec_inc_rpt_metrics_incl <- metric_grouping %>%
+  filter(Metric_Group %in% "Incident Reports" &
+           Security %in% "Y") %>%
+  select(`Data Table`, Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
+  distinct()
+
 # Reformat Security Incident Reports data into wider format for manual entries
 sec_inc_rpts_manual_table <- security_incident_reports %>%
   select(-Service) %>%
-  filter(Month >= sec_inc_rpts_last_month - months(7)) %>%
+  filter(Month >= sec_inc_rpts_last_month - months(7) &
+           Metric %in% sec_inc_rpt_metrics_incl$Metric_Name_Submitted) %>%
   arrange(Month,
           Site) %>%
   mutate(Month = format(Month, "%m-%Y"),
@@ -52,7 +60,7 @@ sec_inc_rpts_metrics_final_df <- function(sec_inc_rpts_summary) {
   # Format for metrics_final_df
   sec_inc_rpts_df <- sec_inc_rpts_summary %>%
     # Remove empty metrics
-    filter(!is.na(Number)) %>%
+    # filter(!is.na(Number)) %>%
     arrange(Month,
             desc(Metric),
             Site) %>%

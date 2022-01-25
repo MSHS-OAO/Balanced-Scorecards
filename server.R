@@ -2102,6 +2102,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
   }"
         
+        # col_highlight <- ncol(data) - 1
+
+        
         rhandsontable(data_sec_inc_rpts(),
                       # # Dataframe for non-reactive testing
                       # data_sec_inc_rpts,
@@ -2109,6 +2112,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       col_highlight = col_highlight,
                       rowHeaders = FALSE,
                       readOnly = FALSE) %>%
+          hot_table(mergeCells = list(
+            list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+            list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+            list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+            list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+            list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+            list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+            list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+          )) %>%
           hot_cols(renderer = renderer_string) %>%
           hot_col(1:2, readOnly = TRUE)
         
