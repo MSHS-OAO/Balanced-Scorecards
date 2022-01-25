@@ -2682,10 +2682,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_xlsx(kpibme_reports, bmekpi_table_path)
         
         # Update metrics_final_df with latest data using custom function
-        # metrics_final_df <<- biomed__metrics_final_df_process(sec_inc_rpts_summary_data)
+        metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
         
         # Save updates metrics_final_df
-        # saveRDS(metrics_final_df, metrics_final_df_path)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         
       })
       
@@ -2743,10 +2743,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_xlsx(disruptions_issues_reports, bmedi_table_path)
         
         # Update metrics_final_df with latest data using custom function
-        # metrics_final_df <<- biomed__metrics_final_df_process(sec_inc_rpts_summary_data)
+        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports)
         
         # Save updates metrics_final_df
-        # saveRDS(metrics_final_df, metrics_final_df_path)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         
       })
       

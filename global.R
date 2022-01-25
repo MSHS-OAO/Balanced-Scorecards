@@ -55,6 +55,7 @@ suppressMessages({
   library(extrafont)
   library(tis) # for US holidays
   library(vroom)
+  library(openxlsx)
   library(sjmisc)
   library(tools)
   library(here)
