@@ -15,11 +15,11 @@ biomedDI_last_month <- max(disruptions_issues_reports$Month)
 disruptions_issues_reports_ui <- disruptions_issues_reports %>%
   select(-Service) %>%
   filter(Month >= biomedDI_last_month - months(7)) %>%
-  mutate(Month = format(Month, "%B-%Y")) %>%
+  mutate(Month = format(Month, "%b-%Y")) %>%
   pivot_wider(names_from = "Month",values_from = `Total Disruptions/Issues`,values_fill=0) %>%
   mutate(Metric = "Total Disruptions and Issues") %>%
   relocate(Metric,.after=Site) %>%
-  mutate('{format(biomedDI_last_month + months(1), "%B-%Y")}' := "")
+  mutate('{format(biomedDI_last_month + months(1), "%b-%Y")}' := "")
 
 
 # KPIs Biomed -------------
@@ -37,12 +37,12 @@ kpibme_last_month <- max(kpibme_reports$Month)
 kpibme_reports_ui <- kpibme_reports %>%
   select(-Service) %>%
   filter(Month >= kpibme_last_month - months(7)) %>%
-  mutate(Month = format(Month, "%B-%Y"),
+  mutate(Month = format(Month, "%b-%Y"),
          Number = round(as.numeric(Number),2),
          Number = if_else(Metric %in% c("Documented Status","PM Compliance - High Risk Equipment","PM Compliance - All Medical Equipment"),Number*100,Number)) %>%
   pivot_wider(names_from = "Month",values_from = Number,values_fill=0) %>%
   group_by(Site) %>%
-  mutate('{format(kpibme_last_month + months(1), "%B-%Y")}' := NA) %>%
+  mutate('{format(kpibme_last_month + months(1), "%b-%Y")}' := NA) %>%
   arrange(Site)
 
 # function to append the new data to summary repo- KPIs & Disruptions and Issues -----
