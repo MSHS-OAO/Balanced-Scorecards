@@ -55,6 +55,7 @@ suppressMessages({
   library(extrafont)
   library(tis) # for US holidays
   library(vroom)
+  library(openxlsx)
   library(sjmisc)
   library(tools)
   library(here)
@@ -197,6 +198,7 @@ home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Op
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
 target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+# target_mapping_path <- ("C:/Users/villea04/Downloads/MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
