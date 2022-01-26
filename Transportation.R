@@ -3,7 +3,7 @@
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 # pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/PTET.xlsx")
 
-
+current_month <- floor_date(Sys.Date())
 
 process_PT_data <- function(pt_data_raw){
   
@@ -65,6 +65,7 @@ process_PT_data <- function(pt_data_raw){
              Premier_Reporting_Period = format(Day,"%b %Y"),
              value_rounded = as.numeric(value_rounded),
              Reporting_Month = format(Day,"%m-%Y")) %>%
+      filter(Day<current_month) %>%
       pivot_wider(names_from = "Metric_Group",values_from = "value_rounded",values_fill=0)  %>%
       rename(NumTransports = `# Transports`) %>%
       select(-Day)%>%
@@ -113,6 +114,7 @@ process_PT_data <- function(pt_data_raw){
                    values_to = "value_rounded") %>%
       mutate(Date =  as.Date(as.numeric(as.character(Date)),origin= "1899-12-30"),
              value_rounded = as.numeric(value_rounded)) %>%
+      filter(Date<current_month) %>%
       pivot_wider(names_from = "Metric_Group",values_from = "value_rounded",values_fill=0) %>%
       mutate(Site = hospital,
             `Transport Type` = "Patient",
