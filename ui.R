@@ -6,7 +6,18 @@ library(shinydashboard)
 default_campus <- sort(unique(metrics_final_df$Site))
 campus_choices <- sort(unique(metrics_final_df$Site))
 default_service <- sort(unique(metrics_final_df$Service))[1]
-service_choices <- sort(unique(metrics_final_df$Service))
+# service_choices <- sort(unique(metrics_final_df$Service))
+service_choices <- sort(
+  unique(
+    metrics_final_df$Service[
+      which(!(
+        metrics_final_df$Service %in% c("Emergency Department", "Nursing")
+        )
+        )
+      ]
+    )
+  )
+
 # default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
 # month_choices <- unique(metrics_final_df$Reporting_Month)
 default_month <- format(max(metrics_final_df$Reporting_Month_Ref, na.rm = TRUE), "%m-%Y")
