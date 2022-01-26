@@ -42,7 +42,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 
-      # service_input <- "Environmental Services"
+      # service_input <- "Lab"
       # month_input <- "09-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -1385,28 +1385,92 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     })
     
     observeEvent(input$submit_food,{
-      print(input$name_1)
-      if(input$name_1 == ""){
+      food_file <- input$food_cost_and_revenue
+      flag <- 0
+      
+      if(is.null(food_file)){
+        return(NULL)
+      }else{
+       food_file_path <- food_file$datapath
+       #food_file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"
+       tryCatch({food_data <- read_excel(food_file_path, sheet = "Cost and Revenue")
+       flag <- 1
+       showModal(modalDialog(
+         title = "Success",
+         paste0("The data has been imported succesfully"),
+         easyClose = TRUE,
+         footer = NULL
+       ))
+       }, error = function(err){  showModal(modalDialog(
+         title = "Error",
+         paste0("There seems to be an issue with one of the files"),
+         easyClose = TRUE,
+         footer = NULL
+       ))})
+      }
+
+      # Save prior version of Food Dept Summary data
+      write_xlsx(cost_and_revenue_repo,
+                 paste0(hist_archive_path,
+                        "Food Services Updates ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      if (flag == 1){
+      # Process Cost and Revenue data
+        tryCatch({food_summary_data <- cost_and_revenue_file_process(food_data)
+        flag <- 2
         showModal(modalDialog(
-          title = "Error",
-          paste0("Please fill in the required fields"),
+          title = "Success",
+          paste0("The data has been imported succesfully"),
           easyClose = TRUE,
           footer = NULL
         ))
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
       }
       
-      census_data <- hot_to_r(input$food_census)
-      census_data <- transform_dt(census_data, "Month", "Census Days")
-      
-      food_budget_data <- hot_to_r(input$food_budget)
-      food_budget_data <- transform_dt(food_budget_data, "Month", "Revenue Budget")
-
-      food_actual_data <- hot_to_r(input$food_budget)
-      food_actual_data <- transform_dt(food_actual_data, "Month", "Actual Revenue")
-
-       data_join <- full_join(census_data,food_budget_data)
-       data_join <<- full_join(data_join,food_actual_data)
-      
+      if (flag == 2){
+        # Append Food summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        food_new_data <- unique(
+          food_summary_data[  c("Service", "Site", "Month", "Metric")]
+        )
+        
+        
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
+                                            food_new_data,
+                                          by = c("Service" = "Service",
+                                                 "Site" = "Site",
+                                                 "Month" = "Month",
+                                                 "Metric" = "Metric")
+        )
+        
+        # Third, combine the updated historical data with the new data
+        cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
+                                            food_summary_data)
+        
+        # Lastly, save the updated summary data
+        write_xlsx(cost_and_revenue_repo, ops_metrics_lab_tat_path)
+        
+        # Update metrics_final_df with latest SCC data using custom function
+        metrics_final_df <<- census_days_metrics_final_process(food_summary_data)
+        
+        # Save updated metrics_final_df
+        saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+  
+        # Update "Reporting Month" drop down in each tab
+        picker_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      }
       
     })
     
@@ -1450,6 +1514,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     observeEvent(input$submit_evs,{
       
       evs_file <- input$evs_data
+      flag <- 0
       
       if (is.null(evs_file)) {
         return(NULL)
@@ -1460,6 +1525,23 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         month <- excel_sheets(file_path)[1]
       }
       
+      tryCatch({evs_data <- evs_file_process(evs_data,month)
+                flag <- 1
+      
+      showModal(modalDialog(
+        title = "Success",
+        paste0("The data has been imported succesfully"),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+      },
+      error = function(err){  showModal(modalDialog(
+        title = "Error",
+        paste0("There seems to be an issue with one of the files"),
+        easyClose = TRUE,
+        footer = NULL
+      ))})
+      
       # Save prior version of Lab TAT Dept Summary data
       write_xlsx(summary_repos_environmental,
                  paste0(hist_archive_path,
@@ -1467,38 +1549,37 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         format(Sys.time(), "%Y%m%d_%H%M%S"),
                         ".xlsx"))
       
-      evs_data <- evs_file_process(evs_data,month)
-      
-      metrics_final_df <<- evs__metrics_final_df_process(evs_data)
-      
-      saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      evs_summary_repo <- read_excel(evs_table_path)
-      updated_rows <- unique(evs_data[c("Service","Site", "Month")])
-      updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
-      
-      evs_summary_repo <- anti_join(evs_summary_repo, updated_rows)
-      evs_summary_repo <- evs_summary_repo %>% filter(!is.na(Month))
-      
-      evs_data$Month <- as.Date(evs_data$Month, "%m/%d/%Y")
-      evs_data$`Non-Isolation Requests` <- as.character(evs_data$`Non-Isolation Requests`)
-      evs_data$`Non-Isolation  % > 90 mins` <- as.character(evs_data$`Non-Isolation  % > 90 mins`)
-      evs_data$`Non-IsolationAverage TAT` <- as.character(evs_data$`Non-IsolationAverage TAT`)
-      evs_data$`Isolation Requests` <- as.character(evs_data$`Isolation Requests`)
-      evs_data$`Isolation % > 90 mins` <- as.character(evs_data$`Isolation % > 90 mins`)
-      evs_data$`Isolation Average TAT` <- as.character(evs_data$`Isolation Average TAT`)
-      
-      
-      
-      evs_summary_repo <- full_join(evs_summary_repo, evs_data)
-      evs_summary_repo <- as.data.frame(evs_summary_repo)
-      #write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
-      
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
-      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      
+      if(flag == 1){
+        metrics_final_df <<- evs__metrics_final_df_process(evs_data)
+        
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        evs_summary_repo <- read_excel(evs_table_path)
+        updated_rows <- unique(evs_data[c("Service","Site", "Month")])
+        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
+        
+        evs_summary_repo <- anti_join(evs_summary_repo, updated_rows)
+        evs_summary_repo <- evs_summary_repo %>% filter(!is.na(Month))
+        
+        evs_data$Month <- as.Date(evs_data$Month, "%m/%d/%Y")
+        evs_data$`Non-Isolation Requests` <- as.character(evs_data$`Non-Isolation Requests`)
+        evs_data$`Non-Isolation  % > 90 mins` <- as.character(evs_data$`Non-Isolation  % > 90 mins`)
+        evs_data$`Non-IsolationAverage TAT` <- as.character(evs_data$`Non-IsolationAverage TAT`)
+        evs_data$`Isolation Requests` <- as.character(evs_data$`Isolation Requests`)
+        evs_data$`Isolation % > 90 mins` <- as.character(evs_data$`Isolation % > 90 mins`)
+        evs_data$`Isolation Average TAT` <- as.character(evs_data$`Isolation Average TAT`)
+        
+        
+        
+        evs_summary_repo <- full_join(evs_summary_repo, evs_data)
+        evs_summary_repo <- as.data.frame(evs_summary_repo)
+        #write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
+        
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      }
       
     })
     
@@ -2314,6 +2395,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # 5. Overtime - Data Input -----------------3----------------------------------------------------------------
     observeEvent(input$submit_finance, {
       census_file <- input$finance_census
+      flag <- 0
       
       if(is.null(census_file)){
         return(NULL)
@@ -2332,47 +2414,65 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         ".xlsx"))
       
       ## Process Census Data
-      census_summary_data <- census_days_file_process(census_data)
+      tryCatch({census_summary_data <- census_days_file_process(census_data)
+                  flag <- 1
       
-      # Append Lab TAT summary with new data
-      # First, identify the sites, months, and metrics in the new data
-      census_new_data <- unique(
-        census_summary_data[  c("Service", "Site", "Month")]
-      )
+      showModal(modalDialog(
+        title = "Success",
+        paste0("The data has been imported succesfully"),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+      }, error = function(err){  showModal(modalDialog(
+        title = "Error",
+        paste0("There seems to be an issue with one of the files"),
+        easyClose = TRUE,
+        footer = NULL
+      ))})
       
-      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-      # This allows us to ensure no duplicate entries for the same site, metric, and time period
-      cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
-                                          census_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Month" = "Month"))
-      
-      
-      # Third, combine the updated historical data with the new data
-      cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
-                                        census_summary_data)
-      
-      # Lastly, save the updated summary data
-      write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
-      
-      # Update metrics_final_df with latest SCC data using custom function
-      metrics_final_df <<- census_days_metrics_final_process(census_summary_data)
-      
-      # Save updated metrics_final_df
-      saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
-      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      if (flag == 1){
+
+        # Append Lab TAT summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        census_new_data <- unique(
+          census_summary_data[  c("Service", "Site", "Month")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
+                                            census_new_data,
+                                            by = c("Service" = "Service",
+                                                   "Site" = "Site",
+                                                   "Month" = "Month"))
+        
+        
+        # Third, combine the updated historical data with the new data
+        cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
+                                          census_summary_data)
+        
+        # Lastly, save the updated summary data
+        write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
+        
+        # Update metrics_final_df with latest SCC data using custom function
+        metrics_final_df <<- census_days_metrics_final_process(census_summary_data)
+        
+        # Save updated metrics_final_df
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        # Update "Reporting Month" drop down in each tab
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      }
       
     })
     
       
     observeEvent(input$submit_finance, {
       overtime_file <- input$finance_overtime
+      flag <- 0
       
       if(is.null(overtime_file)){
         return(NULL)
@@ -2390,39 +2490,56 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         format(Sys.time(), "%Y%m%d_%H%M%S"),
                         ".xlsx"))
       
+      
       # Process Overtime data
-      overtime_summary_data <- overtime_file_processs(overtime_data)
+      tryCatch({overtime_summary_data <- overtime_file_processs(overtime_data)
+          flag <- 1
+      showModal(modalDialog(
+        title = "Success",
+        paste0("The data has been imported succesfully"),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+      }, error = function(err){  showModal(modalDialog(
+        title = "Error",
+        paste0("There seems to be an issue with one of the files"),
+        easyClose = TRUE,
+        footer = NULL
+      ))})
       
-      # Append Overtime summary with new data
-      # First, identify the sites, months, and metrics in the new data
-      overtime_new_data <- unique(
-        overtime_summary_data[  c("Service", "Site", "Associated Dashboard Month", "Metric_name")]
-      )
       
-      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-      # This allows us to ensure no duplicate entries for the same site, metric, and time period
-      summary_repos_overtime <- anti_join(summary_repos_overtime,
-                                          overtime_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Associated Dashboard Month" = "Associated Dashboard Month",
-                                              "Metric_name" = "Metric_name")
-      )
-      
-      # Third, combine the updated historical data with the new data
-      summary_repos_overtime <- full_join(summary_repos_overtime,
-                                          overtime_summary_data)
-      
-      # Lastly, save the updated summary data
-      write_xlsx(summary_repos_overtime, summary_repos_overtime_path)
-      
-      #metrics_final_df <<- overtime_metrics_final_df_process(overtime_summary_data)
-      
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
-      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      
+      if (flag == 1){
+        # Append Overtime summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        overtime_new_data <- unique(
+          overtime_summary_data[  c("Service", "Site", "Associated Dashboard Month", "Metric_name")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        summary_repos_overtime <- anti_join(summary_repos_overtime,
+                                            overtime_new_data,
+                                         by = c("Service" = "Service",
+                                                "Site" = "Site",
+                                                "Associated Dashboard Month" = "Associated Dashboard Month",
+                                                "Metric_name" = "Metric_name")
+        )
+        
+        # Third, combine the updated historical data with the new data
+        summary_repos_overtime <- full_join(summary_repos_overtime,
+                                            overtime_summary_data)
+        
+        # Lastly, save the updated summary data
+        write_xlsx(summary_repos_overtime, summary_repos_overtime_path)
+        
+        #metrics_final_df <<- overtime_metrics_final_df_process(overtime_summary_data)
+        
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      }
+        
     })
     
     

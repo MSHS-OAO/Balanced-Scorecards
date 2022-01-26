@@ -133,7 +133,7 @@ imaging_metrics_final_df <- function(data){
   metrics_final_df <- full_join(metrics_final_df,
                                 imaging_df_merge)
   
-  metrics_final_df <- metrics_final_df %>%
+  # metrics_final_df <- metrics_final_df %>%
     arrange(Service,
             Site,
             Metric_Group,

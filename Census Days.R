@@ -56,7 +56,7 @@ cost_and_revenue_file_process <- function(data){
   data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE")))] <- NA
   
   
-  #foor loop to fill in the NA cells with the site name
+  #for loop to fill in the NA cells with the site name
   site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
   for(i in site_index){
     data[i:(i+5),c("Site")] <- data[i,c("Site")]
