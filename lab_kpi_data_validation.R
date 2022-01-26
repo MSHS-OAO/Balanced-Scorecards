@@ -339,7 +339,7 @@ process_scc <- function(scc_raw_data) {
         paste0(month(Result_DateTime), "/1/", year(Result_DateTime)),
         format = "%m/%d/%Y"),
       # Create a column with metric summary
-      Metric = paste0(Test, " (<= ", TargetTAT, " min)")
+      Metric = paste0(Test, " (<=", TargetTAT, " min)")
     )
   
   # Determine primary month of report and remove any labs resulted the following month.
@@ -429,7 +429,7 @@ process_sun <- function(sun_raw_data) {
         paste0(month(Result_DateTime), "/1/", year(Result_DateTime)),
         format = "%m/%d/%Y"),
       # Create a column with metric summary
-      Metric = paste0(Test, " (<= ", TargetTAT, " min)")
+      Metric = paste0(Test, " (<=", TargetTAT, " min)")
     )
   
   # Sunquest data often includes labs resulted the following day/month.

@@ -552,145 +552,51 @@ lab_prof_test_metrics_final_df <- function(prof_test_summary) {
 
 
 
-# # Code for testing custom functions and approach ----------------------
-# # Comment out code below here for deployed tool
-# # Reference data for site, test, and ICU mappings. This can be commented out when using global.R
-# # lab_sites <- read_excel(
-# #   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
-# #          "/Projects/System Operations/Balanced Scorecards Automation",
-# #          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-# #   sheet = "Lab_Sites"
-# # )
-# # 
-# # lab_test_codes <- read_excel(
-# #   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
-# #          "/Projects/System Operations/Balanced Scorecards Automation",
-# #          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-# #   sheet = "Lab_TestCodes"
-# # )
-# # 
-# # lab_icu <- read_excel(
-# #   paste0("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization",
-# #          "/Projects/System Operations/Balanced Scorecards Automation",
-# #          "/Data_Dashboard/MSHS Scorecards Target Mapping.xlsx"),
-# #   sheet = "Lab_ICU"
-# # )
+# # Code for creating summary repo from monthly files
+# scc_folder <- paste0("J:/deans/Presidents/HSPI-PM",
+#                      "/Operations Analytics and Optimization/Projects",
+#                      "/System Operations/Balanced Scorecards Automation",
+#                      "/Data_Dashboard/Input Data Raw/Lab & Blood Bank/SCC")
 # 
-# # Test custom functions and methodology -----------------------
-# scc_test_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
-#                              "/Operations Analytics and Optimization/Projects",
-#                              "/System Operations/Balanced Scorecards Automation",
-#                              "/Data_Dashboard/Input Data Raw/Lab & Blood Bank",
-#                              "/SCC/2021.03_SCC.xlsx")
+# sun_folder <- paste0("J:/deans/Presidents/HSPI-PM",
+#                      "/Operations Analytics and Optimization/Projects",
+#                      "/System Operations/Balanced Scorecards Automation",
+#                      "/Data_Dashboard/Input Data Raw/Lab & Blood Bank/SUNQUEST")
 # 
-# sun_test_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
-#                              "/Operations Analytics and Optimization/Projects",
-#                              "/System Operations/Balanced Scorecards Automation",
-#                              "/Data_Dashboard/Input Data Raw/Lab & Blood Bank",
-#                              "/SUNQUEST/2021.03_SUNQ.xlsx")
+# scc_files <- list.files(scc_folder)
+# sun_files <- list.files(sun_folder)
 # 
-# 
-# # SCC Data Processing and Appending --------------
-# # Read in raw data Excel file
-# scc_data <- read_excel(scc_test_file_path)
-# 
-# # Save prior version of Lab TAT Dept Summary data in Hist Archive folder
-# write_xlsx(ops_metrics_lab_tat,
-#            paste0(hist_archive_path,
-#                   "Lab TAT Metrics Pre-SCC Updates ",
-#                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-#                   ".xlsx"))
-# 
-# # Process raw data using custom functions
-# scc_summary_data <- lab_scc_tat_process(scc_data)
-# 
-# # write_xlsx(scc_summary_data,
-# #            paste0(hist_archive_path,
-# #                   "Lab TAT Metrics Date Test",
-# #                   ".xlsx"))
-# 
-# # Add new SCC data to existing repository 
-# # First, identify the sites, months, and metrics in the new data
-# scc_new_data <- unique(
-#   scc_summary_data[  c("Service", "Site", "Month", "Metric")]
+# scc_list <- lapply(scc_files,
+#                    function(x) read_excel(
+#                      paste0(scc_folder, "/", x)
+#                    )
 # )
 # 
-# # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-# # This allows us to ensure no duplicate entries for the same site, metric, and time period
-# ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
-#                                          scc_new_data,
-#                                          by = c("Service" = "Service",
-#                                                 "Site" = "Site",
-#                                                 "Month" = "Month",
-#                                                 "Metric" = "Metric")
+# sun_list <- lapply(sun_files,
+#                    function(x) read_excel(
+#                      paste0(sun_folder, "/", x)
+#                    )
 # )
 # 
-# # Third, combine the updated historical data with the new data
-# ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
-#                                  scc_summary_data)
+# scc_summary_stats <- bind_rows(lapply(scc_list, lab_scc_tat_dept_summary))
+# sun_summary_stats <- bind_rows(lapply(sun_list, lab_sun_tat_dept_summary))
 # 
-# # Next, arrange the department summary by month, metric name, and site
-# ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-#   mutate(Site = factor(Site, levels = lab_sites_ordered, ordered = TRUE)) %>%
+# ops_metrics_lab_tat_new <- bind_rows(scc_summary_stats, sun_summary_stats)
+# 
+# ops_metrics_lab_tat_new <- ops_metrics_lab_tat_new %>%
 #   arrange(Month,
 #           desc(Metric),
-#           Site) %>%
-#   mutate(Site = as.character(Site))
+#           Site)
 # 
-# # Lastly, save the updated summary data
-# write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+# test_compare <- left_join(ops_metrics_lab_tat_new,
+#                           ops_metrics_lab_tat,
+#                           by = c("Service" = "Service",
+#                                  "Site" = "Site",
+#                                  "Month" = "Month",
+#                                  "Metric" = "Metric"))
 # 
-# # Update metrics_final_df with SCC data
-# metrics_final_df <- lab_scc_metrics_final_processing(scc_summary_data)
-# 
-# 
-# # Sunquest Data Processing and Appending ----------------------
-# # Read in raw data Excel file
-# sun_data <- read_excel(sun_test_file_path,
-#                        col_types = "text")
-# 
-# # Save prior version of Lab TAT Dept Summary data in Hist Archive folder
-# write_xlsx(ops_metrics_lab_tat,
-#            paste0(hist_archive_path,
-#                   "Lab TAT Metrics Pre-Sun Updates ",
-#                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-#                   ".xlsx"))
-# 
-# # Process raw data using custom function
-# sun_summary_data <- lab_sun_tat_process(sun_data)
-# 
-# # First, identify the sites, months, and metrics in the new data
-# sun_new_data <- unique(
-#   sun_summary_data[c("Service", "Site", "Month", "Metric")]
-# )
-# 
-# # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-# # This allows us to ensure no duplicate entries for the same site, metric, and time period
-# ops_metrics_lab_tat <- anti_join(ops_metrics_lab_tat,
-#                                   sun_new_data,
-#                                   by = c("Service" = "Service",
-#                                          "Site" = "Site",
-#                                          "Month" = "Month",
-#                                          "Metric" = "Metric")
-# )
-# 
-# # Third, combine the updated historical data with the new data
-# ops_metrics_lab_tat <- full_join(ops_metrics_lab_tat,
-#                                  sun_summary_data)
-# 
-# # Next, arrange the department summary by month, metric name, and site
-# ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-#   mutate(Site = factor(Site, levels = lab_sites_ordered, ordered = TRUE)) %>%
-#   arrange(Month,
-#           desc(Metric),
-#           Site) %>%
-#   mutate(Site = as.character(Site))
-# 
-# # Lastly, save the updated summary data
-# write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-# 
-# # Update metrics_final_df with Sunquest data
-# metrics_final_df <- lab_sun_metrics_final_processing(sun_summary_data)
-
-
-
+# test_compare <- test_compare %>%
+#   rename(New_Number = Number.x,
+#          Old_Number = Number.y) %>%
+#   mutate(Old_Number = round(Old_Number, digits = 4),
+#          Same = New_Number == Old_Number)
