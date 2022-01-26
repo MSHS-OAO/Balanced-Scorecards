@@ -1,5 +1,5 @@
 # start <- "J:" #Comment when publishing to RConnect
-# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
+# # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 # pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/PTET.xlsx")
 
@@ -185,6 +185,7 @@ process_NPT_raw_data <- function(data){
     mutate(`% of Trips Over 45 Minutes` = round((`No of Trips Over 45 Minutes`)/`No of Transports`,2),
            Month = format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y"),
            Service = "Patient Transport") %>%
+    filter(Month < current_month) %>%
     mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
            Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%m-%Y")) %>%
     select(Service,Site,`% of Trips Over 45 Minutes`,`Turnaround Time`,Premier_Reporting_Period,Reporting_Month) %>%
