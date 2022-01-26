@@ -431,7 +431,7 @@ ui <-
                         tabPanel("Operational Metrics - Imaging", value = "operational",
                                  shinyjs::useShinyjs(),
                                  shinyjs::inlineCSS(appCSS),
-                                 span("Operational Metrics - Imagings", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                 span("Operational Metrics - Imaging", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
                                  span("Please only submit data if you have completed training on data submission for this tool.",
@@ -442,7 +442,7 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
                                         tabPanel("Imaging - IR", br(),
-                                                 fileInput("imagin_IR", label = "Please upload Imaging ineterventional radiology data"),
+                                                 fileInput("imaging_IR", label = "Please upload Imaging ineterventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
                                         )
                                  )

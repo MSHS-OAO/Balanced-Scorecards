@@ -1474,9 +1474,95 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    observeEvent(input$submit_imaging, {
+      imaging_file <- input$imaging_IR
+      flag <- 0
+      
+      if(is.null(imaging_file)){
+        return(NULL)
+      }else{
+        imaing_filepath <- imgaing_file <- imaging_file$datapath
+        #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
+        tryCatch({imaging_data <- read_excel(imaging_filtepath)
+            flag <- 1
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
+      }
+      
+      # Save prior version of Lab TAT Dept Summary data
+      write_xlsx(imaging_repo,
+                 paste0(hist_archive_path,
+                        "Imaging-IR ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
+      if(flag == 1){
+        # Process Imaging data
+        tryCatch({imaging_summary_data <- imaging_dept_summary(imaging_data)
+                    flag <- 2
+                    showModal(modalDialog(
+                      title = "Success",
+                      paste0("The data has been imported succesfully"),
+                      easyClose = TRUE,
+                      footer = NULL
+                    ))
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
+      }
+      
+      if(flag == 2){
+        
+        # Append Imaging with new data
+        # First, identify the sites, months, and metrics in the new data
+        imaging_new_data <- unique(
+          imaging_summary_data[  c("Service", "Site", "Month", "Metric")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        imaging_repo <<- anti_join(imaging_repo,
+                                   imaging_new_data,
+                                          by = c("Service" = "Service",
+                                                 "Site" = "Site",
+                                                 "Month" = "Month",
+                                                 "Metric" = "Metric")
+        )
+        
+        # Third, combine the updated historical data with the new data
+        imaging_repo <<- full_join(imaging_repo,
+                                   imaging_summary_data)
+        
+  
+        
+        # Lastly, save the updated summary data
+        write_xlsx(imaging_repo, paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
+        
+        # Update metrics_final_df with latest SCC data using custom function
+        metrics_final_df <<- imaging_metrics_final_df(imaging_summary_data)
+        
+        # Save updated metrics_final_df
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        # Update "Reporting Month" drop down in each tab
+        picker_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+      }
+      
+    })
+    
     
     observeEvent(input$submit_engineering,{
-      print(input$name_1)
       if(input$name_engineering_kpi == ""){
         showModal(modalDialog(
           title = "Error",
@@ -1521,26 +1607,36 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         file_path <- evs_file$datapath
         #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-        evs_data <- read_excel(file_path)
-        month <- excel_sheets(file_path)[1]
+        tryCatch({evs_data <- read_excel(file_path)
+                  month <- excel_sheets(file_path)[1]
+                  flag <- 1
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
       }
       
+      if(flag == 1){
       tryCatch({evs_data <- evs_file_process(evs_data,month)
-                flag <- 1
-      
-      showModal(modalDialog(
-        title = "Success",
-        paste0("The data has been imported succesfully"),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-      },
-      error = function(err){  showModal(modalDialog(
-        title = "Error",
-        paste0("There seems to be an issue with one of the files"),
-        easyClose = TRUE,
-        footer = NULL
-      ))})
+                  flag <- 2
+        
+        showModal(modalDialog(
+          title = "Success",
+          paste0("The data has been imported succesfully"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
+      }
       
       # Save prior version of Lab TAT Dept Summary data
       write_xlsx(summary_repos_environmental,
@@ -1549,7 +1645,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         format(Sys.time(), "%Y%m%d_%H%M%S"),
                         ".xlsx"))
       
-      if(flag == 1){
+      if(flag == 2){
         metrics_final_df <<- evs__metrics_final_df_process(evs_data)
         
         saveRDS(metrics_final_df, metrics_final_df_path)
