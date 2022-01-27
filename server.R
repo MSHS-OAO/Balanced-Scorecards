@@ -2015,7 +2015,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         error = function(err){
           showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with one of the files"),
+            paste0("There seems to be an issue with this SCC file."),
             easyClose = TRUE,
             footer = NULL
           ))
@@ -2031,76 +2031,78 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           flag <- 2
           
-          # Save prior version of Lab TAT Dept Summary data
-          write_xlsx(ops_metrics_lab_tat,
-                     paste0(hist_archive_path,
-                            "Lab TAT Metrics Pre-SCC Updates ",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
-          
-          
-          
-          
-        }
-
+          showModal(modalDialog(
+            title = "Success",
+            paste0("This SCC data has been imported successfully"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        },
+        error = function(err){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with this SCC file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        })
+      }
+      
+      if(flag == 2){
+        
+        # Save prior version of Lab TAT Dept Summary data
+        write_xlsx(ops_metrics_lab_tat,
+                   paste0(hist_archive_path,
+                          "Lab TAT Metrics Pre-SCC Updates ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
+        # Append Lab TAT summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        scc_new_data <- unique(
+          scc_summary_data[  c("Service", "Site", "Month", "Metric")]
         )
         
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
+                                          scc_new_data,
+                                          by = c("Service" = "Service",
+                                                 "Site" = "Site",
+                                                 "Month" = "Month",
+                                                 "Metric" = "Metric")
+        )
         
-      }
+        # Third, combine the updated historical data with the new data
+        ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
+                                          scc_summary_data)
         
-      
-      
-      
-      
-      
-      
-      # Append Lab TAT summary with new data
-      # First, identify the sites, months, and metrics in the new data
-      scc_new_data <- unique(
-        scc_summary_data[  c("Service", "Site", "Month", "Metric")]
-      )
-      
-      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-      # This allows us to ensure no duplicate entries for the same site, metric, and time period
-      ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
-                                       scc_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Month" = "Month",
-                                              "Metric" = "Metric")
-      )
-      
-      # Third, combine the updated historical data with the new data
-      ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
-                                       scc_summary_data)
-      
-      # Next, arrange the department summary by month, metric name, and site
-      ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
-        # mutate(Site = factor(Site,
-        #                      levels = lab_sites_ordered,
-        #                      ordered = TRUE)) %>%
-        arrange(Month,
-                desc(Metric),
-                Site) #%>%
+        # Next, arrange the department summary by month, metric name, and site
+        ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
+          # mutate(Site = factor(Site,
+          #                      levels = lab_sites_ordered,
+          #                      ordered = TRUE)) %>%
+          arrange(Month,
+                  desc(Metric),
+                  Site) #%>%
         # mutate(Site = as.character(Site))
-      
-      # Lastly, save the updated summary data
-      write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-      
-      # Update metrics_final_df with latest SCC data using custom function
-      metrics_final_df <<- lab_scc_tat_metrics_final_df(scc_summary_data)
-      
-      # Save updated metrics_final_df
-      saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      # Update "Reporting Month" drop down in each tab
-      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      
-    }
-    )
+        
+        # Lastly, save the updated summary data
+        write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+        
+        # Update metrics_final_df with latest SCC data using custom function
+        metrics_final_df <<- lab_scc_tat_metrics_final_df(scc_summary_data)
+        
+        # Save updated metrics_final_df
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        # Update "Reporting Month" drop down in each tab
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      }
+      })
     
     # Sunquest data submission -------------------
     observeEvent(input$submit_lab_tat,{
@@ -2113,68 +2115,103 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         sun_file_path <- sun_file$datapath
         #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-        sun_data <- read_excel(sun_file_path)
-        # month <- excel_sheets(file_path)[1]
+        # Try catch statement to ensure file type is correct
+        tryCatch({
+          # Read in Sunquest file
+          sun_data <- read_excel(sun_file_path)
+          
+          flag <- 1
+        },
+        error = function(err){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with this Sunquest file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        )
       }
       
-      # Save prior version of Lab TAT Dept Summary data
-      write_xlsx(ops_metrics_lab_tat,
-                 paste0(hist_archive_path,
-                        "Lab TAT Metrics Pre-Sun Updates ",
-                        format(Sys.time(), "%Y%m%d_%H%M%S"),
-                        ".xlsx"))
+      # Process data if the right file format was submitted
+      if(flag == 1) {
+        tryCatch({
+          # Process Sunquest data
+          sun_summary_data <- lab_sun_tat_dept_summary(sun_data)
+          
+          flag <- 2
+          
+          showModal(modalDialog(
+            title = "Success",
+            paste0("This Sunquest data has been imported successfully"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        },
+        error = function(err){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with this Sunquest file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        })
+      }
       
-      # Process Sunquest data
-      sun_summary_data <- lab_sun_tat_dept_summary(sun_data)
-      
-      # Append Lab TAT summary with new data
-      # First, identify the sites, months, and metrics in the new data
-      sun_new_data <- unique(
-        sun_summary_data[  c("Service", "Site", "Month", "Metric")]
-      )
-      
-      # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-      # This allows us to ensure no duplicate entries for the same site, metric, and time period
-      ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
-                                       sun_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Month" = "Month",
-                                              "Metric" = "Metric")
-      )
-      
-      # Third, combine the updated historical data with the new data
-      ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
-                                       sun_summary_data)
-      
-      # Next, arrange the department summary by month, metric name, and site
-      ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
-        # mutate(Site = factor(Site,
-        #                      levels = lab_sites_ordered,
-        #                      ordered = TRUE)) %>%
-        arrange(Month,
-                desc(Metric),
-                Site) #%>%
+      if(flag == 2) {
+        # Save prior version of Lab TAT Dept Summary data
+        write_xlsx(ops_metrics_lab_tat,
+                   paste0(hist_archive_path,
+                          "Lab TAT Metrics Pre-Sun Updates ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
+        # Append Lab TAT summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        sun_new_data <- unique(
+          sun_summary_data[  c("Service", "Site", "Month", "Metric")]
+        )
+        
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
+                                          sun_new_data,
+                                          by = c("Service" = "Service",
+                                                 "Site" = "Site",
+                                                 "Month" = "Month",
+                                                 "Metric" = "Metric")
+        )
+        
+        # Third, combine the updated historical data with the new data
+        ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
+                                          sun_summary_data)
+        
+        # Next, arrange the department summary by month, metric name, and site
+        ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
+          # mutate(Site = factor(Site,
+          #                      levels = lab_sites_ordered,
+          #                      ordered = TRUE)) %>%
+          arrange(Month,
+                  desc(Metric),
+                  Site) #%>%
         # mutate(Site = as.character(Site))
-      
-      # Lastly, save the updated summary data
-      write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-      
-      # Update metrics_final_df with latest Sunquest data using custom function
-      metrics_final_df <<- lab_sun_tat_metrics_final_df(sun_summary_data)
-      
-      # Save updated metrics_final_df
-      saveRDS(metrics_final_df, metrics_final_df_path)
-
-      
-      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      
-      
-    }
-    )
+        
+        # Lastly, save the updated summary data
+        write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+        
+        # Update metrics_final_df with latest Sunquest data using custom function
+        metrics_final_df <<- lab_sun_tat_metrics_final_df(sun_summary_data)
+        
+        # Save updated metrics_final_df
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      }
+    })
     
     # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
     # Create reactive data table for manual entry
