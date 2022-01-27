@@ -832,28 +832,58 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # 4. Data Tab Output -----------------3----------------------------------------------------------------
     observeEvent(input$submit_finance,{
       inFile_msh_msm_msq <- input$finance_msh_msm_msq
+      flag <- 0
       
       
       if (is.null(inFile_msh_msm_msq)) {
         return(NULL)
       }else{
-        sheet_names <- excel_sheets(inFile_msh_msm_msq$datapath)
-        sheet_names <- sheet_names[sheet_names != "Sheet3"]
-        for (i in 1:length(sheet_names)){
-          data <- read_excel(inFile_msh_msm_msq$datapath, sheet = sheet_names[i])
-          sheet_month <- colnames(data)[1]
-          data <- data %>% row_to_names(row_number = 1)
-          data$Month <- sheet_month
-          
-          if(i == 1){
-            prev <- data
-          } else{
-            data <- full_join(data,prev)
-          }
-          prev <- data
-        }
+        tryCatch({sheet_names <- excel_sheets(inFile_msh_msm_msq$datapath)
+           sheet_names <- sheet_names[sheet_names != "Sheet3"]
+            for (i in 1:length(sheet_names)){
+              data <- read_excel(inFile_msh_msm_msq$datapath, sheet = sheet_names[i])
+              sheet_month <- colnames(data)[1]
+              data <- data %>% row_to_names(row_number = 1)
+              data$Month <- sheet_month
+              
+              if(i == 1){
+                prev <- data
+              } else{
+                data <- full_join(data,prev)
+              }
+              prev <- data
+            }
+           flag <- 1
+           showModal(modalDialog(
+             title = "Success",
+             paste0("The data has been imported succesfully"),
+             easyClose = TRUE,
+             footer = NULL
+           ))
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
         
-        exptrend_data <- exptrend_process(prev)
+        if(flag == 1){
+          
+          tryCatch({exptrend_data <- exptrend_process(prev)
+          showModal(modalDialog(
+            title = "Success",
+            paste0("The data has been imported succesfully"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+          }, error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with one of the files"),
+            easyClose = TRUE,
+            footer = NULL
+          ))})
+          
+        }
       }
       
       metrics_final_df <<- budget_to_actual_process(exptrend_data)
@@ -880,6 +910,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     observeEvent(input$submit_finance,{
 
       inFile_msbi_msb_msw <- input$finance_msbi_msb_msw
+      flag <- 0
 
       if (is.null(inFile_msbi_msb_msw)) {
         return(NULL)
@@ -1688,7 +1719,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         evs_summary_repo <- full_join(evs_summary_repo, evs_data)
         evs_summary_repo <- as.data.frame(evs_summary_repo)
-        #write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
+        write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
         
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
