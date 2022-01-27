@@ -1,14 +1,19 @@
-operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
-  mutate_if(is.logical, as.character) %>%
-  mutate_if(is.double, as.character) %>%
-  select(-Hospital) %>%
-  pivot_longer(cols = c(-Month, -Site),
-               names_to = "Metric",
-               values_to = "Value") %>%
-  pivot_wider(names_from = "Month", values_from = Value)
+engineering_repo_pull <- function(){
+
+    operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
+      mutate_if(is.logical, as.character) %>%
+      mutate_if(is.double, as.character) %>%
+      select(-Hospital) %>%
+      pivot_longer(cols = c(-Month, -Site),
+                   names_to = "Metric",
+                   values_to = "Value") %>%
+      pivot_wider(names_from = "Month", values_from = Value)
+    
+    return(operational_metrics_engineering)
+}
 
 
-
+engineering_repo_pull()
 
 cm_kpi <- function(data){
   

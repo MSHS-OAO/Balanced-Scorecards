@@ -2199,7 +2199,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     data_engineering_kpi <- reactive({
       
       
-      
+      operational_metrics_engineering <- engineering_repo_pull()
       ### Census from template
       data  <- operational_metrics_engineering
       data <- data[order(data$Site),]
@@ -2705,7 +2705,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
         
         # Update metrics_final_df with latest Proficiency Testing data using custom function
-        metrics_final_df <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
+        metrics_final_df_test <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
         
         # Save updated metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
