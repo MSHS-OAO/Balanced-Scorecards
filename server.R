@@ -631,6 +631,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       breakdown_all <- breakdown_all %>% select(-all_of(columns_being_removed))
       
+      ### Add missing months
+      months_breakdown <-  breakdown_all %>%
+                              select(-Summary_Metric_Name,-Metric_Group,-Site,-Status,-Target,-`Avg. of Past Months Shown`)
+      months_breakdown <- as.Date(sprintf("%s-01",colnames(months_breakdown)), "%b-%Y-%d")
+      
+      complete_months <- seq.Date(min(months_breakdown), max(months_breakdown), by= 'month')
+      
+      missing_months <- which(!(complete_months %in% months_breakdown))
+      missing_months <- as.character(format(complete_months[missing_months], "%b-%Y"))
+      
+      breakdown_all[,missing_months] <- NA
+      
+      
+      
+      #breakdown_all <- breakdown_all %>% relocate(`Aug-2021`, .before = `Mar-2021`) ##to test ordering
+      
+      subset_data <- breakdown_all[,8:ncol(breakdown_all)]
+      
+      date_names <- sprintf("%s-01",colnames(subset_data))
+      colnames(subset_data) <- date_names
+      
+      dates_order <- as.Date(names(test), format = "%b-%Y-%d")
+      subset_data <- subset_data[order(dates_order)]
+      
+      
+      breakdown_all <- breakdown_all[,1:7]
+      breakdown_all <- bind_cols(breakdown_all,subset_data)
+      
+      breakdown_all_cols <- colnames(breakdown_all)[8:ncol(breakdown_all)]
+      breakdown_all_cols <- format(as.Date(breakdown_all_cols, "%b-%Y-%d"), "%b-%Y")
+      colnames(breakdown_all)[8:ncol(breakdown_all)] <- breakdown_all_cols
+      
       breakdown_all[,3:length(breakdown_all)] %>%
         kable(align = "l", escape = FALSE) %>%
          #pack_rows(index = table(breakdown_all$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
