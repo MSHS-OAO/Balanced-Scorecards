@@ -1688,14 +1688,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))})
       }
       
-      # Save prior version of Lab TAT Dept Summary data
-      write_xlsx(summary_repos_environmental,
-                 paste0(hist_archive_path,
-                        "EVS historical ",
-                        format(Sys.time(), "%Y%m%d_%H%M%S"),
-                        ".xlsx"))
-      
+
       if(flag == 2){
+        # Save prior version of Lab TAT Dept Summary data
+        write_xlsx(summary_repos_environmental,
+                   paste0(hist_archive_path,
+                          "EVS historical ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
         metrics_final_df <<- evs__metrics_final_df_process(evs_data)
         
         saveRDS(metrics_final_df, metrics_final_df_path)
