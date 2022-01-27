@@ -453,9 +453,34 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
                                         tabPanel("Imaging - IR", br(),
-                                                 fileInput("imaging_IR", label = "Please upload Imaging ineterventional radiology data"),
+                                                 fileInput("imaging_IR", label = "Please upload Imaging interventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
+                                        ),
+                                        tabPanel("Imaging - DR ED Chest X-Ray", br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("imaging_xray_username",
+                                                                    labelMandatory(
+                                                                      "1. Please enter name:")
+                                                          )
+                                                   )
+                                                 ),
+                                                 fileInput("imaging_IR", label = "Please upload Imaging ED Chest X-Ray diagnostic radiology data"),
+                                                 actionButton("submit_imagingxray", label = "Submit")
+                                        ),
+                                        tabPanel("Imaging - DR ED Head CT ", br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("imaging_ct_username",
+                                                                    labelMandatory(
+                                                                      "1. Please enter name:")
+                                                          )
+                                                   )
+                                                 ),
+                                                 fileInput("imaging_IR", label = "Please upload Imaging ED Head CT diagnostic radiology data"),
+                                                 actionButton("submit_imagingct", label = "Submit")
                                         )
+                                        
                                  )
   
                         ),
@@ -730,6 +755,16 @@ ui <-
         }")),
  tags$style(HTML("
         #submit_biomedkpis {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ tags$style(HTML("
+        #submit_imagingct {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ tags$style(HTML("
+        #submit_imagingxray {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
