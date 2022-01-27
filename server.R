@@ -42,7 +42,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 
-      # service_input <- "Lab"
+      # service_input <- "Imaging"
       # month_input <- "09-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -456,9 +456,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Environmental Services"
-      # month_input <- "07-2021"
-      # site_input <- "MSH"
+      # service_input <- "Food Services"
+      # month_input <- "09-2021"
+      # site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>%
@@ -614,6 +614,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
       factor_ordering <- table(breakdown_all$Summary_Metric_Name)
       factor_ordering <- factor_ordering[order(factor(names(factor_ordering), levels = metric_name_order))]
+      
+      ## Get the months in the df
+      month_included <- breakdown_all %>%
+                          select(-Summary_Metric_Name,-Metric_Group,-Site,-Status,-Target,-`Avg. of Past Months Shown`)
+    
+      original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
+      
+      #Subtract 12 months from the latest month joing drop the day and add the first of the month back in
+      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(12), "%Y-%m"), "-01"), format = "%Y-%m-%d")
+      
+      columns_being_removed <- which(original_columns < latest_month_shown)
+      columns_being_removed <- original_columns[columns_being_removed]
+      columns_being_removed <- format(columns_being_removed, "%b-%Y")
+      
+      
+      breakdown_all <- breakdown_all %>% select(-all_of(columns_being_removed))
       
       breakdown_all[,3:length(breakdown_all)] %>%
         kable(align = "l", escape = FALSE) %>%
@@ -971,7 +987,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       saveRDS(metrics_final_df, metrics_final_df_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1051,7 +1067,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       saveRDS(metrics_final_df, metrics_final_df_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1131,7 +1147,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       saveRDS(metrics_final_df, metrics_final_df_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1206,7 +1222,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       write_xlsx(press_ganey_data, press_ganey_table_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1280,7 +1296,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       write_xlsx(press_ganey_data, press_ganey_table_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1354,7 +1370,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       write_xlsx(press_ganey_data, press_ganey_table_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -1484,9 +1500,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(is.null(imaging_file)){
         return(NULL)
       }else{
-        imaing_filepath <- imgaing_file <- imaging_file$datapath
+        imaging_filepath <- imgaing_file <- imaging_file$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({imaging_data <- read_excel(imaging_filtepath)
+        tryCatch({imaging_data <- read_excel(imaging_filepath)
             flag <- 1
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
@@ -1526,7 +1542,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Append Imaging with new data
         # First, identify the sites, months, and metrics in the new data
         imaging_new_data <- unique(
-          imaging_summary_data[  c("Service", "Site", "Month", "Metric")]
+          imaging_summary_data[  c("Service", "Site", "Reporting_Month", "Metric_Name_Submitted")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
@@ -1535,8 +1551,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                    imaging_new_data,
                                           by = c("Service" = "Service",
                                                  "Site" = "Site",
-                                                 "Month" = "Month",
-                                                 "Metric" = "Metric")
+                                                 "Reporting_Month" = "Reporting_Month",
+                                                 "Metric_Name_Submitted" = "Metric_Name_Submitted")
         )
         
         # Third, combine the updated historical data with the new data
@@ -1868,11 +1884,28 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       ### Census from template
       data  <- operational_metrics_engineering
       data <- data[order(data$Site),]
-      data$`2021-07-01` <- ""
-
-      data <- data %>%
+      
+      ##### Code that adds months missing months to the rhandsontable
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(colnames(months_only)), "%m-%Y")
+      
+      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+      
+      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+      
+      complete_months <- seq.Date(months[1], max_month, by= 'month')
+      
+      missing_months <- which(!(complete_months %in% months))
+      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+      
+      data[,missing_months] <- NA
+      ##########
+      
+      data <- data %>% 
         mutate_if(is.logical, as.character) %>%
         mutate_if(is.double, as.character)
+      
+      
       
       
     })
@@ -1995,7 +2028,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       saveRDS(metrics_final_df, metrics_final_df_path)
       
       # Update "Reporting Month" drop down in each tab
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -2068,7 +2101,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       saveRDS(metrics_final_df, metrics_final_df_path)
 
       
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -2214,7 +2247,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       saveRDS(metrics_final_df, metrics_final_df_path)
 
 
-      picker_choices <-  unique(metrics_final_df$Reporting_Month)
+      picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
       updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -2695,7 +2728,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         transport_summary_repo <- as.data.frame(transport_summary_repo)
         write_xlsx(transport_summary_repo, transport_table_path)
         
-        picker_choices <-  unique(metrics_final_df$Reporting_Month)
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -2737,7 +2770,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         transport_summary_repo <- as.data.frame(transport_summary_repo)
         write_xlsx(transport_summary_repo, transport_table_path)
         
-        picker_choices <-  unique(metrics_final_df$Reporting_Month)
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])

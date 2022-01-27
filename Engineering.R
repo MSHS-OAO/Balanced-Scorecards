@@ -1,4 +1,4 @@
-operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= "2020-12-01") %>%
+operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
   mutate_if(is.logical, as.character) %>%
   mutate_if(is.double, as.character) %>%
   select(-Hospital) %>%
