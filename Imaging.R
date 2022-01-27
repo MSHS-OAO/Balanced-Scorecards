@@ -1,4 +1,4 @@
-#data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx")
+data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx")
 
 imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
 
@@ -134,10 +134,5 @@ imaging_metrics_final_df <- function(data){
   metrics_final_df <- full_join(metrics_final_df,
                                 imaging_df_merge)
   
-  # metrics_final_df <- metrics_final_df %>%
-    arrange(Service,
-            Site,
-            Metric_Group,
-            Reporting_Month_Ref)
   
 }
