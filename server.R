@@ -621,7 +621,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
       original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
       
-      #Subtract 12 months from the latest month joing drop the day and add the first of the month back in
+      #Subtract 12 months from the latest month drop the day and add the first of the month back in
       latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(12), "%Y-%m"), "-01"), format = "%Y-%m-%d")
       
       columns_being_removed <- which(original_columns < latest_month_shown)
@@ -1663,7 +1663,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with one of the files"),
+          paste0("There seems to be an issue with the enviromental services file"),
           easyClose = TRUE,
           footer = NULL
         ))})
@@ -1675,14 +1675,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         showModal(modalDialog(
           title = "Success",
-          paste0("The data has been imported succesfully"),
+          paste0("The environmental services data has been imported succesfully"),
           easyClose = TRUE,
           footer = NULL
         ))
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with one of the files"),
+          paste0("There seems to be an issue with the enviromental services file"),
           easyClose = TRUE,
           footer = NULL
         ))})
@@ -1917,13 +1917,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       data  <- operational_metrics_engineering
       data <- data[order(data$Site),]
       
-      ##### Code that adds months missing months to the rhandsontable
       months_only <- data %>% select(-Site,-Metric)
       months <- format(as.Date(colnames(months_only)), "%m-%Y")
+      
+      colnames(data)[3:length(data)] <- months
+      
+      ##### Code that adds months missing months to the rhandsontable
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
       
       max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
       
       months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+      
+      months_to_drop <- which(months < max_month %m-% months(6))
+      months_to_drop <- format(months[months_to_drop], "%m-%Y")
       
       complete_months <- seq.Date(months[1], max_month, by= 'month')
       
@@ -1931,7 +1939,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
       
       data[,missing_months] <- NA
+      
+      data <- data %>% select(-all_of(months_to_drop))
+      
+      data
       ##########
+      
+      
+      
       
       data <- data %>% 
         mutate_if(is.logical, as.character) %>%
@@ -2185,6 +2200,31 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Arrange by sites in alphabetical order
       data <- data %>%
         arrange(Site)
+      
+      
+      ##### Code that adds months missing months to the rhandsontable
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+      
+      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+      
+      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+      
+      months_to_drop <- which(months < max_month %m-% months(6))
+      months_to_drop <- format(months[months_to_drop], "%m-%Y")
+      
+      complete_months <- seq.Date(months[1], max_month, by= 'month')
+      
+      missing_months <- which(!(complete_months %in% months))
+      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+      
+      data[,missing_months] <- NA
+      
+      data <- data %>% select(-all_of(months_to_drop))
+      
+      data
+      ##########
+      
     }
     )
     
@@ -2330,6 +2370,31 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Arrange by sites in alphabetical order
         data <- data %>%
           arrange(Site)
+        
+        ##### Code that adds months missing months to the rhandsontable
+        months_only <- data %>% select(-Site,-Metric)
+        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        
+        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        
+        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        
+        months_to_drop <- which(months < max_month %m-% months(6))
+        months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        
+        complete_months <- seq.Date(months[1], max_month, by= 'month')
+        
+        missing_months <- which(!(complete_months %in% months))
+        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        
+        data[,missing_months] <- NA
+        
+        data <- data %>% select(-all_of(months_to_drop))
+        
+        data
+        ##########
+        
+        
       }
       )
       
@@ -2477,6 +2542,30 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data <- data %>%
           arrange(Site)
         
+        
+        ##### Code that adds months missing months to the rhandsontable
+        months_only <- data %>% select(-Site,-Metric)
+        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        
+        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        
+        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        
+        months_to_drop <- which(months < max_month %m-% months(6))
+        months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        
+        complete_months <- seq.Date(months[1], max_month, by= 'month')
+        
+        missing_months <- which(!(complete_months %in% months))
+        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        
+        data[,missing_months] <- NA
+        
+        data <- data %>% select(-all_of(months_to_drop))
+        
+        data
+        ##########
+        
       }
       )
       
@@ -2613,35 +2702,49 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         census_filepath <- census_file$datapath
         #census_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"
         #Read in census file
-        census_data <- read_excel(census_filepath)
+        tryCatch({census_data <- read_excel(census_filepath)
+        flag <- 1
+        showModal(modalDialog(
+          title = "Success",
+          paste0("The census data has been imported succesfully"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the census file"),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
       }
       
-      # Save prior version of COst and Revenue Summary data
-      write_xlsx(cost_and_revenue_repo,
-                 paste0(hist_archive_path,
-                        "Cost and Revenue ",
-                        format(Sys.time(), "%Y%m%d_%H%M%S"),
-                        ".xlsx"))
-      
+
       ## Process Census Data
       tryCatch({census_summary_data <- census_days_file_process(census_data)
-                  flag <- 1
+                  flag <- 2
       
       showModal(modalDialog(
         title = "Success",
-        paste0("The data has been imported succesfully"),
+        paste0("The census data has been imported succesfully"),
         easyClose = TRUE,
         footer = NULL
       ))
       }, error = function(err){  showModal(modalDialog(
         title = "Error",
-        paste0("There seems to be an issue with one of the files"),
+        paste0("There seems to be an issue the census file"),
         easyClose = TRUE,
         footer = NULL
       ))})
       
-      if (flag == 1){
+      if (flag == 2){
 
+        # Save prior version of COst and Revenue Summary data
+        write_xlsx(cost_and_revenue_repo,
+                   paste0(hist_archive_path,
+                          "Cost and Revenue ",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
         # Append Lab TAT summary with new data
         # First, identify the sites, months, and metrics in the new data
         census_new_data <- unique(
@@ -2847,7 +2950,36 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Biomed KPI Outout Table -------
       
       data_bimoed_kpi <- reactive({
-        data  <- kpibme_reports_ui
+        data  <- kpibme_reports_ui %>% ungroup()
+        
+        months_only <- data %>% select(-Site,-Metric)
+        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
+        
+        colnames(data)[3:length(data)] <- months
+        
+        ##### Code that adds months missing months to the rhandsontable
+        months_only <- data %>% select(-Site,-Metric)
+        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        
+        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        
+        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        
+        months_to_drop <- which(months < max_month %m-% months(6))
+        months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        
+        complete_months <- seq.Date(months[1], max_month, by= 'month')
+        
+        missing_months <- which(!(complete_months %in% months))
+        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        
+        data[,missing_months] <- NA
+        
+        data <- data %>% select(-all_of(months_to_drop))
+        
+        data
+        ##########
+        
       })
       
       
@@ -2902,7 +3034,34 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Biomed Disruptions and Issues Outout Table -------
       
       data_bimoed_di <- reactive({
-        data  <- disruptions_issues_reports_ui
+        data  <- disruptions_issues_reports_ui %>% ungroup()
+        
+        months_only <- data %>% select(-Site,-Metric)
+        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
+        
+        colnames(data)[3:length(data)] <- months
+        
+        ##### Code that adds months missing months to the rhandsontable
+        months_only <- data %>% select(-Site,-Metric)
+        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        
+        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        
+        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        
+        months_to_drop <- which(months < max_month %m-% months(6))
+        months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        
+        complete_months <- seq.Date(months[1], max_month, by= 'month')
+        
+        missing_months <- which(!(complete_months %in% months))
+        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        
+        data[,missing_months] <- NA
+        
+        data <- data %>% select(-all_of(months_to_drop))
+        
+        
       })
       
       
