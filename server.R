@@ -2004,21 +2004,55 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         scc_file_path <- scc_file$datapath
         #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-        # Read in SCC file
-        scc_data <- read_excel(scc_file_path)
-        # month <- excel_sheets(file_path)[1]
+        # Try catch statement to ensure file type is correct
+        tryCatch({
+          # Read in SCC file
+          scc_data <- read_excel(scc_file_path)
+          
+          flag <- 1
+          
+        },
+        error = function(err){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with one of the files"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        )
       }
       
-      # Save prior version of Lab TAT Dept Summary data
-      write_xlsx(ops_metrics_lab_tat,
-                 paste0(hist_archive_path,
-                        "Lab TAT Metrics Pre-SCC Updates ",
-                        format(Sys.time(), "%Y%m%d_%H%M%S"),
-                        ".xlsx"))
+      # Process data if the right file format was submitted
+      if(flag == 1) {
+        tryCatch({
+          # Process SCC data
+          scc_summary_data <- lab_scc_tat_dept_summary(scc_data)
+          
+          flag <- 2
+          
+          # Save prior version of Lab TAT Dept Summary data
+          write_xlsx(ops_metrics_lab_tat,
+                     paste0(hist_archive_path,
+                            "Lab TAT Metrics Pre-SCC Updates ",
+                            format(Sys.time(), "%Y%m%d_%H%M%S"),
+                            ".xlsx"))
+          
+          
+          
+          
+        }
+
+        )
+        
+        
+      }
+        
       
       
-      # Process SCC data
-      scc_summary_data <- lab_scc_tat_dept_summary(scc_data)
+      
+      
+      
       
       # Append Lab TAT summary with new data
       # First, identify the sites, months, and metrics in the new data
