@@ -2527,6 +2527,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates)
             
             flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This Security Incident Reports data has been submitted successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
           },
           error = function(err) {
             showModal(modalDialog(
@@ -2702,6 +2709,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               sec_events_dept_summary(sec_events_manual_updates)
             
             flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This Security Events data has been submitted successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
             
           },
           error = function(err) {
