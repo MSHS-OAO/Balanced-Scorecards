@@ -552,7 +552,7 @@ lab_prof_test_metrics_final_df <- function(prof_test_summary) {
 
 
 
-# # Code for creating summary repo from monthly files
+# # # Code for creating summary repo from monthly files
 # scc_folder <- paste0("J:/deans/Presidents/HSPI-PM",
 #                      "/Operations Analytics and Optimization/Projects",
 #                      "/System Operations/Balanced Scorecards Automation",
@@ -599,4 +599,22 @@ lab_prof_test_metrics_final_df <- function(prof_test_summary) {
 #   rename(New_Number = Number.x,
 #          Old_Number = Number.y) %>%
 #   mutate(Old_Number = round(Old_Number, digits = 4),
-#          Same = New_Number == Old_Number)
+#          Same = New_Number == Old_Number,
+#          PercentDiff = percent(abs(New_Number - Old_Number) / Old_Number),
+#          Year = year(Month))
+# 
+# # Save prior version of Lab TAT Dept Summary data
+# write_xlsx(ops_metrics_lab_tat,
+#            paste0(hist_archive_path,
+#                   "Lab TAT Metrics Before OAO Changes ",
+#                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+#                   ".xlsx"))
+# 
+# # Update Lab Summary Repo with new data
+# write_xlsx(ops_metrics_lab_tat_new,
+#            ops_metrics_lab_tat_path)
+# 
+# metrics_final_df_new <- metrics_final_df
+# metrics_final_df_new <- lab_scc_tat_metrics_final_df(ops_metrics_lab_tat_new)
+# 
+# saveRDS(metrics_final_df_new, metrics_final_df_path)
