@@ -25,7 +25,8 @@ sec_inc_rpts_manual_table <- security_incident_reports %>%
   filter(Month >= sec_inc_rpts_last_month - months(7) &
            Metric %in% sec_inc_rpt_metrics_incl$Metric_Name_Submitted) %>%
   arrange(Month,
-          Site) %>%
+          Site,
+          Metric) %>%
   mutate(Month = format(Month, "%m-%Y"),
          Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
@@ -48,7 +49,10 @@ sec_inc_rpts_dept_summary <- function(data) {
       Service = "Security") %>%
     # Reorder columns
     relocate(Service) %>%
-    relocate(Month, .before = Metric)
+    relocate(Month, .before = Metric) %>%
+    arrange(Month,
+            Site,
+            Metric)
       
 }
 
