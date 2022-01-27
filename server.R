@@ -2198,7 +2198,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     data_engineering_kpi <- reactive({
       
-      
+      input$submit_engineering
       operational_metrics_engineering <- engineering_repo_pull()
       ### Census from template
       data  <- operational_metrics_engineering
