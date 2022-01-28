@@ -652,7 +652,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       date_names <- sprintf("%s-01",colnames(subset_data))
       colnames(subset_data) <- date_names
       
-      dates_order <- as.Date(names(test), format = "%b-%Y-%d")
+      dates_order <- as.Date(names(subset_data), format = "%b-%Y-%d")
       subset_data <- subset_data[order(dates_order)]
       
       
@@ -662,6 +662,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       breakdown_all_cols <- colnames(breakdown_all)[8:ncol(breakdown_all)]
       breakdown_all_cols <- format(as.Date(breakdown_all_cols, "%b-%Y-%d"), "%b-%Y")
       colnames(breakdown_all)[8:ncol(breakdown_all)] <- breakdown_all_cols
+      
+      options(knitr.kable.NA = '-')
       
       breakdown_all[,3:length(breakdown_all)] %>%
         kable(align = "l", escape = FALSE) %>%
