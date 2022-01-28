@@ -30,9 +30,9 @@ sec_inc_rpts_manual_table <- security_incident_reports %>%
   mutate(Month = format(Month, "%m-%Y"),
          Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
-              values_from = Number) %>%
+              values_from = Number) #%>%
   # Add a column with the next month for the user to enter data
-  mutate('{format(sec_inc_rpts_last_month + months(1), "%m-%Y")}' := "")
+  # mutate('{format(sec_inc_rpts_last_month + months(1), "%m-%Y")}' := "")
 
 
 # Custom function for converting data from manual table input to Security Incident Reports Dept Summary format
@@ -172,9 +172,9 @@ sec_events_manual_table <- security_events %>%
   mutate(Month = format(Month, "%m-%Y"),
          Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
-              values_from = Number) %>%
-  # Add a column with the next month for the user to enter data
-  mutate('{format(sec_events_last_month + months(1), "%m-%Y")}' := "")
+              values_from = Number) #%>%
+  # # Add a column with the next month for the user to enter data
+  # mutate('{format(sec_events_last_month + months(1), "%m-%Y")}' := "")
 
 # Custom function for converting data from manual table input to Security Events Dept Summary format
 sec_events_dept_summary <- function(data) {

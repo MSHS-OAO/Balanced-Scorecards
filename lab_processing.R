@@ -45,9 +45,9 @@ prof_test_manual_table <- ops_metrics_lab_pt %>%
   mutate(Month = format(Month, "%m-%Y"),
          Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
-              values_from = Number) %>%
-  # Add a column with the next month for the user to enter data
-  mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
+              values_from = Number) #%>%
+  # # Add a column with the next month for the user to enter data
+  # mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
 
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
