@@ -16,7 +16,7 @@ process_PT_data <- function(pt_data_raw){
                  "Reporting_Month",
                  "value_rounded")
   
-  hospitals <- c("MSB","MSBI","MSM","MSQ","MSSL","MSW","NYEE","MSH")
+  hospitals <- c("MSB","MSBI","MSM","MSW","MSH")
   
 
   rows <- nrow(pt_data_raw)

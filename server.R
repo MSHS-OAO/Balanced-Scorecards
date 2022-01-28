@@ -3432,7 +3432,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data <- data %>% select(-all_of(months_to_drop))
         
         data
-        ##########
+
         
       })
       
@@ -3485,7 +3485,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           hot_col(1:3, readOnly = T)
       })
       
-      # Biomed Disruptions and Issues Outout Table -------
+      # Biomed Disruptions and Issues Output Table -------
       
       data_bimoed_di <- reactive({
         data  <- disruptions_issues_reports_ui %>% ungroup()
@@ -3751,126 +3751,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
       
-      # Create observer event actions for manual data submission D&I Biomed ----- 
-      observeEvent(input$submit_biomeddi, {
-        if(input$sec_inc_rpts_username == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields.",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }
-        
-        # Convert rhandsontable to R object
-        bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-        
-        # Save prior version of Security Incident Reports Dept Summary data
-        write_xlsx(disruptions_issues_reports,
-                   paste0(hist_archive_path,
-                          "DI Biomed and Clinical Engineering ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Reformat data from manual input table into summary repo format
-        bme_di_summary_data <-
-          process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
-        
-        # Append Security Incident Reports summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        bme_di_new_data <- unique(
-          bme_di_summary_data[, c("Service", "Site", "Month", "Metric")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data,
-        # if they exist there. This allows us to ensure no duplicate entries for
-        # the same site, metric, and time period.
-        di_bme <<- anti_join(disruptions_issues_reports,
-                             bme_di_new_data,
-                             by = c("Service" = "Service",
-                                    "Site" = "Site",
-                                    "Month" = "Month",
-                                    "Metric" = "Metric"))
-        
-        # Third, combine the updated historical data with the new data
-        disruptions_issues_reports <<- full_join(disruptions_issues_reports,
-                                                 di_bme)
-        
-        # Next, arrange the incident reports summary data by month, metric, and site
-        disruptions_issues_reports <<- disruptions_issues_reports %>%
-          arrange(Month,
-                  Site)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(disruptions_issues_reports, bmedi_table_path)
-        
-        # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports)
-        
-        # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-      })
-      observeEvent(input$submit_biomedkpis, {
-        if(input$sec_inc_rpts_username == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields.",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }
-        
-        # Convert rhandsontable to R object
-        bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
-        
-        # Save prior version of Security Incident Reports Dept Summary data
-        write_xlsx(kpibme_reports,
-                   paste0(hist_archive_path,
-                          "KPIs Biomed and Clinical Engineering ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Reformat data from manual input table into summary repo format
-        bme_kpi_summary_data <-
-          process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
-        
-        # Append Security Incident Reports summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        bme_kpi_new_data <- unique(
-          bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data,
-        # if they exist there. This allows us to ensure no duplicate entries for
-        # the same site, metric, and time period.
-        kpi_bme <<- anti_join(kpibme_reports,
-                              bme_kpi_new_data,
-                              by = c("Service" = "Service",
-                                     "Site" = "Site",
-                                     "Month" = "Month",
-                                     "Metric" = "Metric"))
-        
-        # Third, combine the updated historical data with the new data
-        kpibme_reports <<- full_join(kpibme_reports,
-                                     kpi_bme)
-        
-        # Next, arrange the incident reports summary data by month, metric, and site
-        kpibme_reports <<- kpibme_reports %>%
-          arrange(Month,
-                  desc(Metric),
-                  Site)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(kpibme_reports, bmekpi_table_path)
-        
-        # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-        
-        # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-      })
       
       # Imaging DR observer event actions for X-RAY data submission ----- 
       observeEvent(input$submit_imagingxay, {
