@@ -3342,6 +3342,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         saveRDS(metrics_final_df, metrics_final_df_path)
         
         transport_summary_repo <- read_excel(transport_table_path)
+        
+        write_xlsx(transport_summary_repo,
+                   paste0(hist_archive_path,
+                          "TAT Transport",
+                          format(Sys.time(), "%Y%m%d_%H%M%S"),
+                          ".xlsx"))
+        
+        
         transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
         
         updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
@@ -3571,7 +3579,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission KPIs Biomed ----- 
       observeEvent(input$submit_biomedkpis, {
-        if(input$sec_inc_rpts_username == "") {
+        if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
             "Please fill in the required fields.",
@@ -3633,7 +3641,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission D&I Biomed ----- 
       observeEvent(input$submit_biomeddi, {
-        if(input$sec_inc_rpts_username == "") {
+        if(input$name_biomed_distruptions == "") {
           showModal(modalDialog(
             title = "Error",
             "Please fill in the required fields.",
@@ -3756,7 +3764,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Imaging DR observer event actions for X-RAY data submission ----- 
       observeEvent(input$submit_imagingxay, {
-        if(input$sec_inc_rpts_username == "") {
+        if(input$imaging_xray_username == "") {
           showModal(modalDialog(
             title = "Error",
             "Please fill in the required fields.",
@@ -3765,50 +3773,61 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         }
         
-        # Convert rhandsontable to R object
-        bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
+        xray_file <- input$imaging_DR_XRay
         
+        if (is.null(xray_file)) {
+          return(NULL)
+        }else{
+          file_path <- xray_file$datapath
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          xray_data <- read.xlsx(xlsxFile = file_path, fillMergedCells = TRUE,colNames = TRUE)
+        }
+        
+        
+
         # Save prior version of Security Incident Reports Dept Summary data
-        write_xlsx(disruptions_issues_reports,
+        write_xlsx(ImagingSummaryRepo,
                    paste0(hist_archive_path,
-                          "DI Biomed and Clinical Engineering ",
+                          "Imaging DR-Ops",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
         # Reformat data from manual input table into summary repo format
-        bme_di_summary_data <-
-          process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+        xray_summary_data <-
+          process_xray_data(xray_data)
+        
+        glimpse(xray_summary_data)
         
         # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
-        bme_di_new_data <- unique(
-          bme_di_summary_data[, c("Service", "Site", "Month", "Metric")]
+        xray_new_data <- unique(
+          xray_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data,
         # if they exist there. This allows us to ensure no duplicate entries for
         # the same site, metric, and time period.
-        di_bme <<- anti_join(disruptions_issues_reports,
-                             bme_di_new_data,
+        xray_imaging <<- anti_join(ImagingSummaryRepo,
+                             xray_new_data,
                              by = c("Service" = "Service",
                                     "Site" = "Site",
                                     "Month" = "Month",
-                                    "Metric" = "Metric"))
+                                    "Metric_Name_Submitted" = "Metric_Name_Submitted"))
         
         # Third, combine the updated historical data with the new data
-        disruptions_issues_reports <<- full_join(disruptions_issues_reports,
-                                                 di_bme)
+        imaging_xray_reports <<- full_join(ImagingSummaryRepo,
+                                           xray_summary_data)
         
         # Next, arrange the incident reports summary data by month, metric, and site
-        disruptions_issues_reports <<- disruptions_issues_reports %>%
+        imaging_xray_reports <<- imaging_xray_reports %>%
           arrange(Month,
                   Site)
         
         # Lastly, save the updated summary data
-        write_xlsx(disruptions_issues_reports, bmedi_table_path)
+        write_xlsx(imaging_xray_reports, imagingDR_path)
         
         # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports)
+        metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
         
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
@@ -3817,7 +3836,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Imaging DR observer event actions for Chest CT data submission ----- 
       observeEvent(input$submit_imagingct, {
-        if(input$sec_inc_rpts_username == "") {
+        if(input$imaging_ct_username == "") {
           showModal(modalDialog(
             title = "Error",
             "Please fill in the required fields.",
@@ -3826,50 +3845,60 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         }
         
-        # Convert rhandsontable to R object
-        bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
+        ct_file <- input$imaging_DR_ct
+        
+        if (is.null(ct_file)) {
+          return(NULL)
+        }else{
+          file_path <- ct_file$datapath
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          ct_data <- read.xlsx(xlsxFile = file_path, fillMergedCells = TRUE,colNames = TRUE)
+        }
+        
+        
         
         # Save prior version of Security Incident Reports Dept Summary data
-        write_xlsx(disruptions_issues_reports,
+        write_xlsx(ImagingSummaryRepo,
                    paste0(hist_archive_path,
-                          "DI Biomed and Clinical Engineering ",
+                          "Imaging DR-Ops",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
         # Reformat data from manual input table into summary repo format
-        bme_di_summary_data <-
-          process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+        ct_summary_data <-
+          process_ctdata_data(ct_data)
         
+
         # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
-        bme_di_new_data <- unique(
-          bme_di_summary_data[, c("Service", "Site", "Month", "Metric")]
+        ct_new_data <- unique(
+          ct_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data,
         # if they exist there. This allows us to ensure no duplicate entries for
         # the same site, metric, and time period.
-        di_bme <<- anti_join(disruptions_issues_reports,
-                             bme_di_new_data,
-                             by = c("Service" = "Service",
-                                    "Site" = "Site",
-                                    "Month" = "Month",
-                                    "Metric" = "Metric"))
+        ct_imaging <<- anti_join(ImagingSummaryRepo,
+                                   ct_new_data,
+                                   by = c("Service" = "Service",
+                                          "Site" = "Site",
+                                          "Month" = "Month",
+                                          "Metric_Name_Submitted" = "Metric_Name_Submitted"))
         
         # Third, combine the updated historical data with the new data
-        disruptions_issues_reports <<- full_join(disruptions_issues_reports,
-                                                 di_bme)
+        imaging_ct_reports <<- full_join(ImagingSummaryRepo,
+                                         ct_summary_data)
         
         # Next, arrange the incident reports summary data by month, metric, and site
-        disruptions_issues_reports <<- disruptions_issues_reports %>%
+        imaging_ct_reports <<- imaging_ct_reports %>%
           arrange(Month,
                   Site)
         
         # Lastly, save the updated summary data
-        write_xlsx(disruptions_issues_reports, bmedi_table_path)
+        write_xlsx(imaging_ct_reports, imagingDR_path)
         
         # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports)
+        metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)
         
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)

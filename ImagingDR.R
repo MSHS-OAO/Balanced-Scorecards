@@ -2,9 +2,13 @@
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 # xray <- paste0(home_path, "Input Data Raw/Imaging/E- CH _ 60m_ Monthly.xlsx")
 # ctpath <- paste0(home_path, "Input Data Raw/Imaging/E- CT _ 60m_ Monthly.xlsx")
-
+# 
 # xraydata <- read.xlsx(xlsxFile = xray, fillMergedCells = TRUE,colNames = TRUE)
 # ctdata <- read.xlsx(xlsxFile = ctpath, fillMergedCells = TRUE,colNames = TRUE)
+
+ImagingSummaryRepo <- read_excel(imagingDR_path)
+
+ImagingSummaryRepo$Month <- format(ImagingSummaryRepo$Month,format = "%b %Y")
 
 current_month = format(Sys.Date(),format = "%b %Y")
 
@@ -57,6 +61,16 @@ imagingdrct__metrics_final_df_process <- function(ctdata){
   
   ctdata <- ctdata %>% 
   select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
+  
+  updated_rows <- unique(ctdata[c("Metric_Name","Reporting_Month","Service", "Site")])
+  
+  
+  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,ctdata)
+  
+  return(metrics_final_df)
+  
 }
 # XRay metrics_final_df processing function ----
 imagingdrxray__metrics_final_df_process <- function(xraydata){
@@ -77,6 +91,15 @@ imagingdrxray__metrics_final_df_process <- function(xraydata){
   
   xraydata <- xraydata %>% 
     select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
+  
+  updated_rows <- unique(xraydata[c("Metric_Name","Reporting_Month","Service", "Site")])
+
+  
+  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,xraydata)
+  
+  return(metrics_final_df)
   
 }
 

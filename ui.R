@@ -465,7 +465,7 @@ ui <-
                                                           )
                                                    )
                                                  ),
-                                                 fileInput("imaging_IR", label = "Please upload Imaging ED Chest X-Ray diagnostic radiology data"),
+                                                 fileInput("imaging_DR_XRay", label = "Please upload Imaging ED Chest X-Ray diagnostic radiology data"),
                                                  actionButton("submit_imagingxray", label = "Submit")
                                         ),
                                         tabPanel("Imaging - DR ED Head CT ", br(),
@@ -477,7 +477,7 @@ ui <-
                                                           )
                                                    )
                                                  ),
-                                                 fileInput("imaging_IR", label = "Please upload Imaging ED Head CT diagnostic radiology data"),
+                                                 fileInput("imaging_DR_ct", label = "Please upload Imaging ED Head CT diagnostic radiology data"),
                                                  actionButton("submit_imagingct", label = "Submit")
                                         )
                                         
