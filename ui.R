@@ -334,7 +334,15 @@ ui <-
                                                             div(id = "header_custom_biomed",
                                                                 h3("Please leave cell blank if data has not been received")
                                                             ),
-                                                            h2("3. Once finished please click on the button below"),
+                                                            h2(
+                                                              tags$p("3. When entering the metrics",style = "display: inline;"),
+                                                              tags$b("Documented Status, PM Compliance - High Risk Equipment,",style = "display: inline;"),
+                                                              tags$p("and",style = "display: inline;"),
+                                                              tags$b("PM Compliance - All Medical Equipment,",style = "display: inline;"),
+                                                              tags$p("Please",style = "display: inline;"),
+                                                              tags$b("do not enter as 97% instead enter as 0.97",style = "display: inline;")
+                                                            ),
+                                                            h2("4. Once finished please click on the button below"),
                                                             #####Enter datatables here
                                                             h2("Biomed/Clinical Engineering - KPIs"),
                                                             
@@ -375,7 +383,13 @@ ui <-
                                                             div(id = "header_custom_engineer",
                                                                 h3("Please leave cell blank if data has not been received")
                                                             ),
-                                                            h2("3. Once finished please click on the button below"),
+                                                            h2(
+                                                              tags$p("3. When entering the metrics",style = "display: inline;"),
+                                                              tags$b("EOC/Patient Care Work Order Completion Rate, and Work Order Completion Rate,",style = "display: inline;"),
+                                                              tags$p("Please",style = "display: inline;"),
+                                                              tags$b("do not enter as 97% instead enter as 0.97",style = "display: inline;")
+                                                              ),
+                                                            h2("4. Once finished please click on the button below"),
                                                             #####Enter datatables here
                                                             h2("Engineering - CM KPI"),
                                                             rHandsontableOutput("engineering_kpi"),
@@ -522,7 +536,13 @@ ui <-
                                                             div(id = "header_custom",
                                                                 h3("Please leave cell blank if data has not been received.")
                                                                 ),
-                                                            h2("3. Please click on Submit when finished."),
+                                                            h2(
+                                                              tags$p("3. When entering the",style = "display: inline;"),
+                                                              tags$b( "Proficiency Testing",style = "display: inline;"), 
+                                                              tags$p("metric,",style = "display: inline;"),
+                                                              tags$b("Please do not enter as 97% instead enter as 0.97 .",style = "display: inline;"),
+                                                              ),
+                                                            h2("4. Please click on Submit when finished."),
                                                             hr(),
                                                             h2("Lab & Blood Bank Proficiency Testing"),
                                                             rHandsontableOutput("lab_prof_test"),
