@@ -250,7 +250,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_summary <- metrics_summary %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.), big.mark = ','),
-                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
+                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,1)))))
       
       metrics_summary$Metric_Unit <- NULL
       
