@@ -197,7 +197,7 @@ start <- "J:" #Comment when publishing to RConnect
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target MappingV1.xlsx")
 # target_mapping_path <- ("C:/Users/villea04/Downloads/MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
@@ -208,6 +208,10 @@ census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchma
 # File path for BME/CE KPI metrics
 bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
 bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssuesMonthly.xlsx")
+
+# File path for Lab KPI metrics
+imagingDR_path <- paste0(home_path, "Summary Repos/Imaging-DR.xlsx")
+
 
 
 # File path for Lab KPI metrics
