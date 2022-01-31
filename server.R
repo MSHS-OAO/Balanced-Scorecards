@@ -38,6 +38,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance
       input$submit_food
       input$submit_evs
+      input$submit_imaging
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -450,6 +451,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance
       input$submit_food
       input$submit_evs
+      input$submit_imaging
+      
       
       
       service_input <- input$selectedService2
@@ -695,6 +698,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance
       input$submit_food
       input$submit_evs
+      input$submit_imaging
+      
       
       
       service_input <- input$selectedService3

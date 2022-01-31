@@ -473,6 +473,8 @@ productivity_process <- function(data, data_nursing_radiology){
   
   prod_df_aggregate_all <- bind_rows(prod_df_aggregate, nursing_rad_metric_calc) # Merge newly calculated productivity index and overtime % for nursing and radiology 
   
+  prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
+  
   prod_df_aggregate_all$Metric_Name <- metric_group_mapping$Metric_Name[match(prod_df_aggregate_all$Metric_Name, 
                                                                               metric_group_mapping$Metric_Name_Submitted)] # Map final Metric_Name
   

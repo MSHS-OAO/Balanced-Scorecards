@@ -8,9 +8,10 @@ overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
 summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
 summary_repos_overtime <- read_excel(summary_repos_overtime_path)
 
-data_raw <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
+data <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
 
 overtime_file_processs <- function(data){
+  
   data <- full_join(data,overtime_mapping)  
   
   data <- data %>% 
@@ -20,11 +21,13 @@ overtime_file_processs <- function(data){
             rename(Site = `Site Abbr`,
                    `Associated Dashboard Month` = `Discharge Fisc Year-Period`)
   
-  data <- data %>% group_by(Site, Service, `Associated Dashboard Month`) %>%
-          summarise(Value = round((sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`)),4))
+  data <- data %>% group_by(Site, Service, `Associated Dashboard Month`, Metric_Name) %>%
+          mutate(Value = round((sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`)),4)) %>%
+          select(-`Cost Center Group`,-`Pay Category`,-`Actual Overtime Dollars`, -`Actual Dollars`) %>%
+          distinct()
   
   data$`Associated Dashboard Month` <- as.Date(paste0(data$`Associated Dashboard Month`, "-01"), format = "%Y-%m-%d")
-  data$Metric_Name <- "Overtime Dollars - % (Finance)"
+  #data$Metric_Name <- "Overtime Dollars - % (Finance)"
   data$Premier_Reporting_Period <- "FINANCE DATA"
   data$Metric <- "FINANCE DATA"
   
@@ -60,7 +63,8 @@ overtime_metrics_final_df_process <- function(data){
   finance_df_final$Premier_Reporting_Period <- format(finance_df_final$`Associated Dashboard Month`, "%b %Y")
   
   # Subset processed data for merge 
-  finance_df_merge <- finance_df_final[,processed_df_cols] 
+  finance_df_merge <- finance_df_final[,processed_df_cols]
+  finance_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(finance_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
   
   finance_df_merge <- finance_df_merge %>%
                       filter(value_rounded != "NaN")
