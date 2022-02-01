@@ -1,14 +1,14 @@
-start <- "J:" #Comment when publishing to RConnect
-# start <- "/SharedDrive"  #Uncomment when publishing to RConnect
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-
-overtime_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
-overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
-
-summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
-summary_repos_overtime <- read_excel(summary_repos_overtime_path)
-
-data <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
+# start <- "J:" #Comment when publishing to RConnect
+# # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
+# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+# 
+# overtime_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+# overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
+# 
+# summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
+# summary_repos_overtime <- read_excel(summary_repos_overtime_path)
+# 
+# data <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
 
 overtime_file_processs <- function(data){
   
@@ -49,14 +49,30 @@ overtime_metrics_final_df_process <- function(data){
            value_rounded = round(as.numeric(Value),2),
            Metric_Group = "Overtime Hours")
   
-  finance_target_status <- merge(finance_df_final, target_mapping, by = c("Service","Site","Metric_Name")) # Target mapping
+  finance_target_status <-merge(finance_df_final[, c("Service",
+                                               "Site",
+                                               "Metric_Group",
+                                               "Metric_Name",
+                                               "Reporting_Month",
+                                               "value_rounded")],
+                                target_mapping,
+                                by.x = c("Service",
+                                         "Site",
+                                         "Metric_Group",
+                                         "Metric_Name"),
+                                by.y = c("Service",
+                                         "Site",
+                                         "Metric_Group",
+                                         "Metric_Name"),
+                                all.x = TRUE) # Target mapping
   
   finance_target_status <- finance_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!(Variance %in% FALSE))
+    filter(!is.na(Reporting_Month) &
+             !(Variance %in% FALSE))
   
-  finance_df_final <- merge(finance_df_final, finance_target_status[,c("Service","Site","Metric_Name","Target","Status")],
-                            all = TRUE)
+  finance_df_final <- merge(finance_df_final, finance_target_status[,c("Service","Site","Metric_Name","Target","Status", "Reporting_Month")],
+                            all = FALSE)
   
   finance_df_final <- unique(finance_df_final) # Why are duplicates created from merging operation above?
   
