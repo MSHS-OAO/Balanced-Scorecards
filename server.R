@@ -565,7 +565,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       breakdown_all <- breakdown_all %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
-                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
+                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,1)))))
       
       breakdown_all$Metric_Unit <- NULL
       
@@ -822,7 +822,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       breakdown_all_site <- breakdown_all_site %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit), prettyNum(round(.,1), big.mark = ','),
-                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,2)))))
+                                          ifelse(Metric_Unit == "Dollar", dollar(round(.)), percent(.,1)))))
       
       breakdown_all_site$Metric_Unit <- NULL
       
