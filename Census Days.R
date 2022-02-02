@@ -153,6 +153,6 @@ census_days_metrics_final_process <- function(data) {
 # 
 # data_raw <- read_excel(paste0(home_path, "Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"))
 
-census_days <- census_days_file_process(data_raw)
-data_raw_cost <- read_excel(paste0(home_path, "Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"), sheet = "Cost and Revenue")
-data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Summary Repos/Food Services Cost and Revenue.xlsx")
+# census_days <- census_days_file_process(data_raw)
+# data_raw_cost <- read_excel(paste0(home_path, "Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"), sheet = "Cost and Revenue")
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Summary Repos/Food Services Cost and Revenue.xlsx")

@@ -38,6 +38,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance
       input$submit_food
       input$submit_evs
+      input$submit_imaging
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -450,6 +451,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance
       input$submit_food
       input$submit_evs
+      input$submit_imaging
+      
       
       
       service_input <- input$selectedService2
@@ -695,6 +698,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance
       input$submit_food
       input$submit_evs
+      input$submit_imaging
+      
       
       
       service_input <- input$selectedService3
@@ -3678,6 +3683,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
         
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
       })
       
       # Create observer event actions for manual data submission D&I Biomed ----- 
@@ -3739,6 +3749,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
         
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
       })
       
       observeEvent(input$submit_biomedkpis, {
@@ -3799,6 +3814,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
+        
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
       })
       
@@ -3873,6 +3893,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
         
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
       })
       
       # Imaging DR observer event actions for Chest CT data submission ----- 
@@ -3944,7 +3969,61 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
         
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
       })
+      
+      
+      observeEvent(input$selectedService,{
+        
+        data <- metrics_final_df %>% filter(Service == input$selectedService)
+        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+        campus_choices <- sort(unique(data$Site))
+        updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices[length(campus_choices)])
+        updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices[length(campus_choices)])
+        
+        
+        
+      })
+      
+      observeEvent(input$selectedService,{
+        
+        data <- metrics_final_df %>% filter(Service == input$selectedService2)
+        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        campus_choices <- sort(unique(data$Site))
+        updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
+        updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
+        
+      })
+      
+      
+      observeEvent(input$selectedService,{
+        
+        data <- metrics_final_df %>% filter(Service == input$selectedService3)
+        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+        campus_choices <- sort(unique(data$Site))
+        updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
+        updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
+      })
+      
+      
   
 } # Close Server
 
