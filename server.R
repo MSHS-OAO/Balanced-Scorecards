@@ -646,7 +646,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
       
       #Subtract 12 months from the latest month drop the day and add the first of the month back in
-      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(12), "%Y-%m"), "-01"), format = "%Y-%m-%d")
+      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(11), "%Y-%m"), "-01"), format = "%Y-%m-%d")
       
       columns_being_removed <- which(original_columns < latest_month_shown)
       columns_being_removed <- original_columns[columns_being_removed]
@@ -737,9 +737,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      # service_input <- "Environmental Services"
-      # month_input <- "08-2021"
-      # site_input <- "MSH"
+      # service_input <- "Imaging"
+      # month_input <- "12-2021"
+      # site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
       breakout_tab_metrics <- unique((metric_grouping_filter %>%
@@ -1968,7 +1968,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           
           metrics_final_df <<- cm_kpi(engineering_data)
-          saveRDS(metrics_final_df, metrics_final_df_path)
+          #saveRDS(metrics_final_df, metrics_final_df_path)
           flag <- 2
           
           showModal(modalDialog(
