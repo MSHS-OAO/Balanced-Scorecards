@@ -79,7 +79,7 @@ imagingdrxray__metrics_final_df_process <- function(xraydata){
     mutate( Reporting_Month_Ref = as.Date(paste(Premier_Reporting_Period,"01"), format="%b %Y %d"),
             Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"),
             Metric_Group = "DR - Ops",
-            Metric_Name = "ED Chest X-Ray PA & Lateral (Exam Code CH2PAL) - Order to Scan Completed, % <= 60m ")
+            Metric_Name = "ED Chest X-Ray PA & Lateral (Exam Code CH2PAL) - Order to Scan Completed, % <= 60m")
   
   xraydata <- left_join(xraydata[, c("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Reporting_Month_Ref")],
                       target_mapping, 
