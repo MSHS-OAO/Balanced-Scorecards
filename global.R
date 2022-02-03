@@ -701,7 +701,7 @@ exptrend_process <- function(finance_exptrend){
 
 
 
-options(shiny.maxRequestSize=30*1024^2)
+options(shiny.maxRequestSize=500*1024^2)
 
 
 budget_to_actual_process <- function(data){
