@@ -3561,7 +3561,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA
+        data[,missing_months] <- NA_character_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -3616,7 +3616,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
           )) %>%
           hot_cols(renderer = rendederer_string)  %>%
-          hot_col(1:3, readOnly = T)
+          hot_col(1:2, readOnly = T)
       })
       
       # Biomed Disruptions and Issues Output Table -------
@@ -3645,7 +3645,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA
+        data[,missing_months] <- NA_character_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -3698,7 +3698,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
           )) %>%
           hot_cols(renderer = rendederer_string)  %>%
-          hot_col(1:3, readOnly = T)
+          hot_col(1:2, readOnly = T)
       })
       
       # Create observer event actions for manual data submission KPIs Biomed ----- 
@@ -3726,7 +3726,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         bme_kpi_summary_data <-
           process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
         
-        # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
         bme_kpi_new_data <- unique(
           bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
@@ -3793,7 +3792,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         bme_di_summary_data <-
           process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
         
-        # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
         bme_di_new_data <- unique(
           bme_di_summary_data[, c("Service", "Site", "Month", "Metric")]
@@ -3902,7 +3900,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Imaging DR observer event actions for X-RAY data submission ----- 
-      observeEvent(input$submit_imagingxay, {
+      observeEvent(input$submit_imagingxray, {
         if(input$imaging_xray_username == "") {
           showModal(modalDialog(
             title = "Error",
