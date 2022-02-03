@@ -480,8 +480,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Food Services"
-      # month_input <- "09-2021"
+      # service_input <- "Security"
+      # month_input <- "11-2021"
       # site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -503,7 +503,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Reporting_Month_Ref <= current_period) %>%
         arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
         group_by(Site, Metric_Group, Metric_Name) %>%
-        mutate(id = row_number()) 
+        mutate(id = row_number()) %>%
+        filter(Reporting_Month_Ref >= current_period - months(11))
+        
       
       data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
                              by = c("Metric_Group","Metric_Name"))
@@ -2004,7 +2006,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         engineering_data$`EOC/Patient Care Work Orders Received` <- as.character(engineering_data$`EOC/Patient Care Work Orders Received`)
         
         
-        engineering_table <- full_join(engineering_table, engineering_data) 
+        engineering_table <- full_join(engineering_table, engineering_data)
+        
+        write_xlsx(engineering_table, engineering_table_path)
         
         
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
