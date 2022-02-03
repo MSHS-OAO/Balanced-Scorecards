@@ -2609,35 +2609,30 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Arrange by sites in alphabetical order
       data <- data %>%
         arrange(Site)
-      
-      
+
+
       ##### Code that adds months missing months to the rhandsontable
       months_only <- data %>% select(-Site,-Metric)
       months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-      
+
       max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-      
+
       months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-      
+
       months_to_drop <- which(months < max_month %m-% months(6))
       months_to_drop <- format(months[months_to_drop], "%m-%Y")
-      
+
       complete_months <- seq.Date(months[1], max_month, by= 'month')
-      
+
       missing_months <- which(!(complete_months %in% months))
       missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-      
-      data[,missing_months] <- NA
-      
+
+      data[,missing_months] <- NA_character_
+
       data <- data %>% select(-all_of(months_to_drop))
-      
+
       data
-      
-      data <- data %>% 
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      ##########
-      
+
     }
     )
     
@@ -2726,6 +2721,47 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       })
       
+      # Check Proficiency Test data to make sure user entered data in correct format
+      # ie, number between 0 and 1, no spaces or percentage signs
+      # First test to see if entry can be converted to numeric
+      non_numeric_entry <- any(
+        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
+              MARGIN = 2,
+              function(x)
+                is.na(
+                  suppressWarnings(
+                    as.numeric(x)
+                  )
+                )
+        )
+      )
+      
+      # Next test to see if user entered a value greater than 1
+      greater_than_1_entry <- any(
+        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
+              MARGIN = 2,
+              function(x)
+                as.numeric(x) > 1
+        )
+      )
+
+      
+
+      
+      prof_test_max_value <- any(
+        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
+              MARGIN = 2,
+              function(x) grepl("%|\\s", x) |
+                max(as.numeric(x), na.rm = TRUE) > 1)
+      )
+      
+      prof_test_percent <- any(
+        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
+              MARGIN = 2,
+              function(x) grepl("%|\\s", x))
+      )
+      
+      
       if(flag == 1) {
         tryCatch({
           # Reformat data from manual input table into department summary format
@@ -2755,55 +2791,55 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Lab Proficiency Testing Dept Summary data
-        write_xlsx(ops_metrics_lab_pt,
-                   paste0(hist_archive_path,
-                          "Lab Prof Testing Metrics Pre Updates ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Append Lab Proficiency Testing summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        prof_test_new_data <- unique(
-          prof_test_summary_data[, c("Service", "Site", "Month", "Metric")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        ops_metrics_lab_pt <<- anti_join(ops_metrics_lab_pt,
-                                         prof_test_new_data,
-                                         by = c("Service" = "Service",
-                                                "Site" = "Site",
-                                                "Month" = "Month",
-                                                "Metric" = "Metric"))
-        
-        # Third, combine the updated historical data with the new data
-        ops_metrics_lab_pt <<- full_join(ops_metrics_lab_pt,
-                                         prof_test_summary_data)
-        
-        # Next, arrange the proficiency test summary data by month, metric name, and site
-        ops_metrics_lab_pt <<- ops_metrics_lab_pt %>%
-          mutate(Site = factor(Site,
-                               levels = lab_sites_ordered,
-                               ordered = TRUE)) %>%
-          arrange(Month,
-                  desc(Metric),
-                  Site) %>%
-          mutate(Site = as.character(Site))
-        
-        # Lastly, save the updated summary data
-        write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
-        
-        # Update metrics_final_df with latest Proficiency Testing data using custom function
-        metrics_final_df_test <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # write_xlsx(ops_metrics_lab_pt,
+        #            paste0(hist_archive_path,
+        #                   "Lab Prof Testing Metrics Pre Updates ",
+        #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+        #                   ".xlsx"))
+        # 
+        # # Append Lab Proficiency Testing summary with new data
+        # # First, identify the sites, months, and metrics in the new data
+        # prof_test_new_data <- unique(
+        #   prof_test_summary_data[, c("Service", "Site", "Month", "Metric")]
+        # )
+        # 
+        # # Second, remove these sites, months, and metrics from the historical data, if they exist there
+        # # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        # ops_metrics_lab_pt <<- anti_join(ops_metrics_lab_pt,
+        #                                  prof_test_new_data,
+        #                                  by = c("Service" = "Service",
+        #                                         "Site" = "Site",
+        #                                         "Month" = "Month",
+        #                                         "Metric" = "Metric"))
+        # 
+        # # Third, combine the updated historical data with the new data
+        # ops_metrics_lab_pt <<- full_join(ops_metrics_lab_pt,
+        #                                  prof_test_summary_data)
+        # 
+        # # Next, arrange the proficiency test summary data by month, metric name, and site
+        # ops_metrics_lab_pt <<- ops_metrics_lab_pt %>%
+        #   mutate(Site = factor(Site,
+        #                        levels = lab_sites_ordered,
+        #                        ordered = TRUE)) %>%
+        #   arrange(Month,
+        #           desc(Metric),
+        #           Site) %>%
+        #   mutate(Site = as.character(Site))
+        # 
+        # # Lastly, save the updated summary data
+        # write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
+        # 
+        # # Update metrics_final_df with latest Proficiency Testing data using custom function
+        # metrics_final_df_test <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
+        # 
+        # # Save updated metrics_final_df
+        # saveRDS(metrics_final_df, metrics_final_df_path)
+        # 
+        # 
+        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
 
       }
     })
@@ -2835,7 +2871,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA
+        data[,missing_months] <- NA_character_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -3054,7 +3090,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA
+        data[,missing_months] <- NA_character_
         
         data <- data %>% select(-all_of(months_to_drop))
         
