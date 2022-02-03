@@ -739,9 +739,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      # service_input <- "Imaging"
-      # month_input <- "12-2021"
-      # site_input <- "MSB"
+      service_input <- "Security"
+      month_input <- "12-2021"
+      site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
       breakout_tab_metrics <- unique((metric_grouping_filter %>%
@@ -760,8 +760,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Site == site_input) %>%
         filter(Reporting_Month_Ref <= current_period) %>%
         arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
-        group_by(Site, Metric_Group, Metric_Name) #%>%
-        # mutate(id = row_number()) 
+        group_by(Site, Metric_Group, Metric_Name) %>%
+        # mutate(id = row_number())
+        filter(Reporting_Month_Ref >= current_period - months(11))
       
       months <- metrics_final_df %>% 
         filter(Service == service_input) %>% # input$selectedService
@@ -769,8 +770,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Reporting_Month_Ref <= current_period) %>%
         distinct(Reporting_Month_Ref) %>%
         arrange(desc(Reporting_Month_Ref)) %>%
-        mutate(id = row_number())
-      
+        mutate(id = row_number()) %>%
+        filter(Reporting_Month_Ref >= current_period - months(11))
+        
+
       data <- left_join(data, months,
                         by = c("Reporting_Month_Ref" = "Reporting_Month_Ref"))
 
@@ -881,6 +884,55 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       factor_ordering <- table(breakdown_all_site$Metric_Group)
       factor_ordering <- factor_ordering[order(factor(names(factor_ordering), levels = metric_group_order))]
+      
+      
+      ## Get the months in the df
+      month_included <- breakdown_all_site %>%
+        select(-Metric_Name,-Metric_Group,-Status,-Target,-`Avg. of Past Months Shown`)
+
+      original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
+
+      #Subtract 12 months from the latest month drop the day and add the first of the month back in
+      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(11), "%Y-%m"), "-01"), format = "%Y-%m-%d")
+
+      columns_being_removed <- which(original_columns < latest_month_shown)
+      columns_being_removed <- original_columns[columns_being_removed]
+      columns_being_removed <- format(columns_being_removed, "%b-%Y")
+
+
+      breakdown_all_site <- breakdown_all_site %>% select(-all_of(columns_being_removed))
+
+      ### Add missing months
+      months_breakdown <-  breakdown_all_site %>%
+        select(-Metric_Name,-Metric_Group,-Status,-Target,-`Avg. of Past Months Shown`)
+      months_breakdown <- as.Date(sprintf("%s-01",colnames(months_breakdown)), "%b-%Y-%d")
+
+      complete_months <- seq.Date(min(months_breakdown), max(months_breakdown), by= 'month')
+
+      missing_months <- which(!(complete_months %in% months_breakdown))
+      missing_months <- as.character(format(complete_months[missing_months], "%b-%Y"))
+
+      breakdown_all_site[,missing_months] <- NA
+
+
+
+      #breakdown_all <- breakdown_all %>% relocate(`Aug-2021`, .before = `Mar-2021`) ##to test ordering
+
+      subset_data <- breakdown_all_site[,8:ncol(breakdown_all_site)]
+
+      date_names <- sprintf("%s-01",colnames(subset_data))
+      colnames(subset_data) <- date_names
+
+      dates_order <- as.Date(names(subset_data), format = "%b-%Y-%d")
+      subset_data <- subset_data[order(dates_order)]
+
+
+      breakdown_all_site <- breakdown_all_site[,1:7]
+      breakdown_all_site <- bind_cols(breakdown_all_site,subset_data)
+
+      breakdown_all_cols <- colnames(breakdown_all_site)[8:ncol(breakdown_all_site)]
+      breakdown_all_cols <- format(as.Date(breakdown_all_cols, "%b-%Y-%d"), "%b-%Y")
+      colnames(breakdown_all_site)[8:ncol(breakdown_all_site)] <- breakdown_all_cols
       
       
       breakdown_all_site[,2:length(breakdown_all_site)] %>%
