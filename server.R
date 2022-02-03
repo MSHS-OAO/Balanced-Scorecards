@@ -39,12 +39,23 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_food
       input$submit_evs
       input$submit_imaging
+      input$submit_ytd_press_ganey
+      input$submit_monthly_press_ganey
+      input$submit_biomeddi
+      input$submit_biomedkpis
+      input$submit_imagingct
+      input$submit_lab_pt
+      input$submit_lab_tat
+      input$submit_pt_tat
+      input$submit_sec_inc_rpts
+      input$submit_sec_events
+      
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 
-      # service_input <- "Imaging"
-      # month_input <- "09-2021"
+      # service_input <- "Environmental Services"
+      # month_input <- "12-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -452,6 +463,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_food
       input$submit_evs
       input$submit_imaging
+      input$submit_ytd_press_ganey
+      input$submit_monthly_press_ganey
+      input$submit_biomeddi
+      input$submit_biomedkpis
+      input$submit_imagingct
+      input$submit_lab_pt
+      input$submit_lab_tat
+      input$submit_pt_tat
+      input$submit_sec_inc_rpts
+      input$submit_sec_events
       
       
       
@@ -699,6 +720,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_food
       input$submit_evs
       input$submit_imaging
+      input$submit_ytd_press_ganey
+      input$submit_monthly_press_ganey
+      input$submit_biomeddi
+      input$submit_biomedkpis
+      input$submit_imagingct
+      input$submit_lab_pt
+      input$submit_lab_tat
+      input$submit_pt_tat
+      input$submit_sec_inc_rpts
+      input$submit_sec_events
       
       
       
@@ -1916,27 +1947,75 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       }
       
+      flag <- 0
+      
+      tryCatch({
+      
       engineering_data <<- hot_to_r(input$engineering_kpi)
+      flag <-1
+        },
+      error = function(err){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Engineering data entered."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      })
       
-      metrics_final_df <<- cm_kpi(engineering_data)
-      #saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      if(flag ==1){
+        tryCatch({
+          
+          metrics_final_df <<- cm_kpi(engineering_data)
+          saveRDS(metrics_final_df, metrics_final_df_path)
+          flag <- 2
+          
+          showModal(modalDialog(
+            title = "Success",
+            paste0("The Engineering data has been submitted successfully."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        },
+        error = function(err){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the Engineering data entered."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        })
+      }
+      
+      if(flag == 2){
+       
+        engineering_table <- read_excel(engineering_table_path)
+        engineering_data <- engineering_data_process(engineering_data)
+        
+        updated_rows <- unique(engineering_data[c("Site", "Month")])
+        updated_rows$Month <- as.Date(updated_rows$Month, "%Y-%m-%d")
+        
+        engineering_table <- anti_join(engineering_table, updated_rows)
+        engineering_table <- engineering_table %>% filter(!is.na(Month))
+        
+        engineering_data$Month <- as.Date(engineering_data$Month, "%Y-%m-%d")
+        engineering_data$`Number of Work Orders Created with a Life Safety Priority` <- as.double(engineering_data$`Number of Work Orders Created with a Life Safety Priority`)
+        engineering_data$`EOC/Patient Care Work Orders Received` <- as.character(engineering_data$`EOC/Patient Care Work Orders Received`)
+        
+        
+        engineering_table <- full_join(engineering_table, engineering_data) 
+        
+        
+        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+         
+      }
+      
 
 
-      engineering_table <- read_excel(engineering_table_path)
-      engineering_data <- engineering_data_process(engineering_data)
-
-      updated_rows <- unique(engineering_data[c("Site", "Month")])
-      updated_rows$Month <- as.Date(updated_rows$Month, "%Y-%m-%d")
-      
-      engineering_table <- anti_join(engineering_table, updated_rows)
-      engineering_table <- engineering_table %>% filter(!is.na(Month))
-      
-      engineering_data$Month <- as.Date(engineering_data$Month, "%Y-%m-%d")
-      engineering_data$`Number of Work Orders Created with a Life Safety Priority` <- as.double(engineering_data$`Number of Work Orders Created with a Life Safety Priority`)
-      engineering_data$`EOC/Patient Care Work Orders Received` <- as.double(engineering_data$`EOC/Patient Care Work Orders Received`)
-      
-      
-      engineering_table <- full_join(engineering_table, engineering_data)
     
     })
     
@@ -2206,8 +2285,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     data_engineering_kpi <- reactive({
       
       input$submit_engineering
-      operational_metrics_engineering <- engineering_repo_pull()
-      ### Census from template
+      #operational_metrics_engineering <- engineering_repo_pull()
       data  <- operational_metrics_engineering
       data <- data[order(data$Site),]
       
@@ -2554,8 +2632,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       data <- data %>% select(-all_of(months_to_drop))
 
       data
-      ########
-      
+
     }
     )
     
@@ -2612,7 +2689,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                     rowHeaders = FALSE,
                     readOnly = FALSE) %>%
         hot_cols(renderer = renderer_string) %>%
-        hot_col(1:2, readOnly = TRUE)
+        hot_col(1:2, readOnly = T)
       
     })
     
@@ -3992,44 +4069,44 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data <- metrics_final_df %>% filter(Service == input$selectedService)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
         
-        campus_choices <- sort(unique(data$Site))
-        updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices[length(campus_choices)])
-        updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices[length(campus_choices)])
+        # campus_choices <- sort(unique(data$Site))
+        # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices[length(campus_choices)])
+        # updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices[length(campus_choices)])
         
         
         
       })
       
-      observeEvent(input$selectedService,{
+      observeEvent(input$selectedService2,{
         
         data <- metrics_final_df %>% filter(Service == input$selectedService2)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
         campus_choices <- sort(unique(data$Site))
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
-        updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
+        # updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
         
       })
       
       
-      observeEvent(input$selectedService,{
+      observeEvent(input$selectedService3,{
         
         data <- metrics_final_df %>% filter(Service == input$selectedService3)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
         
         campus_choices <- sort(unique(data$Site))
-        updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
+        # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
       })
       
