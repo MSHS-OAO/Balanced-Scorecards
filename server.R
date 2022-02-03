@@ -740,10 +740,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       site_input <- input$selectedCampus3
 
 
-=======
       # service_input <- "Imaging"
       # month_input <- "12-2021"
->>>>>>> 3e632b650ce6097f673fa33bb77516ef7055a513
       # site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
