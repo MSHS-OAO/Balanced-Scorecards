@@ -2619,7 +2619,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Create observe event actions for manual data submission
     observeEvent(input$submit_lab_pt, {
-      print(input$name_1)
       if(input$lab_pt_username == "") {
         showModal(modalDialog(
           title = "Error",
@@ -2627,79 +2626,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           easyClose = TRUE,
           footer = NULL
         ))
-      }
-
-      tryCatch({
-        # Convert rhandsontable to R object
-        prof_test_manual_updates <<- hot_to_r(input$lab_prof_test)
+      } else {
         
-        flag <- 1
-      },
-      error = function(err){
-        showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an issue with the Proficiency Test data entered."),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-      })
-      
-      # Check Proficiency Test data to make sure user entered data in correct format
-      # ie, number between 0 and 1, no spaces or percentage signs
-      # First test to see if entry can be converted to numeric
-      non_numeric_entry <- any(
-        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-              MARGIN = 2,
-              function(x)
-                is.na(
-                  suppressWarnings(
-                    as.numeric(x)
-                  )
-                )
-        )
-      )
-      
-      # Next test to see if user entered a value greater than 1
-      greater_than_1_entry <- any(
-        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-              MARGIN = 2,
-              function(x)
-                as.numeric(x) > 1
-        )
-      )
-
-      
-
-      
-      prof_test_max_value <- any(
-        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-              MARGIN = 2,
-              function(x) grepl("%|\\s", x) |
-                max(as.numeric(x), na.rm = TRUE) > 1)
-      )
-      
-      prof_test_percent <- any(
-        apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-              MARGIN = 2,
-              function(x) grepl("%|\\s", x))
-      )
-      
-      
-      if(flag == 1) {
         tryCatch({
-          # Reformat data from manual input table into department summary format
-          prof_test_summary_data <-
-            # lab_prof_test_dept_summary(prof_test_manual_table)
-            lab_prof_test_dept_summary(prof_test_manual_updates)
+          # Convert rhandsontable to R object
+          prof_test_manual_updates <<- hot_to_r(input$lab_prof_test)
           
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Proficiency Test data has been submitted successfully."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
+          flag <- 1
         },
         error = function(err){
           showModal(modalDialog(
@@ -2709,62 +2642,139 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             footer = NULL
           ))
         })
-      }
-      
-      if(flag == 2) {
         
-        # Save prior version of Lab Proficiency Testing Dept Summary data
-        # write_xlsx(ops_metrics_lab_pt,
-        #            paste0(hist_archive_path,
-        #                   "Lab Prof Testing Metrics Pre Updates ",
-        #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-        #                   ".xlsx"))
-        # 
-        # # Append Lab Proficiency Testing summary with new data
-        # # First, identify the sites, months, and metrics in the new data
-        # prof_test_new_data <- unique(
-        #   prof_test_summary_data[, c("Service", "Site", "Month", "Metric")]
-        # )
-        # 
-        # # Second, remove these sites, months, and metrics from the historical data, if they exist there
-        # # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        # ops_metrics_lab_pt <<- anti_join(ops_metrics_lab_pt,
-        #                                  prof_test_new_data,
-        #                                  by = c("Service" = "Service",
-        #                                         "Site" = "Site",
-        #                                         "Month" = "Month",
-        #                                         "Metric" = "Metric"))
-        # 
-        # # Third, combine the updated historical data with the new data
-        # ops_metrics_lab_pt <<- full_join(ops_metrics_lab_pt,
-        #                                  prof_test_summary_data)
-        # 
-        # # Next, arrange the proficiency test summary data by month, metric name, and site
-        # ops_metrics_lab_pt <<- ops_metrics_lab_pt %>%
-        #   mutate(Site = factor(Site,
-        #                        levels = lab_sites_ordered,
-        #                        ordered = TRUE)) %>%
-        #   arrange(Month,
-        #           desc(Metric),
-        #           Site) %>%
-        #   mutate(Site = as.character(Site))
-        # 
-        # # Lastly, save the updated summary data
-        # write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
-        # 
-        # # Update metrics_final_df with latest Proficiency Testing data using custom function
-        # metrics_final_df_test <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
-        # 
-        # # Save updated metrics_final_df
-        # saveRDS(metrics_final_df, metrics_final_df_path)
-        # 
-        # 
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        if (flag == 1) {
+          
+          # Check Proficiency Test data to make sure user entered data in correct format
+          # ie, number between 0 and 1, no spaces, percentage signs, etc.
+          user_format_error <<- any(
+            apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
+                  MARGIN = 2,
+                  function(x)
+                    # Determine if there are issues converting any user entries to numeric values
+                    # ie, if the user enters "%" or text, the entry will be converted to NA
+                    is.na(
+                      suppressWarnings(
+                        as.numeric(
+                          str_replace_na(x, replacement = "0")
+                        )
+                      )
+                    )
+            )
+          ) |
+            any(
+              apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
+                    MARGIN = 2,
+                    function(x)
+                      # Determine if numeric value is greater than 1
+                      max(
+                        suppressWarnings(
+                          as.numeric(
+                            str_replace_na(x, replacement = "0")
+                          )
+                        ), na.rm = TRUE
+                      ) > 1
+              )
+            )
+          
+          if (user_format_error) {
+            
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            
+          } else {
+            
+            # Check that data can be reformatted for department summary repo
+            tryCatch({
+              # Reformat data from manual input table into department summary format
+              prof_test_summary_data <-
+                # lab_prof_test_dept_summary(prof_test_manual_table)
+                lab_prof_test_dept_summary(prof_test_manual_updates)
+              
+              flag <- 2
+              
+              showModal(modalDialog(
+                title = "Success",
+                paste0("This Proficiency Test data has been submitted successfully."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            },
+            error = function(err){
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Proficiency Test data entered."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            })
+            
+            if(flag == 2) {
+              
+              # Save prior version of Lab Proficiency Testing Dept Summary data
+              write_xlsx(ops_metrics_lab_pt,
+                         paste0(hist_archive_path,
+                                "Lab Prof Testing Metrics Pre Updates ",
+                                format(Sys.time(), "%Y%m%d_%H%M%S"),
+                                ".xlsx"))
 
+              # Append Lab Proficiency Testing summary with new data
+              # First, identify the sites, months, and metrics in the new data
+              prof_test_new_data <- unique(
+                prof_test_summary_data[, c("Service", "Site", "Month", "Metric")]
+              )
+
+              # Second, remove these sites, months, and metrics from the historical data, if they exist there
+              # This allows us to ensure no duplicate entries for the same site, metric, and time period
+              ops_metrics_lab_pt <<- anti_join(ops_metrics_lab_pt,
+                                               prof_test_new_data,
+                                               by = c("Service" = "Service",
+                                                      "Site" = "Site",
+                                                      "Month" = "Month",
+                                                      "Metric" = "Metric"))
+
+              # Third, combine the updated historical data with the new data
+              ops_metrics_lab_pt <<- full_join(ops_metrics_lab_pt,
+                                               prof_test_summary_data)
+
+              # Next, arrange the proficiency test summary data by month, metric name, and site
+              ops_metrics_lab_pt <<- ops_metrics_lab_pt %>%
+                mutate(Site = factor(Site,
+                                     levels = lab_sites_ordered,
+                                     ordered = TRUE)) %>%
+                arrange(Month,
+                        desc(Metric),
+                        Site) %>%
+                mutate(Site = as.character(Site))
+
+              # Lastly, save the updated summary data
+              write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
+
+              # Update metrics_final_df with latest Proficiency Testing data using custom function
+              metrics_final_df <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
+
+              # Save updated metrics_final_df
+              saveRDS(metrics_final_df, metrics_final_df_path)
+
+
+              picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+              updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+              updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+              updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+
+            }
+            
+          }
+          
+        }
+        
       }
+
     })
 
       
