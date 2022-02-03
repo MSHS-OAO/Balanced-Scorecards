@@ -54,24 +54,34 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
       pivot_longer(cols = c(-Site,-Metric),
                    names_to = "Month",
                    values_to = "Number") %>%
-      mutate(Month = format(parse_date_time(paste0("01-",Month),orders = "dmy"),"%Y-%m-%d"),
+      mutate(Month = as.Date(format(parse_date_time(paste0("01-",Month),orders = "dmy"),"%Y-%m-%d")),
              Service = "Biomed / Clinical Engineering") %>%
       select(Service,Site,Month,Metric,Number)
+      
+      summary_repo_kpi_format <- as.data.frame(summary_repo_kpi_format)
+      summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]    
+      
   
     return(summary_repo_kpi_format)
   }
   else{
     
     summary_repo_di_format <- data %>%
-      mutate(vars(col.names.to.numeric),as.numeric()) %>%
+      #mutate(vars(col.names.to.numeric),as.numeric()) %>%
       pivot_longer(cols = c(-Site,-Metric),
                    names_to = "Month",
                    values_to = "Total Disruptions/Issues") %>%
-      mutate(Month = format(parse_date_time(paste0("01-",Month),orders = "dmy"),"%Y-%m-%d"),
+      mutate(Month = as.Date(format(parse_date_time(paste0("01-",Month),orders = "dmy"),"%Y-%m-%d")),
              Service = "Biomed / Clinical Engineering") %>%
       select(Service,Site,Month,`Total Disruptions/Issues`)
     
+    summary_repo_di_format <- as.data.frame(summary_repo_di_format)
+    summary_repo_di_format <- summary_repo_di_format[complete.cases(summary_repo_di_format), ]    
+    
+    
     return(summary_repo_di_format)
+    
+    
     
     
   }

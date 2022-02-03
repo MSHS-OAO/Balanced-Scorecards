@@ -3565,7 +3565,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA_character_
+        data[,missing_months] <- NA_integer_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -3649,7 +3649,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA_character_
+        data[,missing_months] <- NA_integer_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -3730,6 +3730,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         bme_kpi_summary_data <-
           process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
         
+        glimpse(bme_kpi_summary_data)
+        
         # First, identify the sites, months, and metrics in the new data
         bme_kpi_new_data <- unique(
           bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
@@ -3747,8 +3749,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Third, combine the updated historical data with the new data
         kpibme_reports <<- full_join(kpibme_reports,
-                                                kpi_bme)
+                                     bme_kpi_summary_data)
         
+        glimpse(kpibme_reports)
         # Next, arrange the incident reports summary data by month, metric, and site
         kpibme_reports <<- kpibme_reports %>%
           arrange(Month,
@@ -3796,11 +3799,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         bme_di_summary_data <-
           process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
         
+        
         # First, identify the sites, months, and metrics in the new data
         bme_di_new_data <- unique(
-          bme_di_summary_data[, c("Service", "Site", "Month", "Metric")]
+          bme_di_summary_data[, c("Service", "Site", "Month")]
         )
         
+        glimpse(bme_di_summary_data)
         # Second, remove these sites, months, and metrics from the historical data,
         # if they exist there. This allows us to ensure no duplicate entries for
         # the same site, metric, and time period.
@@ -3808,12 +3813,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                              bme_di_new_data,
                               by = c("Service" = "Service",
                                      "Site" = "Site",
-                                     "Month" = "Month",
-                                     "Metric" = "Metric"))
+                                     "Month" = "Month"))
+        glimpse(di_bme)
         
         # Third, combine the updated historical data with the new data
-        disruptions_issues_reports <<- full_join(disruptions_issues_reports,
-                                     di_bme)
+        disruptions_issues_reports <<- full_join(di_bme,
+                                                 bme_di_summary_data)
         
         # Next, arrange the incident reports summary data by month, metric, and site
         disruptions_issues_reports <<- disruptions_issues_reports %>%
@@ -3824,7 +3829,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_xlsx(disruptions_issues_reports, bmedi_table_path)
         
         # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports)
+        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
         
         # Save updates metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
@@ -3956,7 +3961,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                     "Metric_Name_Submitted" = "Metric_Name_Submitted"))
         
         # Third, combine the updated historical data with the new data
-        imaging_xray_reports <<- full_join(ImagingSummaryRepo,
+        imaging_xray_reports <<- full_join(xray_imaging,
                                            xray_summary_data)
         
         # Next, arrange the incident reports summary data by month, metric, and site
@@ -4032,7 +4037,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                           "Metric_Name_Submitted" = "Metric_Name_Submitted"))
         
         # Third, combine the updated historical data with the new data
-        imaging_ct_reports <<- full_join(ImagingSummaryRepo,
+        imaging_ct_reports <<- full_join(ct_imaging,
                                          ct_summary_data)
         
         # Next, arrange the incident reports summary data by month, metric, and site
