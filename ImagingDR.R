@@ -8,7 +8,6 @@
 
 ImagingSummaryRepo <- read_excel(imagingDR_path)
 
-ImagingSummaryRepo$Month <- format(ImagingSummaryRepo$Month,format = "%b %Y")
 
 current_month = format(Sys.Date(),format = "%b %Y")
 
