@@ -480,8 +480,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Food Services"
-      # month_input <- "09-2021"
+      # service_input <- "Security"
+      # month_input <- "11-2021"
       # site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -503,7 +503,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Reporting_Month_Ref <= current_period) %>%
         arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
         group_by(Site, Metric_Group, Metric_Name) %>%
-        mutate(id = row_number()) 
+        mutate(id = row_number()) %>%
+        filter(Reporting_Month_Ref >= current_period - months(11))
+        
       
       data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
                              by = c("Metric_Group","Metric_Name"))
@@ -646,7 +648,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
       
       #Subtract 12 months from the latest month drop the day and add the first of the month back in
-      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(12), "%Y-%m"), "-01"), format = "%Y-%m-%d")
+      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(11), "%Y-%m"), "-01"), format = "%Y-%m-%d")
       
       columns_being_removed <- which(original_columns < latest_month_shown)
       columns_being_removed <- original_columns[columns_being_removed]
@@ -737,9 +739,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      
+
+=======
       # service_input <- "Imaging"
-      # month_input <- "08-2021"
+      # month_input <- "12-2021"
+>>>>>>> 3e632b650ce6097f673fa33bb77516ef7055a513
       # site_input <- "MSB"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -1969,7 +1973,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           
           metrics_final_df <<- cm_kpi(engineering_data)
-          saveRDS(metrics_final_df, metrics_final_df_path)
+          #saveRDS(metrics_final_df, metrics_final_df_path)
           flag <- 2
           
           showModal(modalDialog(
@@ -2005,7 +2009,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         engineering_data$`EOC/Patient Care Work Orders Received` <- as.character(engineering_data$`EOC/Patient Care Work Orders Received`)
         
         
-        engineering_table <- full_join(engineering_table, engineering_data) 
+        engineering_table <- full_join(engineering_table, engineering_data)
+        
+        write_xlsx(engineering_table, engineering_table_path)
         
         
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
