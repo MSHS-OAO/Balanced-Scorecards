@@ -1,5 +1,66 @@
 cost_and_revenue_repo <- read_excel(paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
 
+data <- read_excel("C:/Users/villea04/Documents/MSHS Workforce Data Request_Food_RecurringRequest 2021.xlsx", sheet = "Rev Budget")
+
+rev_budget_sheet_process <- function(data){
+  data <- data %>% filter(!is.na(`REVENUE BUDGET`))
+  site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  data <- data[site_index[1]:nrow(data),]
+  
+  
+  data$Site <- data$`REVENUE BUDGET`
+  ##Cnhange values other than site names to NA
+  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE")))] <- NA
+  
+  
+  #for loop to fill in the NA cells with the site name
+  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  for(i in site_index){
+    data[i:(i+5),c("Site")] <- data[i,c("Site")]
+  }
+  
+  
+  data <- data %>% 
+    row_to_names(row_number = 1) 
+  
+  ###Delete columns full of NA only
+  data <- data[, colSums(is.na(data)) != nrow(data)]
+  
+  data <- data %>% rename(Metric = 1)
+  data <- data %>% rename(Site = length(.)) 
+  
+  ##Delete rows that contain the site neams and months
+  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  data <- data[-site_index,]
+  
+  
+  ##Chnaage site to abbreviation 
+  data$Site <- ifelse(data$Site == "MS BROOKLYN", "MSB",
+                      ifelse(data$Site == "MS BETH ISRAEL", "MSBI",
+                             ifelse(data$Site == "MS QUEENS", "MSQ",
+                                    ifelse(data$Site == "MS MORNINGSIDE", "MSM",
+                                           ifelse(data$Site == "MS WEST", "MSW",
+                                                  ifelse(data$Site == "MS NYEE", "NYEE",
+                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
+  
+  data <- data %>% relocate(Site, .before = Metric)
+  
+  
+  data <- data[,1:14]
+  ##Delete columns with all 0s
+  data <- data[, colSums(data != 0) > 0]
+  
+  
+  data <- data %>% pivot_longer(3:length(.),
+                                names_to = "Month",
+                                values_to = "Revenue Budget")
+  
+  ##Use previous month to get year for data
+  data$Month <- as.Date(paste0(data$Month, "-01", "-",format(Sys.Date() %m-% months(1), "%Y")),"%b-%d-%Y")
+  
+  data$Service <- "Food Services"
+  data <- data %>% relocate(Service, .before = Site)
+}
 
 census_days_file_process <- function(data){
   start_index <- which(colnames(data) == "Census Days") 
@@ -89,6 +150,7 @@ cost_and_revenue_file_process <- function(data){
   
   data <- data[ , !(names(data) %in% c("YTD"))]
   
+  data <- data[,1:14]
   ##Delete columns with all 0s
   data <- data[, colSums(data != 0) > 0]
   
@@ -109,11 +171,22 @@ cost_and_revenue_file_process <- function(data){
 
 census_days_metrics_final_process <- function(data) {
   raw_cost_rev_df <- data
+  min_month <- min(raw_cost_rev_df$Month)
+  max_month <- max(raw_cost_rev_df$Month)
+  
+  if(!("Census Days" %in% colnames(raw_cost_rev_df))){
+    
+    summary_repo_data <- read_excel(paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+    summary_repo_data <- summary_repo_data %>% filter(Month >= min_month & Month <= max_month)
+    summary_repo_data <- summary_repo_data %>% select(-Metric, -Service, -`Actual Revenue`, -`Revenue Budget`)
+    summary_repo_data <- summary_repo_data %>% distinct()
+    
+    raw_cost_rev_df <- merge(summary_repo_data, raw_cost_rev_df)
+  }
   
   
   # Cost and Revenue data pre-processing
   cost_rev_df <- raw_cost_rev_df %>%
-    select(-Notes) %>%
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
       rev_per_census = round(`Actual Revenue`/`Census Days`, 2),
@@ -136,6 +209,9 @@ census_days_metrics_final_process <- function(data) {
   # Subset processed data for merge 
   cost_rev_df_merge <- cost_rev_df_final[,processed_df_cols] 
   cost_rev_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(cost_rev_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
+  
+  cost_rev_df_merge <- cost_rev_df_merge %>% filter(!(is.na(value_rounded)))
+  cost_rev_df_merge <- cost_rev_df_merge %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
   
   
   updated_rows <- unique(cost_rev_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])

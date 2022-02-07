@@ -448,6 +448,7 @@ productivity_process <- function(data, data_nursing_radiology){
   prod_df_aggregate <- prod_df_all %>%
     group_by(Service, Site, Metric_Group, Metric_Name, Premier_Reporting_Period, Reporting_Month_Ref) %>%
     summarise(value_rounded = round(mean(value_rounded, na.rm = TRUE),2)) %>%
+    mutate(Metric_Name = str_trim(Metric_Name)) %>%
     filter(Metric_Name != "Total Target Worked FTE") %>%
     filter(!(Service %in% c("Nursing","Imaging") & 
                Metric_Name %in% c("Overtime Percent of Paid Hours","Worked Hours Productivity Index")))
@@ -455,6 +456,7 @@ productivity_process <- function(data, data_nursing_radiology){
   
   nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
     filter(Service %in% c("Nursing","Imaging")) %>%
+    mutate(Metric_Name = str_trim(Metric_Name)) %>%
     filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
                               "Overtime Hours", "Total Paid hours")) %>%
     group_by(Service, Site, Metric_Name, Premier_Reporting_Period, Reporting_Month_Ref) %>%
@@ -485,7 +487,7 @@ productivity_process <- function(data, data_nursing_radiology){
   
   prod_target_status <- prod_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>% # Target mapping
-    filter(Variance == TRUE)
+    filter(!(Variance %in% FALSE))
   
   prod_df_final <- merge(prod_df_aggregate_all, prod_target_status[,c("Service","Site","Metric_Name","Reporting_Month_Ref","Target","Status")],
                          all = TRUE)
@@ -706,7 +708,12 @@ options(shiny.maxRequestSize=500*1024^2)
 
 budget_to_actual_process <- function(data){
   raw_budget_actual <- data
-
+  
+  raw_budget_actual$`Month Actual`[is.na(raw_budget_actual$`Month Actual`)] <- 0
+  raw_budget_actual$`Month Budget`[is.na(raw_budget_actual$`Month Budget`)] <- 0
+  
+  
+  raw_budget_actual$Service <- ifelse(raw_budget_actual$`FTI - Mapping` == "Bloodbank","Lab - Bloodbank", raw_budget_actual$Service)
   ## Budget to Actual data pre-processing
   budget_actual_df <- raw_budget_actual %>%
     mutate(Month_Var = ifelse(`Month Budget` == "Not Received", " ", 
@@ -718,9 +725,13 @@ budget_to_actual_process <- function(data){
     pivot_wider(
       names_from = Metric_Name,
       values_from = Month_Var) %>%
-    select(Service, Site, Month, `Budget to Actual Variance - Labor`, `Budget to Actual Variance - Non Labor`) %>%
-    mutate(`Budget to Actual Variance - Total` = 
-             `Budget to Actual Variance - Labor` + `Budget to Actual Variance - Non Labor`)
+    select(Service, Site, Month, `Budget to Actual Variance - Labor`, `Budget to Actual Variance - Non Labor`)
+  
+  budget_actual_df$`Budget to Actual Variance - Labor`[is.na(budget_actual_df$`Budget to Actual Variance - Labor`)] <- 0
+  
+  budget_actual_df <- budget_actual_df %>%
+          mutate(`Budget to Actual Variance - Total` = 
+                   `Budget to Actual Variance - Labor` + `Budget to Actual Variance - Non Labor`)
   
   ## Calculate Target and Status
   budget_actual_target <- raw_budget_actual %>%
@@ -749,6 +760,8 @@ budget_to_actual_process <- function(data){
   
   budget_actual_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(budget_actual_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
   
+  budget_actual_df_merge$Metric_Name <- ifelse(budget_actual_df_merge$Service == "Lab - Bloodbank", paste0(budget_actual_df_merge$Metric_Name, " (Blood Bank)"),budget_actual_df_merge$Metric_Name)
+  budget_actual_df_merge$Service <- ifelse(budget_actual_df_merge$Service == "Lab - Bloodbank", "Lab", budget_actual_df_merge$Service)
   
   
   updated_rows <- unique(budget_actual_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
