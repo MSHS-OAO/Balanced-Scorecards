@@ -3651,7 +3651,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     # })
     
-    # Transport Metrics - Patient Data (Manual Entry) -----------------------
+    # Transport Metrics - Patient Data  -----------------------
       observeEvent(input$submit_npt_tat,{
         
         npt_file <- input$non_patient_transport
@@ -3661,45 +3661,86 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }else{
           file_path <- npt_file$datapath
           #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-          npt_data <- read_excel(file_path)
+          
+          
+          tryCatch({
+            npt_data <- read_excel(file_path)
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this Non Patient Transport data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          )
         }
         
-        data <- process_NPT_raw_data(npt_data)
         
-        npt_data <- data[[1]]
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            data <- process_NPT_raw_data(npt_data)
+            
+            npt_data <- data[[1]]
+            
+            summary_repo_format <- data[[2]]
+            
+            flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This Non Patient Transport data has been imported successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this Non Patient Transport data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          })
+        }
         
-        summary_repo_format <- data[[2]]
+        if(flag==2){
         
-        metrics_final_df <<- transport__metrics_final_df_process(npt_data)
-        
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        transport_summary_repo <- read_excel(transport_table_path)
-        
-        write_xlsx(transport_summary_repo,
-                   paste0(hist_archive_path,
-                          "TAT Transport",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        
-        transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
-        
-        updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
-        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
-        
-        transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
-        transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
-        transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
-        transport_summary_repo <- as.data.frame(transport_summary_repo)
-        write_xlsx(transport_summary_repo, transport_table_path)
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        
+            metrics_final_df <<- transport__metrics_final_df_process(npt_data)
+            
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            transport_summary_repo <- read_excel(transport_table_path)
+            
+            write_xlsx(transport_summary_repo,
+                       paste0(hist_archive_path,
+                              "TAT Transport",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+            
+            transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
+            
+            updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
+            updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
+            
+            transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
+            transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
+            transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
+            transport_summary_repo <- as.data.frame(transport_summary_repo)
+            write_xlsx(transport_summary_repo, transport_table_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+        }
       })
       
       observeEvent(input$submit_pt_tat,{
@@ -3712,35 +3753,62 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           file_path <- pt_file$datapath
           #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
           #pt_data <- read_excel(file_path)
+          
+          
+            tryCatch({
+              # Read in SCC file
+              data <- process_PT_data(file_path)
+              
+              pt_data <- data[[1]]
+              
+              summary_repo_format <- data[[2]]
+              
+              flag <- 1
+              
+              showModal(modalDialog(
+                title = "Success",
+                paste0("This Patient Transport data has been imported and processed successfully."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+              
+              
+            },
+            error = function(err){
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with this Patient Transport Data file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            }
+            )
 
         }
         
-        data <- process_PT_data(file_path)
         
-        pt_data <- data[[1]]
+        if(flag==1){
         
-        summary_repo_format <- data[[2]]
-        
-        metrics_final_df <<- transport__metrics_final_df_process(pt_data)
-        
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        transport_summary_repo <- read_excel(transport_table_path)
-        transport_summary_repo$Date <- as.Date(transport_summary_repo$Date)
-        transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
-        updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
-        
-        transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
-        transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
-        transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
-        transport_summary_repo <- as.data.frame(transport_summary_repo)
-        write_xlsx(transport_summary_repo, transport_table_path)
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
+          metrics_final_df <<- transport__metrics_final_df_process(pt_data)
+          
+          saveRDS(metrics_final_df, metrics_final_df_path)
+          
+          transport_summary_repo <- read_excel(transport_table_path)
+          transport_summary_repo$Date <- as.Date(transport_summary_repo$Date)
+          transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
+          updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
+          
+          transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
+          transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
+          transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
+          transport_summary_repo <- as.data.frame(transport_summary_repo)
+          write_xlsx(transport_summary_repo, transport_table_path)
+          
+          picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+          updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        }
         
       })
       
@@ -3919,64 +3987,104 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+        }else{
+          tryCatch({
+            
+        
+              # Convert rhandsontable to R object
+              bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
+        
+             flag <- 1
+          },
+          error =function(err){
+            
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            
+          })
+          
+          if(flag==1){
+            tryCatch({
+            # Reformat data from manual input table into summary repo format
+            bme_kpi_summary_data <<-
+              process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+            
+            flag <- 2
+            
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This Biomedical KPIs data has been submitted successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            },
+            
+            error = function(err) {
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            })
+          }
+        
+          if(flag==2){
+            
+            # Save prior version of KPIs Dept Summary data
+            write_xlsx(kpibme_reports,
+                       paste0(hist_archive_path,
+                              "KPIs Biomed and Clinical Engineering ",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+        
+            # First, identify the sites, months, and metrics in the new data
+            bme_kpi_new_data <- unique(
+              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
+            )
+            
+            # Second, remove these sites, months, and metrics from the historical data,
+            # if they exist there. This allows us to ensure no duplicate entries for
+            # the same site, metric, and time period.
+            kpi_bme <<- anti_join(kpibme_reports,
+                                  bme_kpi_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Month" = "Month",
+                                         "Metric" = "Metric"))
+            
+            # Third, combine the updated historical data with the new data
+            kpibme_reports <<- full_join(kpibme_reports,
+                                         bme_kpi_summary_data)
+            
+            glimpse(kpibme_reports)
+            # Next, arrange the incident reports summary data by month, metric, and site
+            kpibme_reports <<- kpibme_reports %>%
+              arrange(Month,
+                      desc(Metric),
+                      Site)
+            
+            # Lastly, save the updated summary data
+            write_xlsx(kpibme_reports, bmekpi_table_path)
+            
+            # Update metrics_final_df with latest data using custom function
+            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
+            
+            # Save updates metrics_final_df
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          }
         }
-        
-        # Convert rhandsontable to R object
-        bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
-        
-        # Save prior version of Security Incident Reports Dept Summary data
-        write_xlsx(kpibme_reports,
-                   paste0(hist_archive_path,
-                          "KPIs Biomed and Clinical Engineering ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Reformat data from manual input table into summary repo format
-        bme_kpi_summary_data <-
-          process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
-        
-        glimpse(bme_kpi_summary_data)
-        
-        # First, identify the sites, months, and metrics in the new data
-        bme_kpi_new_data <- unique(
-          bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data,
-        # if they exist there. This allows us to ensure no duplicate entries for
-        # the same site, metric, and time period.
-        kpi_bme <<- anti_join(kpibme_reports,
-                              bme_kpi_new_data,
-                              by = c("Service" = "Service",
-                                     "Site" = "Site",
-                                     "Month" = "Month",
-                                     "Metric" = "Metric"))
-        
-        # Third, combine the updated historical data with the new data
-        kpibme_reports <<- full_join(kpibme_reports,
-                                     bme_kpi_summary_data)
-        
-        glimpse(kpibme_reports)
-        # Next, arrange the incident reports summary data by month, metric, and site
-        kpibme_reports <<- kpibme_reports %>%
-          arrange(Month,
-                  desc(Metric),
-                  Site)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(kpibme_reports, bmekpi_table_path)
-        
-        # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-        
-        # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
       })
       
       # Create observer event actions for manual data submission D&I Biomed ----- 
@@ -3988,62 +4096,102 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+        }else{
+          
+          tryCatch({
+        
+            # Convert rhandsontable to R object
+            bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
+            
+            flag <- 1
+        
+          },
+          error <- function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Disruptions and Issues data entered."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          })
+        
+          if(flag ==1){
+            
+            tryCatch({
+            # Reformat data from manual input table into summary repo format
+            bme_di_summary_data <-
+              process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+            
+            flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This Disruptions and Issues data has been submitted successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            
+            },
+            error = function(err) {
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Disruptions and Issues data entered."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+              
+            })
+          }
+          
+          if(flag==2){
+            
+            # Save prior version of DI Reports Dept Summary data
+            write_xlsx(disruptions_issues_reports,
+                       paste0(hist_archive_path,
+                              "DI Biomed and Clinical Engineering ",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+        
+            # First, identify the sites, months, and metrics in the new data
+            bme_di_new_data <- unique(
+              bme_di_summary_data[, c("Service", "Site", "Month")]
+            )
+            
+            # Second, remove these sites, months, and metrics from the historical data,
+            # if they exist there. This allows us to ensure no duplicate entries for
+            # the same site, metric, and time period.
+            di_bme <<- anti_join(disruptions_issues_reports,
+                                 bme_di_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Month" = "Month"))
+            glimpse(di_bme)
+            
+            # Third, combine the updated historical data with the new data
+            disruptions_issues_reports <<- full_join(di_bme,
+                                                     bme_di_summary_data)
+            
+            # Next, arrange the DI reports summary data by month, metric, and site
+            disruptions_issues_reports <<- disruptions_issues_reports %>%
+              arrange(Month,
+                      Site)
+            
+            # Lastly, save the updated summary data
+            write_xlsx(disruptions_issues_reports, bmedi_table_path)
+            
+            # Update metrics_final_df with latest data using custom function
+            metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
+            
+            # Save updates metrics_final_df
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+              } 
         }
-        
-        # Convert rhandsontable to R object
-        bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-        
-        # Save prior version of DI Reports Dept Summary data
-        write_xlsx(disruptions_issues_reports,
-                   paste0(hist_archive_path,
-                          "DI Biomed and Clinical Engineering ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Reformat data from manual input table into summary repo format
-        bme_di_summary_data <-
-          process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
-        
-        
-        # First, identify the sites, months, and metrics in the new data
-        bme_di_new_data <- unique(
-          bme_di_summary_data[, c("Service", "Site", "Month")]
-        )
-        
-        glimpse(bme_di_summary_data)
-        # Second, remove these sites, months, and metrics from the historical data,
-        # if they exist there. This allows us to ensure no duplicate entries for
-        # the same site, metric, and time period.
-        di_bme <<- anti_join(disruptions_issues_reports,
-                             bme_di_new_data,
-                              by = c("Service" = "Service",
-                                     "Site" = "Site",
-                                     "Month" = "Month"))
-        glimpse(di_bme)
-        
-        # Third, combine the updated historical data with the new data
-        disruptions_issues_reports <<- full_join(di_bme,
-                                                 bme_di_summary_data)
-        
-        # Next, arrange the DI reports summary data by month, metric, and site
-        disruptions_issues_reports <<- disruptions_issues_reports %>%
-          arrange(Month,
-                  Site)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(disruptions_issues_reports, bmedi_table_path)
-        
-        # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-        
-        # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
       })
       
       observeEvent(input$submit_biomedkpis, {
@@ -4129,63 +4277,99 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           return(NULL)
         }else{
           file_path <- xray_file$datapath
-          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-          xray_data <- read.xlsx(xlsxFile = file_path, fillMergedCells = TRUE,colNames = TRUE)
+
+          tryCatch({
+            xray_data <- read.xlsx(xlsxFile = file_path, fillMergedCells = TRUE,colNames = TRUE)
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this X-Ray file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          )
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            # Reformat data from manual input table into summary repo format
+            xray_summary_data <-
+              process_xray_data(xray_data)
+            
+            flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This data file has been imported successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          })
         }
         
         
-
-        # Save prior version of xray Reports Dept Summary data
-        write_xlsx(ImagingSummaryRepo,
-                   paste0(hist_archive_path,
-                          "Imaging DR-Ops",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Reformat data from manual input table into summary repo format
-        xray_summary_data <-
-          process_xray_data(xray_data)
-        
-        glimpse(xray_summary_data)
-        
-        # First, identify the sites, months, and metrics in the new data
-        xray_new_data <- unique(
-          xray_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data,
-        # if they exist there. This allows us to ensure no duplicate entries for
-        # the same site, metric, and time period.
-        xray_imaging <<- anti_join(ImagingSummaryRepo,
-                             xray_new_data,
-                             by = c("Service" = "Service",
-                                    "Site" = "Site",
-                                    "Month" = "Month",
-                                    "Metric_Name_Submitted" = "Metric_Name_Submitted"))
-        
-        # Third, combine the updated historical data with the new data
-        imaging_xray_reports <<- full_join(xray_imaging,
-                                           xray_summary_data)
-        
-        # Next, arrange the incident reports summary data by month, metric, and site
-        imaging_xray_reports <<- imaging_xray_reports %>%
-          arrange(Month,
-                  Site)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(imaging_xray_reports, imagingDR_path)
-        
-        # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
-        
-        # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
+        if(flag == 2){
+            # Save prior version of xray Reports Dept Summary data
+            write_xlsx(ImagingSummaryRepo,
+                       paste0(hist_archive_path,
+                              "Imaging DR-Ops",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+            
+            
+            # First, identify the sites, months, and metrics in the new data
+            xray_new_data <- unique(
+              xray_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
+            )
+            
+            # Second, remove these sites, months, and metrics from the historical data,
+            # if they exist there. This allows us to ensure no duplicate entries for
+            # the same site, metric, and time period.
+            xray_imaging <<- anti_join(ImagingSummaryRepo,
+                                 xray_new_data,
+                                 by = c("Service" = "Service",
+                                        "Site" = "Site",
+                                        "Month" = "Month",
+                                        "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+            
+            # Third, combine the updated historical data with the new data
+            imaging_xray_reports <<- full_join(xray_imaging,
+                                               xray_summary_data)
+            
+            # Next, arrange the incident reports summary data by month, metric, and site
+            imaging_xray_reports <<- imaging_xray_reports %>%
+              arrange(Month,
+                      Site)
+            
+            # Lastly, save the updated summary data
+            write_xlsx(imaging_xray_reports, imagingDR_path)
+            
+            # Update metrics_final_df with latest data using custom function
+            metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
+            
+            # Save updates metrics_final_df
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        }
       })
       
       # Imaging DR observer event actions for Chest CT data submission ----- 
@@ -4205,62 +4389,104 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           return(NULL)
         }else{
           file_path <- ct_file$datapath
-          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-          ct_data <- read.xlsx(xlsxFile = file_path, fillMergedCells = TRUE,colNames = TRUE)
+          
+          
+          tryCatch({
+            
+            ct_data <- read.xlsx(xlsxFile = file_path, fillMergedCells = TRUE,colNames = TRUE)
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          )
+          
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            # Reformat data from manual input table into summary repo format
+            ct_summary_data <-
+              process_ctdata_data(ct_data)
+            
+            flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This data file has been imported successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          })
         }
         
         
         
-        # Save prior version of Imaging Reports Dept Summary data
-        write_xlsx(ImagingSummaryRepo,
-                   paste0(hist_archive_path,
-                          "Imaging DR-Ops",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Reformat data from manual input table into summary repo format
-        ct_summary_data <-
-          process_ctdata_data(ct_data)
-        
-
-        # First, identify the sites, months, and metrics in the new data
-        ct_new_data <- unique(
-          ct_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data,
-        # if they exist there. This allows us to ensure no duplicate entries for
-        # the same site, metric, and time period.
-        ct_imaging <<- anti_join(ImagingSummaryRepo,
-                                   ct_new_data,
-                                   by = c("Service" = "Service",
-                                          "Site" = "Site",
-                                          "Month" = "Month",
-                                          "Metric_Name_Submitted" = "Metric_Name_Submitted"))
-        
-        # Third, combine the updated historical data with the new data
-        imaging_ct_reports <<- full_join(ct_imaging,
-                                         ct_summary_data)
-        
-        # Next, arrange the imaging reports summary data by month, metric, and site
-        imaging_ct_reports <<- imaging_ct_reports %>%
-          arrange(Month,
-                  Site)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(imaging_ct_reports, imagingDR_path)
-        
-        # Update metrics_final_df with latest data using custom function
-        metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)
-        
-        # Save updates metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
+        if(flag == 2){
+          
+            # Save prior version of Imaging Reports Dept Summary data
+            write_xlsx(ImagingSummaryRepo,
+                       paste0(hist_archive_path,
+                              "Imaging DR-Ops",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+            
+    
+            # First, identify the sites, months, and metrics in the new data
+            ct_new_data <- unique(
+              ct_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
+            )
+            
+            # Second, remove these sites, months, and metrics from the historical data,
+            # if they exist there. This allows us to ensure no duplicate entries for
+            # the same site, metric, and time period.
+            ct_imaging <<- anti_join(ImagingSummaryRepo,
+                                       ct_new_data,
+                                       by = c("Service" = "Service",
+                                              "Site" = "Site",
+                                              "Month" = "Month",
+                                              "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+            
+            # Third, combine the updated historical data with the new data
+            imaging_ct_reports <<- full_join(ct_imaging,
+                                             ct_summary_data)
+            
+            # Next, arrange the imaging reports summary data by month, metric, and site
+            imaging_ct_reports <<- imaging_ct_reports %>%
+              arrange(Month,
+                      Site)
+            
+            # Lastly, save the updated summary data
+            write_xlsx(imaging_ct_reports, imagingDR_path)
+            
+            # Update metrics_final_df with latest data using custom function
+            metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)
+            
+            # Save updates metrics_final_df
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        }
       })
       
       
