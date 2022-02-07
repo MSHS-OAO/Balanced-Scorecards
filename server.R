@@ -3993,7 +3993,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Convert rhandsontable to R object
         bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
         
-        # Save prior version of Security Incident Reports Dept Summary data
+        # Save prior version of DI Reports Dept Summary data
         write_xlsx(disruptions_issues_reports,
                    paste0(hist_archive_path,
                           "DI Biomed and Clinical Engineering ",
@@ -4025,7 +4025,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         disruptions_issues_reports <<- full_join(di_bme,
                                                  bme_di_summary_data)
         
-        # Next, arrange the incident reports summary data by month, metric, and site
+        # Next, arrange the DI reports summary data by month, metric, and site
         disruptions_issues_reports <<- disruptions_issues_reports %>%
           arrange(Month,
                   Site)
@@ -4059,7 +4059,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Convert rhandsontable to R object
         bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
         
-        # Save prior version of Security Incident Reports Dept Summary data
+        # Save prior version of kpi Reports Dept Summary data
         write_xlsx(kpibme_reports,
                    paste0(hist_archive_path,
                           "KPIs Biomed and Clinical Engineering ",
@@ -4070,7 +4070,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         bme_kpi_summary_data <-
           process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
         
-        # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
         bme_kpi_new_data <- unique(
           bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
@@ -4090,7 +4089,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         kpibme_reports <<- full_join(kpibme_reports,
                                      kpi_bme)
         
-        # Next, arrange the incident reports summary data by month, metric, and site
+        # Next, arrange the kpi reports summary data by month, metric, and site
         kpibme_reports <<- kpibme_reports %>%
           arrange(Month,
                   desc(Metric),
@@ -4136,7 +4135,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
 
-        # Save prior version of Security Incident Reports Dept Summary data
+        # Save prior version of xray Reports Dept Summary data
         write_xlsx(ImagingSummaryRepo,
                    paste0(hist_archive_path,
                           "Imaging DR-Ops",
@@ -4149,7 +4148,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         glimpse(xray_summary_data)
         
-        # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
         xray_new_data <- unique(
           xray_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
@@ -4213,7 +4211,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         
-        # Save prior version of Security Incident Reports Dept Summary data
+        # Save prior version of Imaging Reports Dept Summary data
         write_xlsx(ImagingSummaryRepo,
                    paste0(hist_archive_path,
                           "Imaging DR-Ops",
@@ -4225,7 +4223,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           process_ctdata_data(ct_data)
         
 
-        # Append Security Incident Reports summary with new data
         # First, identify the sites, months, and metrics in the new data
         ct_new_data <- unique(
           ct_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
@@ -4245,7 +4242,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         imaging_ct_reports <<- full_join(ct_imaging,
                                          ct_summary_data)
         
-        # Next, arrange the incident reports summary data by month, metric, and site
+        # Next, arrange the imaging reports summary data by month, metric, and site
         imaging_ct_reports <<- imaging_ct_reports %>%
           arrange(Month,
                   Site)
