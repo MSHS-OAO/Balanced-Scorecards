@@ -220,7 +220,7 @@ transport__metrics_final_df_process <- function(data){
 
   TAT_Transport_target_status <- TAT_Transport_target_status %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(Variance == TRUE)
+    filter(Variance %in% c(TRUE,NA))
 
   TAT_Transport_df_final <- merge(data, 
                             TAT_Transport_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],

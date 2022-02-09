@@ -101,7 +101,8 @@ biomed__metrics_final_df_process <- function(data,type){
              Metric_Name_Submitted = Metric,
              Reporting_Month_Ref = Month) %>%
       mutate(Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
-             Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"))
+             Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
+             value_rounded = round(as.numeric(value_rounded),2))
     
     summary_metric_filter_subset <- summary_metric_filter %>% select(Metric_Group,Metric_Name,Metric_Name_Submitted)
     
@@ -114,7 +115,7 @@ biomed__metrics_final_df_process <- function(data,type){
     
     metrics_final_df_form <- metrics_final_df_form %>%
       mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-      filter(Variance == TRUE)
+      filter(Variance %in% c(TRUE,NA))
     
     metrics_final_df_form <- metrics_final_df_form[,c("Service",
                                                       "Site",
@@ -128,9 +129,9 @@ biomed__metrics_final_df_process <- function(data,type){
                                                       "Reporting_Month_Ref")]
     
     updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
-    
+
     metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-    
+
     metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
     
     return(metrics_final_df)
@@ -168,9 +169,9 @@ biomed__metrics_final_df_process <- function(data,type){
                                                       "Reporting_Month_Ref")]
     
     updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
-    
+
     metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-    
+
     metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
     
     return(metrics_final_df)
