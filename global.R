@@ -248,6 +248,7 @@ metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier prod
 target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
 metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
+budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
 metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
 
@@ -569,19 +570,19 @@ bislr_preprocess <- function(finance_bislr){
   
   colname <- names(finance_bislr_actual)
   
-  finance_bislr_actual <- merge(finance_bislr_actual, site_mapping[,c("Balanced.Scorecards.Groupings", "SITE","COST.CENTER")],
-                            by.x = c("Cost Center2"), by.y = c("COST.CENTER"))
+  finance_bislr_actual <- merge(finance_bislr_actual, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
+                            by.x = c("Cost Center2"), by.y = c("Cost Center2"))
   
   finance_bislr_actual <- finance_bislr_actual %>%
                             select(-`Functional Level`, -`Cost Center Desc`) %>%
-                            rename(Service = Balanced.Scorecards.Groupings) %>%
-                            rename(Site = SITE) %>%
+                            rename(Service = Service) %>%
+                            rename(Site = Site) %>%
                             select(-YTD)
   finance_bislr_actual <- finance_bislr_actual %>%
-    pivot_longer(cols = c(-`Cost Center2`, -`Division Level 3 Desc`, -`Account Category Desc2`, -Service, -Site),
+    pivot_longer(cols = c(-`Cost Center2`, -`Division Level 3 Desc`, -`Account Category Desc2`, -Service, -Site, -`FTI - Mapping`),
                  names_to = "Month",
                  values_to = "Month Actual") 
-  finance_bislr_actual <- finance_bislr_actual[,c("Service", "Site", "Division Level 3 Desc", "Cost Center2", "Account Category Desc2", "Month", "Month Actual")]
+  finance_bislr_actual <- finance_bislr_actual[,c("Service", "Site", "Division Level 3 Desc", "Cost Center2", "Account Category Desc2", "Month", "Month Actual", "FTI - Mapping")]
   
   
   ###Split out to Budget Data
@@ -603,19 +604,19 @@ bislr_preprocess <- function(finance_bislr){
   
   colnames(finance_bislr_budget) <- colname
   
-  finance_bislr_budget <- merge(finance_bislr_budget, site_mapping[,c("Balanced.Scorecards.Groupings", "SITE","COST.CENTER")],
-                                by.x = c("Cost Center2"), by.y = c("COST.CENTER"))
+  finance_bislr_budget <- merge(finance_bislr_budget, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
+                                by.x = c("Cost Center2"), by.y = c("Cost Center2"))
   
   finance_bislr_budget <- finance_bislr_budget %>%
     select(-`Functional Level`, -`Cost Center Desc`) %>%
-    rename(Service = Balanced.Scorecards.Groupings) %>%
-    rename(Site = SITE) 
+    rename(Service = Service) %>%
+    rename(Site = Site) 
   
   finance_bislr_budget <- finance_bislr_budget %>%
-    pivot_longer(cols = c(-`Cost Center2`, -`Division Level 3 Desc`, -`Account Category Desc2`, -Service, -Site),
+    pivot_longer(cols = c(-`Cost Center2`, -`Division Level 3 Desc`, -`Account Category Desc2`, -Service, -Site, -`FTI - Mapping`),
                  names_to = "Month",
                  values_to = "Month Budget") 
-  finance_bislr_budget <- finance_bislr_budget[,c("Service", "Site", "Division Level 3 Desc", "Cost Center2", "Account Category Desc2", "Month", "Month Budget")]
+  finance_bislr_budget <- finance_bislr_budget[,c("Service", "Site", "Division Level 3 Desc", "Cost Center2", "Account Category Desc2", "Month", "Month Budget", "FTI - Mapping")]
   
   finance_bislr_budget <- finance_bislr_budget %>% filter(!is.na(Service))
   
@@ -649,7 +650,9 @@ bislr_preprocess <- function(finance_bislr){
 # }
 
 exptrend_process <- function(finance_exptrend){
-
+  
+  month <- colnames(finance_exptrend)[1]
+  finance_exptrend <- finance_exptrend %>% row_to_names(row_number = 1)
   finance_exptrend <-  finance_exptrend %>%
                         select(-FDIV,-SUBACCT,-ACCTNAME,-NAME, -YTD_BUD, -YTD_ACT) %>%
                         rename(`Account Category Desc2` = EXPTYPE,
@@ -665,16 +668,16 @@ exptrend_process <- function(finance_exptrend){
   finance_exptrend$`Account Category Desc2` <- gsub(".*SUPPLIES", "Supplies", finance_exptrend$`Account Category Desc2`)
   finance_exptrend$`Account Category Desc2` <- gsub(".*SALARIES", "Salary", finance_exptrend$`Account Category Desc2`)
   
-  finance_exptrend$Month <- paste(finance_exptrend$Month, "01")
+  finance_exptrend$Month <- paste0(month, " 01")
   finance_exptrend$Month <- format(as.Date(finance_exptrend$Month, format = '%B %Y %d'),"%Y-%m-%d")
   
   finance_exptrend$`Cost Center2` <- stringr::str_replace(finance_exptrend$`Cost Center2`, '\\-', "")
   
-  finance_exptrend <- merge(finance_exptrend, site_mapping[,c("Balanced.Scorecards.Groupings","COST.CENTER")],
-                                 by.x = c("Cost Center2"), by.y = c("COST.CENTER"))
-  finance_exptrend <- finance_exptrend %>% filter(!is.na(Balanced.Scorecards.Groupings))
+  finance_exptrend <- merge(finance_exptrend, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
+                                 by.x = c("Cost Center2"), by.y = c("Cost Center2"))
+  finance_exptrend <- finance_exptrend %>% filter(!is.na(Service))
   
-  finance_exptrend <- finance_exptrend %>% rename(Service = Balanced.Scorecards.Groupings)
+  finance_exptrend <- finance_exptrend %>% rename(Service = Service)
 }
 
 

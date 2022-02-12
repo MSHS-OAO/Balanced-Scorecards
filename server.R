@@ -29,7 +29,34 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # 1. Summary Tab Output ---------------------------------------------------------------------------------
     output$siteSummary_title <- renderText({
-      paste0("MSHS ",input$selectedService, " Summary")
+      
+      input$submit_prod
+      input$submit_engineering
+      input$submit_finance
+      input$submit_food
+      input$submit_evs
+      input$submit_imaging
+      input$submit_ytd_press_ganey
+      input$submit_monthly_press_ganey
+      input$submit_biomeddi
+      input$submit_biomedkpis
+      input$submit_imagingct
+      input$submit_lab_pt
+      input$submit_lab_tat
+      input$submit_pt_tat
+      input$submit_sec_inc_rpts
+      input$submit_sec_events
+      
+      
+      time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+      time_df <- time_df %>% filter(Service == input$selectedService)
+      if(nrow(time_df) == 0){
+        text = paste0("MSHS ",input$selectedService, " Summary")
+      }else{
+        updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        text = paste0("MSHS ",input$selectedService, " Summary - Updated ",updated)
+      }
+      text
     })
     
     output$siteSummary_table <- function(){
@@ -55,7 +82,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth
 
       # service_input <- "Food Services"
-      # month_input <- "12-2021"
+      # month_input <- "01-2022"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -112,7 +139,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(!(Metric_Group %in% c("Press Ganey Score", "HCAHPS (60 day lag)"))) %>%
         group_by(Metric_Group, Metric_Name) %>%
         #filter(total == max(total)) %>%
-        filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
+        #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
+        filter(format(Reporting_Month_Ref, "%Y",) == max(format(Reporting_Month_Ref, "%Y"))) %>%
         group_by(Metric_Group, Metric_Name) %>%
         mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
                                               paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
@@ -452,7 +480,35 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # 2. Comparison Tab Output -------------------------------------------------------------------------------
     output$siteComp_title <- renderText({
-      paste0("MSHS ",input$selectedService2, " Key Metric Rollup")
+      
+      
+      input$submit_prod
+      input$submit_engineering
+      input$submit_finance
+      input$submit_food
+      input$submit_evs
+      input$submit_imaging
+      input$submit_ytd_press_ganey
+      input$submit_monthly_press_ganey
+      input$submit_biomeddi
+      input$submit_biomedkpis
+      input$submit_imagingct
+      input$submit_lab_pt
+      input$submit_lab_tat
+      input$submit_pt_tat
+      input$submit_sec_inc_rpts
+      input$submit_sec_events
+      
+      
+      time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+      time_df <- time_df %>% filter(Service == input$selectedService2)
+      if(nrow(time_df) == 0){
+        text = paste0("MSHS ",input$selectedService2, " Key Metric Rollup")
+      }else{
+        updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        text = paste0("MSHS ",input$selectedService2, " Key Metric Rollup - Updated ",updated)
+      }
+      text
     })
     
     output$siteComp_table <- function(){
@@ -711,7 +767,34 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # 3. Breakout Tab Output -----------------3----------------------------------------------------------------
     output$siteBreakout_title <- renderText({
-      paste0(input$selectedCampus3," ",input$selectedService3, " Breakout")
+      
+      input$submit_prod
+      input$submit_engineering
+      input$submit_finance
+      input$submit_food
+      input$submit_evs
+      input$submit_imaging
+      input$submit_ytd_press_ganey
+      input$submit_monthly_press_ganey
+      input$submit_biomeddi
+      input$submit_biomedkpis
+      input$submit_imagingct
+      input$submit_lab_pt
+      input$submit_lab_tat
+      input$submit_pt_tat
+      input$submit_sec_inc_rpts
+      input$submit_sec_events
+      
+      
+      time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+      time_df <- time_df %>% filter(Service == input$selectedService3)
+      if(nrow(time_df) == 0){
+        text = paste0(input$selectedCampus3, " ",input$selectedService3, " Breakout")
+      }else{
+        updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        text = paste0(input$selectedCampus3," ",input$selectedService3, " Breakout - Updated ",updated)
+      }
+      text
     })
     
     output$siteBreakout_table <- function(){
@@ -1848,7 +1931,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         ".xlsx"))
       
       if (flag == 1){
-        test_food <<- food_data
       # Process Cost and Revenue data
         tryCatch({food_summary_data <- cost_and_revenue_file_process(food_data)
                   food_summary_budget <- rev_budget_sheet_process(food_data_rev)
@@ -1868,7 +1950,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       if (flag == 2){
-        food_summary_data <- merge(food_summary_data,food_summary_budget)
+        food_summary_data <- cost_budget_combine(food_summary_data,food_summary_budget)
         # Append Food summary with new data
         # First, identify the sites, months, and metrics in the new data
         food_new_data <- unique(
@@ -1891,18 +1973,29 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
                                             food_summary_data)
         # Lastly, save the updated summary data
-        write_xlsx(cost_and_revenue_repo, ops_metrics_lab_tat_path)
+        write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+        
+        cost_and_revenue_repo$Month <- as.Date(cost_and_revenue_repo$Month)
         
         # Update metrics_final_df with latest SCC data using custom function
         metrics_final_df <<- census_days_metrics_final_process(food_summary_data)
         # Save updated metrics_final_df
-        saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+        #saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
   
         # Update "Reporting Month" drop down in each tab
         picker_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+        time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        date_time$Service = "Food Services"
+        date_time <- rbind(time_df, date_time)
+        write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        
+        
       }
       
     })
@@ -1989,6 +2082,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        date_time$Service = "Imaging"
+        date_time <- rbind(time_df, date_time)
+        write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+      
         
       }
       
@@ -2172,6 +2272,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
               updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
               
+              time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+              date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+              date_time$Service = "Engineering"
+              date_time <- rbind(time_df, date_time)
+              write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+              
+              
             }
             
           }
@@ -2257,12 +2364,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         evs_summary_repo <- full_join(evs_summary_repo, evs_data)
         evs_summary_repo <- as.data.frame(evs_summary_repo)
-        write_xlsx(evs_summary_repo, evs_table_path, row.names = FALSE)
+        write_xlsx(evs_summary_repo, evs_table_path)
         
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+        time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        date_time$Service = "Environmental Services"
+        date_time <- rbind(time_df, date_time)
+        write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
       }
       
     })
@@ -2652,6 +2766,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        date_time$Service = "Lab"
+        date_time <- rbind(time_df, date_time)
+        write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        
       }
       })
     
@@ -2761,6 +2882,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        date_time$Service = "Lab"
+        date_time <- rbind(time_df, date_time)
+        write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
       }
     })
     
@@ -3017,6 +3144,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
               updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
               updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+              
+              
+              time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+              date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+              date_time$Service = "Lab"
+              date_time <- rbind(time_df, date_time)
+              write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
 
             }
             
@@ -3254,6 +3388,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Security"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+            
           }
           
         }
@@ -3473,6 +3613,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Security"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
           }
           
@@ -3740,6 +3886,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Transport"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+            
         }
       })
       
@@ -3808,6 +3960,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          
+          time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+          date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+          date_time$Service = "Transport"
+          date_time <- rbind(time_df, date_time)
+          write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
         }
         
       })
@@ -4083,6 +4241,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Biomed / Clinical Engineering"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
           }
         }
       })
@@ -4189,6 +4353,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Biomed / Clinical Engineering"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+            
               } 
         }
       })
@@ -4303,6 +4474,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Imaging"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
         }
       })
       
@@ -4420,6 +4598,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Imaging"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
         }
       })
       

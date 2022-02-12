@@ -2,6 +2,14 @@ cost_and_revenue_repo <- read_excel(paste0(home_path, "Summary Repos/Food Servic
 
 #data <- read_excel("C:/Users/villea04/Documents/MSHS Workforce Data Request_Food_RecurringRequest 2021.xlsx", sheet = "Rev Budget")
 
+
+cost_budget_combine <- function(cost,rev){
+  merge <- merge(cost,rev, by = c("Service", "Site", "Metric", "Month"), all.x = TRUE)
+  
+  merge
+  
+}
+
 rev_budget_sheet_process <- function(data){
   data <- data %>% filter(!is.na(`REVENUE BUDGET`))
   site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
@@ -47,8 +55,14 @@ rev_budget_sheet_process <- function(data){
   
   
   data <- data[,1:14]
+  
+  
+  data$Metric <- ifelse(data$Metric == "Retail Revenue", "Revenue from Retail", data$Metric)
+  data$Metric <- ifelse(data$Metric == "Catering", "Revenue from Catering", data$Metric)
+  data$Metric <- ifelse(data$Metric == "Total Revenue", "Revenue from R&C (Includes Foregone)", data$Metric)
+  
   ##Delete columns with all 0s
-  data <- data[, colSums(data != 0) > 0]
+  data <- data[rowSums(data[,3:14] != 0, na.rm = TRUE) > 0,]
   
   
   data <- data %>% pivot_longer(3:length(.),
@@ -60,6 +74,14 @@ rev_budget_sheet_process <- function(data){
   
   data$Service <- "Food Services"
   data <- data %>% relocate(Service, .before = Site)
+  
+  data <- data %>% filter(!is.na(`Revenue Budget`))
+  
+  data <- data %>% filter(Month <= as.Date(paste0(format(Sys.Date(),"%Y-%m"),"-01"), "%Y-%m-%d") %m-% months(1))
+  
+  data$Metric <- ifelse(data$Metric == "Catering", "Catering Revenue", data$Metric)
+  
+  data
 }
 
 census_days_file_process <- function(data){
@@ -122,7 +144,7 @@ cost_and_revenue_file_process <- function(data){
   for(i in site_index){
     data[i:(i+5),c("Site")] <- data[i,c("Site")]
   }
- 
+  
   data <- data %>% 
     row_to_names(row_number = 1) 
   
@@ -142,9 +164,9 @@ cost_and_revenue_file_process <- function(data){
                       ifelse(data$Site == "MS BETH ISRAEL", "MSBI",
                              ifelse(data$Site == "MS QUEENS", "MSQ",
                                     ifelse(data$Site == "MS MORNINGSIDE", "MSM",
-                                                ifelse(data$Site == "MS WEST", "MSW",
-                                                       ifelse(data$Site == "MS NYEE", "NYEE",
-                                                        ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
+                                           ifelse(data$Site == "MS WEST", "MSW",
+                                                  ifelse(data$Site == "MS NYEE", "NYEE",
+                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
   
   data <- data %>% relocate(Site, .before = Metric)
   
@@ -152,7 +174,8 @@ cost_and_revenue_file_process <- function(data){
   
   data <- data[,1:14]
   ##Delete columns with all 0s
-  data <- data[, colSums(data != 0) > 0]
+  data <- data[, colSums(data != 0, na.rm = TRUE) > 0]
+  
   
   
   data <- data %>% pivot_longer(3:length(.),
@@ -165,7 +188,44 @@ cost_and_revenue_file_process <- function(data){
   data$Service <- "Food Services"
   data <- data %>% relocate(Service, .before = Site)
   
-
+  data <- data %>% filter(!is.na(`Actual Revenue`))
+  
+  data$Metric <- ifelse(data$Metric == "Non Labor Actual", "Non Labor Cost", data$Metric)
+  data$Metric <- ifelse(data$Metric == "Salary Actual", "Labor Cost", data$Metric)
+  
+  cost <- data %>% filter(Metric == "Labor Cost" | Metric == "Non Labor Cost")
+  data <- data %>% filter(!(Metric == "Labor Cost" | Metric == "Non Labor Cost"))
+  
+  cost$`Actual Revenue` <- as.numeric(cost$`Actual Revenue`)
+  
+  
+  total <- cost %>% filter((Metric == "Non Labor Cost") | Metric == "Labor Cost") %>%
+    group_by(Site,Month) %>%
+    mutate(`Actual Revenue` = sum(`Actual Revenue`)) %>%
+    mutate(Metric = "Total Cost") %>%
+    distinct()
+  
+  combined <- rbind(data.frame(cost),data.frame(total),data.frame(data))
+  
+  
+  combined$Metric <- ifelse(combined$Metric == "Retail Revenue", "Revenue from Retail", combined$Metric)
+  combined$Metric <- ifelse(combined$Metric == "Catering Revenue", "Revenue from Catering", combined$Metric)
+  
+  
+  r_c_revenue <- combined %>% filter(Metric == "Revenue from Retail" | Metric == "Revenue from Catering" | Metric == "Foregone Revenue")
+  combined <- combined %>% filter(!(Metric == "Revenue from Retail" | Metric == "Revenue from Catering" | Metric == "Foregone Revenue"))
+  
+  r_c_revenue$`Actual.Revenue` <- as.numeric(r_c_revenue$`Actual.Revenue`)
+  r_c_total <- r_c_revenue %>% filter((Metric == "Revenue from Retail" | Metric == "Revenue from Catering" | Metric == "Foregone Revenue")) %>%
+    group_by(Site,Month) %>%
+    mutate(`Actual.Revenue` = sum(`Actual.Revenue`)) %>%
+    mutate(Metric = "Revenue from R&C (Includes Foregone)") %>%
+    distinct()
+  
+  combined <- rbind(data.frame(r_c_revenue),data.frame(r_c_total),data.frame(combined))
+  
+  combined <- combined %>% rename(`Actual Revenue` = Actual.Revenue)
+  
 }
 
 
@@ -181,16 +241,23 @@ census_days_metrics_final_process <- function(data) {
     summary_repo_data <- summary_repo_data %>% select(-Metric, -Service, -`Actual Revenue`, -`Revenue Budget`)
     summary_repo_data <- summary_repo_data %>% distinct()
     
-    raw_cost_rev_df <- merge(summary_repo_data, raw_cost_rev_df)
+    if(nrow(summary_repo_data) != 0){
+      raw_cost_rev_df <- merge(summary_repo_data, raw_cost_rev_df)
+    }else{
+      raw_cost_rev_df$`Census Days` <- NA
+    }
   }
   
+  raw_cost_rev_df$`Actual Revenue` <- as.numeric(raw_cost_rev_df$`Actual Revenue`)
+  raw_cost_rev_df$`Revenue Budget` <- as.numeric(raw_cost_rev_df$`Revenue Budget`)
+  raw_cost_rev_df$`Census Days` <- as.numeric(raw_cost_rev_df$`Census Days`)
   
   # Cost and Revenue data pre-processing
   cost_rev_df <- raw_cost_rev_df %>%
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
-      rev_per_census = round(`Actual Revenue`/`Census Days`, 2),
-      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(`Revenue Budget` - `Actual Revenue`, 2))),
+      rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
+      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2))),
       Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
       Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
     pivot_longer(
@@ -220,7 +287,7 @@ census_days_metrics_final_process <- function(data) {
   cost_rev_df_merge$Target <- as.numeric(cost_rev_df_merge$Target)
   metrics_final_df <- full_join(metrics_final_df,cost_rev_df_merge)
   
-  }
+}
 
 ##### Testing to read in Cost and Revenue from Summary Repos
 # start <- "J:" #Comment when publishing to RConnect
