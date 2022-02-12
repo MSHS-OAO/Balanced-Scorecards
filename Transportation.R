@@ -24,7 +24,7 @@ process_PT_data <- function(pt_data_raw){
 
   # pt_data_raw <- pt_data_raw %>%
   #   slice(3:end)
-  pt_data_raw <- read_excel(pt_data_raw)
+  pt_data_raw <- read_excel(pt_data_raw,sheet = "PTET")
   
   hospitals_in_data <- c(unique(pull(pt_data_raw[,"...1"])))
   
