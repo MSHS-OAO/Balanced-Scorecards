@@ -4423,6 +4423,223 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
       })
       
+      # Nursing observer event actions for data submission ----- 
+      observeEvent(input$submit_nursing, {
+       
+        nursing_file <- input$nursing
+        
+        if (is.null(nursing_file)) {
+          return(NULL)
+        }else{
+          file_path <- nursing_file$datapath
+          
+          
+          tryCatch({
+            
+            nursing_data <- read_excel(file_path)
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          )
+          
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            # Reformat data from manual input table into summary repo format
+            nursing_summary_data <-
+              process_nursing_data(nursing_data)
+            
+            flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This data file has been imported successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          })
+        }
+        
+        
+        
+        if(flag == 2){
+          
+          # Save prior version of Imaging Reports Dept Summary data
+          write_xlsx(NursingSummaryRepo,
+                     paste0(hist_archive_path,
+                            "Nursing",
+                            format(Sys.time(), "%Y%m%d_%H%M%S"),
+                            ".xlsx"))
+          
+          
+          
+          # First, identify the sites, months, and metrics in the new data
+          nursing_new_data <- unique(
+            nursing_summary_data[, c("Service", "Site", "Month")]
+          )
+          
+          # Second, remove these sites, months, and metrics from the historical data,
+          # if they exist there. This allows us to ensure no duplicate entries for
+          # the same site, metric, and time period.
+          nursing_old_data <<- anti_join(NursingSummaryRepo,
+                                   nursing_new_data,
+                                   by = c("Service" = "Service",
+                                          "Site" = "Site",
+                                          "Month" = "Month"))
+          
+          # Third, combine the updated historical data with the new data
+          nursing_reports <<- full_join(nursing_old_data,
+                                           nursing_summary_data)
+          
+          # Next, arrange the imaging reports summary data by month, metric, and site
+          nursing_reports <<- nursing_reports %>%
+            arrange(Month,
+                    Site)
+          
+          # Lastly, save the updated summary data
+          write_xlsx(nursing_reports, nursing_path)
+          
+          # Update metrics_final_df with latest data using custom function
+          metrics_final_df <<- nursing__metrics_final_df_process(nursing_summary_data)
+          
+          # Save updates metrics_final_df
+          saveRDS(metrics_final_df, metrics_final_df_path)
+          
+          picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+          updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        }
+      })
+      
+      
+      # ED observer event actions for data submission ----- 
+      observeEvent(input$submit_ed, {
+        
+        ed_file <- input$ed
+        
+        if (is.null(ed_file)) {
+          return(NULL)
+        }else{
+          file_path <- ed_file$datapath
+          
+          
+          tryCatch({
+            
+            ed_data <- read_excel(file_path)
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          )
+          
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            # Reformat data from manual input table into summary repo format
+            ed_summary_data <-
+              process_ed_data(ed_data)
+            
+            flag <- 2
+            
+            showModal(modalDialog(
+              title = "Success",
+              paste0("This data file has been imported successfully."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          })
+        }
+        
+        
+        
+        if(flag == 2){
+          
+          # Save prior version of Imaging Reports Dept Summary data
+          write_xlsx(EDSummaryRepo,
+                     paste0(hist_archive_path,
+                            "Nursing",
+                            format(Sys.time(), "%Y%m%d_%H%M%S"),
+                            ".xlsx"))
+          
+          
+          
+          # First, identify the sites, months, and metrics in the new data
+          ed_new_data <- unique(
+            ed_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
+          )
+          
+          # Second, remove these sites, months, and metrics from the historical data,
+          # if they exist there. This allows us to ensure no duplicate entries for
+          # the same site, metric, and time period.
+          ed_old_data <<- anti_join(EDSummaryRepo,
+                                    ed_new_data,
+                                         by = c("Service" = "Service",
+                                                "Site" = "Site",
+                                                "Month" = "Month",
+                                                "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+          
+          # Third, combine the updated historical data with the new data
+          ed_reports <<- full_join(ed_old_data,
+                                        ed_summary_data)
+          
+          # Next, arrange the imaging reports summary data by month, metric, and site
+          ed_reports <<- ed_reports %>%
+            arrange(Month,
+                    Site)
+          
+          # Lastly, save the updated summary data
+          write_xlsx(ed_reports, ed_path)
+          
+          # Update metrics_final_df with latest data using custom function
+          metrics_final_df <<- ed__metrics_final_df_process(ed_summary_data)
+          
+          # Save updates metrics_final_df
+          saveRDS(metrics_final_df, metrics_final_df_path)
+          
+          picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+          updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        }
+      })
       
       observeEvent(input$selectedService,{
         
