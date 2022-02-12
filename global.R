@@ -209,9 +209,11 @@ census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchma
 bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
 bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssuesMonthly.xlsx")
 
-# File path for Lab KPI metrics
+# File path for Imaging DR Ops metrics
 imagingDR_path <- paste0(home_path, "Summary Repos/Imaging-DR.xlsx")
 
+# File path for Nursing metrics
+nursing_path <- paste0(home_path, "Summary Repos/Nursing.xlsx")
 
 
 # File path for Lab KPI metrics
@@ -794,5 +796,6 @@ source("Imaging.R")
 source("Engineering.R")
 source("Overtime.R")
 source("Census Days.R")
+source("nursing.R")
 
 
