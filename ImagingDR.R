@@ -9,10 +9,12 @@
 ImagingSummaryRepo <- read_excel(imagingDR_path)
 
 
-current_month = format(Sys.Date(),format = "%b %Y")
 
 #  XRay Summary Repo Format ----
 process_xray_data <- function(xraydata){
+  
+  current_month = format(Sys.Date(),format = "%b %Y")
+  
   
   volume_info <- xraydata
   
@@ -48,6 +50,9 @@ process_xray_data <- function(xraydata){
 }
 #  CT Summary Repo Format ----
 process_ctdata_data <- function(ctdata){
+  
+  current_month = format(Sys.Date(),format = "%b %Y")
+  
   
   volume_info <- ctdata
   
