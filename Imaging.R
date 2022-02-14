@@ -1,6 +1,6 @@
 # data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx")
 # 
-# imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
+imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
 
 imaging_dept_summary <- function(data){
   

@@ -3718,8 +3718,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     })
     
       
-    observeEvent(input$submit_finance, {
+    observeEvent(input$submit_finance_ot, {
+      
+      if(input$name_finance == "") {
+        showModal(modalDialog(
+          title = "Error",
+          "Please fill in the required fields.",
+          easyClose = TRUE,
+          footer = NULL
+        )
+        )
+      }
+      
       overtime_file <- input$finance_overtime
+      
+      
       flag <- 0
       
       if(is.null(overtime_file)){
@@ -3760,7 +3773,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Append Overtime summary with new data
         # First, identify the sites, months, and metrics in the new data
         overtime_new_data <- unique(
-          overtime_summary_data[  c("Service", "Site", "Associated Dashboard Month", "Metric_name")]
+          overtime_summary_data[  c("Service", "Site", "Associated Dashboard Month", "Metric_Name")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
@@ -3770,9 +3783,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          by = c("Service" = "Service",
                                                 "Site" = "Site",
                                                 "Associated Dashboard Month" = "Associated Dashboard Month",
-                                                "Metric_name" = "Metric_name")
+                                                "Metric_Name" = "Metric_Name")
         )
-        
+        summary_repos_overtime$Value <- as.numeric(summary_repos_overtime$Value)
         # Third, combine the updated historical data with the new data
         summary_repos_overtime <- full_join(summary_repos_overtime,
                                             overtime_summary_data)
@@ -3780,7 +3793,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Lastly, save the updated summary data
         write_xlsx(summary_repos_overtime, summary_repos_overtime_path)
         
-        #metrics_final_df <<- overtime_metrics_final_df_process(overtime_summary_data)
+        metrics_final_df <<- overtime_metrics_final_df_process(overtime_summary_data)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -3888,7 +3902,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
             date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            date_time$Service = "Transport"
+            date_time$Service = "Patient Transport"
             date_time <- rbind(time_df, date_time)
             write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
@@ -3898,6 +3912,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       observeEvent(input$submit_pt_tat,{
         
         pt_file <- input$patient_transport
+        flag <- 0 
         
         if (is.null(pt_file)) {
           return(NULL)
@@ -3963,7 +3978,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
           date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-          date_time$Service = "Transport"
+          date_time$Service = "Patient Transport"
           date_time <- rbind(time_df, date_time)
           write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
         }

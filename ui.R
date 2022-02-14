@@ -234,7 +234,7 @@ ui <-
                                                ),
                                       tabPanel("Overtime", br(),
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
-                                               actionButton("submit_finance", label = "Submit")
+                                               actionButton("submit_finance_ot", label = "Submit")
                                                )
                                  )
                         ),
@@ -736,6 +736,14 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
+ 
+ tags$style(HTML("
+        #submit_finance_ot {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
  
   
   tags$style(HTML("
