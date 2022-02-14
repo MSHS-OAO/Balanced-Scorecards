@@ -780,26 +780,28 @@ ui <-
         }")),
  
  tags$style(HTML("
-<<<<<<< HEAD
-        #submit_finance_ot {
-=======
         #submit_nursing {
->>>>>>> 31dacbd15b6b556316a8d458018dcfc35e49c4e8
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
  
-<<<<<<< HEAD
-=======
+ 
+ tags$style(HTML("
+        #submit_finance_ot {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ 
+ 
  tags$style(HTML("
         #submit_ed {
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
->>>>>>> 31dacbd15b6b556316a8d458018dcfc35e49c4e8
- 
+
   
   tags$style(HTML("
         #submit_monthly_press_ganey {

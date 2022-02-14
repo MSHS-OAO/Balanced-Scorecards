@@ -25,6 +25,7 @@ disruptions_issues_reports_ui <- disruptions_issues_reports %>%
 # KPIs Biomed -------------
 # Import historical summary
 kpibme_reports <- read_excel(bmekpi_table_path)
+kpibme_reports$Number <- as.numeric(kpibme_reports$Number)
 
 # Reformat "Month" column in KPIs for merging
 kpibme_reports <- kpibme_reports %>%

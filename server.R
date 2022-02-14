@@ -4276,16 +4276,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             footer = NULL
           ))
         }else{
-          
           tryCatch({
-        
             # Convert rhandsontable to R object
             bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-            
+          print("trcatch1_after")
             flag <- 1
         
           },
-          error <- function(err){
+          error = function(err){
             showModal(modalDialog(
               title = "Error",
               paste0("There seems to be an issue with the Disruptions and Issues data entered."),
@@ -4301,6 +4299,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             bme_di_summary_data <-
               process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
             
+            print("trcacth 2")
             flag <- 2
             
             showModal(modalDialog(
