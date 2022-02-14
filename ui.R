@@ -6,17 +6,17 @@ library(shinydashboard)
 default_campus <- sort(unique(metrics_final_df$Site))
 campus_choices <- sort(unique(metrics_final_df$Site))
 default_service <- sort(unique(metrics_final_df$Service))[1]
-# service_choices <- sort(unique(metrics_final_df$Service))
-service_choices <- sort(
-  unique(
-    metrics_final_df$Service[
-      which(!(
-        metrics_final_df$Service %in% c("Emergency Department", "Nursing")
-        )
-        )
-      ]
-    )
-  )
+service_choices <- sort(unique(metrics_final_df$Service))
+# service_choices <- sort(
+#   unique(
+#     metrics_final_df$Service[
+#       which(!(
+#         metrics_final_df$Service %in% c("Emergency Department", "Nursing")
+#         )
+#         )
+#       ]
+#     )
+#   )
 
 # default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
 # month_choices <- unique(metrics_final_df$Reporting_Month)
@@ -416,6 +416,26 @@ ui <-
                                         )
                                  )
                                  ),
+                        tabPanel("Operational Metrics - Emergency Department",
+                                 span("Operational Metrics - Emergency Department", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
+                                        tabPanel("ED KPIs", hr(),
+                                                 fileInput("ed", label = "Please upload ED KPIs data"),
+                                                 hr(),
+                                                 actionButton("submit_ed", "Submit", class = "btn-primary")
+                                        )
+                                        
+                                        
+                                 )
+                        ),
                         
                         tabPanel("Operational Metrics - Food Services", value = "operational",
                                  shinyjs::useShinyjs(),
@@ -541,6 +561,28 @@ ui <-
                                                  )
                                         )
                         ),
+                        tabPanel("Operational Metrics - Nursing",
+                                 span("Operational Metrics - Nursing", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
+                                        tabPanel("Nursing Indicators", 
+                                                 hr(),
+                                                 fileInput("nursing", label = "Please upload Nursing Indicators data"),
+                                                 hr(),
+                                                 actionButton("submit_nursing", "Submit", class = "btn-primary")
+                                        )
+                                        
+                                        
+                                 )
+                        ),
+                        
                         tabPanel("Operational Metrics - Patient Transport",
                                  span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -558,7 +600,7 @@ ui <-
                                         ),
                                         tabPanel("Turnaround Time-Patient Transport", hr(),
                                                  fileInput("patient_transport", label = "Please upload PTET Metrics data"),
-                                                 actionButton("submit_pt_tat", "Submit", class = "btn-primary"),
+                                                 actionButton("submit_pt_tat", "Submit", class = "btn-primary")
                                         )
                                         
                     
@@ -631,9 +673,9 @@ ui <-
                                                  ),
                                                  actionButton("submit_sec_events", "Submit", class = "btn-primary")
                                         )
+
                                  )
                         )
-                        
              )# Close tabPanel Breakout
              
           ), # Close NavBar
@@ -738,12 +780,25 @@ ui <-
         }")),
  
  tags$style(HTML("
+<<<<<<< HEAD
         #submit_finance_ot {
+=======
+        #submit_nursing {
+>>>>>>> 31dacbd15b6b556316a8d458018dcfc35e49c4e8
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
  
+<<<<<<< HEAD
+=======
+ tags$style(HTML("
+        #submit_ed {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+>>>>>>> 31dacbd15b6b556316a8d458018dcfc35e49c4e8
  
   
   tags$style(HTML("

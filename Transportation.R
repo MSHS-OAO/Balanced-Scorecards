@@ -3,15 +3,12 @@
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 # pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/PTET.xlsx")
 
-# current_month <- floor_date(Sys.Date(),"month")
 
-
-# current_month <- as.Date(paste0(format(Sys.Date(), "%Y-%m"), "-01"), format = "%Y-%m-%d")
 
 process_PT_data <- function(pt_data_raw){
   
   current_month <- floor_date(Sys.Date(),"month")
-  
+
   
   cols_order = c("Service",
                  "Site",
