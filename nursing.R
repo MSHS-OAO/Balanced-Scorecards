@@ -30,7 +30,6 @@ process_nursing_data <- function(data){
 
 nursing__metrics_final_df_process <- function(data){
   
-  glimpse(data)
   
   metrics_final_df_form <- data %>%
     rename(Reporting_Month_Ref = Month,
