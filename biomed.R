@@ -16,7 +16,7 @@ disruptions_issues_reports_ui <- disruptions_issues_reports %>%
   select(-Service) %>%
   filter(Month >= biomedDI_last_month - months(7)) %>%
   mutate(Month = format(Month, "%b-%Y")) %>%
-  pivot_wider(names_from = "Month",values_from = `Total Disruptions/Issues`,values_fill=0) %>%
+  pivot_wider(names_from = "Month",values_from = `Total Disruptions/Issues`,values_fill=NA_integer_) %>%
   mutate(Metric = "Total Disruptions and Issues") %>%
   relocate(Metric,.after=Site) #%>%
   # mutate('{format(biomedDI_last_month + months(1), "%b-%Y")}' := "")
@@ -40,7 +40,7 @@ kpibme_reports_ui <- kpibme_reports %>%
   filter(Month >= kpibme_last_month - months(7)) %>%
   mutate(Month = format(Month, "%b-%Y"),
          Number = round(as.numeric(Number),2)) %>%
-  pivot_wider(names_from = "Month",values_from = Number,values_fill=0) %>%
+  pivot_wider(names_from = "Month",values_from = Number,values_fill=NA_integer_) %>%
   group_by(Site) %>%
   # mutate('{format(kpibme_last_month + months(1), "%b-%Y")}' := NA) %>%
   arrange(Site)
