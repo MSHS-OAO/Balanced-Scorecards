@@ -4919,8 +4919,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           # Determine the number of unique targets and status definitions for each metric
           unique_targets_status <- targets_table_format %>%
-            group_by(Metric_Name) %>%
-            distinct(Target,
+            group_by(Metric_Group, Metric_Name) %>%
+            distinct(Metric_Group, Metric_Name,
+                     Target,
                      `Green: Range_1`, `Green: Range_2`,
                      `Yellow: Range_1`, `Yellow: Range_2`,
                      `Red: Range_1`, `Red: Range_2`) %>%
@@ -4931,7 +4932,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           targets_table_format <- left_join(targets_table_format,
                                             unique_targets_status,
-                                            by = c("Metric_Name" = "Metric_Name"))
+                                            by = c("Metric_Name" = "Metric_Name",
+                                                   "Metric_Group" = "Metric_Group"))
           
           targets_table_format <- targets_table_format %>%
             relocate(Site, .after = Metric_Name) %>%
@@ -4945,7 +4947,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                           full_width = FALSE,
                           position = "center",
                           row_label_position = "c", font_size = 16) %>%
-            collapse_rows(columns = c(1, 2))
+            collapse_rows(columns = c(1, 2)) %>%
+            row_spec(0,  background = "#212070", color = "white") %>%
+            column_spec(1, bold = TRUE)
           
         }
         
