@@ -468,7 +468,7 @@ productivity_process <- function(data, data_nursing_radiology){
                 values_from = value_rounded) %>%
     mutate(`Worked Hours Productivity Index` = round(`Total Target Worked FTE`/`Actual Worked FTE`,2),
            `Overtime Percent of Paid Hours` = round(`Overtime Hours`/`Total Paid hours`,2)) %>%
-    pivot_longer(5:9,
+    pivot_longer(5:length(.),
                  names_to = "Metric_Name",
                  values_to = "value_rounded") %>%
     filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%

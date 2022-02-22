@@ -413,8 +413,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create traffic lights for the targets
       col_red <- which(targets_summary == "Red", arr.ind = TRUE)
-      col_red_rows <- as.integer(col_red[,1])
-      col_red_cols <- as.integer(col_red[,2])
+      # col_red_rows <- as.integer(col_red[,1])
+      # col_red_cols <- as.integer(col_red[,2])
       col_yellow <- which(targets_summary == "Yellow", arr.ind = TRUE)
       col_green <- which(targets_summary == "Green", arr.ind = TRUE)
       
@@ -4096,6 +4096,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
         data[,missing_months] <- NA_integer_
+        
+        months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
+        months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
+        order_months <- months_df[months]
+        
+        
+        index <- months+2
+        index <- c(1:2,index)
+        
+        data <- data[index]
         
         data <- data %>% select(-all_of(months_to_drop))
         
