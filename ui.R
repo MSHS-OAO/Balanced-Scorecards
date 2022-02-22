@@ -7,6 +7,7 @@ default_campus <- sort(unique(metrics_final_df$Site))
 campus_choices <- sort(unique(metrics_final_df$Site))
 default_service <- sort(unique(metrics_final_df$Service))[1]
 service_choices <- sort(unique(metrics_final_df$Service))
+metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
 # service_choices <- sort(
 #   unique(
 #     metrics_final_df$Service[
@@ -676,9 +677,56 @@ ui <-
 
                                  )
                         )
-             )# Close tabPanel Breakout
+             ), # Close tabPanel Breakout
+             
+             # Fifth tab - Targets & Status Definitions
+             tabPanel("Targets & Status Definitions", value = "targets",
+                      fluidRow(
+                        column(2, 
+                               box(
+                                 title = NULL, solidHeader = FALSE, width = 12,
+                                 pickerInput("selectedService4", label = h4("Select Department:"), 
+                                             choices = service_choices,
+                                             multiple = FALSE,
+                                             options = pickerOptions(
+                                               liveSearch = TRUE,
+                                               actionsBox = TRUE,
+                                               dropupAuto = FALSE,
+                                               size = 10),
+                                             selected = default_service))),
+                        column(2,
+                               box(
+                                 title = NULL, solidHeader = FALSE, width = 12,
+                                 pickerInput("selectedMetricGroup", label = h4("Select Metric Group:"),
+                                             choices = metric_group_choices,
+                                             multiple = TRUE,
+                                             options = pickerOptions(
+                                               liveSearch = TRUE,
+                                               actionsBox = TRUE,
+                                               dropupAuto = FALSE,
+                                               size = 10),
+                                             selected = default_service)))
+                      ),
+                      hr(), 
+                      fluidRow(textOutput("targetSummary_title")),
+                      tags$head(tags$style("#targetSummary_title{color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 30px}")), br(), br(),
+                      fluidRow(textOutput("targetSummary_message")),
+                      tags$body(tags$style("#targetSummary_message{
+                                           color: #black;
+                                           font-family:Calibri;
+                                           font-style:italic;
+                                           font-size:15px;
+                                           margin-left: 30px")),
+                      fluidRow(
+                        column(12, tableOutput("targetSummary_table") %>% 
+                                 withSpinner(type = 8, color = "#dddedd"))
+                      )
+             ), # Close tabPanel Summary
              
           ), # Close NavBar
+  
+  
           
   tags$style(HTML("
  .handsontable  .htDimmed {

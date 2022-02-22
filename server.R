@@ -4849,6 +4849,127 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
       })
       
+      
+      # 5. Target and Status Definitions tab ----------------------------------
+      
+      # Create title based on user selected service line
+      output$targetSummary_title <- renderText({
+        
+        text = paste0("MSHS ", input$selectedService4, " Metric Targets & Status Definitions")
+        
+        text
+        
+      })
+      
+      # Display error message for user if no metrics are selected
+      output$targetSummary_message <- renderText({
+        
+        service_input <- input$selectedService4
+        metric_group_input <- input$selectedMetricGroup
+        # service_input <- "Lab"
+        # metric_group_input <- "Overtime Hours"
+        
+        targets_table <- target_mapping %>%
+          filter(Service %in% service_input &
+                   Metric_Group %in% metric_group_input) %>%
+          select(-Service,
+                 -Metric_Name_Submitted)
+        
+        if (nrow(targets_table) == 0) {
+          
+          "Please select at least one metric group for the selected service"
+          
+        } else {
+          
+          ""
+        }
+        
+      })
+      
+      # Create table based on selected service and metric groups
+      output$targetSummary_table <- function(){
+        
+        service_input <- input$selectedService4
+        metric_group_input <- input$selectedMetricGroup
+        # service_input <- "Lab"
+        # metric_group_input <- "Overtime Hours"
+        
+        targets_table <- target_mapping %>%
+          filter(Service %in% service_input &
+                   Metric_Group %in% metric_group_input) %>%
+          select(-Service,
+                 -Metric_Name_Submitted)
+        
+        if (nrow(targets_table) == 0) {
+          
+          targets_table_format <- NULL
+          
+          # textOutput("Please select at least one metric group for the selected service")
+          
+        } else {
+          
+          targets_table_format <- targets_table %>%
+            pivot_wider(names_from = c(Status),
+                        values_from = c(Range_1, Range_2),
+                        names_sep = "___") %>%
+            # Manually rename and reorder columns for now
+            rename_with(#~ paste0(., "B"),
+              # str_replace,
+              # pattern = "1___R",
+              # replacement = "Testtttt",
+              
+              ~ paste0(
+                str_extract(., "(?<=___)[A-Za-z]+"),
+                ": ",
+                str_extract(., ".+(?=___)")),
+              matches("___")) %>%
+            relocate(contains("Green"), .after = Target) %>%
+            relocate(contains("Yellow"), .after = contains("Green")) %>%
+            relocate(contains("Red"), .after = contains("Yellow"))
+          
+          # Determine the number of unique targets and status definitions for each metric
+          unique_targets_status <- targets_table_format %>%
+            group_by(Metric_Group, Metric_Name) %>%
+            distinct(Metric_Group, Metric_Name,
+                     Target,
+                     `Green: Range_1`, `Green: Range_2`,
+                     `Yellow: Range_1`, `Yellow: Range_2`,
+                     `Red: Range_1`, `Red: Range_2`) %>%
+            mutate(Num_Definitions = n()) %>%
+            select(-Target,
+                   -contains(": ")) %>%
+            distinct()
+          
+          targets_table_format <- left_join(targets_table_format,
+                                            unique_targets_status,
+                                            by = c("Metric_Name" = "Metric_Name",
+                                                   "Metric_Group" = "Metric_Group"))
+          
+          targets_table_format <- targets_table_format %>%
+            relocate(Site, .after = Metric_Name) %>%
+            mutate(Site = ifelse(Num_Definitions == 1, "All Sites", Site)) %>%
+            select(-Num_Definitions) %>%
+            distinct()
+          
+          kable(targets_table_format,
+                escape = FALSE) %>%
+            kable_styling(bootstrap_options = c("hover", "bordered", "striped"),
+                          full_width = FALSE,
+                          position = "center",
+                          row_label_position = "c", font_size = 16) %>%
+            collapse_rows(columns = c(1, 2)) %>%
+            row_spec(0,  background = "#212070", color = "white") %>%
+            column_spec(1, bold = TRUE)
+          
+        }
+        
+        
+        
+        
+        
+      }
+      
+      # Code to update drop down selections based on selected service line -------------
       observeEvent(input$selectedService,{
         
         data <- metrics_final_df %>% filter(Service == input$selectedService)
@@ -4894,6 +5015,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
       })
+      
+      observeEvent(input$selectedService4, {
+        
+        target_data <- target_mapping %>%
+          filter(Service %in% input$selectedService4)
+        
+        picker_choices_metric_group <- unique(target_data$Metric_Group)
+        
+        updatePickerInput(session, "selectedMetricGroup",
+                          choices = picker_choices_metric_group,
+                          selected = picker_choices_metric_group)
+        
+      })
+
       
       
   
