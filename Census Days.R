@@ -10,7 +10,7 @@ cost_budget_combine <- function(cost,rev){
   
 }
 
-rev_budget_sheet_process <- function(data){
+rev_budget_dept_summary <- function(data){
   data <- data %>% filter(!is.na(`REVENUE BUDGET`))
   site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
   data <- data[site_index[1]:nrow(data),]
@@ -84,7 +84,7 @@ rev_budget_sheet_process <- function(data){
   data
 }
 
-census_days_file_process <- function(data){
+census_days_dept_summary <- function(data){
   start_index <- which(colnames(data) == "Census Days") 
   end_index <- which(colnames(data) == "Nursery Days")-3 
   data <- data[,c(1,start_index:end_index)] #only get census days data
@@ -126,7 +126,7 @@ census_days_file_process <- function(data){
 
 
 
-cost_and_revenue_file_process <- function(data){
+cost_and_revenue_dept_summary <- function(data){
   
   ## filter out na rows and delete the empty cells in the beginning of file
   data <- data %>% filter(!is.na(`Current Month`))
@@ -229,7 +229,7 @@ cost_and_revenue_file_process <- function(data){
 }
 
 
-census_days_metrics_final_process <- function(data) {
+census_days_metrics_final_df <- function(data) {
   raw_cost_rev_df <- data
   min_month <- min(raw_cost_rev_df$Month)
   max_month <- max(raw_cost_rev_df$Month)
