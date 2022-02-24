@@ -4,21 +4,22 @@
 # 
 # data <- read_excel(path_raw)
 
-NursingSummaryRepo <- read_excel(nursing_path)
+NursingSummaryRepo <- read_excel(nursing_path) # change the variable name lower_case
+
 NursingSummaryRepo <- NursingSummaryRepo %>% 
   mutate(`All Falls (per 1,000 PD)` = as.numeric(`All Falls (per 1,000 PD)`),
          `Falls with Injury (per 1,000 PD)` = as.numeric(`Falls with Injury (per 1,000 PD)`),
          `HAPU (per 1,000 PD)` = as.numeric(`HAPU (per 1,000 PD)`))
 
 
-process_nursing_data <- function(data){
+process_nursing_data <- function(data){ #service_dept_summary
   
   
   data <- data %>%
     rename( Month =`Year-Month`,
             Service = Unit,
             Site = Facility) %>%
-    mutate(Month = format(as.Date(parse_date_time(paste0(Month,"-01"),orders = "ymd")),"%Y-%m-%d"),
+    mutate(Month = format(as.Date(parse_date_time(paste0(Month,"-01"),orders = "ymd")),"%Y-%m-%d"), #get rid of parse_date_time
            Service = "Nursing",
            `All Falls (per 1,000 PD)` = `All Falls`/(`Denominator (Patient Days)`/1000),
            `Falls with Injury (per 1,000 PD)` = `Falls with Injury`/(`Denominator (Patient Days)`/1000),
