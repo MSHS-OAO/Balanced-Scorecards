@@ -80,9 +80,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-
-      # service_input <- "Food Services"
-      # month_input <- "01-2022"
+# 
+#       service_input <- "Imaging"
+#       month_input <- "01-2022"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -413,8 +413,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create traffic lights for the targets
       col_red <- which(targets_summary == "Red", arr.ind = TRUE)
-      col_red_rows <- as.integer(col_red[,1])
-      col_red_cols <- as.integer(col_red[,2])
+      # col_red_rows <- as.integer(col_red[,1])
+      # col_red_cols <- as.integer(col_red[,2])
       col_yellow <- which(targets_summary == "Yellow", arr.ind = TRUE)
       col_green <- which(targets_summary == "Green", arr.ind = TRUE)
       
@@ -463,18 +463,48 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
       
-      kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
-            col.names = kable_col_names) %>%
-        pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
-        kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
-                      position = "center", row_label_position = "c", font_size = 16) %>%
-        # add_header_above(header_above,
-        #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
-        row_spec(0,  background = "#212070", color = "white") %>%
-        column_spec(1, bold = TRUE) %>%
-        column_spec(c(2, 10), italic = TRUE) %>%
-        column_spec(3:9, background = "#fee7f5") %>%
-        column_spec(11:17, background = "#E6F8FF") 
+
+      
+      if(service_input == "Imaging"){
+          ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
+          dr_start <- which(summary_tab_tb$`Metric Name` == "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")[1]
+        
+          kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
+                col.names = kable_col_names) %>%
+            pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
+            kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                          position = "center", row_label_position = "c", font_size = 16) %>%
+            # add_header_above(header_above,
+            #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
+            row_spec(0,  background = "#212070", color = "white") %>%
+            column_spec(1, bold = TRUE) %>%
+            column_spec(c(2, 10), italic = TRUE) %>%
+            column_spec(3:9, background = "#fee7f5") %>%
+            column_spec(11:17, background = "#E6F8FF") %>%
+            group_rows(group_label = "Interventional Radiology",
+                       start_row = ir_start,
+                       end_row = dr_start-1,
+                       label_row_css = "background-color: #212070; color: white;") %>%
+            group_rows(group_label = "Diagnostic Radiology",
+                       start_row = dr_start,
+                       end_row = (dr_start + 2),
+                       label_row_css = "background-color: #212070; color: white;")
+      }else{
+        kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
+              col.names = kable_col_names) %>%
+          pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
+          kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                        position = "center", row_label_position = "c", font_size = 16) %>%
+          # add_header_above(header_above,
+          #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
+          row_spec(0,  background = "#212070", color = "white") %>%
+          column_spec(1, bold = TRUE) %>%
+          column_spec(c(2, 10), italic = TRUE) %>%
+          column_spec(3:9, background = "#fee7f5") %>%
+          column_spec(11:17, background = "#E6F8FF") 
+      }
+      
+      
     }
     
     
@@ -536,9 +566,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Security"
+      # service_input <- "Enngineering"
       # month_input <- "11-2021"
       # site_input <- "MSB"
+
+      
+      validate(
+        need(!(is.na(site_input)), "Please select at least one site")
+      )
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>%
@@ -822,9 +857,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      # service_input <- "Imaging"
+      # service_input <- "Engineering"
       # month_input <- "12-2021"
-      # site_input <- "MSH"
+      # site_input <- "NYEE"
 
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -876,6 +911,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       current_site_breakdown <- current_site_breakdown[,c("Metric_Group","Metric_Name","value_rounded","Status","Target")]
       current_site_breakdown <- as.data.frame(current_site_breakdown)
+      
+      
+      validate(
+        need(nrow(current_site_breakdown) != 0, "Please choose a different site, the currently selected site does not have data asscoiated with it")
+      )
       
       ## Create target traffic lights for current month metrics
       # Create traffic lights for the targets
@@ -1932,8 +1972,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if (flag == 1){
       # Process Cost and Revenue data
-        tryCatch({food_summary_data <- cost_and_revenue_file_process(food_data)
-                  food_summary_budget <- rev_budget_sheet_process(food_data_rev)
+        tryCatch({food_summary_data <- cost_and_revenue_dept_summary(food_data)
+                  food_summary_budget <- rev_budget_dept_summary(food_data_rev)
         flag <- 2
         showModal(modalDialog(
           title = "Success",
@@ -1978,7 +2018,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         cost_and_revenue_repo$Month <- as.Date(cost_and_revenue_repo$Month)
         
         # Update metrics_final_df with latest SCC data using custom function
-        metrics_final_df <<- census_days_metrics_final_process(food_summary_data)
+        metrics_final_df <<- census_days_metrics_final_df(food_summary_data)
         # Save updated metrics_final_df
         #saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
   
@@ -3655,7 +3695,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       ## Process Census Data
-      tryCatch({census_summary_data <- census_days_file_process(census_data)
+      tryCatch({census_summary_data <- census_days_dept_summary(census_data)
                   flag <- 2
       
       showModal(modalDialog(
@@ -3703,7 +3743,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
         
         # Update metrics_final_df with latest SCC data using custom function
-        metrics_final_df <<- census_days_metrics_final_process(census_summary_data)
+        metrics_final_df <<- census_days_metrics_final_df(census_summary_data)
         
         # Save updated metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
@@ -4096,6 +4136,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
         data[,missing_months] <- NA_integer_
+        
+        months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
+        months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
+        order_months <- months_df[months]
+        
+        
+        index <- months+2
+        index <- c(1:2,index)
+        
+        data <- data[index]
         
         data <- data %>% select(-all_of(months_to_drop))
         

@@ -1,4 +1,4 @@
-# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx")
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/AutoHSO-BalancedScorecard-2022-DUMMYDATA.xlsx")
 # 
 imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
 
@@ -27,7 +27,10 @@ imaging_dept_summary <- function(data){
   data <- data[-c(delete_rows),]
   
   delete_rows <- which(data$Description == "8:30A-5P, M,T,R,F and 9:30A-5P W")
-  data <- data[-c(delete_rows),]
+  
+  if(length(delete_rows != 0 )){
+    data <- data[-c(delete_rows),]
+  }
   
   data <- filter(data, rowSums(is.na(data)) != ncol(data))
   
@@ -57,6 +60,12 @@ imaging_dept_summary <- function(data){
   data <- data %>% rename(Metric_Name_Submitted = Description)
   
   data$value_rounded <- round(data$value_rounded, digits = 2)
+  
+  budget_metrics <- c("Ambulatory Budgeted Revenue","Ambulatory Budgeted Volume")
+  data_filter <- data %>% filter(!(Metric_Name_Submitted %in% budget_metrics)) %>% filter(!is.na(value_rounded))
+  data_max_month <- max(data_filter$Reporting_Month_Ref)
+  
+  data <- data %>% filter(Reporting_Month_Ref <= data_max_month)
   
   data
 }
