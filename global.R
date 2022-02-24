@@ -245,7 +245,7 @@ transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 data_path <- here()
 metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
-target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
+target_mapping <- read_excel(target_mapping_path, sheet = "Target v2") # Import target mapping file
 metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
