@@ -566,9 +566,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Security"
+      # service_input <- "Enngineering"
       # month_input <- "11-2021"
       # site_input <- "MSB"
+
+      
+      validate(
+        need(!(is.na(site_input)), "Please select at least one site")
+      )
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>%
