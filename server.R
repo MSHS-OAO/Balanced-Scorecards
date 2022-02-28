@@ -93,6 +93,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metric_targets <- target_mapping %>% filter(Service == service_input)
       
+      metric_targets_v2 <- target_mapping_new %>%
+        filter(Service == service_input)
+      
       # Variable setting
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
@@ -4909,7 +4912,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # service_input <- "Lab"
         # metric_group_input <- "Overtime Hours"
         
-        targets_table <- target_mapping %>%
+        targets_table <- target_mapping_reference %>%
           filter(Service %in% service_input &
                    Metric_Group %in% metric_group_input) %>%
           select(-Service,
@@ -4934,7 +4937,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # service_input <- "Lab"
         # metric_group_input <- "Overtime Hours"
         
-        targets_table <- target_mapping %>%
+        targets_table <- target_mapping_reference %>%
           filter(Service %in% service_input &
                    Metric_Group %in% metric_group_input) %>%
           select(-Service,
@@ -4948,58 +4951,59 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
         } else {
           
-          targets_table_format <- targets_table %>%
-            pivot_wider(names_from = c(Status),
-                        values_from = c(Range_1, Range_2),
-                        names_sep = "___") %>%
-            # Manually rename and reorder columns for now
-            rename_with(#~ paste0(., "B"),
-              # str_replace,
-              # pattern = "1___R",
-              # replacement = "Testtttt",
-              
-              ~ paste0(
-                str_extract(., "(?<=___)[A-Za-z]+"),
-                ": ",
-                str_extract(., ".+(?=___)")),
-              matches("___")) %>%
-            relocate(contains("Green"), .after = Target) %>%
-            relocate(contains("Yellow"), .after = contains("Green")) %>%
-            relocate(contains("Red"), .after = contains("Yellow"))
-          
           # Determine the number of unique targets and status definitions for each metric
-          unique_targets_status <- targets_table_format %>%
+          unique_targets_status <- targets_table %>%
             group_by(Metric_Group, Metric_Name) %>%
             distinct(Metric_Group, Metric_Name,
                      Target,
-                     `Green: Range_1`, `Green: Range_2`,
-                     `Yellow: Range_1`, `Yellow: Range_2`,
-                     `Red: Range_1`, `Red: Range_2`) %>%
+                     Green_Status, Yellow_Status, Red_Status) %>%
             mutate(Num_Definitions = n()) %>%
-            select(-Target,
-                   -contains(": ")) %>%
+            # select(-Target,
+            #        -contains(": ")) %>%
             distinct()
-          
-          targets_table_format <- left_join(targets_table_format,
+
+          targets_table <- left_join(targets_table,
                                             unique_targets_status,
                                             by = c("Metric_Name" = "Metric_Name",
-                                                   "Metric_Group" = "Metric_Group"))
-          
-          targets_table_format <- targets_table_format %>%
+                                                   "Metric_Group" = "Metric_Group",
+                                                   "Target" = "Target",
+                                                   "Green_Status" = "Green_Status",
+                                                   "Yellow_Status" = "Yellow_Status",
+                                                   "Red_Status" = "Red_Status"))
+
+          targets_table_summary <- targets_table %>%
             relocate(Site, .after = Metric_Name) %>%
             mutate(Site = ifelse(Num_Definitions == 1, "All Sites", Site)) %>%
             select(-Num_Definitions) %>%
-            distinct()
+            distinct() %>%
+            arrange(Metric_Group, Metric_Name, Site)
           
-          kable(targets_table_format,
-                escape = FALSE) %>%
+          # Reformat any targets that should be displayed as percentages
+          targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")] <-
+            percent(as.numeric(targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")]),
+                    accuracy = 1)
+          
+          targets_table_headers <- str_replace(colnames(targets_table_summary),
+                                               "\\_", "\\ ")
+          
+          kable(targets_table_summary,
+                escape = FALSE,
+                col.names = NULL) %>%
             kable_styling(bootstrap_options = c("hover", "bordered", "striped"),
                           full_width = FALSE,
                           position = "center",
                           row_label_position = "c", font_size = 16) %>%
-            collapse_rows(columns = c(1, 2)) %>%
-            row_spec(0,  background = "#212070", color = "white") %>%
-            column_spec(1, bold = TRUE)
+            column_spec(c(1), bold = TRUE) %>%
+            add_header_above(targets_table_headers,
+                             background = c("#212070",
+                                            "#212070",
+                                            "#212070",
+                                            "#212070",
+                                            "green",
+                                            "#e6e600",
+                                            "red"),
+                             color = "white",
+                             line = FALSE)
           
         }
         
