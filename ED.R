@@ -1,11 +1,11 @@
-start <- "J:" #Comment when publishing to RConnect
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI1_data (13)_ED_for Dec Refresh.xlsx")
-
-ed_data_ts <- read_excel(path_raw,sheet = "TimeStamps")
-ed_data_percentiles <- read_excel(path_raw,sheet = "Percentiles")
-
-
+# start <- "J:" #Comment when publishing to RConnect
+# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+# path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI1_data (13)_ED_for Dec Refresh.xlsx")
+# 
+# ed_data_ts <- read_excel(path_raw,sheet = "TimeStamps")
+# ed_data_percentiles <- read_excel(path_raw,sheet = "Percentiles")
+# 
+# 
 
 
 ed_summary_repo <- read_excel(ed_path) # change the variable name lower_case
@@ -116,6 +116,6 @@ ed__metrics_final_df_process <- function(summary_data){
 }
 
 
-data <- ed_dept_summary(ed_data_ts,ed_data_percentiles)
-mdf <- ed__metrics_final_df_process(data)
+# data <- ed_dept_summary(ed_data_ts,ed_data_percentiles)
+# mdf <- ed__metrics_final_df_process(data)
 # write_xlsx(data,ed_path)
