@@ -24,7 +24,6 @@ suppressMessages({
   library(gridExtra)
   library(eeptools)
   library(ggQC)
-  # library(zipcodeR)
   library(utils)
   library(scales)
   library(chron)
@@ -191,9 +190,9 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 # census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
 # operational_metrics_lab_path <- here("Data/Summary Repos/Lab - Metrics.xlsx")
 
-start <- "J:" #Comment when publishing to RConnect
- # start <- "/data"  #Uncomment when publishing to RConnect
- # home_path <- paste0(start,"/Scorecards/")
+#start <- "J:" #Comment when publishing to RConnect
+ start <- "/data"  #Uncomment when publishing to RConnect
+ home_path <- paste0(start,"/Scorecards/")
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
@@ -214,6 +213,9 @@ imagingDR_path <- paste0(home_path, "Summary Repos/Imaging-DR.xlsx")
 
 # File path for Nursing metrics
 nursing_path <- paste0(home_path, "Summary Repos/Nursing.xlsx")
+
+# File path for ED metrics
+ed_path <- paste0(home_path, "Summary Repos/EDSummary.xlsx")
 
 
 # File path for Lab KPI metrics
@@ -246,6 +248,7 @@ data_path <- here()
 metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
 target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
+target_mapping_v2 <- read_excel(target_mapping_path, sheet = "Target v2") # Import updated target mapping file
 metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
@@ -315,7 +318,7 @@ dttm <- function(x) {
 }
 
 
-# Import all reference / mapping files needed
+# Import all reference / mapping files needed ----
 site_path <- here() # Set path to new data (raw data)
 site_mapping <- read_excel(target_mapping_path, 
                            sheet = "Site_New",  col_names = TRUE, na = c("", "NA")) # Premier site-service mapping
@@ -345,170 +348,10 @@ key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Reporting_Period",
                        "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
 
-### Process Productivity Data 
-
-productivity_process <- function(data, data_nursing_radiology){
-  # Import productivity data for depts excluding Nursing and Radiology 
-  raw_prod_df <- data
-  #raw_prod_df <- read_excel("Data/Dept Report Builder.xlsx")
-  raw_prod_df <- raw_prod_df %>% select(!`Entity Time Period Desc`)
-  
-  ## Productivity data pre-processing
-  ### Aggregate reporting period columns
-  prod_df <- raw_prod_df %>% 
-    mutate(id = seq_len(n())) %>% 
-    melt(id.var = c('Corporation Code','Corporation Name', 'Entity Code', 'Entity', 'Department Reporting Definition ID',
-                    'Department Reporting Definition Name', 'Key Volume', 'Mapped Facility Cost Centers', 'id'), na.rm = F) %>% 
-    select(-c('id'))
-  
-  
-  ### Process Reporting Period to Reporting Month
-  prod_df$variable <- gsub("\\..*","", prod_df$variable) # Remove underscores at end of reporting period
-  names(prod_df)[names(prod_df) == 'variable'] <- 'Premier_Reporting_Period' # Rename Reporting Period column
-  prod_df <- prod_df %>%
-    mutate(Reporting_Month_Start = as.Date(dttm(gsub(" .*$", "", Premier_Reporting_Period))))
-  
-  prod_df_final <- prod_df %>% # Fill in Metric name in a column
-    mutate(Metrics = as.numeric(value),
-           Metrics = ifelse(is.na(Metrics), value, ""),
-           Metrics = ifelse(Metrics == "", NA, Metrics)) %>%
-    fill(Metrics) %>%
-    filter(!is.na(`Corporation Code`)) %>%
-    unique()
-  
-  
-  # Import productivity data fo Nursing and Radiology 
-  raw_prod_nursing_rad_df <- data_nursing_radiology
-  #raw_prod_nursing_rad_df <- read_excel("Data/Dept Report Builder_nursing_radiology.xlsx")
-  raw_prod_nursing_rad_df <- raw_prod_nursing_rad_df %>% select(!`Entity Time Period Desc`)
-  
-  
-  ## Productivity data pre-processing
-  ### Aggregate reporting period columns
-  prod_nursing_rad_df <- raw_prod_nursing_rad_df %>% 
-    mutate(id = seq_len(n())) %>% 
-    melt(id.var = c('Corporation Code','Corporation Name', 'Entity Code', 'Entity', 'Department Reporting Definition ID',
-                    'Department Reporting Definition Name', 'Key Volume', 'Mapped Facility Cost Centers', 'id'), na.rm = F) %>% 
-    select(-c('id'))
-  
-  
-  ### Process Reporting Period to Reporting Month
-  prod_nursing_rad_df$variable <- gsub("\\..*","", prod_nursing_rad_df$variable) # Remove underscores at end of reporting period
-  names(prod_nursing_rad_df)[names(prod_nursing_rad_df) == 'variable'] <- 'Premier_Reporting_Period' # Rename Reporting Period column
-  prod_nursing_rad_df <- prod_nursing_rad_df %>%
-    mutate(Reporting_Month_Start = as.Date(dttm(gsub(" .*$", "", Premier_Reporting_Period))))
-  
-  prod_nursing_rad_df_final <- prod_nursing_rad_df %>% # Fill in Metric name in a column
-    mutate(Metrics = as.numeric(value),
-           Metrics = ifelse(is.na(Metrics), value, ""),
-           Metrics = ifelse(Metrics == "", NA, Metrics)) %>%
-    fill(Metrics) %>%
-    filter(!is.na(`Corporation Code`)) %>%
-    unique()
-  
-  
-  # Merge two data imports and exclude duplicates 
-  prod_df_merged <- rbind(prod_df_final, prod_nursing_rad_df_final)
-  prod_df_merged <- prod_df_merged %>%
-    unique()
-  
-  
-  ## Map Site and Service Group
-  prod_df_all <- merge(prod_df_merged, site_mapping[,c("DEFINITION.CODE","KEY.VOLUME","SITE", "Balanced.Scorecards.Groupings")], 
-                       by.x = c("Department Reporting Definition ID", "Key Volume"),
-                       by.y = c("DEFINITION.CODE", "KEY.VOLUME"), all.x = TRUE)
-  
-  names(prod_df_all)[names(prod_df_all) == "Balanced.Scorecards.Groupings"] <- "Service"
-  names(prod_df_all)[names(prod_df_all) == "SITE"] <- "Site"
-  
-  
-  prod_df_all <- prod_df_all %>% # Process Metric Group column
-    filter(!is.na(Service)) %>%
-    mutate(Metric_Name = trim(gsub("-.*","", Metrics)),
-           Metric_Group = ifelse(grepl("Overtime", Metric_Name), "Overtime Hours", "Productivity"),
-           value_rounded = round(parse_number(value),2))
-  
-  ### Map Premier Reporting Period -> Dashboard Month 
-  report_date_mapping <- report_date_mapping %>%
-    mutate(`Report Data Updated until` = format(as.Date(`Report Data Updated until`, "%m/%d/%Y"), "%m/%d/%Y"),
-           `Report Release Date` = format(as.Date(`Report Release Date`, "%m/%d/%Y"), "%m/%d/%Y"),
-           `Dashboard Month` = format(as.Date(`Dashboard Month`, "%m/%d/%Y"), "%m/%d/%Y"))
-  
-  report_data <- as.data.frame(report_date_mapping$`Report Data Updated until`)
-  report_data <- col_concat(report_data, sep = "|")
-  report_data <- paste(report_data, collapse = "|")
-  
-  prod_df_all <- prod_df_all %>% filter(grepl(report_data, Premier_Reporting_Period))
-  prod_df_all <- prod_df_all %>% separate(Premier_Reporting_Period, c("Report_Start","Report_End"), sep = " - ", remove = FALSE)
-  prod_df_all$Reporting_Month_Ref <- report_date_mapping$`Dashboard Month`[match(prod_df_all$`Report_End`,report_date_mapping$`Report Data Updated until`)]
-  prod_df_all$Reporting_Month_Ref <- as.Date(prod_df_all$Reporting_Month_Ref, format = "%m/%d/%Y")
-  
-  prod_df_all <- prod_df_all[, !(names(prod_df_all) %in% c("Report_Start","Report_End"))]
-  prod_df_all <- prod_df_all %>% unique()
-  
-  
-  ## Calculate aggregate Overtime % and Productivity Index for Nursing and Imaging
-  prod_df_aggregate <- prod_df_all %>%
-    group_by(Service, Site, Metric_Group, Metric_Name, Premier_Reporting_Period, Reporting_Month_Ref) %>%
-    summarise(value_rounded = round(mean(value_rounded, na.rm = TRUE),2)) %>%
-    mutate(Metric_Name = str_trim(Metric_Name)) %>%
-    filter(Metric_Name != "Total Target Worked FTE") %>%
-    filter(!(Service %in% c("Nursing","Imaging") & 
-               Metric_Name %in% c("Overtime Percent of Paid Hours","Worked Hours Productivity Index")))
-  
-  
-  nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
-    filter(Service %in% c("Nursing","Imaging")) %>%
-    mutate(Metric_Name = str_trim(Metric_Name)) %>%
-    filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
-                              "Overtime Hours", "Total Paid hours")) %>%
-    group_by(Service, Site, Metric_Name, Premier_Reporting_Period, Reporting_Month_Ref) %>%
-    summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE),2)) %>%
-    pivot_wider(names_from = Metric_Name,
-                values_from = value_rounded) %>%
-    mutate(`Worked Hours Productivity Index` = round(`Total Target Worked FTE`/`Actual Worked FTE`,2),
-           `Overtime Percent of Paid Hours` = round(`Overtime Hours`/`Total Paid hours`,2)) %>%
-    pivot_longer(5:length(.),
-                 names_to = "Metric_Name",
-                 values_to = "value_rounded") %>%
-    filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
-    mutate_at(vars(value_rounded), ~replace(., is.nan(.), 0)) %>%
-    mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))
-  
-  
-  prod_df_aggregate_all <- bind_rows(prod_df_aggregate, nursing_rad_metric_calc) # Merge newly calculated productivity index and overtime % for nursing and radiology 
-  
-  prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
-  
-  prod_df_aggregate_all$Metric_Name <- metric_group_mapping$Metric_Name[match(prod_df_aggregate_all$Metric_Name, 
-                                                                              metric_group_mapping$Metric_Name_Submitted)] # Map final Metric_Name
-  
-  
-  ### Create Target Variance Column
-  prod_target_status <- merge(prod_df_aggregate_all[, c("Service","Site","Metric_Name","Reporting_Month_Ref","value_rounded")],
-                              target_mapping, by = c("Service","Site","Metric_Name"))
-  
-  prod_target_status <- prod_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>% # Target mapping
-    filter(!(Variance %in% FALSE))
-  
-  prod_df_final <- merge(prod_df_aggregate_all, prod_target_status[,c("Service","Site","Metric_Name","Reporting_Month_Ref","Target","Status")],
-                         all = TRUE)
-  
-  prod_df_final$Reporting_Month <- format(as.Date(prod_df_final$Reporting_Month_Ref, format = "%Y-%m-%d"),"%m-%Y")
-  prod_df_final$Reporting_Month_Ref <- NULL
-  
-  prod_df_final$Premier_Reporting_Period <- sub(".*- ", "", prod_df_final$Premier_Reporting_Period)
-  
-  # Subset processed data for merge 
-  prod_df_merge <- prod_df_final[,processed_df_cols] 
-  
-  prod_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(prod_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
-  
-  metrics_final_df <- full_join(metrics_final_df,prod_df_merge)
-}
 
 
+
+# Code for making name filed Mandatory ----
 # CSS to use in the app
 appCSS <-
   ".mandatory_star { color: red; }
@@ -549,161 +392,6 @@ transform_dt <- function(dt, names_to, values_to){
 
 
 
-bislr_preprocess <- function(finance_bislr){
-  ### Split out to actual data
-  actual_index <- which(colnames(finance_bislr) == "Actual")
-  finance_bislr_actual <- finance_bislr[,1:actual_index]
-  col_names <- colnames(finance_bislr_actual)
-  year_index <- str_find(col_names, "ACTUAL", 0)[1]
-  year <- gsub(".*ACTUAL", "", col_names[6])
-  
-  finance_bislr_actual <- finance_bislr_actual %>% row_to_names(row_number = 1)  
-  
-  colname <- names(finance_bislr_actual)
-  colname[7:length(finance_bislr_actual)-1] <- paste0(colname[7:length(finance_bislr_actual)-1], "-01-",year)
-  colname[7:length(finance_bislr_actual)-1] <- format(as.Date(colname[7:length(finance_bislr_actual)-1], "%B-%d-%Y"),"%Y-%m-%d")
-  
-  
-  colnames(finance_bislr_actual) <- colname
-  
-  names(finance_bislr_actual)[length(names(finance_bislr_actual))] <- "YTD" 
-  
-  colname <- names(finance_bislr_actual)
-  
-  finance_bislr_actual <- merge(finance_bislr_actual, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
-                            by.x = c("Cost Center2"), by.y = c("Cost Center2"))
-  
-  finance_bislr_actual <- finance_bislr_actual %>%
-                            select(-`Functional Level`, -`Cost Center Desc`) %>%
-                            rename(Service = Service) %>%
-                            rename(Site = Site) %>%
-                            select(-YTD)
-  finance_bislr_actual <- finance_bislr_actual %>%
-    pivot_longer(cols = c(-`Cost Center2`, -`Division Level 3 Desc`, -`Account Category Desc2`, -Service, -Site, -`FTI - Mapping`),
-                 names_to = "Month",
-                 values_to = "Month Actual") 
-  finance_bislr_actual <- finance_bislr_actual[,c("Service", "Site", "Division Level 3 Desc", "Cost Center2", "Account Category Desc2", "Month", "Month Actual", "FTI - Mapping")]
-  
-  
-  ###Split out to Budget Data
-  budget_index <- which(colnames(finance_bislr) == "Budget")
-  index_start <- actual_index+1
-  
-  finance_bislr_budget <- finance_bislr[,c(1:5,(actual_index+1):(budget_index-1))]
-  
-  col_names <- colnames(finance_bislr_budget)
-  year_index <- str_find(col_names, "BUDGET", 0)[1]
-  
-  year <- gsub(".*BUDGET", "", col_names[6])
-  
-  finance_bislr_budget <- finance_bislr_budget %>% row_to_names(row_number = 1)  
-  
-  colname <- names(finance_bislr_budget)
-  colname[6:length(finance_bislr_budget)] <- paste0(colname[6:length(finance_bislr_budget)], "-01-",year)
-  colname[6:length(finance_bislr_budget)] <- format(as.Date(colname[6:length(finance_bislr_budget)], "%B-%d-%Y"),"%Y-%m-%d")
-  
-  colnames(finance_bislr_budget) <- colname
-  
-  finance_bislr_budget <- merge(finance_bislr_budget, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
-                                by.x = c("Cost Center2"), by.y = c("Cost Center2"))
-  
-  finance_bislr_budget <- finance_bislr_budget %>%
-    select(-`Functional Level`, -`Cost Center Desc`) %>%
-    rename(Service = Service) %>%
-    rename(Site = Site) 
-  
-  finance_bislr_budget <- finance_bislr_budget %>%
-    pivot_longer(cols = c(-`Cost Center2`, -`Division Level 3 Desc`, -`Account Category Desc2`, -Service, -Site, -`FTI - Mapping`),
-                 names_to = "Month",
-                 values_to = "Month Budget") 
-  finance_bislr_budget <- finance_bislr_budget[,c("Service", "Site", "Division Level 3 Desc", "Cost Center2", "Account Category Desc2", "Month", "Month Budget", "FTI - Mapping")]
-  
-  finance_bislr_budget <- finance_bislr_budget %>% filter(!is.na(Service))
-  
-  finance_bislr_actual <- finance_bislr_actual %>% filter(!is.na(Service))
-  
-  finance_bislr_comb <- full_join(finance_bislr_actual,finance_bislr_budget)
-}
-
-#finance_bislr_comb <- bislr_preprocess(finance_bislr)
-
-##Read in data from ExpTrend
-# sheet_names <- excel_sheets("Data/FTI/ExpTrendSepMo2021.xlsx")
-# sheet_names <- sheet_names[sheet_names != "Sheet3"]
-# 
-# 
-# for (i in 1:length(sheet_names)){
-#   
-#   data <- read_excel("Data/FTI/ExpTrendSepMo2021.xlsx", sheet = sheet_names[i])
-#   sheet_month <- colnames(data)[1]
-#   data <- data %>% row_to_names(row_number = 1)
-#   data$Month <- sheet_month
-#   
-#   print(i)
-#   if(i == 1){
-#     prev <- data
-#   } else{
-#     data <- full_join(data,prev)
-#   }
-#   
-#   prev <- data
-# }
-
-exptrend_process <- function(finance_exptrend){
-  
-  month <- colnames(finance_exptrend)[1]
-  finance_exptrend <- finance_exptrend %>% row_to_names(row_number = 1)
-  finance_exptrend <-  finance_exptrend %>%
-                        select(-FDIV,-SUBACCT,-ACCTNAME,-NAME, -YTD_BUD, -YTD_ACT) %>%
-                        rename(`Account Category Desc2` = EXPTYPE,
-                               Site = SITE,
-                               `Cost Center2` = CC,
-                               `Month Budget` = MO_BUD,
-                               `Month Actual` = MO_ACT)
-  
-  
-  finance_exptrend$`Account Category Desc2` <- gsub(".*2-", "", finance_exptrend$`Account Category Desc2`)
-  finance_exptrend$`Account Category Desc2` <- gsub(".*1-", "", finance_exptrend$`Account Category Desc2`)
-  
-  finance_exptrend$`Account Category Desc2` <- gsub(".*SUPPLIES", "Supplies", finance_exptrend$`Account Category Desc2`)
-  finance_exptrend$`Account Category Desc2` <- gsub(".*SALARIES", "Salary", finance_exptrend$`Account Category Desc2`)
-  
-  finance_exptrend$Month <- paste0(month, " 01")
-  finance_exptrend$Month <- format(as.Date(finance_exptrend$Month, format = '%B %Y %d'),"%Y-%m-%d")
-  
-  finance_exptrend$`Cost Center2` <- stringr::str_replace(finance_exptrend$`Cost Center2`, '\\-', "")
-  
-  finance_exptrend <- merge(finance_exptrend, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
-                                 by.x = c("Cost Center2"), by.y = c("Cost Center2"))
-  finance_exptrend <- finance_exptrend %>% filter(!is.na(Service))
-  
-  finance_exptrend <- finance_exptrend %>% rename(Service = Service)
-}
-
-
-
-## Read in file for Census Days
-# census_days <- read_excel(census_days_path, sheet = "System Summary", col_types = "text")#, stringsAsFactors = F)
-# census_days_index <- which(colnames(census_days) == "Census Days")
-# census_days <- census_days[,c(1,census_days_index:(census_days_index+6))]
-# 
-# census_days <- census_days %>% row_to_names(row_number = 1) %>%
-#                 rename(Month = 1)
-# 
-# census_days <- census_days %>%
-#                 pivot_longer(cols = c(-Month),names_to = "Site",
-#                             values_to = "Census Days")
-# 
-# census_days <- census_days %>% filter(!is.na(Month))
-# 
-# census_days$Month <- paste(census_days$Month, "01")
-# 
-# census_days$Month <- gsub(",", "", census_days$Month)
-# 
-# 
-# census_days$Month <- format(as.Date(census_days$Month, "%B %Y %d"), "%m/%d/%Y")
-#   
-# census_days <- census_days %>% filter(!is.na(Month))
 
 
 
@@ -711,71 +399,7 @@ exptrend_process <- function(finance_exptrend){
 options(shiny.maxRequestSize=500*1024^2)
 
 
-budget_to_actual_process <- function(data){
-  raw_budget_actual <- data
-  
-  raw_budget_actual$`Month Actual`[is.na(raw_budget_actual$`Month Actual`)] <- 0
-  raw_budget_actual$`Month Budget`[is.na(raw_budget_actual$`Month Budget`)] <- 0
-  
-  
-  raw_budget_actual$Service <- ifelse(raw_budget_actual$`FTI - Mapping` == "Bloodbank","Lab - Bloodbank", raw_budget_actual$Service)
-  ## Budget to Actual data pre-processing
-  budget_actual_df <- raw_budget_actual %>%
-    mutate(Month_Var = ifelse(`Month Budget` == "Not Received", " ", 
-                              round(as.numeric(`Month Budget`) - as.numeric(`Month Actual`))),
-           Metric_Name = ifelse(`Account Category Desc2` == "Salary", 
-                                "Budget to Actual Variance - Labor", "Budget to Actual Variance - Non Labor")) %>%
-    group_by(Service, Site, Metric_Name, Month) %>%
-    summarise(Month_Var= sum(as.numeric(Month_Var), na.rm = TRUE)) %>%
-    pivot_wider(
-      names_from = Metric_Name,
-      values_from = Month_Var) %>%
-    select(Service, Site, Month, `Budget to Actual Variance - Labor`, `Budget to Actual Variance - Non Labor`)
-  
-  budget_actual_df$`Budget to Actual Variance - Labor`[is.na(budget_actual_df$`Budget to Actual Variance - Labor`)] <- 0
-  
-  budget_actual_df <- budget_actual_df %>%
-          mutate(`Budget to Actual Variance - Total` = 
-                   `Budget to Actual Variance - Labor` + `Budget to Actual Variance - Non Labor`)
-  
-  ## Calculate Target and Status
-  budget_actual_target <- raw_budget_actual %>%
-    group_by(Service, Site, Month) %>%
-    summarise(Budget_Total = sum(as.numeric(`Month Budget`), na.rm = TRUE)) 
-  
-  
-  budget_actual_df <- merge(budget_actual_df, budget_actual_target)
-  budget_actual_df <- budget_actual_df %>% 
-    mutate(Target = round(`Budget to Actual Variance - Total`/Budget_Total,2),
-           Status = ifelse(Target >= 0, "Green", ifelse(Target < -0.02, "Red", "Yellow"))) %>%
-    pivot_longer(4:7,
-                 names_to = "Metric_Name",
-                 values_to = "value_rounded") %>%
-    mutate(Metric_Group = "Budget to Actual",
-           Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y"),
-           Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y")) %>%
-    filter(!is.na(Reporting_Month))
-  
-  budget_actual_df$Metric_Name_Submitted <- metric_group_mapping$Metric_Name[match(budget_actual_df$Metric_Name, metric_group_mapping$Metric_Name_Submitted)]
-  budget_actual_df <- budget_actual_df %>% 
-    mutate(Metric_Name = ifelse(is.na(Metric_Name_Submitted), Metric_Name, Metric_Name_Submitted))
-  
-  ### Subset processed data for merge
-  budget_actual_df_merge <- budget_actual_df[,processed_df_cols] 
-  
-  budget_actual_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(budget_actual_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
-  
-  budget_actual_df_merge$Metric_Name <- ifelse(budget_actual_df_merge$Service == "Lab - Bloodbank", paste0(budget_actual_df_merge$Metric_Name, " (Blood Bank)"),budget_actual_df_merge$Metric_Name)
-  budget_actual_df_merge$Service <- ifelse(budget_actual_df_merge$Service == "Lab - Bloodbank", "Lab", budget_actual_df_merge$Service)
-  
-  
-  updated_rows <- unique(budget_actual_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
-  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
 
-  metrics_final_df <- full_join(metrics_final_df,budget_actual_df_merge)
-  
-  return(metrics_final_df)
-}
 
 
 engineering_data_process <- function(data){
@@ -786,6 +410,35 @@ engineering_data_process <- function(data){
     pivot_wider(names_from = "Metric", values_from = Value)
   
 }
+
+
+# Code for processing and using new target mapping file
+target_mapping_new <- target_mapping_v2 %>%
+  select(-Range_1, -Range_2, -Status) %>%
+  filter(Target != "Remove") %>%
+  group_by(Service,
+           Site,
+           Metric_Group,
+           Metric_Name,
+           Target,
+           Green_Status,
+           Yellow_Status,
+           Red_Status,
+           Green_Start, Green_End,
+           Yellow_Start, Yellow_End,
+           Red_Start, Red_End) %>%
+  summarize(nRow = n())
+
+target_mapping_analysis <- target_mapping_v2 %>%
+  select(-Range_1, -Range_2, -contains("Status")) %>%
+  filter(Target != "Remove") %>%
+  distinct()
+
+target_mapping_reference <- target_mapping_v2 %>%
+  select(-Range_1, -Range_2, -Status, -contains("_Start"), -contains("_End")) %>%
+  filter(Target != "Remove") %>%
+  distinct()
+
 
 # Source files for processing service line data -------------------
 source("lab_processing.R")
@@ -801,5 +454,6 @@ source("Overtime.R")
 source("Census Days.R")
 source("nursing.R")
 source("ED.R")
-
+source("productivity.R")
+source("budget_to_actual.R")
 

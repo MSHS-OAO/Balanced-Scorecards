@@ -52,7 +52,7 @@ nursing__metrics_final_df_process <- function(data){
   
   metrics_final_df_form <- metrics_final_df_form %>%
     mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(Variance %in% c(TRUE,NA))
+    filter(Variance %in% c(TRUE,NA)) #change once new target mapping 
   
   metrics_final_df_form <- metrics_final_df_form %>% 
     select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
