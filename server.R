@@ -4991,15 +4991,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             select(-Num_Definitions) %>%
             distinct()
           
-          kable(targets_table_format,
-                escape = FALSE) %>%
-            kable_styling(bootstrap_options = c("hover", "bordered", "striped"),
-                          full_width = FALSE,
-                          position = "center",
-                          row_label_position = "c", font_size = 16) %>%
-            collapse_rows(columns = c(1, 2)) %>%
-            row_spec(0,  background = "#212070", color = "white") %>%
-            column_spec(1, bold = TRUE)
+          # kable(targets_table_format,
+          #       escape = FALSE) %>%
+          #   kable_styling(bootstrap_options = c("hover", "bordered", "striped"),
+          #                 full_width = FALSE,
+          #                 position = "center",
+          #                 row_label_position = "c", font_size = 16) %>%
+          #   collapse_rows(columns = c(1, 2)) %>%
+          #   row_spec(0,  background = "#212070", color = "white") %>%
+          #   column_spec(1, bold = TRUE)
+          
+          datatable(targets_table_format)
           
         }
         
