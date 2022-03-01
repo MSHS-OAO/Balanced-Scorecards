@@ -191,7 +191,7 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 # operational_metrics_lab_path <- here("Data/Summary Repos/Lab - Metrics.xlsx")
 
 #start <- "J:" #Comment when publishing to RConnect
- start <- "/data"  #Uncomment when publishing to RConnect
+ start <- "J:"  #Uncomment when publishing to RConnect
  home_path <- paste0(start,"/Scorecards/")
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
