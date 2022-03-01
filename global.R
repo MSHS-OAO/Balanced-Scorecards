@@ -214,6 +214,9 @@ imagingDR_path <- paste0(home_path, "Summary Repos/Imaging-DR.xlsx")
 # File path for Nursing metrics
 nursing_path <- paste0(home_path, "Summary Repos/Nursing.xlsx")
 
+# File path for ED metrics
+ed_path <- paste0(home_path, "Summary Repos/EDSummary.xlsx")
+
 
 # File path for Lab KPI metrics
 ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
@@ -245,6 +248,7 @@ data_path <- here()
 metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
 target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
+target_mapping_v2 <- read_excel(target_mapping_path, sheet = "Target v2") # Import updated target mapping file
 metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
@@ -406,6 +410,35 @@ engineering_data_process <- function(data){
     pivot_wider(names_from = "Metric", values_from = Value)
   
 }
+
+
+# Code for processing and using new target mapping file
+target_mapping_new <- target_mapping_v2 %>%
+  select(-Range_1, -Range_2, -Status) %>%
+  filter(Target != "Remove") %>%
+  group_by(Service,
+           Site,
+           Metric_Group,
+           Metric_Name,
+           Target,
+           Green_Status,
+           Yellow_Status,
+           Red_Status,
+           Green_Start, Green_End,
+           Yellow_Start, Yellow_End,
+           Red_Start, Red_End) %>%
+  summarize(nRow = n())
+
+target_mapping_analysis <- target_mapping_v2 %>%
+  select(-Range_1, -Range_2, -contains("Status")) %>%
+  filter(Target != "Remove") %>%
+  distinct()
+
+target_mapping_reference <- target_mapping_v2 %>%
+  select(-Range_1, -Range_2, -Status, -contains("_Start"), -contains("_End")) %>%
+  filter(Target != "Remove") %>%
+  distinct()
+
 
 # Source files for processing service line data -------------------
 source("lab_processing.R")
