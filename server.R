@@ -4846,7 +4846,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if(flag == 2){
           
           # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(EDSummaryRepo,
+          write_xlsx(ed_summary_repo,
                      paste0(hist_archive_path,
                             "ED",
                             format(Sys.time(), "%Y%m%d_%H%M%S"),
@@ -4856,18 +4856,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           # First, identify the sites, months, and metrics in the new data
           ed_new_data <- unique(
-            ed_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
+            ed_summary_data[, c("Service", "Site", "Month", "KPI")]
           )
           
           # Second, remove these sites, months, and metrics from the historical data,
           # if they exist there. This allows us to ensure no duplicate entries for
           # the same site, metric, and time period.
-          ed_old_data <<- anti_join(EDSummaryRepo,
+          ed_old_data <<- anti_join(ed_summary_repo,
                                     ed_new_data,
                                          by = c("Service" = "Service",
                                                 "Site" = "Site",
                                                 "Month" = "Month",
-                                                "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+                                                "KPI" = "KPI"))
           
           # Third, combine the updated historical data with the new data
           ed_reports <<- full_join(ed_old_data,
