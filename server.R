@@ -81,8 +81,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-#       service_input <- "Imaging"
-#       month_input <- "01-2022"
+      # service_input <- "ED"
+      # month_input <- "01-2022"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
