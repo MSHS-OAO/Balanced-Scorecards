@@ -239,7 +239,7 @@ security_events_path <- paste0(home_path,
 hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 
 #
-key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
+key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
