@@ -5,7 +5,7 @@
 # ed_data_ts <- read_excel(path_raw,sheet = "TimeStamps")
 # ed_data_percentiles <- read_excel(path_raw,sheet = "Percentiles")
 # 
-
+# 
 
 
 ed_summary_repo <- read_excel(ed_path) # change the variable name lower_case
@@ -40,7 +40,7 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
                           "Door to Admit (Median)",
                           "ED LOS Treat & Release (Median)",
                           "ED LOS Admit (Median)",
-                          "LWBS %",
+                          "LWBS",
                           "Visit Volume (Epic)",
                           "ED LOS Treat&Release Patients (90th Percentile Hours)",
                           "ED LOS Admitted Patients (90th Percentile Hours)",
@@ -57,18 +57,26 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
            Metric = `Measure Values`) %>%
     select(-`Measure Names`) %>%
     pivot_wider(names_from = "KPI",values_from = "Metric",values_fill=0) %>%
-  mutate(`LWBS %` = round(`LWBS %`/`Visit Volume (Epic)`,4),
+  mutate(`LWBS %` = round(`LWBS`/`Visit Volume (Epic)`,4),
          `Admit to Depart (90th Percentile Boarder Hours)` = `Admit to Depart (90th Percentile Boarder Hours)`/60,
          `ED LOS Admitted Patients (90th Percentile Hours)` = `ED LOS Admitted Patients (90th Percentile Hours)`/60,
          `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat&Release Patients (90th Percentile Hours)`/60,
          `ED LOS Admit (Median)` = `ED LOS Admit (Median)`/60,
          `ED LOS Treat & Release (Median)` = `ED LOS Treat & Release (Median)`/60,
          `Door to Admit (Median)` = `Door to Admit (Median)`/60,
-         `Admit to Depart (Median Boarder Hours)` = `Admit to Depart (Median Boarder Hours)`/60) %>%
+         `Admit to Depart (Median Boarder Hours)` = `Admit to Depart (Median Boarder Hours)`/60,
+         `Acuity Total` = `Acuity Null`+`Acuity 1`+ `Acuity 2` +`Acuity 3`+`Acuity 4`+`Acuity 5`,
+         `Acuity 1 count AAAEM` = round(`Acuity 1`/`Acuity Total`,4),
+         `Acuity 2 count AAAEM` = round(`Acuity 2`/`Acuity Total`,4),
+         `Acuity 3 count AAAEM` = round(`Acuity 3`/`Acuity Total`,4),
+         `Acuity 4 count AAAEM` = round(`Acuity 4`/`Acuity Total`,4),
+         `Acuity 5 count AAAEM` = round(`Acuity 5`/`Acuity Total`,4),
+         `Acuity Null count AAAEM` = round(`Acuity Null`/`Acuity Total`,4)) %>%
+    select(-`Acuity Total`) %>%
     pivot_longer(cols = c(-Site,-Month),
                  names_to = "KPI",
                  values_to = "Metric")%>%
-    mutate(Service = "ED") %>%
+   mutate(Service = "ED") %>%
     select(Service,Site,Month,KPI,Metric)
 
   
@@ -84,7 +92,12 @@ ed__metrics_final_df_process <- function(summary_data){
     mutate(Reporting_Month_Ref = parse_date_time(Reporting_Month_Ref,orders = "ymd"),
            Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
            Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
-           Metric_Group = "Operational",
+           Metric_Group = ifelse(Metric_Name %in% c("Acuity Null",
+                                                    "Acuity 5",
+                                                    "Acuity 4",
+                                                    "Acuity 3",
+                                                    "Acuity 2",
+                                                    "Acuity 1"),"ESI // Total Volume", ifelse(grepl("AAAEM",Metric_Name),"ESI % Breakout","Operational")),
            Target = NA,
            Status = NA)
   
