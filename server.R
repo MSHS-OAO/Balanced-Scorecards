@@ -4806,10 +4806,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ed_data_ts <- data[[1]]
             ed_data_percentiles <- data[[2]]
             
-            print(ed_data_ts)
-            print(ed_data_percentiles)
-            
-            
             flag <- 1
             
           },
