@@ -4797,9 +4797,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           tryCatch({
             
-            ed_data_ts <- read_excel(file_path,sheet = "TimeStamps")
-            ed_data_percentiles <- read_excel(file_path,sheet = "Percentiles")
             
+            ed_data_ts <- read.xlsx(file_path,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+            ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+            
+            
+            data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
+            
+            ed_data_ts <- data[[1]]
+            ed_data_percentiles <- data[[2]]
             
             flag <- 1
             

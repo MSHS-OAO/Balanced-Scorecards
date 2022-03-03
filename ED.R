@@ -1,17 +1,50 @@
 # start <- "J:" #Comment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI1_data (13)_ED_for Dec Refresh.xlsx")
-# 
-# ed_data_ts <- read_excel(path_raw,sheet = "TimeStamps")
-# ed_data_percentiles <- read_excel(path_raw,sheet = "Percentiles")
+# path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI Summary.xlsx")
 # 
 # 
+# ed_data_ts <- read.xlsx(path_raw,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+# ed_data_percentiles <- read.xlsx(path_raw,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
 
+
+ed_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
+  
+  ed_data_ts[1,"X2"] <- "Measure Names"
+  ed_data_percentiles[1,"X2"] <- "Measure Names"
+  
+  ed_data_ts <- ed_data_ts %>%
+    row_to_names(row_number = 1)%>%
+    pivot_longer(cols = c(-`Month of Arrival Date`,-`Measure Names`),
+                 names_to = "Arrv Dept (group)",
+                 values_to = "Measure Values") %>%
+    filter(!`Month of Arrival Date`=="Grand Total") %>%
+    mutate(`Month of Arrival Date` = as.Date(paste(`Month of Arrival Date`,"01"),format="%b %Y %d"))%>%
+    mutate(`Measure Values` = as.numeric(`Measure Values`))
+  
+  
+  ed_data_percentiles <- ed_data_percentiles %>%
+    row_to_names(row_number = 1)%>%
+    pivot_longer(cols = c(-`Month of Arrival Date`,-`Measure Names`),
+                 names_to = "Arrv Dept (group)",
+                 values_to = "Measure Values") %>%
+    filter(!`Month of Arrival Date`=="Grand Total") %>%
+    filter(!`Measure Names`=="Volume") %>%
+    mutate(`Month of Arrival Date` = as.Date(paste(`Month of Arrival Date`,"01"),format="%b %Y %d"))%>%
+    mutate(`Measure Values` = as.numeric(`Measure Values`))
+  
+  results <-list(ed_data_ts ,ed_data_percentiles)
+  
+  return(results)
+  
+  
+}
 
 ed_summary_repo <- read_excel(ed_path) # change the variable name lower_case
 
 
 ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
+  
+  
   
   mapping <- tibble(`Measure Names`=c("Acuity Null",
                               "Acuity 5",
@@ -56,8 +89,9 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
            Month = `Month of Arrival Date`,
            Metric = `Measure Values`) %>%
     select(-`Measure Names`) %>%
-    pivot_wider(names_from = "KPI",values_from = "Metric",values_fill=0) %>%
-  mutate(`LWBS %` = round(`LWBS`/`Visit Volume (Epic)`,4),
+    pivot_wider(names_from = "KPI",
+                values_from = "Metric",values_fill=0) %>%
+   mutate(`LWBS %` = round(`LWBS`/`Visit Volume (Epic)`,4),
          `Admit to Depart (90th Percentile Boarder Hours)` = `Admit to Depart (90th Percentile Boarder Hours)`/60,
          `ED LOS Admitted Patients (90th Percentile Hours)` = `ED LOS Admitted Patients (90th Percentile Hours)`/60,
          `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat&Release Patients (90th Percentile Hours)`/60,
@@ -115,7 +149,11 @@ ed__metrics_final_df_process <- function(summary_data){
   
 }
 
-
+# data <- nursing_data_preprocess(ed_data_ts,ed_data_percentiles)
+# 
+# ed_data_ts <- data[[1]]
+# ed_data_percentiles <- data[[2]]
+# 
 # data <- ed_dept_summary(ed_data_ts,ed_data_percentiles)
 # mdf <- ed__metrics_final_df_process(data)
-# write_xlsx(data,ed_path)
+# # write_xlsx(data,ed_path)
