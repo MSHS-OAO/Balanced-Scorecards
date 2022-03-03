@@ -7,7 +7,7 @@
 # ed_data_percentiles <- read.xlsx(path_raw,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
 
 
-nursing_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
+ed_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
   
   ed_data_ts[1,"X2"] <- "Measure Names"
   ed_data_percentiles[1,"X2"] <- "Measure Names"

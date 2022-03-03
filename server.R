@@ -4801,7 +4801,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
             
             
-            data <- nursing_data_preprocess(ed_data_ts,ed_data_percentiles)
+            data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
             
             ed_data_ts <- data[[1]]
             ed_data_percentiles <- data[[2]]
