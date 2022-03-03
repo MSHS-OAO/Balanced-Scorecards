@@ -87,14 +87,17 @@ press_ganey_dept_summary <- function(data) {
     )
 
   pg_data_split <- pg_data_split %>%
-    filter(!(Site %in% c("MSSN", "MSHS")))
+    filter(!(Site %in% c("MSSN", "MSHS"))) %>%
+    rename(Raw_PG_Service = `REPORT TITLE`)
 
   # Merge with mapping to get metric names for dashboard
   pg_data_split <- left_join(pg_data_split,
-                             press_ganey_mapping[c("Service",
-                                                 "Questions",
-                                                 "Question_Clean")],
-                             by = c("Questions" = "Questions"))
+                             press_ganey_mapping[c("Raw_PG_Service",
+                                                   "Service",
+                                                   "Questions",
+                                                   "Question_Clean")],
+                             by = c("Raw_PG_Service" = "Raw_PG_Service",
+                                    "Questions" = "Questions"))
 
   # Filter out unused data
   pg_data_split <- pg_data_split %>%

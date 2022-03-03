@@ -198,6 +198,7 @@ home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Op
 # start <- "/data"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/Scorecards_Staging/")
 # start_shared <- "/SharedDrive"
+start_shared <- "J:"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
 target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
@@ -458,11 +459,5 @@ source("Overtime.R")
 source("Census Days.R")
 source("nursing.R")
 source("ED.R")
-<<<<<<< HEAD
 # source("productivity.R")
 # source("budget_to_actual.R")
-=======
-#source("productivity.R")
-#source("budget_to_actual.R")
->>>>>>> f37182ccd9ba8292cbdc13ffbfae04c36c88ba90
-

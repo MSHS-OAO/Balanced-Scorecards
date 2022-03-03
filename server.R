@@ -171,7 +171,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         press_ganey_ytd <- press_ganey_data %>%
           # Add logic to include Jan data in YTD data
           mutate(ReportingType = ifelse(month(Reporting_Date_Start) == 1 &
-                                          month(Reporting_Date_End) == 1,
+                                          month(Reporting_Date_End) == 1 &
+                                          year(Reporting_Date_Start) == year(Reporting_Date_End),
                                         "YTD", ReportingType)) %>%
           # Filter on YTD data and selected service
           filter(ReportingType %in% "YTD" &
