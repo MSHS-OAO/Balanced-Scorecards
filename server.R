@@ -183,7 +183,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Press Ganey mapping for metrics
         pg_mapping_simple <- press_ganey_mapping %>%
-          select(-Questions)
+          select(-Raw_PG_Service, -Questions)
         
         # Crosswalk PG YTD data with mapping
         press_ganey_ytd <- left_join(press_ganey_ytd,
