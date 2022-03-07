@@ -1,0 +1,159 @@
+# start <- "J:" #Comment when publishing to RConnect
+# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+# path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI Summary.xlsx")
+# 
+# 
+# ed_data_ts <- read.xlsx(path_raw,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+# ed_data_percentiles <- read.xlsx(path_raw,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+
+
+ed_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
+  
+  ed_data_ts[1,"X2"] <- "Measure Names"
+  ed_data_percentiles[1,"X2"] <- "Measure Names"
+  
+  ed_data_ts <- ed_data_ts %>%
+    row_to_names(row_number = 1)%>%
+    pivot_longer(cols = c(-`Month of Arrival Date`,-`Measure Names`),
+                 names_to = "Arrv Dept (group)",
+                 values_to = "Measure Values") %>%
+    filter(!`Month of Arrival Date`=="Grand Total") %>%
+    mutate(`Month of Arrival Date` = as.Date(paste(`Month of Arrival Date`,"01"),format="%b %Y %d"))%>%
+    mutate(`Measure Values` = as.numeric(`Measure Values`))
+  
+  
+  ed_data_percentiles <- ed_data_percentiles %>%
+    row_to_names(row_number = 1)%>%
+    pivot_longer(cols = c(-`Month of Arrival Date`,-`Measure Names`),
+                 names_to = "Arrv Dept (group)",
+                 values_to = "Measure Values") %>%
+    filter(!`Month of Arrival Date`=="Grand Total") %>%
+    filter(!`Measure Names`=="Volume") %>%
+    mutate(`Month of Arrival Date` = as.Date(paste(`Month of Arrival Date`,"01"),format="%b %Y %d"))%>%
+    mutate(`Measure Values` = as.numeric(`Measure Values`))
+  
+  results <-list(ed_data_ts ,ed_data_percentiles)
+  
+  return(results)
+  
+  
+}
+
+ed_summary_repo <- read_excel(ed_path) # change the variable name lower_case
+
+
+ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
+  
+  
+  
+  mapping <- tibble(`Measure Names`=c("Acuity Null",
+                              "Acuity 5",
+                              "Acuity 4",
+                              "Acuity 3",
+                              "Acuity 2",
+                              "Acuity 1",
+                              "SUM Admit to Depart (Boarder Hrs)",
+                              "Median Admit to Depart (Boarder mins)",
+                              "Median Arrival to Admit Decision",
+                              "Median ED LOS Discharge (mins)",
+                              "Median ED LOS Admit (mins)",
+                              "LWBS",
+                              "Volume",
+                              "Percentile (90) of ED LOS Discharge",
+                              "Percentile (90) of ED LOS Admit",
+                              "Percentile (90) of Admit to Depart"), 
+                    KPI=c("Acuity Null",
+                          "Acuity 5",
+                          "Acuity 4",
+                          "Acuity 3",
+                          "Acuity 2",
+                          "Acuity 1",
+                          "Total Boarder Hours",
+                          "Admit to Depart (Median Boarder Hours)",
+                          "Door to Admit (Median)",
+                          "ED LOS Treat & Release (Median)",
+                          "ED LOS Admit (Median)",
+                          "LWBS",
+                          "Visit Volume (Epic)",
+                          "ED LOS Treat&Release Patients (90th Percentile Hours)",
+                          "ED LOS Admitted Patients (90th Percentile Hours)",
+                          "Admit to Depart (90th Percentile Boarder Hours)"))
+  
+  summary_repo <- rbind(ed_data_ts,ed_data_percentiles)
+  
+  summary_repo <-left_join(summary_repo,
+                            mapping)
+  
+  summary_repo <- summary_repo %>%
+    rename(`Site` = `Arrv Dept (group)`,
+           Month = `Month of Arrival Date`,
+           Metric = `Measure Values`) %>%
+    select(-`Measure Names`) %>%
+    pivot_wider(names_from = "KPI",
+                values_from = "Metric",values_fill=0) %>%
+   mutate(`LWBS %` = round(`LWBS`/`Visit Volume (Epic)`,4),
+         `Admit to Depart (90th Percentile Boarder Hours)` = `Admit to Depart (90th Percentile Boarder Hours)`/60,
+         `ED LOS Admitted Patients (90th Percentile Hours)` = `ED LOS Admitted Patients (90th Percentile Hours)`/60,
+         `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat&Release Patients (90th Percentile Hours)`/60,
+         `ED LOS Admit (Median)` = `ED LOS Admit (Median)`/60,
+         `ED LOS Treat & Release (Median)` = `ED LOS Treat & Release (Median)`/60,
+         `Door to Admit (Median)` = `Door to Admit (Median)`/60,
+         `Admit to Depart (Median Boarder Hours)` = `Admit to Depart (Median Boarder Hours)`/60,
+         `Acuity Total` = `Acuity Null`+`Acuity 1`+ `Acuity 2` +`Acuity 3`+`Acuity 4`+`Acuity 5`,
+         `Acuity 1 count AAAEM` = round(`Acuity 1`/`Acuity Total`,4),
+         `Acuity 2 count AAAEM` = round(`Acuity 2`/`Acuity Total`,4),
+         `Acuity 3 count AAAEM` = round(`Acuity 3`/`Acuity Total`,4),
+         `Acuity 4 count AAAEM` = round(`Acuity 4`/`Acuity Total`,4),
+         `Acuity 5 count AAAEM` = round(`Acuity 5`/`Acuity Total`,4),
+         `Acuity Null count AAAEM` = round(`Acuity Null`/`Acuity Total`,4)) %>%
+    select(-`Acuity Total`) %>%
+    pivot_longer(cols = c(-Site,-Month),
+                 names_to = "KPI",
+                 values_to = "Metric")%>%
+   mutate(Service = "ED") %>%
+    select(Service,Site,Month,KPI,Metric)
+
+  
+}
+
+
+ed__metrics_final_df_process <- function(summary_data){
+  
+  metrics_final_df_form <- summary_data %>%
+    rename(Reporting_Month_Ref = Month,
+           Metric_Name = KPI,
+           value_rounded = Metric) %>%
+    mutate(Reporting_Month_Ref = parse_date_time(Reporting_Month_Ref,orders = "ymd"),
+           Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
+           Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
+           Metric_Group = ifelse(Metric_Name %in% c("Acuity Null",
+                                                    "Acuity 5",
+                                                    "Acuity 4",
+                                                    "Acuity 3",
+                                                    "Acuity 2",
+                                                    "Acuity 1"),"ESI // Total Volume", ifelse(grepl("AAAEM",Metric_Name),"ESI % Breakout","Operational")),
+           Target = NA,
+           Status = NA)
+  
+  metrics_final_df_form <- metrics_final_df_form %>% 
+    select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
+  
+  updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
+  
+  
+  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  
+  metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
+  
+  return(metrics_final_df)
+  
+}
+
+# data <- nursing_data_preprocess(ed_data_ts,ed_data_percentiles)
+# 
+# ed_data_ts <- data[[1]]
+# ed_data_percentiles <- data[[2]]
+# 
+# data <- ed_dept_summary(ed_data_ts,ed_data_percentiles)
+# mdf <- ed__metrics_final_df_process(data)
+# # write_xlsx(data,ed_path)

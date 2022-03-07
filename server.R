@@ -81,8 +81,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-#       service_input <- "Imaging"
-#       month_input <- "01-2022"
+      # service_input <- "ED"
+      # month_input <- "01-2022"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -171,7 +171,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         press_ganey_ytd <- press_ganey_data %>%
           # Add logic to include Jan data in YTD data
           mutate(ReportingType = ifelse(month(Reporting_Date_Start) == 1 &
-                                          month(Reporting_Date_End) == 1,
+                                          month(Reporting_Date_End) == 1 &
+                                          year(Reporting_Date_Start) == year(Reporting_Date_End),
                                         "YTD", ReportingType)) %>%
           # Filter on YTD data and selected service
           filter(ReportingType %in% "YTD" &
@@ -182,7 +183,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Press Ganey mapping for metrics
         pg_mapping_simple <- press_ganey_mapping %>%
-          select(-Questions)
+          select(-Raw_PG_Service, -Questions)
         
         # Crosswalk PG YTD data with mapping
         press_ganey_ytd <- left_join(press_ganey_ytd,
@@ -4796,7 +4797,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           tryCatch({
             
-            ed_data <- read_excel(file_path)
+            
+            ed_data_ts <- read.xlsx(file_path,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+            ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
+            
+            
+            data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
+            
+            ed_data_ts <- data[[1]]
+            ed_data_percentiles <- data[[2]]
             
             flag <- 1
             
@@ -4818,7 +4827,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             ed_summary_data <-
-              process_ed_data(ed_data)
+              ed_dept_summary(ed_data_ts,ed_data_percentiles)
             
             flag <- 2
             
@@ -4844,9 +4853,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if(flag == 2){
           
           # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(EDSummaryRepo,
+          write_xlsx(ed_summary_repo,
                      paste0(hist_archive_path,
-                            "Nursing",
+                            "ED",
                             format(Sys.time(), "%Y%m%d_%H%M%S"),
                             ".xlsx"))
           
@@ -4854,18 +4863,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           # First, identify the sites, months, and metrics in the new data
           ed_new_data <- unique(
-            ed_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
+            ed_summary_data[, c("Service", "Site", "Month", "KPI")]
           )
           
           # Second, remove these sites, months, and metrics from the historical data,
           # if they exist there. This allows us to ensure no duplicate entries for
           # the same site, metric, and time period.
-          ed_old_data <<- anti_join(EDSummaryRepo,
+          ed_old_data <<- anti_join(ed_summary_repo,
                                     ed_new_data,
                                          by = c("Service" = "Service",
                                                 "Site" = "Site",
                                                 "Month" = "Month",
-                                                "Metric_Name_Submitted" = "Metric_Name_Submitted"))
+                                                "KPI" = "KPI"))
           
           # Third, combine the updated historical data with the new data
           ed_reports <<- full_join(ed_old_data,
@@ -5004,7 +5013,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                             "red"),
                              color = "white",
                              line = FALSE)
-          
+         
         }
         
         
