@@ -719,8 +719,7 @@ ui <-
                                            font-size:15px;
                                            margin-left: 30px")),
                       fluidRow(
-                        column(12, tableOutput("targetSummary_table") %>% 
-                                 withSpinner(type = 8, color = "#dddedd"))
+                        column(12, DT::dataTableOutput("targetSummary_table"))
                       )
              ), # Close tabPanel Summary
              

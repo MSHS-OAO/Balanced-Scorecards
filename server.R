@@ -4939,7 +4939,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       
       # Create table based on selected service and metric groups
-      output$targetSummary_table <- function(){
+      output$targetSummary_table <- renderDataTable(datatable({
         
         service_input <- input$selectedService4
         metric_group_input <- input$selectedMetricGroup
@@ -4952,75 +4952,50 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           select(-Service,
                  -Metric_Name_Submitted)
         
-        if (nrow(targets_table) == 0) {
-          
-          targets_table_format <- NULL
-          
-          # textOutput("Please select at least one metric group for the selected service")
-          
-        } else {
-          
-          # Determine the number of unique targets and status definitions for each metric
-          unique_targets_status <- targets_table %>%
-            group_by(Metric_Group, Metric_Name) %>%
-            distinct(Metric_Group, Metric_Name,
-                     Target,
-                     Green_Status, Yellow_Status, Red_Status) %>%
-            mutate(Num_Definitions = n()) %>%
-            # select(-Target,
-            #        -contains(": ")) %>%
-            distinct()
+        # Determine the number of unique targets and status definitions for each metric
+        unique_targets_status <- targets_table %>%
+          group_by(Metric_Group, Metric_Name) %>%
+          distinct(Metric_Group, Metric_Name,
+                   Target,
+                   Green_Status, Yellow_Status, Red_Status) %>%
+          mutate(Num_Definitions = n()) %>%
+          # select(-Target,
+          #        -contains(": ")) %>%
+          distinct()
+        
+        targets_table <- left_join(targets_table,
+                                   unique_targets_status,
+                                   by = c("Metric_Name" = "Metric_Name",
+                                          "Metric_Group" = "Metric_Group",
+                                          "Target" = "Target",
+                                          "Green_Status" = "Green_Status",
+                                          "Yellow_Status" = "Yellow_Status",
+                                          "Red_Status" = "Red_Status"))
+        
+        targets_table_summary <- targets_table %>%
+          relocate(Site, .after = Metric_Name) %>%
+          mutate(Site = ifelse(Num_Definitions == 1, "All Sites", Site)) %>%
+          select(-Num_Definitions) %>%
+          distinct() %>%
+          arrange(Metric_Group, Metric_Name, Site)
+        
+        # Reformat any targets that should be displayed as percentages
+        targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")] <-
+          percent(as.numeric(targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")]),
+                  accuracy = 1)
+        
+        targets_table_summary
+        },
+        rownames = FALSE,
+        colnames = str_replace(colnames(targets_table_summary),
+                               pattern = "\\_",
+                               replacement = "\\ "),
+        options = list(
+          paging = FALSE
+        )
 
-          targets_table <- left_join(targets_table,
-                                            unique_targets_status,
-                                            by = c("Metric_Name" = "Metric_Name",
-                                                   "Metric_Group" = "Metric_Group",
-                                                   "Target" = "Target",
-                                                   "Green_Status" = "Green_Status",
-                                                   "Yellow_Status" = "Yellow_Status",
-                                                   "Red_Status" = "Red_Status"))
-
-          targets_table_summary <- targets_table %>%
-            relocate(Site, .after = Metric_Name) %>%
-            mutate(Site = ifelse(Num_Definitions == 1, "All Sites", Site)) %>%
-            select(-Num_Definitions) %>%
-            distinct() %>%
-            arrange(Metric_Group, Metric_Name, Site)
-          
-          # Reformat any targets that should be displayed as percentages
-          targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")] <-
-            percent(as.numeric(targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")]),
-                    accuracy = 1)
-          
-          targets_table_headers <- str_replace(colnames(targets_table_summary),
-                                               "\\_", "\\ ")
-          
-          kable(targets_table_summary,
-                escape = FALSE,
-                col.names = NULL) %>%
-            kable_styling(bootstrap_options = c("hover", "bordered", "striped"),
-                          full_width = FALSE,
-                          position = "center",
-                          row_label_position = "c", font_size = 16) %>%
-            column_spec(c(1), bold = TRUE) %>%
-            add_header_above(targets_table_headers,
-                             background = c("#212070",
-                                            "#212070",
-                                            "#212070",
-                                            "#212070",
-                                            "green",
-                                            "#e6e600",
-                                            "red"),
-                             color = "white",
-                             line = FALSE)
-         
-        }
-        
-        
-        
-        
-        
-      }
+      ))
+      
       
       # Code to update drop down selections based on selected service line -------------
       observeEvent(input$selectedService,{
