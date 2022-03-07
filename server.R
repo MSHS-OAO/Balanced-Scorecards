@@ -81,19 +81,24 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-      # service_input <- "ED"
+      # service_input <- "Food Services"
       # month_input <- "01-2022"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
                                        filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
       
+      # Target mappings using original structure
       target_section_metrics <- unique((target_mapping %>%  #target_mapping is read in from excel sheet in target mapping file
                                        filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
-      
+
       metric_targets <- target_mapping %>% filter(Service == service_input)
+
+      # Target mappings using updated structure
+      target_section_metrics_new <- unique((target_mapping_analysis %>%  #target_mapping is read in from excel sheet in target mapping file
+                                              filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
       
-      metric_targets_v2 <- target_mapping_new %>%
+      metric_targets_new <- target_mapping_analysis %>%
         filter(Service == service_input)
       
       # Variable setting
@@ -324,6 +329,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       missing_sites <- setdiff(sites_inc, names(current_target))
       current_target[missing_sites] <- NA
+      
+      # Crosswalk Current Period Summary with updated Target Mapping
+      current_target_new <- left_join(current_summary_data,
+                                      target_section_metrics_new)
       
       #FYTD Summary Target 
       fytd_target_metrics <- merge(target_section_metrics, fytd_merged, 
