@@ -1080,7 +1080,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     }
     
     
-    # 4. Data Tab Output -----------------3----------------------------------------------------------------
+    # 4. Data Tab Output ---------------------------------------------------------------------------------
+    # MSH, MSM, and MSQ Submit Finance -----
     observeEvent(input$submit_finance,{
       inFile_msh_msm_msq <- input$finance_msh_msm_msq
       flag <- 0
@@ -1144,6 +1145,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    # MSH, MSM, and MSQ Submit Census Days -----
     observeEvent(input$submit_finance,{
       
       inFile_census <- input$finance_census
@@ -1158,6 +1160,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
     })
     
+    # MSBI, MSB, and MSW Submit Finance -----
     observeEvent(input$submit_finance,{
 
       inFile_msbi_msb_msw <- input$finance_msbi_msb_msw
@@ -1940,6 +1943,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    
+    # Submit Food Services -----
     observeEvent(input$submit_food,{
       food_file <- input$food_cost_and_revenue
       flag <- 0
@@ -2043,6 +2048,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    # Submit Interventional Radiology -----
     observeEvent(input$submit_imaging, {
       imaging_file <- input$imaging_IR
       flag <- 0
@@ -2137,7 +2143,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
-    
+    # Submit Engineering -----
     observeEvent(input$submit_engineering,{
       if(input$name_engineering_kpi == ""){
         showModal(modalDialog(
@@ -2332,8 +2338,104 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
     
     })
+    # Engineering Reactive dataset -----
+    data_engineering_kpi <- reactive({
+      
+      #input$submit_engineering
+      #operational_metrics_engineering <- engineering_repo_pull()
+      data  <- operational_metrics_engineering
+      data <- data[order(data$Site),]
+      
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(colnames(months_only)), "%m-%Y")
+      
+      colnames(data)[3:length(data)] <- months
+      
+      ##### Code that adds months missing months to the rhandsontable
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+      
+      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+      
+      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+      
+      months_to_drop <- which(months < max_month %m-% months(6))
+      months_to_drop <- format(months[months_to_drop], "%m-%Y")
+      
+      complete_months <- seq.Date(months[1], max_month, by= 'month')
+      
+      missing_months <- which(!(complete_months %in% months))
+      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+      
+      data[,missing_months] <- NA
+      
+      data <- data %>% select(-all_of(months_to_drop))
+      
+      data
+      ##########
+      
+      
+      
+      
+      data <- data %>% 
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+      
+      
+      
+    })
     
+    # Engineering Rhandsontable ------ 
+    output$engineering_kpi <- renderRHandsontable({
+      #data <- data
+      data <- data_engineering_kpi()
+      
+      
+      
+      unique_sites <- unique(data$Site)
+      site_1 <- which(data$Site == unique_sites[1])
+      site_2 <- which(data$Site == unique_sites[2])
+      site_3 <- which(data$Site == unique_sites[3])
+      site_4 <- which(data$Site == unique_sites[4])
+      site_5 <- which(data$Site == unique_sites[5])
+      site_6 <- which(data$Site == unique_sites[6])
+      site_7 <- which(data$Site == unique_sites[7])
+      
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- ncol(data) - 1
+      
+      
+      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
     
+    # Submit Environemental Services -----
     observeEvent(input$submit_evs,{
       
       evs_file <- input$evs_data
@@ -2424,280 +2526,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
-    data_react <- reactive({
-      
-      data  <- operational_metrics %>% filter(`Revenue Type` == "Actual")
-      data <- data[order(data$Site),]
-      
-      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
-      
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-      
-      
-    })
-    
-    
-    output$hand_table <- renderRHandsontable({
-      unique_sites <- unique(data_react()$Site)
-      site_1 <- which(data_react()$Site == unique_sites[1])
-      site_2 <- which(data_react()$Site == unique_sites[2])
-      site_3 <- which(data_react()$Site == unique_sites[3])
-      site_4 <- which(data_react()$Site == unique_sites[4])
-      site_5 <- which(data_react()$Site == unique_sites[5])
-      site_6 <- which(data_react()$Site == unique_sites[6])
-      site_7 <- which(data_react()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
 
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(10:15)
-      
-      
-      rhandsontable(data_react(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_react()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-    
-    
-    
-    
-    
-    data_food_budget <- reactive({
-      data  <- operational_metrics %>% filter(Service == "Food Services" &`Revenue Type` == "Budget" & `Metric Group` == "Cost and Revenue")
-      data <- data[order(data$Site),]
-      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
-
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-    })
-    
-    
-    output$food_budget <- renderRHandsontable({
-      unique_sites <- unique(data_food_budget()$Site)
-      site_1 <- which(data_food_budget()$Site == unique_sites[1])
-      site_2 <- which(data_food_budget()$Site == unique_sites[2])
-      site_3 <- which(data_food_budget()$Site == unique_sites[3])
-      site_4 <- which(data_food_budget()$Site == unique_sites[4])
-      site_5 <- which(data_food_budget()$Site == unique_sites[5])
-      site_6 <- which(data_food_budget()$Site == unique_sites[6])
-      site_7 <- which(data_food_budget()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(10:15)
-      
-      
-      rhandsontable(data_food_budget(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_food_budget()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-    
-    data_food_census <- reactive({
-      
-      
-      
-      ### Census from template
-      data  <- operational_metrics %>% filter(Service == "Food Services" & Metric == "Census Days" & `Metric Group` == "Cost and Revenue")
-      data <- data[order(data$Site),]
-      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
-      
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-          mutate_if(is.double, as.character)
-      
-      
-    })
-    
-    
-    output$food_census <- renderRHandsontable({
-      unique_sites <- unique(data_food_census()$Site)
-      site_1 <- which(data_food_census()$Site == unique_sites[1])
-      site_2 <- which(data_food_census()$Site == unique_sites[2])
-      site_3 <- which(data_food_census()$Site == unique_sites[3])
-      site_4 <- which(data_food_census()$Site == unique_sites[4])
-      site_5 <- which(data_food_census()$Site == unique_sites[5])
-      site_6 <- which(data_food_census()$Site == unique_sites[6])
-      site_7 <- which(data_food_census()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(9:15)
-      
-      
-      rhandsontable(data_food_census(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_food_census()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-    
-    
-    data_engineering_kpi <- reactive({
-      
-      #input$submit_engineering
-      #operational_metrics_engineering <- engineering_repo_pull()
-      data  <- operational_metrics_engineering
-      data <- data[order(data$Site),]
-      
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(colnames(months_only)), "%m-%Y")
-      
-      colnames(data)[3:length(data)] <- months
-      
-      ##### Code that adds months missing months to the rhandsontable
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-      
-      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-      
-      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-      
-      months_to_drop <- which(months < max_month %m-% months(6))
-      months_to_drop <- format(months[months_to_drop], "%m-%Y")
-      
-      complete_months <- seq.Date(months[1], max_month, by= 'month')
-      
-      missing_months <- which(!(complete_months %in% months))
-      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-      
-      data[,missing_months] <- NA
-      
-      data <- data %>% select(-all_of(months_to_drop))
-      
-      data
-      ##########
-      
-      
-      
-      
-      data <- data %>% 
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-      
-      
-      
-    })
-    
-    
-    output$engineering_kpi <- renderRHandsontable({
-      #data <- data
-      data <- data_engineering_kpi()
-      
-      
-      
-      unique_sites <- unique(data$Site)
-      site_1 <- which(data$Site == unique_sites[1])
-      site_2 <- which(data$Site == unique_sites[2])
-      site_3 <- which(data$Site == unique_sites[3])
-      site_4 <- which(data$Site == unique_sites[4])
-      site_5 <- which(data$Site == unique_sites[5])
-      site_6 <- which(data$Site == unique_sites[6])
-      site_7 <- which(data$Site == unique_sites[7])
-      
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- ncol(data) - 1
-      
-      
-      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
+   
 
    
     # Lab KPI - Turnaround Time ------------
@@ -3669,7 +3499,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
 
-    # 5. Overtime - Data Input -----------------3----------------------------------------------------------------
+    # 5. Overtime - Data Input ---------------------------------------------------------------------------------
     observeEvent(input$submit_finance, {
       census_file <- input$finance_census
       flag <- 0
@@ -5027,30 +4857,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data <- metrics_final_df %>% filter(Service == input$selectedService)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        
-        # campus_choices <- sort(unique(data$Site))
-        # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices[length(campus_choices)])
-        # updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices[length(campus_choices)])
-        
-        
-        
       })
       
       observeEvent(input$selectedService2,{
         
         data <- metrics_final_df %>% filter(Service == input$selectedService2)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
+
         campus_choices <- sort(unique(data$Site))
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
-        # updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
-        
+
       })
       
       
@@ -5058,13 +4875,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         data <- metrics_final_df %>% filter(Service == input$selectedService3)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
         
         campus_choices <- sort(unique(data$Site))
-        # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
       })
       
