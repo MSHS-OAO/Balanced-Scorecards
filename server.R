@@ -4986,19 +4986,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             distinct() %>%
             arrange(Metric_Group, Metric_Name, Site)
           
-
-          # kable(targets_table_format,
-          #       escape = FALSE) %>%
-          #   kable_styling(bootstrap_options = c("hover", "bordered", "striped"),
-          #                 full_width = FALSE,
-          #                 position = "center",
-          #                 row_label_position = "c", font_size = 16) %>%
-          #   collapse_rows(columns = c(1, 2)) %>%
-          #   row_spec(0,  background = "#212070", color = "white") %>%
-          #   column_spec(1, bold = TRUE)
-          
-          datatable(targets_table_format)
-
           # Reformat any targets that should be displayed as percentages
           targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")] <-
             percent(as.numeric(targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")]),
@@ -5025,8 +5012,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                             "red"),
                              color = "white",
                              line = FALSE)
-
-          
+         
         }
         
         
