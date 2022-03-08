@@ -193,11 +193,12 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
 
 start <- "J:" #Comment when publishing to RConnect
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+start_shared <- "J:"
 
 # start <- "/data"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/Scorecards_Staging/")
 # start_shared <- "/SharedDrive"
-start_shared <- "J:"
+
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
 target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
