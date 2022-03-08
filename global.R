@@ -416,7 +416,12 @@ engineering_data_process <- function(data){
 }
 
 
-# Code for processing and using new target mapping file
+# Code for processing and using new target mapping file and metrics_final_df without Target and Status included
+metrics_final_df_new <- metrics_final_df %>%
+  select(-Target, -Status) %>%
+  mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
+                              "Overtime - % (Premier)", Metric_Name))
+
 target_mapping_new <- target_mapping_v2 %>%
   select(-Range_1, -Range_2, -Status) %>%
   filter(Target != "Remove") %>%
@@ -435,7 +440,8 @@ target_mapping_new <- target_mapping_v2 %>%
 
 target_mapping_analysis <- target_mapping_v2 %>%
   select(-Range_1, -Range_2, -contains("Status")) %>%
-  filter(Target != "Remove") %>%
+  filter(!(Target %in% c("Remove"))) %>%
+  mutate_at(vars(contains(c("_Start", "_End"))), as.numeric) %>%
   distinct()
 
 target_mapping_reference <- target_mapping_v2 %>%

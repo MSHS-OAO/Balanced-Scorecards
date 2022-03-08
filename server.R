@@ -105,14 +105,50 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
-      # Filter data by service specific metrics
+      # Filter data by service specific metrics using original structure
       data <- left_join(summary_tab_metrics, metrics_final_df, by = c("Service", "Metric_Group", "Metric_Name"))  ##extract selected service from metric_final_df
       data <- data  %>% 
         filter(Reporting_Month_Ref <= current_period) %>% #Ensure only selected service and all data before selected month is returned
         filter(Service == service_input)
       
+      # Filter data by service specific metrics using new structure
+      data_new <- left_join(summary_tab_metrics, metrics_final_df_new,
+                            by = c("Service",
+                                   "Metric_Group",
+                                   "Metric_Name"))
+      
+      # Crosswalk data with target mappings
+      data_new <- left_join(data_new,
+                            target_mapping_analysis,
+                            by = c("Service",
+                                   "Site",
+                                   "Metric_Group",
+                                   "Metric_Name"))
+      
+      # Determine status based on status definitions
+      data_new <- data_new %>%
+        mutate(Status = ifelse(is.na(Target), NA,
+                               ifelse(between(value_rounded,
+                                              Green_Start,
+                                              Green_End),
+                                      "Green",
+                                      ifelse(between(value_rounded,
+                                                     Yellow_Start,
+                                                     Yellow_End),
+                                             "Yellow",
+                                             ifelse(between(value_rounded,
+                                                            Red_Start,
+                                                            Red_End),
+                                                    "Red", NA)))))
+      
+      # Filter on selected reporting period
+      data_new <- data %>%
+        filter(Reporting_Month_Ref <= current_period)
+      
+      
+      
       # Data Period Filtering
-      period_filter <- data %>% 
+      period_filter <- data_new %>% 
         group_by(Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>% 
         #distinct() %>%
         summarise(total = n()) %>%                                                            #
@@ -122,7 +158,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       
       # Current Period Table
-      current_summary_data <- left_join((period_filter %>% filter(id == 1)), data, by = c("Metric_Group","Metric_Name","Reporting_Month_Ref","Premier_Reporting_Period"))  #Take all most recent data (id = 1) and merge with all data 
+      current_summary_data <- left_join((period_filter %>% filter(id == 1)),
+                                        data_new,
+                                        by = c("Metric_Group",
+                                               "Metric_Name",
+                                               "Reporting_Month_Ref",
+                                               "Premier_Reporting_Period"))  #Take all most recent data (id = 1) and merge with all data 
 
       current_summary <- current_summary_data %>%
         mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
