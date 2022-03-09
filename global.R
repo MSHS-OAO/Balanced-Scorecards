@@ -280,6 +280,15 @@ summary_metric_filter <- summary_metrics %>%
 metric_unit_filter <- unique(metric_grouping[, c("Metric_Group","Metric_Name","Metric_Unit")])
 metric_unit_filter_summary <- unique(summary_metric_filter[, c("Summary_Metric_Name","Metric_Unit")])
 metric_unit_perc <- unique((metric_unit_filter_summary %>% filter(Metric_Unit == "Percent"))$Summary_Metric_Name)
+# Fix naming of Overtime Hours - % (Premier)
+metric_unit_filter_summary_new <- metric_unit_filter_summary %>%
+  mutate(Summary_Metric_Name = str_replace(Summary_Metric_Name,
+                                           "\\ %\\ \\(Premier\\)",
+                                           "\\ Hours\\ \\-\\ %\\ \\(Premier\\)"))
+
+metric_unit_perc_new <- str_replace(metric_unit_perc,
+                                    "\\ %\\ \\(Premier\\)",
+                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
 
 # Reactive Data Functions --------------------------------------------------------------------------
 ## Summary Tab Data
@@ -420,28 +429,28 @@ engineering_data_process <- function(data){
 metrics_final_df_new <- metrics_final_df %>%
   select(-Target, -Status) %>%
   mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
-                              "Overtime - % (Premier)", Metric_Name))
+                              "Overtime Hours - % (Premier)", Metric_Name))
 
-target_mapping_new <- target_mapping_v2 %>%
-  select(-Range_1, -Range_2, -Status) %>%
-  filter(Target != "Remove") %>%
-  group_by(Service,
-           Site,
-           Metric_Group,
-           Metric_Name,
-           Target,
-           Green_Status,
-           Yellow_Status,
-           Red_Status,
-           Green_Start, Green_End,
-           Yellow_Start, Yellow_End,
-           Red_Start, Red_End) %>%
-  summarize(nRow = n())
+# target_mapping_new <- target_mapping_v2 %>%
+#   select(-Range_1, -Range_2, -Status) %>%
+#   filter(Target != "Remove") %>%
+#   group_by(Service,
+#            Site,
+#            Metric_Group,
+#            Metric_Name,
+#            Target,
+#            Green_Status,
+#            Yellow_Status,
+#            Red_Status,
+#            Green_Start, Green_End,
+#            Yellow_Start, Yellow_End,
+#            Red_Start, Red_End) %>%
+#   summarize(nRow = n())
 
 target_mapping_analysis <- target_mapping_v2 %>%
   select(-Range_1, -Range_2, -contains("Status")) %>%
-  filter(!(Target %in% c("Remove"))) %>%
-  mutate_at(vars(contains(c("_Start", "_End"))), as.numeric) %>%
+  filter(!(Target %in% c("Remove", "Budget"))) %>%
+  mutate_at(vars(contains(c("Target", "_Start", "_End"))), as.numeric) %>%
   distinct()
 
 target_mapping_reference <- target_mapping_v2 %>%
