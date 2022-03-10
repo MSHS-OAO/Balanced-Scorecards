@@ -511,7 +511,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         colnames(budget_to_actual_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
       }
       
-      if("Variance to Budget" %in% as.vector(target_section_metrics_new$Metric_Name)){
+      if("Variance to Budget" %in% as.vector(status_section_metrics$Metric_Name)){
         #Calculate FYTD Budget to Actual Targets
         variance_to_budget_target <- metrics_final_df_new %>% 
           filter((Service == service_input) &
