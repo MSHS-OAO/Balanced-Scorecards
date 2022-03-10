@@ -97,11 +97,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                     "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
                       }))
       
-      # Target mappings using original structure
-      target_section_metrics <- unique((target_mapping %>%  #target_mapping is read in from excel sheet in target mapping file
-                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
-
-      metric_targets <- target_mapping %>% filter(Service == service_input)
+      # # Target mappings using original structure
+      # target_section_metrics <- unique((target_mapping %>%  #target_mapping is read in from excel sheet in target mapping file
+      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
+      # 
+      # metric_targets <- target_mapping %>% filter(Service == service_input)
 
       # Subset target mapping to select Metric_Group and  Metric_Names to be 
       # displayed in status indicator section based on the selected service line
@@ -118,27 +118,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
-      # Filter data by service specific metrics using original structure
-      data <- left_join(summary_tab_metrics, metrics_final_df, by = c("Service", "Metric_Group", "Metric_Name"))  ##extract selected service from metric_final_df
-      data <- data  %>% 
-        filter(Reporting_Month_Ref <= current_period) %>% #Ensure only selected service and all data before selected month is returned
-        filter(Service == service_input)
+      # # Filter data by service specific metrics using original structure
+      # data <- left_join(summary_tab_metrics, metrics_final_df, by = c("Service", "Metric_Group", "Metric_Name"))  ##extract selected service from metric_final_df
+      # data <- data  %>% 
+      #   filter(Reporting_Month_Ref <= current_period) %>% #Ensure only selected service and all data before selected month is returned
+      #   filter(Service == service_input)
       
       # Filter data by service specific metrics using new structure
-      data_new <- left_join(summary_tab_metrics_new, metrics_final_df_new,
-                            by = c("Service",
-                                   "Metric_Group",
-                                   "Metric_Name"))
+      data <- left_join(summary_tab_metrics_new, metrics_final_df_new,
+                        by = c("Service",
+                               "Metric_Group",
+                               "Metric_Name"))
       
       # Crosswalk data with metric targets and status definitions
-      data_new <- left_join(data_new,
-                            metric_targets_status,
-                            by = c("Service",
-                                   "Site",
-                                   "Metric_Group",
-                                   "Metric_Name"))
+      data <- left_join(data,
+                        metric_targets_status,
+                        by = c("Service",
+                               "Site",
+                               "Metric_Group",
+                               "Metric_Name"))
       
-      data_new <- data_new %>%
+      data <- data %>%
         # Determine status based on status definitions
         mutate(Status = ifelse(is.na(Target), NA,
                                ifelse(between(value_rounded,
@@ -157,8 +157,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Reporting_Month_Ref <= current_period)
       
       # Data Period Filtering
-      period_filter <- data_new %>% 
-        group_by(Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>% 
+      period_filter <- data %>% 
+        group_by(Metric_Group,
+                 Metric_Name,
+                 Reporting_Month_Ref,
+                 Premier_Reporting_Period) %>% 
         #distinct() %>%
         summarise(total = n()) %>%                                                            #
         arrange(Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
@@ -168,7 +171,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Current Period Table -----------------
       current_summary_data <- left_join((period_filter %>% filter(id == 1)),
-                                        data_new,
+                                        data,
                                         by = c("Metric_Group",
                                                "Metric_Name",
                                                "Reporting_Month_Ref",
@@ -222,7 +225,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # FYTD Summary Table - for total
       fytd_summary_all <- left_join(fytd_period,
-                                    data_new,
+                                    data,
                                     by = c("Metric_Group",
                                            "Metric_Name",
                                            "Reporting_Month_Ref",
@@ -416,20 +419,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       row.names(metrics_summary) <- NULL
       
       # Code for comparing metrics to targets and displaying statuses ------------
-      # Current Period Target (Original)
-      current_target <- merge(target_section_metrics, current_summary_data, by = c("Metric_Group","Metric_Name"))
-      ## Need to add in logic for Budget related metrics if those are to be included
-      current_target <- current_target %>%
-        filter(!is.na(Status)) %>%
-        mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
-                                         paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period)) %>%
-        select(Metric_Group, Summary_Metric_Name, `Current Period`, Site, Status) %>%
-        `colnames<-` (c("Section","Metric_Name","Current Period","Site","target")) %>%
-        mutate(Section = "Variance to Target") %>%
-        pivot_wider(names_from = Site, values_from = target) 
-      
-      missing_sites <- setdiff(sites_inc, names(current_target))
-      current_target[missing_sites] <- NA
+      # # Current Period Target (Original)
+      # current_target <- merge(target_section_metrics, current_summary_data, by = c("Metric_Group","Metric_Name"))
+      # ## Need to add in logic for Budget related metrics if those are to be included
+      # current_target <- current_target %>%
+      #   filter(!is.na(Status)) %>%
+      #   mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+      #                                    paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period)) %>%
+      #   select(Metric_Group, Summary_Metric_Name, `Current Period`, Site, Status) %>%
+      #   `colnames<-` (c("Section","Metric_Name","Current Period","Site","target")) %>%
+      #   mutate(Section = "Variance to Target") %>%
+      #   pivot_wider(names_from = Site, values_from = target) 
+      # 
+      # missing_sites <- setdiff(sites_inc, names(current_target))
+      # current_target[missing_sites] <- NA
       
       # Crosswalk Current Period Summary with metrics to be displayed in Status section
       current_status <- left_join(current_summary_data,
@@ -438,10 +441,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_status <- current_status %>%
         ungroup() %>%
         filter(!is.na(Status)) %>%
-        mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
-                                         paste0("Rep. Pd. Ending ",
-                                                Premier_Reporting_Period),
-                                         Premier_Reporting_Period)) %>%
+        mutate(`Current Period` = ifelse(
+          str_detect(Premier_Reporting_Period, "/"), 
+          paste0("Rep. Pd. Ending ",
+                 Premier_Reporting_Period),
+          Premier_Reporting_Period)) %>%
         select(Metric_Group,
                Summary_Metric_Name,
                `Current Period`,
@@ -461,13 +465,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_status[missing_sites] <- NA
         
       
-      #FYTD Summary Target (Original)
-      fytd_target_metrics <- merge(target_section_metrics, fytd_merged, 
-                                       by = c("Metric_Group","Metric_Name"))
-
-      fytd_target <- merge(fytd_target_metrics, 
-                           metric_targets[,c("Site","Metric_Group","Metric_Name","Target","Range_1","Range_2","Status")], 
-                           by = c("Site","Metric_Group","Metric_Name"))
+      # #FYTD Summary Target (Original)
+      # fytd_target_metrics <- merge(target_section_metrics, fytd_merged, 
+      #                                  by = c("Metric_Group","Metric_Name"))
+      # 
+      # fytd_target <- merge(fytd_target_metrics, 
+      #                      metric_targets[,c("Site","Metric_Group","Metric_Name","Target","Range_1","Range_2","Status")], 
+      #                      by = c("Site","Metric_Group","Metric_Name"))
 
       # FYTD Summary with status indicators using new structure
       # Crosswalk metrics to display in Status section with FYTD data
@@ -477,6 +481,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Now, crosswalk FYTD metrics to be displayed with their targets and status definitions
       fytd_status <- left_join(fytd_status,
                                metric_targets_status)
+      
+      # Determine status definitions for FYTD metrics
+      fytd_status <- fytd_status %>%
+        # Determine status based on status definitions
+        mutate(Status = ifelse(is.na(Target), NA,
+                               ifelse(between(value_rounded,
+                                              Green_Start,
+                                              Green_End),
+                                      "Green",
+                                      ifelse(between(value_rounded,
+                                                     Yellow_Start,
+                                                     Yellow_End),
+                                             "Yellow",
+                                             ifelse(between(value_rounded,
+                                                            Red_Start,
+                                                            Red_End),
+                                                    "Red", NA))))) %>%
+        filter(!is.na(Target)) %>%
+        mutate(Section = "Status") %>%
+        select(Section, Summary_Metric_Name, `Fiscal Year to Date`, Site, Status)
             
       if("Budget to Actual MOM" %in% as.vector(status_section_metrics$Metric_Name)){
         
@@ -497,18 +521,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                        names_to = "Summary_Metric_Name",
                        values_to = "value_rounded") %>%
           filter(Summary_Metric_Name == "Budget to Actual MOM") %>%
-          mutate(Section = "Variance to Target")
+          mutate(Section = "Status")
         
         budget_to_actual_target <- budget_to_actual_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
         budget_to_actual_target$`Fiscal Year to Date` <-
           fytd_status$`Fiscal Year to Date`[match(budget_to_actual_target$Summary_Metric_Name, fytd_status$Metric_Name)]
       }else{
-        budget_to_actual_target <- data.frame(Section = c("NA"),
-                                                Summary_Metric_Name = c("NA"),
-                                                `Fiscal Year to Date` = c("NA"),
-                                                Site = c("NA"),
-                                                Status = c("NA"))
-        colnames(budget_to_actual_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
+        budget_to_actual_target <- NULL
+        # budget_to_actual_target <- data.frame(Section = c("NA"),
+        #                                         Summary_Metric_Name = c("NA"),
+        #                                         `Fiscal Year to Date` = c("NA"),
+        #                                         Site = c("NA"),
+        #                                         Status = c("NA"))
+        # colnames(budget_to_actual_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
       }
       
       if("Variance to Budget" %in% as.vector(status_section_metrics$Metric_Name)){
@@ -530,56 +555,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                        names_to = "Summary_Metric_Name",
                        values_to = "value_rounded") %>%
           filter(Summary_Metric_Name == "Variance to Budget") %>%
-          mutate(Section = "Variance to Target")
+          mutate(Section = "Status")
         
         variance_to_budget_target <- variance_to_budget_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
         variance_to_budget_target$`Fiscal Year to Date` <- fytd_status$`Fiscal Year to Date`[match(variance_to_budget_target$Summary_Metric_Name, fytd_status$Metric_Name)]
       } else{
-        variance_to_budget_target <- data.frame(Section = c("NA"),
-                                                   Summary_Metric_Name = c("NA"),
-                                                   `Fiscal Year to Date` = c("NA"),
-                                                   Site = c("NA"),
-                                                   Status = c("NA"))
-        colnames(variance_to_budget_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
+        variance_to_budget_target <- NULL
+        # variance_to_budget_target <- data.frame(Section = c("NA"),
+        #                                            Summary_Metric_Name = c("NA"),
+        #                                            `Fiscal Year to Date` = c("NA"),
+        #                                            Site = c("NA"),
+        #                                            Status = c("NA"))
+        # colnames(variance_to_budget_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
       }
       
       
-      # Merge with rest of the metrics 
-      fytd_target <- fytd_target %>%
-        mutate(Variance =  between(value_rounded, Range_1, Range_2)) %>%
-        filter(Variance == TRUE) %>%
-        mutate(Section = "Variance to Target") %>%
-        select(Section, Summary_Metric_Name, `Fiscal Year to Date`, Site, Status) 
+      # # Merge with rest of the metrics 
+      # fytd_target <- fytd_target %>%
+      #   mutate(Variance =  between(value_rounded, Range_1, Range_2)) %>%
+      #   filter(Variance == TRUE) %>%
+      #   mutate(Section = "Variance to Target") %>%
+      #   select(Section, Summary_Metric_Name, `Fiscal Year to Date`, Site, Status) 
+      # 
+      # fytd_target <- bind_rows(fytd_target, budget_to_actual_target, variance_to_budget_target)
+      # 
+      # fytd_target <- fytd_target %>%
+      #   # filter(Section != "NA") %>%
+      #   pivot_wider(names_from = Site, values_from = Status)
+      # names(fytd_target)[names(fytd_target) == 'Summary_Metric_Name'] <- 'Metric_Name'
+      # 
+      # missing_sites <- setdiff(sites_inc, names(fytd_target))
+      # fytd_target[missing_sites] <- NA
       
-      fytd_target <- bind_rows(fytd_target, budget_to_actual_target, variance_to_budget_target)
-      
-      fytd_target <- fytd_target %>%
-        filter(Section != "NA") %>%
-        pivot_wider(names_from = Site, values_from = Status)
-      names(fytd_target)[names(fytd_target) == 'Summary_Metric_Name'] <- 'Metric_Name'
-      
-      missing_sites <- setdiff(sites_inc, names(fytd_target))
-      fytd_target[missing_sites] <- NA
-      
-      # Determine status definitions for FYTD metrics
-      fytd_status <- fytd_status %>%
-        # Determine status based on status definitions
-        mutate(Status = ifelse(is.na(Target), NA,
-                               ifelse(between(value_rounded,
-                                              Green_Start,
-                                              Green_End),
-                                      "Green",
-                                      ifelse(between(value_rounded,
-                                                     Yellow_Start,
-                                                     Yellow_End),
-                                             "Yellow",
-                                             ifelse(between(value_rounded,
-                                                            Red_Start,
-                                                            Red_End),
-                                                    "Red", NA))))) %>%
-        filter(!is.na(Target)) %>%
-        mutate(Section = "Status") %>%
-        select(Section, Summary_Metric_Name, `Fiscal Year to Date`, Site, Status)
       
       # Merge FYTD metrics with budget metrics
       fytd_status <- bind_rows(fytd_status,
@@ -599,8 +606,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       
       # Merge FYTD and Current Period Targets
-      targets_summary <- left_join(fytd_status, current_status,by = c("Section", "Metric_Name"))
-      targets_summary <- targets_summary[order(factor(targets_summary$Metric_Name, levels=unique(summary_tab_metrics_new$Metric_Name))),] 
+      targets_summary <- left_join(fytd_status,
+                                   current_status,
+                                   by = c("Section", "Metric_Name"))
+      targets_summary <- targets_summary[
+        order(factor(targets_summary$Metric_Name,
+                     levels=unique(summary_tab_metrics_new$Metric_Name))),] 
       targets_summary <- as.data.frame(targets_summary)
       
       # Create traffic lights for the targets
