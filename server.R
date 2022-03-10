@@ -769,7 +769,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       # 
-      # service_input <- "Enngineering"
+      # service_input <- "Engineering"
       # month_input <- "11-2021"
       # site_input <- "MSB"
 
@@ -782,11 +782,33 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       summary_tab_metrics <- unique((summary_metric_filter %>%
                                        filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
       
+      
+      # Update summary tab metrics with correct name for Overtime - % (Premier)
+      summary_tab_metrics_new <- summary_tab_metrics %>%
+        mutate(across(.cols = everything(),
+                      .fns = function(x) {
+                        str_replace(x,
+                                    "\\ %\\ \\(Premier\\)",
+                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+                      }))
+      
+      # Target mappings using original structure
       target_section_metrics <- unique((target_mapping %>%
                                           filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
       
       metric_targets <- target_mapping %>% filter(Service == service_input)
 
+      # Subset target mapping to select Metric_Group and  Metric_Names to be 
+      # displayed in status indicator section based on the selected service line
+      status_section_metrics <- target_mapping_analysis %>%
+        filter(Service %in% service_input) %>%
+        select(Service, Metric_Group, Metric_Name) %>%
+        distinct()
+      
+      # Subset target mapping to select Targets and Status Definitions for selected service line
+      metric_targets_status <- target_mapping_analysis %>%
+        filter(Service == service_input)
+      
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
@@ -803,6 +825,44 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       data <- merge(data, summary_tab_metrics[,c("Metric_Group","Metric_Name","Summary_Metric_Name")], 
                              by = c("Metric_Group","Metric_Name"))
+      
+      # Filter data by service specific metrics using new structure
+      data_new <- metrics_final_df_new %>% 
+        filter(Site %in% site_input) %>%
+        filter(Service == service_input) %>% # input$selectedService
+        filter(Reporting_Month_Ref <= current_period) %>%
+        arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
+        group_by(Site, Metric_Group, Metric_Name) %>%
+        mutate(id = row_number()) %>%
+        filter(Reporting_Month_Ref >= current_period - months(11))
+      
+      data_new <- left_join(summary_tab_metrics_new[, c("Metric_Group",
+                                                        "Metric_Name",
+                                                        "Summary_Metric_Name")],
+                            data_new,
+                            by = c("Metric_Group", "Metric_Name"))
+      
+      # Crosswalk data with metric targets and status definitions
+      data_new <- left_join(data_new,
+                            metric_targets_status,
+                            by = c("Site", "Service", "Metric_Group",
+                                   "Metric_Name"))
+      
+      # Determine status based on status definitions
+      data_new <- data_new %>%
+        mutate(Status = ifelse(is.na(Target), NA,
+                               ifelse(between(value_rounded,
+                                              Green_Start, Green_End),
+                                      "Green",
+                                      ifelse(between(value_rounded,
+                                                     Yellow_Start, Yellow_End),
+                                             "Yellow",
+                                             ifelse(between(value_rounded,
+                                                            Red_Start, Red_End),
+                                                    "Red", NA))))) %>%
+        select(-contains(c("_Start", "_End")), -Metric_Name_Submitted)
+      
+      
       
       # Selected Month/Year Metric
       # Current Period Table
