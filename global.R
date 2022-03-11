@@ -113,12 +113,6 @@ MountSinai_cols <- function(...) {
   MountSinai_colors[cols]
 }
 
-# Color Function that can be used to call all colors is "MountSinai_cols()"
-# Use in ggplot 
-
-#MountSinai_cols()       # will provide all colors and their hex codes in a table 
-#MountSinai_cols("pink") # will provide color name and the hex code for the pink color
-
 # Create palettes 
 MountSinai_palettes <- list(
   `all`   = MountSinai_cols("dark purple","dark pink","dark blue","dark grey",
@@ -180,17 +174,6 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
   }
 }
 #### Global Filepaths
-# budget_to_actual_path <- here::here("Data/Summary Repos/Budget to Actual.xlsx")
-# metrics_final_df_path <- here::here("Data/metrics_final_df.rds")
-# key_volume_mapping_path <- "J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx"
-# target_mapping_path <- here::here("Data/MSHS Scorecards Target Mapping.xlsx")
-# operational_metrics_path <- here::here("Data/Balanced Scorecards Data Input.xlsx")
-# operational_metrics_engineering_path <- here("Data/Summary Repos/CM KPI.xlsx")
-# operational_metrics_environmental_path <- here("Data/Summary Repos/TAT - EVS.xlsx")
-# census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
-# operational_metrics_lab_path <- here("Data/Summary Repos/Lab - Metrics.xlsx")
-
-
 start <- "J:" #Comment when publishing to RConnect
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 start_shared <- "J:"
@@ -202,7 +185,6 @@ start_shared <- "J:"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
 target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
-# target_mapping_path <- ("C:/Users/villea04/Downloads/MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")

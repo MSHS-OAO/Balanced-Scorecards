@@ -81,8 +81,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-      service_input <- "Environmental Services"
-      month_input <- "12-2021"
+      # service_input <- "ED"
+      # month_input <- "12-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -447,7 +447,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
       }
       
-      
+      if(c("target") %in% colnames(targets_summary)){
+        targets_summary <- targets_summary %>% select(-target)
+      }
       summary_tab_tb <- rbind(metrics_summary, targets_summary[,1:18])
       summary_tab_tb$NYEE <- NULL
       
@@ -3884,7 +3886,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA_integer_
+        data[,missing_months] <- NA_real_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -3968,7 +3970,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA_integer_
+        data[,missing_months] <- NA_real_
         
         months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
         months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
