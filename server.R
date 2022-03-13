@@ -46,7 +46,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService)
@@ -76,7 +77,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -533,7 +535,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService2)
@@ -564,7 +567,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       
       service_input <- input$selectedService2
@@ -824,7 +828,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService3)
@@ -855,7 +860,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       
       service_input <- input$selectedService3
