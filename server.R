@@ -3692,7 +3692,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     # })
     
-    # Transport Metrics - Patient Data  -----------------------
+    # Transport Metrics - Non Patient Data  -----------------------
+    
       observeEvent(input$submit_npt_tat,{
         
         npt_file <- input$non_patient_transport
@@ -3789,6 +3790,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
         }
       })
+    # Transport Metrics - Patient Data  -----------------------
+    
       
       observeEvent(input$submit_pt_tat,{
         
@@ -4270,7 +4273,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       
 
-      # Imaging DR observer event actions for X-RAY data submission ----- 
+      # Imaging DR X-RAY data submission ----- 
       observeEvent(input$submit_imagingxray, {
         if(input$imaging_xray_username == "") {
           showModal(modalDialog(
@@ -4389,7 +4392,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
       })
       
-      # Imaging DR observer event actions for Chest CT data submission ----- 
+      # Imaging DR Chest CT data submission ----- 
       observeEvent(input$submit_imagingct, {
         if(input$imaging_ct_username == "") {
           showModal(modalDialog(
