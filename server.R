@@ -3860,7 +3860,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
       
-      # Biomed KPI Outout Table -------
+      # KPI Biomed Output Table -------
       
       data_bimoed_kpi <- reactive({
         data  <- kpibme_reports_ui %>% ungroup()
@@ -3943,8 +3943,123 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           hot_cols(renderer = rendederer_string)  %>%
           hot_col(1:2, readOnly = T)
       })
+      #KPIs Biomed Observe Event----- 
+      observeEvent(input$submit_biomedkpis, {
+        if(input$name_biomed_kpi == "") {
+          showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields.",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          tryCatch({
+            
+            
+            # Convert rhandsontable to R object
+            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
+            
+            flag <- 1
+          },
+          error =function(err){
+            
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            
+          })
+          
+          if(flag==1){
+            tryCatch({
+              # Reformat data from manual input table into summary repo format
+              bme_kpi_summary_data <<-
+                process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+              
+              flag <- 2
+              
+              
+              showModal(modalDialog(
+                title = "Success",
+                paste0("This Biomedical KPIs data has been submitted successfully."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            },
+            
+            error = function(err) {
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            })
+          }
+          
+          if(flag==2){
+            
+            # Save prior version of KPIs Dept Summary data
+            write_xlsx(kpibme_reports,
+                       paste0(hist_archive_path,
+                              "KPIs Biomed and Clinical Engineering ",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+            
+            # First, identify the sites, months, and metrics in the new data
+            bme_kpi_new_data <- unique(
+              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
+            )
+            
+            # Second, remove these sites, months, and metrics from the historical data,
+            # if they exist there. This allows us to ensure no duplicate entries for
+            # the same site, metric, and time period.
+            kpi_bme <<- anti_join(kpibme_reports,
+                                  bme_kpi_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Month" = "Month",
+                                         "Metric" = "Metric"))
+            
+            # Third, combine the updated historical data with the new data
+            kpibme_reports <<- full_join(kpi_bme,
+                                         bme_kpi_summary_data)
+            
+            glimpse(kpibme_reports)
+            # Next, arrange the incident reports summary data by month, metric, and site
+            kpibme_reports <<- kpibme_reports %>%
+              arrange(Month,
+                      desc(Metric),
+                      Site)
+            
+            # Lastly, save the updated summary data
+            write_xlsx(kpibme_reports, bmekpi_table_path)
+            
+            # Update metrics_final_df with latest data using custom function
+            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
+            
+            # Save updates metrics_final_df
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Biomed / Clinical Engineering"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+          }
+        }
+      })
       
-      # Biomed Disruptions and Issues Output Table -------
+      
+      #D&I Biomed Output Table -------
       
       data_bimoed_di <- reactive({
         data  <- disruptions_issues_reports_ui %>% ungroup()
@@ -4036,122 +4151,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           hot_col(1:2, readOnly = T)
       })
       
-      # Create observer event actions for manual data submission KPIs Biomed ----- 
-      observeEvent(input$submit_biomedkpis, {
-        if(input$name_biomed_kpi == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields.",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else{
-          tryCatch({
-            
-        
-              # Convert rhandsontable to R object
-              bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
-        
-             flag <- 1
-          },
-          error =function(err){
-            
-            showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            
-          })
-          
-          if(flag==1){
-            tryCatch({
-            # Reformat data from manual input table into summary repo format
-            bme_kpi_summary_data <<-
-              process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
-            
-            flag <- 2
-            
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This Biomedical KPIs data has been submitted successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            },
-            
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-          }
-        
-          if(flag==2){
-            
-            # Save prior version of KPIs Dept Summary data
-            write_xlsx(kpibme_reports,
-                       paste0(hist_archive_path,
-                              "KPIs Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-        
-            # First, identify the sites, months, and metrics in the new data
-            bme_kpi_new_data <- unique(
-              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            kpi_bme <<- anti_join(kpibme_reports,
-                                  bme_kpi_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month",
-                                         "Metric" = "Metric"))
-            
-            # Third, combine the updated historical data with the new data
-            kpibme_reports <<- full_join(kpi_bme,
-                                         bme_kpi_summary_data)
-            
-            glimpse(kpibme_reports)
-            # Next, arrange the incident reports summary data by month, metric, and site
-            kpibme_reports <<- kpibme_reports %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(kpibme_reports, bmekpi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            
-            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            date_time$Service = "Biomed / Clinical Engineering"
-            date_time <- rbind(time_df, date_time)
-            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-          }
-        }
-      })
-      
-      # Create observer event actions for manual data submission D&I Biomed ----- 
+      # D&I Biomed Observe Event----- 
       observeEvent(input$submit_biomeddi, {
         if(input$name_biomed_distruptions == "") {
           showModal(modalDialog(
