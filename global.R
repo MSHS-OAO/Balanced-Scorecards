@@ -268,6 +268,8 @@ metric_grouping_filter <- metric_grouping %>%
   filter(!is.na(Inclusion)) %>%
   arrange(Service)
 
+
+
 summary_metric_filter <- summary_metrics %>%
   pivot_longer(
     7:length(summary_metrics),
@@ -289,6 +291,20 @@ metric_unit_filter_summary_new <- metric_unit_filter_summary %>%
 metric_unit_perc_new <- str_replace(metric_unit_perc,
                                     "\\ %\\ \\(Premier\\)",
                                     "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+
+# Need to create a new metric_unit_filter that includes Metric_Name_Submitted
+# This is needed since this column is used in the KPI Breakout tab and is not
+# in metric_unit_filte, resulting in metrics not being formatted properly
+metric_unit_filter_new <- unique(metric_grouping[, c("Metric_Group",
+                                                     "Metric_Name",
+                                                     "Metric_Name_Submitted",
+                                                     "Metric_Unit")])
+
+metric_unit_filter_new <- metric_unit_filter_new %>%
+  mutate(Metric_Name = str_replace(Metric_Name,
+                                   "\\ %\\ \\(Premier\\)",
+                                   "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")) %>%
+  select(-Metric_Name)
 
 # Reactive Data Functions --------------------------------------------------------------------------
 ## Summary Tab Data
