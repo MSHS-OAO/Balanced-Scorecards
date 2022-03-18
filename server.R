@@ -81,7 +81,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-      # service_input <- "Lab"
+      # service_input <- "Environmental Services"
       # month_input <- "11-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -105,6 +105,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       # Subset target mapping to select Metric_Group and  Metric_Names to be 
       # displayed in status indicator section based on the selected service line
+      # NOTE: Are both of these data frames really needed or can we use one and
+      # just select the relevant columns later in the code?
       status_section_metrics <- target_mapping_analysis %>%
         filter(Service %in% service_input) %>%
         select(Service, Metric_Group, Metric_Name) %>%
@@ -193,6 +195,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Should we fix the code so there are no duplicates anyway?
       current_summary <- unique(current_summary)
       
+      # Think about renaming columns at the end
       current_summary <- current_summary %>%
         `colnames<-` (c("Section",
                         "Metric_Name",
@@ -370,8 +373,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # metrics_summary <- metrics_summary[
       #   order(factor(metrics_summary$Metric_Name,
       #                levels=unique(summary_tab_metrics_new$Summary_Metric_Name))), ] 
-      
-      
 
       # Crosswalk metrics with their units and format
       # metrics_summary$Metric_Unit <- metric_unit_filter_summary_new$Metric_Unit[match(metrics_summary$Metric_Name, 
@@ -411,6 +412,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                            sep = "|"),
                                            NA_character_))
       
+      # Change this to dplyr logic using mutate_if or mutate_all
       metrics_summary[is.na(metrics_summary)] <- "-"
       
       # Reorder rows based on Summary Tab Metrics order
@@ -435,9 +437,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # missing_sites <- setdiff(sites_inc, names(current_target))
       # current_target[missing_sites] <- NA
       
+      # Code for Status Section -----------------------------------
       # Crosswalk Current Period Summary with metrics to be displayed in Status section
       current_status <- left_join(current_summary_data,
                                   status_section_metrics)
+      
+      # Manually remove duplicates - this should be fixed in the repositories
+      current_status <- unique(current_status)
       
       current_status <- current_status %>%
         ungroup() %>%
@@ -452,6 +458,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                `Current Period`,
                Site,
                Status) %>%
+        # Consider waiting to rename columns until the end
         `colnames<-` (c("Section",
                         "Metric_Name",
                         "Current Period",
@@ -593,7 +600,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fytd_status <- bind_rows(fytd_status,
                                budget_to_actual_target,
                                variance_to_budget_target)
-      
+
       # Pivot wider for dashboard format
       fytd_status <- fytd_status %>%
         filter(Section != "NA") %>%
@@ -615,6 +622,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                      levels=unique(summary_tab_metrics_new$Metric_Name))),] 
       targets_summary <- as.data.frame(targets_summary)
       
+      # NOTE: Is there an easier way to do this using mutate?
       # Create traffic lights for the targets
       col_red <- which(targets_summary == "Red", arr.ind = TRUE)
       # col_red_rows <- as.integer(col_red[,1])
@@ -624,32 +632,53 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
       
-      if(nrow(colors_comb) != 0){
-        for (i in 1:nrow(colors_comb)){
-          targets_summary[colors_comb[i,1],colors_comb[i,2]] <- fa('fas fa-circle')
-        }
-      }
+      targets_summary2 <- targets_summary %>%
+        mutate(across(.cols = everything(),
+                      .fns = function(x) {
+                        ifelse(x %in% "Red", paste0('<span style="color:',
+                                                    c("red"),'">',
+                                                    fa('fas fa-circle'),
+                                                    '</span>'),
+                               ifelse(x %in% "Yellow", 
+                                      paste0('<span style="color:',
+                                             c("yellow"),'">',
+                                             fa('fas fa-circle'),
+                                             '</span>'),
+                                      ifelse(x %in% "Green",
+                                             paste0('<span style="color:',
+                                                    c("green"),'">',
+                                                    fa('fas fa-circle'),
+                                                    '</span>'),
+                                             x)))
+                      }
+        ))
+
+      # if(nrow(colors_comb) != 0){
+      #   for (i in 1:nrow(colors_comb)){
+      #     targets_summary[colors_comb[i,1],colors_comb[i,2]] <- fa('fas fa-circle')
+      #   }
+      # }
+      # 
+      # if(nrow(col_red) != 0){
+      #   for (i in 1:nrow(col_red)){
+      #     targets_summary[col_red[i,1],col_red[i,2]] <- cell_spec(targets_summary[col_red[i,1],col_red[i,2]], 'html', color = 'red', escape = FALSE)
+      #   }
+      # }
+      # 
+      # if(nrow(col_green) != 0){
+      #   for(i in 1:nrow(col_green)){
+      #     targets_summary[col_green[i,1],col_green[i,2]] <- cell_spec(targets_summary[col_green[i,1],col_green[i,2]], 'html', color = 'green', escape = FALSE)
+      #   }
+      # }
+      # 
+      # if(nrow(col_yellow != 0)){
+      #   for (i in 1:nrow(col_yellow)){
+      #     targets_summary[col_yellow[i,1],col_yellow[i,2]] <- cell_spec(targets_summary[col_yellow[i,1],col_yellow[i,2]], 'html', color = 'yellow', escape = FALSE)
+      #   }
+      # }
       
-      if(nrow(col_red) != 0){
-        for (i in 1:nrow(col_red)){
-          targets_summary[col_red[i,1],col_red[i,2]] <- cell_spec(targets_summary[col_red[i,1],col_red[i,2]], 'html', color = 'red', escape = FALSE)
-        }
-      }
-      
-      if(nrow(col_green) != 0){
-        for(i in 1:nrow(col_green)){
-          targets_summary[col_green[i,1],col_green[i,2]] <- cell_spec(targets_summary[col_green[i,1],col_green[i,2]], 'html', color = 'green', escape = FALSE)
-        }
-      }
-      
-      if(nrow(col_yellow != 0)){
-        for (i in 1:nrow(col_yellow)){
-          targets_summary[col_yellow[i,1],col_yellow[i,2]] <- cell_spec(targets_summary[col_yellow[i,1],col_yellow[i,2]], 'html', color = 'yellow', escape = FALSE)
-        }
-      }
-      
-      
-      summary_tab_tb <- rbind(metrics_summary, targets_summary[,1:18])
+
+      summary_tab_tb <- rbind(metrics_summary, targets_summary2[,1:18])
       summary_tab_tb$NYEE <- NULL
       
       
@@ -666,6 +695,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
+      
+      # summary_tab_tb[2,2] <- paste0('<span style="color:',
+      #                               c("blue"),'">',
+      #                               fa('fas fa-circle'),
+      #                               '</span>')
       
 
       
