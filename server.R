@@ -5403,33 +5403,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         text
         
       })
-      
-      # Display error message for user if no metrics are selected
-      output$targetSummary_message <- renderText({
-        
-        service_input <- input$selectedService4
-        metric_group_input <- input$selectedMetricGroup
 
-        # service_input <- "Food Services"
-        # metric_group_input <- metric_group_choices
-        
-        targets_table <- target_mapping_reference %>%
-          filter(Service %in% service_input &
-                   Metric_Group %in% metric_group_input) %>%
-          select(-Service,
-                 -Metric_Name_Submitted)
-        
-        if (nrow(targets_table) == 0) {
-          
-          "Please select at least one metric group for the selected service"
-          
-        } else {
-          
-          ""
-        }
-        
-      })
-      
       # Create table based on selected service and metric groups
       output$targetSummary_table <- renderDataTable(datatable({
         
@@ -5481,8 +5455,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           percent(
             as.numeric(
               targets_table_summary$Target[which(
-                targets_table_summary$Metric_Unit == "Percent")],
-                  1))
+                targets_table_summary$Metric_Unit == "Percent")]),
+                  accuracy = 1)
         
         # Update format of metrics as numbers with 2 decimals
         targets_table_summary$Target[which(

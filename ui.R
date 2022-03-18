@@ -711,13 +711,6 @@ ui <-
                       fluidRow(textOutput("targetSummary_title")),
                       tags$head(tags$style("#targetSummary_title{color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 30px}")), br(), br(),
-                      fluidRow(textOutput("targetSummary_message")),
-                      tags$body(tags$style("#targetSummary_message{
-                                           color: #black;
-                                           font-family:Calibri;
-                                           font-style:italic;
-                                           font-size:15px;
-                                           margin-left: 30px")),
                       fluidRow(
                         column(10, 
                                offset = 1,
