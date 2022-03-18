@@ -81,8 +81,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-      # service_input <- "Food Services"
-      # month_input <- "01-2022"
+      # service_input <- "Lab"
+      # month_input <- "11-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
       summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
@@ -5409,8 +5409,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         service_input <- input$selectedService4
         metric_group_input <- input$selectedMetricGroup
-        # service_input <- "Lab"
-        # metric_group_input <- "Overtime Hours"
+
+        # service_input <- "Food Services"
+        # metric_group_input <- metric_group_choices
         
         targets_table <- target_mapping_reference %>%
           filter(Service %in% service_input &
@@ -5434,14 +5435,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         service_input <- input$selectedService4
         metric_group_input <- input$selectedMetricGroup
+        
         # service_input <- "Lab"
-        # metric_group_input <- "Overtime Hours"
+        # metric_group_input <- metric_group_choices
         
         targets_table <- target_mapping_reference %>%
           filter(Service %in% service_input &
                    Metric_Group %in% metric_group_input) %>%
-          select(-Service,
-                 -Metric_Name_Submitted)
+          select(-Service)
         
         # Determine the number of unique targets and status definitions for each metric
         unique_targets_status <- targets_table %>%
@@ -5470,13 +5471,68 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           distinct() %>%
           arrange(Metric_Group, Metric_Name, Site)
         
-        # Reformat any targets that should be displayed as percentages
-        targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")] <-
-          percent(as.numeric(targets_table_summary$Target[str_detect(targets_table_summary$Green_Status, "\\%")]),
-                  accuracy = 1)
+        # Crosswalk with units and format
+        targets_table_summary <- left_join(targets_table_summary,
+                                           metric_unit_filter_new)
+        # 
+        # Update format of metrics as percent
+        targets_table_summary$Target[which(
+          targets_table_summary$Metric_Unit == "Percent")] <-
+          percent(
+            as.numeric(
+              targets_table_summary$Target[which(
+                targets_table_summary$Metric_Unit == "Percent")],
+                  1))
         
+        # Update format of metrics as numbers with 2 decimals
+        targets_table_summary$Target[which(
+          is.na(targets_table_summary$Metric_Unit))] <-
+          as.character(
+            as.numeric(
+              targets_table_summary$Target[which(
+                is.na(targets_table_summary$Metric_Unit))]))
+        
+        # Remove Metric_Unit column
+        targets_table_summary$Metric_Unit <- NULL
+        
+        # Arrange metrics based on metric group
+        targets_table_summary <- targets_table_summary %>%
+          mutate(Metric_Group = factor(
+            Metric_Group,
+            levels = metric_group_order[metric_group_order %in% .$Metric_Group],
+            ordered = TRUE)) %>%
+          arrange(Metric_Group, Metric_Name, Site) %>%
+          mutate(Metric_Group = as.character(Metric_Group)) %>%
+          # select(-Metric_Group) %>%
+          select(-Metric_Name_Submitted)
+        
+        colnames(targets_table_summary)[
+          which(str_detect(colnames(targets_table_summary), "Green"))] <-
+          paste0('<span style="color:',
+                 c("green"),'">',
+                 "Green Status ",
+                 fa('fas fa-circle'),
+                 '</span>')
+        
+        colnames(targets_table_summary)[
+          which(str_detect(colnames(targets_table_summary), "Yellow"))] <-
+          paste0('<span style="color:',
+                 c("#FFD700"),'">',
+                 "Yellow Status ",
+                  fa('fas fa-circle'),
+                 '</span>')
+        
+        colnames(targets_table_summary)[
+          which(str_detect(colnames(targets_table_summary), "Red"))] <-
+          paste0('<span style="color:',
+                 c("red"),'">',
+                 "Red Status ",
+                 fa('fas fa-circle'),
+                 '</span>')
+
         targets_table_summary
         },
+        escape = FALSE,
         rownames = FALSE,
         colnames = str_replace(colnames(targets_table_summary),
                                pattern = "\\_",

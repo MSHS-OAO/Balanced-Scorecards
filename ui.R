@@ -719,7 +719,9 @@ ui <-
                                            font-size:15px;
                                            margin-left: 30px")),
                       fluidRow(
-                        column(12, DT::dataTableOutput("targetSummary_table"))
+                        column(10, 
+                               offset = 1,
+                               DT::dataTableOutput("targetSummary_table"))
                       )
              ), # Close tabPanel Summary
              

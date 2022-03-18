@@ -474,6 +474,9 @@ target_mapping_reference <- target_mapping_v2 %>%
   filter(Target != "Remove") %>%
   distinct()
 
+# target_mapping_reference <- left_join(target_mapping_reference,
+#                                       metric_unit_filter_new)
+
 
 # Source files for processing service line data -------------------
 source("lab_processing.R")
