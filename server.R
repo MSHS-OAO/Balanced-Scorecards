@@ -635,21 +635,31 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       targets_summary2 <- targets_summary %>%
         mutate(across(.cols = everything(),
                       .fns = function(x) {
-                        ifelse(x %in% "Red", paste0('<span style="color:',
+                        ifelse(x %in% "Red", paste0('<div style="text-align:center">',
+                                                    '<span style="color:',
                                                     c("red"),'">',
                                                     fa('fas fa-circle'),
-                                                    '</span>'),
+                                                    '</span>',
+                                                    '</div>'),
                                ifelse(x %in% "Yellow", 
-                                      paste0('<span style="color:',
+                                      paste0('<div style="text-align:center">',
+                                             '<span style="color:',
                                              c("yellow"),'">',
                                              fa('fas fa-circle'),
-                                             '</span>'),
+                                             '</span>',
+                                             '</div>'),
                                       ifelse(x %in% "Green",
-                                             paste0('<span style="color:',
+                                             paste0('<div style="text-align:center">',
+                                                    '<span style="color:',
                                                     c("green"),'">',
                                                     fa('fas fa-circle'),
-                                                    '</span>'),
-                                             x)))
+                                                    '</span>',
+                                                    '</div>'),
+                                             ifelse(is.na(x),
+                                                    paste0('<div style="text-align:center">',
+                                                           '-',
+                                                           '</div>'),
+                                                    x))))
                       }
         ))
 
