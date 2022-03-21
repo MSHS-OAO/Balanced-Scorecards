@@ -722,7 +722,7 @@ ui <-
                         column(12, tableOutput("targetSummary_table") %>% 
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
-             ), # Close tabPanel Summary
+             ) # Close tabPanel Summary
              
           ), # Close NavBar
   

@@ -83,7 +83,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-      # service_input <- "ED"
+      # service_input <- "Patient Transport"
       # month_input <- "12-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -413,7 +413,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Merge FYTD and Current Period Targets
       targets_summary <- left_join(fytd_target, current_target,by = c("Section", "Metric_Name"))
-      targets_summary <- targets_summary[order(factor(targets_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
+      targets_summary <- targets_summary[order(factor(targets_summary$Metric_Name, levels=unique(summary_tab_metrics$Summary_Metric_Name))),] 
       targets_summary <- as.data.frame(targets_summary)
       
       # Create traffic lights for the targets
