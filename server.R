@@ -89,13 +89,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                        filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
       
       # Update summary tab metrics with correct name for Overtime - % (Premier)
-      summary_tab_metrics_new <- summary_tab_metrics %>%
-        mutate(across(.cols = everything(),
-                      .fns = function(x) {
-                        str_replace(x,
-                                    "\\ %\\ \\(Premier\\)",
-                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-                      }))
+      # summary_tab_metrics_new <- summary_tab_metrics %>%
+      #   mutate(across(.cols = everything(),
+      #                 .fns = function(x) {
+      #                   str_replace(x,
+      #                               "\\ %\\ \\(Premier\\)",
+      #                               "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+      #                 }))
+      
+      summary_tab_metrics_new <- metric_mapping_summary_site %>%
+        filter(Service == service_input) %>%
+        select(-General_Group, -Display_Order)
+      
+      summary_metric_group_order <- unique(summary_tab_metrics_new$Metric_Group)
+      
+      summary_metric_name_order <- unique(summary_tab_metrics_new$Metric_Name_Summary)
       
       # # Target mappings using original structure
       # target_section_metrics <- unique((target_mapping %>%  #target_mapping is read in from excel sheet in target mapping file
@@ -128,17 +136,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Filter data by service specific metrics using new structure
       data <- left_join(summary_tab_metrics_new, metrics_final_df_new,
-                        by = c("Service",
-                               "Metric_Group",
-                               "Metric_Name"))
+                        by = c("Service" = "Service",
+                               "Metric_Group" = "Metric_Group",
+                               "Metric_Name_Breakout" = "Metric_Name"))
       
       # Crosswalk data with metric targets and status definitions
       data <- left_join(data,
                         metric_targets_status,
-                        by = c("Service",
-                               "Site",
-                               "Metric_Group",
-                               "Metric_Name"))
+                        by = c("Service" = "Service",
+                               "Site" = "Site",
+                               "Metric_Group" = "Metric_Group",
+                               "Metric_Name_Breakout" = "Metric_Name",
+                               "Metric_Name_Submitted" = "Metric_Name_Submitted"))
       
       data <- data %>%
         # Determine status based on status definitions
@@ -161,13 +170,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Data Period Filtering
       period_filter <- data %>% 
         group_by(Metric_Group,
-                 Metric_Name,
+                 Metric_Name_Summary,
+                 Metric_Name_Breakout,
                  Reporting_Month_Ref,
                  Premier_Reporting_Period) %>% 
         #distinct() %>%
         summarise(total = n()) %>%                                                            #
-        arrange(Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
-        group_by(Metric_Group, Metric_Name) %>%
+        arrange(Metric_Group, Metric_Name_Summary,
+                Metric_Name_Breakout, desc(Reporting_Month_Ref)) %>%
+        group_by(Metric_Group, Metric_Name_Summary, Metric_Name_Breakout) %>%
         mutate(id = row_number())
         
       
@@ -175,7 +186,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_summary_data <- left_join((period_filter %>% filter(id == 1)),
                                         data,
                                         by = c("Metric_Group",
-                                               "Metric_Name",
+                                               "Metric_Name_Summary",
+                                               "Metric_Name_Breakout",
                                                "Reporting_Month_Ref",
                                                "Premier_Reporting_Period"))  #Take all most recent data (id = 1) and merge with all data 
 
@@ -186,10 +198,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          Premier_Reporting_Period))  ## Create Current Period column if it's premier say when it ends
       
       current_summary <- current_summary[, c("Metric_Group",
-                                             "Summary_Metric_Name",
+                                             "Metric_Name_Summary",
                                              "Current Period",
                                              "Site",
-                                             "value_rounded")]
+                                             "value_rounded",
+                                             "Metric_Unit")]
       
       # Remove any duplicates
       # Should we fix the code so there are no duplicates anyway?
@@ -197,13 +210,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Think about renaming columns at the end
       current_summary <- current_summary %>%
-        `colnames<-` (c("Section",
-                        "Metric_Name",
-                        "Current Period",
-                        "Site",
-                        "value_rounded")) %>%
+        # rename(Metric_Name = Metric_Name_Summary) %>%
+        # `colnames<-` (c("Section",
+        #                 "Metric_Name",
+        #                 "Current Period",
+        #                 "Site",
+        #                 "value_rounded")) %>%
         mutate(Section = "Metrics") %>%
-        pivot_wider(names_from = Site, values_from = value_rounded)
+        relocate(Section) %>%
+        ungroup() %>%
+        select(-Metric_Group) %>%
+        pivot_wider(names_from = Site, values_from = value_rounded) #%>%
+        # mutate(Metric_Name_Summary = factor(Metric_Name_Summary,
+        #                                     levels = summary_metric_name_order,
+        #                                     ordered = TRUE)) %>%
+        # arrange(Metric_Name_Summary) %>%
+        # mutate(Metric_Name_Summary = as.character(Metric_Name_Summary))
 
       # Identify any sites missing for the summary and add them with NA values
       missing_sites <- setdiff(sites_inc, names(current_summary))
@@ -213,11 +235,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fytd_period <- period_filter %>%        #Get all data from YTD
         # Remove monthly Press Ganey and HCAHPS data from YTD sections since there is separate YTD data for this
         filter(!(Metric_Group %in% c("Press Ganey Score", "HCAHPS (60 day lag)"))) %>%
-        group_by(Metric_Group, Metric_Name) %>%
+        group_by(Metric_Group, Metric_Name_Summary, Metric_Name_Breakout) %>%
         #filter(total == max(total)) %>%
         #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
         filter(format(Reporting_Month_Ref, "%Y",) == max(format(Reporting_Month_Ref, "%Y"))) %>%
-        group_by(Metric_Group, Metric_Name) %>%
+        group_by(Metric_Group, Metric_Name_Summary, Metric_Name_Breakout) %>%
         mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
                                               paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
                                               ifelse(which.max(id) == 1,
@@ -231,15 +253,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fytd_summary_all <- left_join(fytd_period,
                                     data,
                                     by = c("Metric_Group",
-                                           "Metric_Name",
+                                           "Metric_Name_Summary",
+                                           "Metric_Name_Breakout",
                                            "Reporting_Month_Ref",
                                            "Premier_Reporting_Period"),
                                     all = TRUE)
       
       fytd_summary_total <- fytd_summary_all %>%
-        filter(Metric_Name %in% c("Budget to Actual MOM", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Name_Summary %in% c("Budget to Actual MOM",
+                                          "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
-        group_by(Site, Metric_Group, Metric_Name, Summary_Metric_Name, `Fiscal Year to Date`) %>%
+        group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name_Breakout, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
         ungroup()
       
@@ -297,13 +321,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           rename(value_rounded = value)
         
         # Identify Press Ganey metrics to include in Summary tab
-        pg_summary_tab_metrics <- summary_metric_filter %>%
-          filter(Service %in% service_input) %>%
-          select(Service,
-                 Metric_Group,
-                 Metric_Name,
-                 Metric_Name_Submitted,
-                 Summary_Metric_Name)
+        # pg_summary_tab_metrics <- summary_metric_filter %>%
+        #   filter(Service %in% service_input) %>%
+        #   select(Service,
+        #          Metric_Group,
+        #          Metric_Name,
+        #          Metric_Name_Submitted,
+        #          Summary_Metric_Name)
+        
+        pg_summary_tab_metrics <- metric_mapping_summary_site %>%
+          filter(Service %in% service_input &
+                   General_Group %in% "Patient Experience") %>%
+          select(-General_Group, -Display_Order, -Metric_Unit,
+                 Service, Metric_Group, Metric_Name_Summary,
+                 Metric_Name_Breakout, Metric_Name_Submitted)
 
         # Crosswalk Press Ganey YTD data with Summary tab metrics
         pg_ytd_reformat <- left_join(pg_ytd_reformat,
@@ -313,7 +344,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         pg_ytd_reformat <- pg_ytd_reformat %>%
           # Filter on 
-          filter(!is.na(Summary_Metric_Name) &
+          filter(!is.na(Metric_Name_Summary) &
                    Reporting_Month_Ref == max(Reporting_Month_Ref)) %>%
           mutate(`Fiscal Year to Date` = ifelse(month(Reporting_Month_Ref) == 1 &
                                                   month(Reporting_Date_Start) == 1,
@@ -338,27 +369,30 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # FYTD Summary Table - for average 
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
-        filter(Metric_Name %!in% c("Budget to Actual MOM", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Name_Summary %!in% c("Budget to Actual MOM", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
                  Metric_Group,
-                 Metric_Name,
-                 Summary_Metric_Name,
+                 Metric_Name_Summary,
+                 Metric_Name_Breakout,
                  `Fiscal Year to Date`) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
-        mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc_new,
-                                      round(value_rounded, 2),
-                                      round(value_rounded))) %>%
+        # mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc_new,
+        #                               round(value_rounded, 2),
+        #                               round(value_rounded))) %>%
         ungroup()
     
       # Merge for summary 
       fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pg_ytd_reformat)
       fytd_summary <- fytd_merged
-      fytd_summary$Metric_Name <- NULL
+      # fytd_summary$Metric_Name_Breakout <- NULL
       fytd_summary <- fytd_summary %>%
-        `colnames<-` (c("Site","Section","Metric_Name", "Fiscal Year to Date","value_rounded")) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded) %>%
-        mutate(Section = "Metrics")
+        select(-Metric_Group, -Metric_Name_Breakout) %>%
+        mutate(Section = "Metrics") %>%
+        relocate(Section) %>%
+        # `colnames<-` (c("Site","Section","Metric_Name", "Fiscal Year to Date","value_rounded")) %>%
+        pivot_wider(names_from = Site, values_from = value_rounded) #%>%
+        # mutate(Section = "Metrics")
 
       missing_sites <- setdiff(sites_inc, names(fytd_summary))
       fytd_summary[missing_sites] <- NA
@@ -366,7 +400,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Merge FYTD and Current Period Metrics Summary 
-      metrics_summary <- merge(fytd_summary, current_summary, by = c("Section","Metric_Name"), all = TRUE)
+      metrics_summary <- merge(fytd_summary, current_summary,
+                               by = c("Section","Metric_Name_Summary"), all = TRUE)
       
       # Comment out reordering until the end
       # metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
@@ -377,17 +412,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Crosswalk metrics with their units and format
       # metrics_summary$Metric_Unit <- metric_unit_filter_summary_new$Metric_Unit[match(metrics_summary$Metric_Name, 
       #                                                                             metric_unit_filter_summary_new$Summary_Metric_Name)]
-      
-      metrics_summary <- left_join(metrics_summary,
-                                   metric_unit_filter_summary_new,
-                                   by = c("Metric_Name" = "Summary_Metric_Name"))
+      # DON'T THINK WE NEED THIS ANYMORE SINCE METRIC_UNIT IS IN METRICS_SUMMARY
+      # metrics_summary <- left_join(metrics_summary,
+      #                              metric_unit_filter_summary_new,
+      #                              by = c("Metric_Name" = "Summary_Metric_Name"))
       
       metrics_summary <- metrics_summary %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit),
-                                          prettyNum(round(.), big.mark = ','),
+                                          prettyNum(round(., digits = 1),
+                                                    big.mark = ','),
                                           ifelse(Metric_Unit == "Dollar",
                                                  dollar(round(.)),
-                                                 percent(.,1)))))
+                                                 percent(.,0.1)))))
       
       # Remove Metric_Unit column once numbers have been formatted
       metrics_summary$Metric_Unit <- NULL
@@ -416,10 +452,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       metrics_summary[is.na(metrics_summary)] <- "-"
       
       # Reorder rows based on Summary Tab Metrics order
-      metrics_summary <- metrics_summary[
-        order(factor(metrics_summary$Metric_Name,
-                     levels=unique(summary_tab_metrics_new$Metric_Name))), ] 
-      row.names(metrics_summary) <- NULL
+      # metrics_summary_old <- metrics_summary[
+      #   order(factor(metrics_summary$Metric_Name_Summary,
+      #                levels=unique(summary_tab_metrics_new$Metric_Name_Summary))), ] 
+      # row.names(metrics_summary_old) <- NULL
+      
+      metrics_summary <- metrics_summary %>%
+        mutate(Metric_Name_Summary = factor(Metric_Name_Summary,
+                                            levels = summary_metric_name_order,
+                                            ordered = TRUE)) %>%
+        arrange(Metric_Name_Summary) %>%
+        mutate(Metric_Name_Summary = as.character(Metric_Name_Summary))
       
       # Code for comparing metrics to targets and displaying statuses ------------
       # # Current Period Target (Original)

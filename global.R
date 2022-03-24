@@ -200,7 +200,7 @@ home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Op
 start_shared <- "J:"
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping KEN.xlsx")
 # target_mapping_path <- ("C:/Users/villea04/Downloads/MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
@@ -307,6 +307,7 @@ metric_unit_filter_new <- metric_unit_filter_new %>%
   select(-Metric_Name)
 
 # Reactive Data Functions --------------------------------------------------------------------------
+## CAN THESE VARIABLES/FUNCTIONS BE REMOVED? THEY DON'T APPEAR TO BE USED ANYWHERE.
 ## Summary Tab Data
 groupByFilters_1 <- function(dt, campus, service){
   result <- dt %>% filter(Site %in% campus, Service %in% service)
@@ -324,6 +325,7 @@ sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
 
 # Metric Group Order ------------------------------------------------------------------------------- 
 # metric_group_order <- c("Productivity", "Overtime Hours", "Budget to Actual")
+## CAN THIS BE REMOVED? WE REDEFINE THIS IN SERVER.R
 metric_group_order <- metric_grouping_order
 
 # Summary Tab Metrics ------------------------------------------------------------------------------ 
@@ -332,6 +334,7 @@ metric_group_order <- metric_grouping_order
 #                               "Budget to Actual Variance - Total")
 # summary_tab_metrics <- as.factor(unique(summary_metric_filter$Metric_Group))
 
+## CAN THIS BE REMOVED? NOT USED ANYWHERE
 summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
                         "Overtime Dollars - % (Finance)") 
 
@@ -356,7 +359,7 @@ report_date_mapping <- read_excel(target_mapping_path,
                                   sheet = "Report Dates",  col_names = TRUE, na = c("", "NA")) # Premier reporting-dashboard date mapping 
 
 
-
+## Redundant to metric_grouping_filter
 metric_group_mapping <- read_excel(target_mapping_path, 
                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
@@ -447,22 +450,6 @@ metrics_final_df_new <- metrics_final_df %>%
   mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
                               "Overtime Hours - % (Premier)", Metric_Name))
 
-# target_mapping_new <- target_mapping_v2 %>%
-#   select(-Range_1, -Range_2, -Status) %>%
-#   filter(Target != "Remove") %>%
-#   group_by(Service,
-#            Site,
-#            Metric_Group,
-#            Metric_Name,
-#            Target,
-#            Green_Status,
-#            Yellow_Status,
-#            Red_Status,
-#            Green_Start, Green_End,
-#            Yellow_Start, Yellow_End,
-#            Red_Start, Red_End) %>%
-#   summarize(nRow = n())
-
 target_mapping_analysis <- target_mapping_v2 %>%
   select(-Range_1, -Range_2, -contains("Status")) %>%
   filter(!(Target %in% c("Remove", "Budget"))) %>%
@@ -476,6 +463,40 @@ target_mapping_reference <- target_mapping_v2 %>%
 
 # target_mapping_reference <- left_join(target_mapping_reference,
 #                                       metric_unit_filter_new)
+
+metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
+
+high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
+
+metric_mapping_summary_site <- metric_mapping_raw %>%
+  # Remove Data Table column since it isn't used anywhere
+  # Remove columns ending in _Incl since this is used for the KPI Breakout tab
+  select(-`Data Table`, -contains("_Incl")) %>%
+  # Pivot longer based on service line columns
+  pivot_longer(cols = contains("_Order"),
+               names_to = "Service",
+               values_to = "Display_Order") %>%
+  # Remove any metrics that are not displayed in the Summary or Site tabs
+  filter(!is.na(Display_Order)) %>%
+  # Convert General_Group to an ordered factor
+  # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
+  mutate(General_Group = factor(General_Group,
+                                levels = high_level_order,
+                                ordered = TRUE)) %>%
+  # Arrange by service line, general grouping, and display order to ensure consistency
+  arrange(Service, General_Group, Display_Order) %>%
+  mutate(
+    # Remove _Order from service column
+    Service = str_extract(Service, ".*(?=_Order)"),
+    # Convert General_Group from factor back to character now that data is ordered properly
+    General_Group = as.character(General_Group),
+    # Update Overtime Hours - % (Premier)
+    across(.cols = everything (),
+           .fns = function(x) {
+             str_replace(x,
+                         "\\ %\\ \\(Premier\\)",
+                         "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+             }))
 
 
 # Source files for processing service line data -------------------
