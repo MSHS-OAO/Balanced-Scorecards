@@ -918,8 +918,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       )
 
       # Code Starts ---------------------------------------------------------------------------------
-      summary_tab_metrics <- unique((summary_metric_filter %>%
-                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
+      # summary_tab_metrics <- unique((summary_metric_filter %>%
+      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
       
       
       # Update summary tab metrics with correct name for Overtime - % (Premier)
@@ -1433,6 +1433,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          "\\ %\\ \\(Premier\\)",
                                          "\\ Hours\\ \\-\\ %\\ \\(Premier\\)"))
       
+      breakout_tab_metrics_new <- metric_mapping_breakout %>%
+        filter(Service %in% service_input) %>%
+        select(-General_Group, -Metric_Name_Summary, -Display_Order)
+      
+      metric_group_order <- unique(breakout_tab_metrics_new$Metric_Group)
+      
+      metric_name_order <- unique(breakout_tab_metrics_new$Metric_Name_Breakout)
+      
       # Subset target mapping to select Metric_Group and Metric_Names to displayed
       # in status indicator section based on the selected service line
       status_section_metrics <- target_mapping_analysis %>%
@@ -1470,6 +1478,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Ungroup
         ungroup()
       
+      # Try to do this the same was we do it in the Summary and Site tabs for consistency
+      # First crosswalk metrics to include and metrics_final_df
+      data_new <- left_join(breakout_tab_metrics_new,
+                            metrics_final_df_new,
+                            by = c("Service" = "Service",
+                                   "Metric_Group" = "Metric_Group",
+                                   "Metric_Name_Breakout" = "Metric_Name"))
+      
+      data_new <- data_new %>%
+        filter(Service %in% service_input,
+               Site %in% site_input,
+               Reporting_Month_Ref <= current_period,
+               Reporting_Month_Ref >= current_period - months(11)) %>%
+        arrange(Site, Metric_Group, Metric_Name_Breakout,
+                desc(Reporting_Month_Ref)) %>%
+        group_by(Site, Metric_Group, Metric_Name_Breakout) %>%
+        mutate(id = row_number()) %>%
+        ungroup()
+      
+      # Do we need this?
       months <- metrics_final_df_new %>% 
         filter(Service == service_input) %>% # input$selectedService
         filter(Site == site_input) %>%
@@ -1491,7 +1519,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Crosswalk with months
       data <- left_join(data, months,
-                            by = "Reporting_Month_Ref")
+                        by = "Reporting_Month_Ref")
       
       # Crosswalk with breakout tab metrics to bring in Metric_Name_Submitted
       data <- left_join(data, breakout_tab_metrics,
@@ -1508,6 +1536,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                "Metric_Group", "Metric_Name",
                                "Metric_Name_Submitted"))
       
+      data_new <- left_join(data_new,
+                            metric_targets_status,
+                            by = c("Service",
+                                   "Site",
+                                   "Metric_Group",
+                                   "Metric_Name_Breakout" = "Metric_Name",
+                                   "Metric_Name_Submitted"))
+      
       # Determine status based on status definitions
       data <- data %>%
         mutate(Status = ifelse(is.na(Target), NA,
@@ -1523,6 +1559,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         select(-contains(c("_Start", "_End")), -Metric_Name) %>%
         rename(Metric_Name = Metric_Name_Submitted)
       
+      # Determine status based on status definitions
+      data_new <- data_new %>%
+        mutate(Status = ifelse(is.na(Target), NA,
+                               ifelse(between(value_rounded,
+                                              Green_Start, Green_End),
+                                      "Green",
+                                      ifelse(between(value_rounded,
+                                                     Yellow_Start, Yellow_End),
+                                             "Yellow",
+                                             ifelse(between(value_rounded,
+                                                            Red_Start, Red_End),
+                                                    "Red", NA))))) %>%
+        select(-contains(c("_Start", "_End")), -Metric_Name_Submitted) %>%
+        rename(Metric_Name = Metric_Name_Breakout)
+      
       # Selected Month/Year Metric
       # Current Period Table
       current_site_breakdown <- data %>%
@@ -1535,6 +1586,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                            "value_rounded",
                                                            "Status",
                                                            "Target")]
+      
+      current_site_breakdown_new <- data_new %>%
+        filter(Reporting_Month_Ref == current_period) %>%
+        select(Metric_Group, Metric_Name, Metric_Unit,
+               value_rounded, Status, Target)
       
       # Convert to data frame for color formatting
       current_site_breakdown <- as.data.frame(current_site_breakdown)
