@@ -1437,6 +1437,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(Service %in% service_input) %>%
         select(-General_Group, -Metric_Name_Summary, -Display_Order)
       
+      # Create a data frame with units for each metric.
+      # Crosswalk this after current period, past average, and past breakout are merged to ensure all
+      # metrics with units are accurately represented
+      breakout_tab_metrics_units <- breakout_tab_metrics_new %>%
+        select(Metric_Group, Metric_Name_Breakout, Metric_Unit)
+      
       metric_group_order <- unique(breakout_tab_metrics_new$Metric_Group)
       
       metric_name_order <- unique(breakout_tab_metrics_new$Metric_Name_Breakout)
@@ -1493,11 +1499,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                Reporting_Month_Ref >= current_period - months(11)) %>%
         arrange(Site, Metric_Group, Metric_Name_Breakout,
                 desc(Reporting_Month_Ref)) %>%
-        group_by(Site, Metric_Group, Metric_Name_Breakout) %>%
-        mutate(id = row_number()) %>%
-        ungroup()
+        distinct()
       
       # Do we need this?
+      # This will be needed until duplicate monthly entries are corrected in metrics_final_df
       months <- metrics_final_df_new %>% 
         filter(Service == service_input) %>% # input$selectedService
         filter(Site == site_input) %>%
@@ -1520,6 +1525,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Crosswalk with months
       data <- left_join(data, months,
                         by = "Reporting_Month_Ref")
+      
+      data_new <- left_join(data_new, months,
+                            by = "Reporting_Month_Ref")
       
       # Crosswalk with breakout tab metrics to bring in Metric_Name_Submitted
       data <- left_join(data, breakout_tab_metrics,
@@ -1571,8 +1579,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                              ifelse(between(value_rounded,
                                                             Red_Start, Red_End),
                                                     "Red", NA))))) %>%
-        select(-contains(c("_Start", "_End")), -Metric_Name_Submitted) %>%
-        rename(Metric_Name = Metric_Name_Breakout)
+        select(-contains(c("_Start", "_End")), -Metric_Name_Submitted)
       
       # Selected Month/Year Metric
       # Current Period Table
@@ -1589,74 +1596,107 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       current_site_breakdown_new <- data_new %>%
         filter(Reporting_Month_Ref == current_period) %>%
-        select(Metric_Group, Metric_Name, Metric_Unit,
+        select(Metric_Group, Metric_Name_Breakout, Metric_Unit,
                value_rounded, Status, Target)
       
       # Convert to data frame for color formatting
       current_site_breakdown <- as.data.frame(current_site_breakdown)
+      current_site_breakdown_new <- as.data.frame(current_site_breakdown_new)
       
       validate(
         need(nrow(current_site_breakdown) != 0, "Please choose a different site, the currently selected site does not have data asscoiated with it")
       )
       
-      ## Create target traffic lights for current month metrics
-      # Create traffic lights for the targets
-      col_red <- which(current_site_breakdown == "Red", arr.ind = TRUE)
-      col_red_rows <- as.integer(col_red[,1])
-      col_red_cols <- as.integer(col_red[,2])
-      col_yellow <- which(current_site_breakdown == "Yellow", arr.ind = TRUE)
-      col_green <- which(current_site_breakdown == "Green", arr.ind = TRUE)
-      
-      colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
-      
-      if(nrow(colors_comb) != 0){
-        for (i in 1:nrow(colors_comb)){
-          current_site_breakdown[colors_comb[i,1],colors_comb[i,2]] <-
-            fa('fas fa-circle')
-        }
-      }
-      
-      if(nrow(col_red) != 0){
-        for (i in 1:nrow(col_red)){
-          current_site_breakdown[col_red[i,1],col_red[i,2]] <-
-            cell_spec(current_site_breakdown[col_red[i,1],
-                                             col_red[i,2]],
-                      'html', color = 'red', escape = FALSE)
-        }
-      }
-      
-      if(nrow(col_green) != 0){
-        for(i in 1:nrow(col_green)){
-          current_site_breakdown[col_green[i,1],col_green[i,2]] <-
-            cell_spec(current_site_breakdown[col_green[i,1],
-                                             col_green[i,2]],
-                      'html', color = 'green', escape = FALSE)
-        }
-      }
-      
-      if(nrow(col_yellow != 0)){
-        for (i in 1:nrow(col_yellow)){
-          current_site_breakdown[col_yellow[i,1],col_yellow[i,2]] <-
-            cell_spec(current_site_breakdown[col_yellow[i,1],
-                                             col_yellow[i,2]],
-                      'html', color = 'yellow', escape = FALSE)
-        }
-      }
-      
+      # ## Create target traffic lights for current month metrics
+      # # Create traffic lights for the targets
+      # col_red <- which(current_site_breakdown == "Red", arr.ind = TRUE)
+      # col_red_rows <- as.integer(col_red[,1])
+      # col_red_cols <- as.integer(col_red[,2])
+      # col_yellow <- which(current_site_breakdown == "Yellow", arr.ind = TRUE)
+      # col_green <- which(current_site_breakdown == "Green", arr.ind = TRUE)
+      # 
+      # colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
+      # 
+      # if(nrow(colors_comb) != 0){
+      #   for (i in 1:nrow(colors_comb)){
+      #     current_site_breakdown[colors_comb[i,1],colors_comb[i,2]] <-
+      #       fa('fas fa-circle')
+      #   }
+      # }
+      # 
+      # if(nrow(col_red) != 0){
+      #   for (i in 1:nrow(col_red)){
+      #     current_site_breakdown[col_red[i,1],col_red[i,2]] <-
+      #       cell_spec(current_site_breakdown[col_red[i,1],
+      #                                        col_red[i,2]],
+      #                 'html', color = 'red', escape = FALSE)
+      #   }
+      # }
+      # 
+      # if(nrow(col_green) != 0){
+      #   for(i in 1:nrow(col_green)){
+      #     current_site_breakdown[col_green[i,1],col_green[i,2]] <-
+      #       cell_spec(current_site_breakdown[col_green[i,1],
+      #                                        col_green[i,2]],
+      #                 'html', color = 'green', escape = FALSE)
+      #   }
+      # }
+      # 
+      # if(nrow(col_yellow != 0)){
+      #   for (i in 1:nrow(col_yellow)){
+      #     current_site_breakdown[col_yellow[i,1],col_yellow[i,2]] <-
+      #       cell_spec(current_site_breakdown[col_yellow[i,1],
+      #                                        col_yellow[i,2]],
+      #                 'html', color = 'yellow', escape = FALSE)
+      #   }
+      # }
+      # Simpler way for color coding status
+      current_site_breakdown_new <- current_site_breakdown_new %>%
+        mutate(Status = ifelse(Status %in% c("Red", "Yellow", "Green"),
+                               paste0('<div style="text-align:center">',
+                                      '<span style="color:',
+                                      Status,'">',
+                                      fa('fas fa-circle'),
+                                      '</span>',
+                                      '</div>'),
+                               paste0('<div style="text-align:center">',
+                                      '-',
+                                      '</div>')))
       
       # Previous Months Summary
       ## Past 12 months of Summary In
       past_avg_site <- data %>%
-        # Is the <=13 filter needed?
+        # Is the <=13 filter needed since we've already filtered on month?
         filter(id >= 2 & id <= 13) %>%
         group_by(Metric_Group, Metric_Name) %>%
         summarise(`Avg. of Past Months Shown` = mean(value_rounded,
                                                      na.rm = TRUE))
       
+      past_avg_site_new <- data_new %>%
+        # Is the <=13 filter needed since we've already filtered on month?
+        # filter(id >= 2 & id <= 13) %>%
+        filter(id >= 2) %>%
+        group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit) %>%
+        summarise(`Avg. of Past Months Shown` = mean(value_rounded,
+                                                     na.rm = TRUE))
+      
+      
       ## Breakdown of prior 12 months
       past_site_breakdown <- data %>%
+        # Again, not sure if we need id <= 13 here
         filter(id >= 2 & id <= 13) %>%
         group_by(Metric_Group, Metric_Name, Reporting_Month_Ref) %>%
+        summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
+        arrange(Reporting_Month_Ref) %>%
+        mutate(Reporting_Month_Ref = format(
+          as.Date(Reporting_Month_Ref, format = "%Y-%m-%d"),"%b-%Y")) %>%
+        pivot_wider(names_from = Reporting_Month_Ref,
+                    values_from = value_rounded)
+      
+      past_site_breakdown_new <- data_new %>%
+        filter(id >= 2) %>%
+        group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit,
+                 Reporting_Month_Ref) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
         arrange(Reporting_Month_Ref) %>%
         mutate(Reporting_Month_Ref = format(
@@ -1676,12 +1716,29 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                   past_site_breakdown,
                                   by = c("Metric_Group","Metric_Name"))
       
+      breakdown_all_site_new <- merge(current_site_breakdown_new,
+                                      past_avg_site_new,
+                                      by = c("Metric_Group",
+                                             "Metric_Name_Breakout",
+                                             "Metric_Unit"),
+                                      all = TRUE)
+      
+      breakdown_all_site_new <- merge(breakdown_all_site_new,
+                                      past_site_breakdown_new,
+                                      by = c("Metric_Group",
+                                             "Metric_Name_Breakout",
+                                             "Metric_Unit"),
+                                      all = TRUE)
+      
       # Not sure that we need to order these yet
       # breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(breakout_tab_metrics$Metric_Group))),] 
       # metric_group_order <- as.vector(unique(breakdown_all_site$Metric_Group))
       
       # Rename value_rounded column with selected reporting period
       names(breakdown_all_site)[names(breakdown_all_site) == 'value_rounded'] <-
+        format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
+      
+      names(breakdown_all_site_new)[names(breakdown_all_site_new) == 'value_rounded'] <-
         format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
       
       # Format units
@@ -1692,10 +1749,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       #                        all.x = TRUE)
       
       # Crosswalk with units and format appropriately
-      breakdown_all_site <- left_join(breakdown_all_site,
-                                      metric_unit_filter_new,
-                                      by = c("Metric_Group" = "Metric_Group",
-                                             "Metric_Name" = "Metric_Name_Submitted"))
+      # breakdown_all_site <- left_join(breakdown_all_site,
+      #                                 metric_unit_filter_new,
+      #                                 by = c("Metric_Group" = "Metric_Group",
+      #                                        "Metric_Name" = "Metric_Name_Submitted"))
       
       breakdown_all_site <- breakdown_all_site %>%
         mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit),
@@ -1704,6 +1761,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                  dollar(round(.)),
                                                  percent(.,1))))) %>%
         select(-Metric_Unit)
+      
       # 
       # breakdown_all_site$Metric_Unit <- NULL
       
@@ -1733,11 +1791,53 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            NA_character_)) %>%
         replace(is.na(.), "-")
       
+      
       breakdown_all_site <- breakdown_all_site[order(
         factor(breakdown_all_site$Metric_Group,
                levels=unique(breakout_tab_metrics$Metric_Group))), ] 
       
       row.names(breakdown_all_site) <- NULL
+      
+      
+      breakdown_all_site_new <- breakdown_all_site_new %>%
+        mutate(
+          # Format numbers based on metric unit
+          across(where(is.numeric),
+                 .fns = function(x) {
+                   ifelse(Metric_Unit %in% "Dollar",
+                          dollar(round(x)),
+                          ifelse(Metric_Unit %in% "Percent",
+                                 percent(x, 0.1),
+                                 prettyNum(round(x, digits = 1),
+                                           big.mark = ",")))
+                      }),
+          # Remove metric_unit column
+          Metric_Unit = NULL,
+          # Replace NAs
+          across(.cols = everything(),
+                 .fns = function(x) {
+                   str_replace(x,
+                               pattern = paste("NA",
+                                               "NaN",
+                                               "NA%",
+                                               "%NA",
+                                               "NaN%",
+                                               "$NaN",
+                                               sep = "|"),
+                               NA_character_)
+                   })) %>%
+        replace(is.na(.), "-") %>%
+        # Reorder rows based on Metric_Group and Metric_Name_Breakout
+        mutate(Metric_Group = factor(Metric_Group,
+                                     levels = metric_group_order,
+                                     ordered = TRUE),
+               Metric_Name_Breakout = factor(Metric_Name_Breakout,
+                                             levels = metric_name_order,
+                                             ordered = TRUE)) %>%
+        arrange(Metric_Group, Metric_Name_Breakout) %>%
+        mutate(Metric_Group = as.character(Metric_Group),
+               Metric_Name_Breakout = as.character(Metric_Name_Breakout))
+
       
       # How do we account for things like "Budget to Actual - Labor", "Budget to Actual - NonLabor", etc.?
       # Changed this to use dplyr but think this needs to be reviewed given the metrics displayed in this tab
@@ -1748,6 +1848,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(Target = ifelse(Metric_Name %in% c("Variance to Budget"),
                                ">= Budget",
                                ifelse(Metric_Name %in% c("Budget to Actual MOM"),
+                                      "<= Budget", Target)))
+      
+      breakdown_all_site_new <- breakdown_all_site_new %>%
+        mutate(Target = ifelse(Metric_Name_Breakout %in% c("Variance to Budget"),
+                               ">= Budget",
+                               ifelse(Metric_Name_Breakout %in% c("Budget to Actual MOM"),
                                       "<= Budget", Target)))
       
       # Determine order metrics should appear
