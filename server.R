@@ -1604,7 +1604,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_site_breakdown_new <- as.data.frame(current_site_breakdown_new)
       
       validate(
-        need(nrow(current_site_breakdown) != 0, "Please choose a different site, the currently selected site does not have data asscoiated with it")
+        need(nrow(current_site_breakdown_new) != 0, "Please choose a different site, the currently selected site does not have data asscoiated with it")
       )
       
       # ## Create target traffic lights for current month metrics
@@ -1857,7 +1857,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       "<= Budget", Target)))
       
       # Determine order metrics should appear
-      metric_group_order <- as.vector(unique(
+      metric_group_order_old <- as.vector(unique(
         breakout_tab_metrics$Metric_Group[
           which(breakout_tab_metrics$Metric_Group %in%
                   breakdown_all_site$Metric_Group)]))
@@ -1865,43 +1865,57 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       factor_ordering <- table(breakdown_all_site$Metric_Group)
       factor_ordering <- factor_ordering[order(
         factor(names(factor_ordering),
+               levels = metric_group_order_old))]
+      
+      factor_ordering_new <- table(breakdown_all_site_new$Metric_Group)
+      factor_ordering_new <- factor_ordering_new[order(
+        factor(names(factor_ordering_new),
                levels = metric_group_order))]
       
 
       
       ## Get the months in the df
-      month_included <- breakdown_all_site %>%
-        select(-Metric_Name,-Metric_Group,-Status,-Target,-`Avg. of Past Months Shown`)
+      month_included <- breakdown_all_site_new %>%
+        select(-Metric_Name_Breakout, -Metric_Group,
+               -Status, -Target, -`Avg. of Past Months Shown`)
 
       original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
 
       #Subtract 12 months from the latest month drop the day and add the first of the month back in
-      latest_month_shown <- as.Date(paste0(format(original_columns[1] %m-% months(11), "%Y-%m"), "-01"), format = "%Y-%m-%d")
+      # NOTE: IS THIS LATEST MONTH OR EARLIEST MONTH?
+      latest_month_shown <- as.Date(paste0(
+        format(original_columns[1] %m-% months(11), "%Y-%m"), "-01"),
+        format = "%Y-%m-%d")
 
       columns_being_removed <- which(original_columns < latest_month_shown)
       columns_being_removed <- original_columns[columns_being_removed]
       columns_being_removed <- format(columns_being_removed, "%b-%Y")
 
 
-      breakdown_all_site <- breakdown_all_site %>% select(-all_of(columns_being_removed))
+      breakdown_all_site_new <- breakdown_all_site_new %>%
+        select(-all_of(columns_being_removed))
 
       ### Add missing months
-      months_breakdown <-  breakdown_all_site %>%
-        select(-Metric_Name,-Metric_Group,-Status,-Target,-`Avg. of Past Months Shown`)
-      months_breakdown <- as.Date(sprintf("%s-01",colnames(months_breakdown)), "%b-%Y-%d")
+      months_breakdown <-  breakdown_all_site_new %>%
+        select(-Metric_Name_Breakout, -Metric_Group,
+               -Status, -Target, -`Avg. of Past Months Shown`)
+      
+      months_breakdown <- as.Date(sprintf("%s-01", colnames(months_breakdown)),
+                                  "%b-%Y-%d")
 
       complete_months <- seq.Date(min(months_breakdown), max(months_breakdown), by= 'month')
 
       missing_months <- which(!(complete_months %in% months_breakdown))
       missing_months <- as.character(format(complete_months[missing_months], "%b-%Y"))
-
-      breakdown_all_site[,missing_months] <- NA
-
-
+      
+      # Do we need to do anything to format the order this occurs in?
+      breakdown_all_site_new[, missing_months] <- NA
 
       #breakdown_all <- breakdown_all %>% relocate(`Aug-2021`, .before = `Mar-2021`) ##to test ordering
-
-      subset_data <- breakdown_all_site[,8:ncol(breakdown_all_site)]
+      
+      # QUESTION: Why do we start at column 8 here?
+      # Can any of this be simplified?
+      subset_data <- breakdown_all_site_new[, 8:ncol(breakdown_all_site_new)]
 
       date_names <- sprintf("%s-01",colnames(subset_data))
       colnames(subset_data) <- date_names
@@ -1910,19 +1924,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       subset_data <- subset_data[order(dates_order)]
 
 
-      breakdown_all_site <- breakdown_all_site[,1:7]
-      breakdown_all_site <- bind_cols(breakdown_all_site, subset_data)
+      breakdown_all_site_new <- breakdown_all_site_new[, 1:7]
+      breakdown_all_site_new <- bind_cols(breakdown_all_site_new, subset_data)
 
-      breakdown_all_cols <- colnames(breakdown_all_site)[8:ncol(breakdown_all_site)]
+      breakdown_all_cols <- colnames(breakdown_all_site_new)[8:ncol(breakdown_all_site_new)]
       breakdown_all_cols <- format(as.Date(breakdown_all_cols, "%b-%Y-%d"), "%b-%Y")
-      colnames(breakdown_all_site)[8:ncol(breakdown_all_site)] <- breakdown_all_cols
+      colnames(breakdown_all_site_new)[8:ncol(breakdown_all_site_new)] <- breakdown_all_cols
       
+      breakdown_all_site_new <- breakdown_all_site_new %>%
+        rename(Metric = Metric_Name_Breakout)
       
-      breakdown_all_site[,2:length(breakdown_all_site)] %>%
+      breakdown_all_site_new[, 2:length(breakdown_all_site_new)] %>%
         kable(align = "l", escape = FALSE) %>%
         # pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
         #pack_rows(index = table(breakdown_all_site$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
-        pack_rows(index = factor_ordering,
+        pack_rows(index = factor_ordering_new,
                   label_row_css = "background-color: #212070; color: white;") %>%
         kable_styling(bootstrap_options = c("hover","bordered","striped"),
                       full_width = FALSE,
@@ -1932,7 +1948,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         add_header_above(c(" " = 1,
                            "Selected Month-Year" = 2,
                            " " = 2,
-                           "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all_site)-6),
+                           "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all_site_new)-6),
                          font_size = 16,
                          bold = TRUE,
                          color = "white",
@@ -1940,7 +1956,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         row_spec(0, background = "#212070", color = "white") %>%
         column_spec(1, bold = TRUE) %>%
         column_spec(2:3, background = "#fee7f5", bold = TRUE) %>%
-        column_spec(6:(length(breakdown_all_site) - 1), 
+        column_spec(6:(length(breakdown_all_site_new) - 1), 
                     background = "#E6F8FF")
       
     }
