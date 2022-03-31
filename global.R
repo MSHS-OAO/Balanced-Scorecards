@@ -257,68 +257,68 @@ metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") #
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
-metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
-
-metric_grouping_filter <- metric_grouping %>%
-  pivot_longer(
-    6:length(metric_grouping),
-    names_to = "Service",
-    values_to = "Inclusion"
-  ) %>%
-  filter(!is.na(Inclusion)) %>%
-  arrange(Service)
-
-
-
-summary_metric_filter <- summary_metrics %>%
-  pivot_longer(
-    7:length(summary_metrics),
-    names_to = "Service",
-    values_to = "Order"
-  ) %>%
-  filter(!is.na(Order)) %>%
-  arrange(Order) 
-
-metric_unit_filter <- unique(metric_grouping[, c("Metric_Group","Metric_Name","Metric_Unit")])
-metric_unit_filter_summary <- unique(summary_metric_filter[, c("Summary_Metric_Name","Metric_Unit")])
-metric_unit_perc <- unique((metric_unit_filter_summary %>% filter(Metric_Unit == "Percent"))$Summary_Metric_Name)
-# Fix naming of Overtime Hours - % (Premier)
-metric_unit_filter_summary_new <- metric_unit_filter_summary %>%
-  mutate(Summary_Metric_Name = str_replace(Summary_Metric_Name,
-                                           "\\ %\\ \\(Premier\\)",
-                                           "\\ Hours\\ \\-\\ %\\ \\(Premier\\)"))
-
-metric_unit_perc_new <- str_replace(metric_unit_perc,
-                                    "\\ %\\ \\(Premier\\)",
-                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-
-# Need to create a new metric_unit_filter that includes Metric_Name_Submitted
-# This is needed since this column is used in the KPI Breakout tab and is not
-# in metric_unit_filte, resulting in metrics not being formatted properly
-metric_unit_filter_new <- unique(metric_grouping[, c("Metric_Group",
-                                                     "Metric_Name",
-                                                     "Metric_Name_Submitted",
-                                                     "Metric_Unit")])
-
-metric_unit_filter_new <- metric_unit_filter_new %>%
-  mutate(Metric_Name = str_replace(Metric_Name,
-                                   "\\ %\\ \\(Premier\\)",
-                                   "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")) %>%
-  select(-Metric_Name)
-
-# Reactive Data Functions --------------------------------------------------------------------------
-## CAN THESE VARIABLES/FUNCTIONS BE REMOVED? THEY DON'T APPEAR TO BE USED ANYWHERE.
-## Summary Tab Data
-groupByFilters_1 <- function(dt, campus, service){
-  result <- dt %>% filter(Site %in% campus, Service %in% service)
-  return(result)
-}
-
-## Comparison and Breakout Tab Data
-groupByFilters_2 <- function(dt, campus, service, metric){
-  result <- dt %>% filter(Site %in% campus, Service %in% service, Metric_Name %in% metric)
-  return(result)
-}
+# metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
+# 
+# metric_grouping_filter <- metric_grouping %>%
+#   pivot_longer(
+#     6:length(metric_grouping),
+#     names_to = "Service",
+#     values_to = "Inclusion"
+#   ) %>%
+#   filter(!is.na(Inclusion)) %>%
+#   arrange(Service)
+# 
+# 
+# 
+# summary_metric_filter <- summary_metrics %>%
+#   pivot_longer(
+#     7:length(summary_metrics),
+#     names_to = "Service",
+#     values_to = "Order"
+#   ) %>%
+#   filter(!is.na(Order)) %>%
+#   arrange(Order) 
+# 
+# metric_unit_filter <- unique(metric_grouping[, c("Metric_Group","Metric_Name","Metric_Unit")])
+# metric_unit_filter_summary <- unique(summary_metric_filter[, c("Summary_Metric_Name","Metric_Unit")])
+# metric_unit_perc <- unique((metric_unit_filter_summary %>% filter(Metric_Unit == "Percent"))$Summary_Metric_Name)
+# # Fix naming of Overtime Hours - % (Premier)
+# metric_unit_filter_summary_new <- metric_unit_filter_summary %>%
+#   mutate(Summary_Metric_Name = str_replace(Summary_Metric_Name,
+#                                            "\\ %\\ \\(Premier\\)",
+#                                            "\\ Hours\\ \\-\\ %\\ \\(Premier\\)"))
+# 
+# metric_unit_perc_new <- str_replace(metric_unit_perc,
+#                                     "\\ %\\ \\(Premier\\)",
+#                                     "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+# 
+# # Need to create a new metric_unit_filter that includes Metric_Name_Submitted
+# # This is needed since this column is used in the KPI Breakout tab and is not
+# # in metric_unit_filte, resulting in metrics not being formatted properly
+# metric_unit_filter_new <- unique(metric_grouping[, c("Metric_Group",
+#                                                      "Metric_Name",
+#                                                      "Metric_Name_Submitted",
+#                                                      "Metric_Unit")])
+# 
+# metric_unit_filter_new <- metric_unit_filter_new %>%
+#   mutate(Metric_Name = str_replace(Metric_Name,
+#                                    "\\ %\\ \\(Premier\\)",
+#                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")) %>%
+#   select(-Metric_Name)
+# 
+# # Reactive Data Functions --------------------------------------------------------------------------
+# ## CAN THESE VARIABLES/FUNCTIONS BE REMOVED? THEY DON'T APPEAR TO BE USED ANYWHERE.
+# ## Summary Tab Data
+# groupByFilters_1 <- function(dt, campus, service){
+#   result <- dt %>% filter(Site %in% campus, Service %in% service)
+#   return(result)
+# }
+# 
+# ## Comparison and Breakout Tab Data
+# groupByFilters_2 <- function(dt, campus, service, metric){
+#   result <- dt %>% filter(Site %in% campus, Service %in% service, Metric_Name %in% metric)
+#   return(result)
+# }
 
 # Sites included -----------------------------------------------------------------------------------
 sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
@@ -360,15 +360,15 @@ report_date_mapping <- read_excel(target_mapping_path,
 
 
 ## Redundant to metric_grouping_filter
-metric_group_mapping <- read_excel(target_mapping_path, 
-                                   sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
-metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
-  pivot_longer(
-    6:length(metric_group_mapping),
-    names_to = "Service",
-    values_to = "Inclusion"
-  ) %>%
-  filter(!is.na(Inclusion))
+# metric_group_mapping <- read_excel(target_mapping_path, 
+#                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
+# metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
+#   pivot_longer(
+#     6:length(metric_group_mapping),
+#     names_to = "Service",
+#     values_to = "Inclusion"
+#   ) %>%
+#   filter(!is.na(Inclusion))
 
 cost_rev_mapping <- read_excel(target_mapping_path, 
                                sheet = "Cost and Rev Mapping",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
@@ -448,7 +448,10 @@ engineering_data_process <- function(data){
 metrics_final_df_new <- metrics_final_df %>%
   select(-Target, -Status) %>%
   mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
-                              "Overtime Hours - % (Premier)", Metric_Name))
+                              "Overtime Hours - % (Premier)", Metric_Name),
+         Metric_Group = ifelse(str_detect(Metric_Group,
+                                          "(Press Ganey)|(HCAHPS)"),
+                               "Patient Experience", Metric_Group))
 
 target_mapping_analysis <- target_mapping_v2 %>%
   select(-Range_1, -Range_2, -contains("Status")) %>%

@@ -85,8 +85,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # month_input <- "11-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
-      summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
-                                       filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
+      # summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
+      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
       
       # Update summary tab metrics with correct name for Overtime - % (Premier)
       # summary_tab_metrics_new <- summary_tab_metrics %>%
@@ -5800,7 +5800,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         service_input <- input$selectedService4
         metric_group_input <- input$selectedMetricGroup
         
-        # service_input <- "Lab"
+        # service_input <- "Patient Transport"
         # metric_group_input <- metric_group_choices
         
         targets_metric_group_order <- unique(metric_mapping_breakout$Metric_Group)
@@ -5967,7 +5967,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       observeEvent(input$selectedService4, {
         
-        target_data <- target_mapping %>%
+        target_data <- target_mapping_reference %>%
           filter(Service %in% input$selectedService4)
         
         picker_choices_metric_group <- unique(target_data$Metric_Group)
