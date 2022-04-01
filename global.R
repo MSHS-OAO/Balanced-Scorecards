@@ -360,7 +360,7 @@ report_date_mapping <- read_excel(target_mapping_path,
 
 
 ## Redundant to metric_grouping_filter
-# metric_group_mapping <- read_excel(target_mapping_path, 
+# metric_group_mapping <- read_excel(target_mapping_path,
 #                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 # metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
 #   pivot_longer(
@@ -448,7 +448,8 @@ engineering_data_process <- function(data){
 metrics_final_df_new <- metrics_final_df %>%
   select(-Target, -Status) %>%
   mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
-                              "Overtime Hours - % (Premier)", Metric_Name),
+                              "Overtime Hours - % (Premier)",
+                              str_replace(Metric_Name, "\\sMOM", "")),
          Metric_Group = ifelse(str_detect(Metric_Group,
                                           "(Press Ganey)|(HCAHPS)"),
                                "Patient Experience", Metric_Group))
