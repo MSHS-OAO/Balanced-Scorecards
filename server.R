@@ -272,9 +272,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # FYTD Summary Table - for Patient Experience
       # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
-      if (service_input %in% unique(press_ganey_data$Service)) {
+      if (service_input %in% unique(pt_exp_data$Service)) {
         
-        pg_ytd <- press_ganey_data %>%
+        pt_exp_ytd <- pt_exp_data %>%
           # Add logic to include Jan data in YTD data
           mutate(ReportingType = ifelse(month(Reporting_Date_Start) == 1 &
                                           month(Reporting_Date_End) == 1 &
@@ -288,17 +288,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           filter(Reporting_Month_Ref <= current_period)
         
         # Patient Experience mapping for metrics
-        pg_mapping_simple <- press_ganey_mapping %>%
-          select(-Raw_PG_Service, -Questions)
+        pt_exp_mapping_simple <- pt_exp_mapping %>%
+          select(-Raw_Pt_Exp_Service, -Questions)
         
-        # Crosswalk PG YTD data with mapping
-        pg_ytd <- left_join(pg_ytd,
-                                pg_mapping_simple,
+        # Crosswalk Patient Experience YTD data with mapping
+        pt_exp_ytd <- left_join(pt_exp_ytd,
+                                pt_exp_mapping_simple,
                                 by = c("Service" = "Service",
-                                            "Question_Clean" = "Question_Clean"))
+                                       "Question_Clean" = "Question_Clean"))
         
         # Begin reformatting Patient Experience YTD data
-        pg_ytd_reformat <- pg_ytd %>%
+        pt_exp_ytd_reformat <- pt_exp_ytd %>%
           # Convert to longer format
           pivot_longer(cols = c(contains("Site_"),
                                 contains("All_PG_Database_")),
@@ -332,7 +332,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #          Metric_Name_Submitted,
         #          Summary_Metric_Name)
         
-        pg_summary_tab_metrics <- metric_mapping_summary_site %>%
+        pt_exp_summary_tab_metrics <- metric_mapping_summary_site %>%
           filter(Service %in% service_input &
                    General_Group %in% "Patient Experience") %>%
           select(-General_Group, -Display_Order, -Metric_Unit,
@@ -340,12 +340,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  Metric_Name_Breakout, Metric_Name_Submitted)
 
         # Crosswalk Patient Experience YTD data with Summary tab metrics
-        pg_ytd_reformat <- left_join(pg_ytd_reformat,
-                                         pg_summary_tab_metrics,
+        pt_exp_ytd_reformat <- left_join(pt_exp_ytd_reformat,
+                                         pt_exp_summary_tab_metrics,
                                          by = c("Service" = "Service",
                                             "Metric_Name_Submitted" = "Metric_Name_Submitted"))
         
-        pg_ytd_reformat <- pg_ytd_reformat %>%
+        pt_exp_ytd_reformat <- pt_exp_ytd_reformat %>%
           # Filter on 
           filter(!is.na(Metric_Name_Summary) &
                    Reporting_Month_Ref == max(Reporting_Month_Ref)) %>%
@@ -365,7 +365,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           relocate(value_rounded, .after = `Fiscal Year to Date`)
 
       } else {
-        pg_ytd_reformat <- NULL
+        pt_exp_ytd_reformat <- NULL
       }
       
                     
@@ -386,7 +386,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ungroup()
     
       # Merge for summary 
-      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pg_ytd_reformat)
+      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat)
       fytd_summary <- fytd_merged
       # fytd_summary$Metric_Name_Breakout <- NULL
       fytd_summary <- fytd_summary %>%
@@ -2121,7 +2121,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         tryCatch({
           # Process ED monthly data
-          pg_ed_monthly_summary_data <- press_ganey_dept_summary(data_ed_monthly)
+          pt_exp_ed_monthly_summary_data <- pt_exp_dept_summary(data_ed_monthly)
           
           flag <- 2
           
@@ -2145,51 +2145,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(press_ganey_data,
+        write_xlsx(pt_exp_data,
                    paste0(hist_archive_path,
-                          "Press Ganey Pre-ED Monthly ",
+                          "Pt Exp Pre-ED Monthly ",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
         # Append Patient Experience summary with new data
         # First, identify the sites, months, and metrics in the new data
-        pg_new_data <- unique(
-          pg_ed_monthly_summary_data[c("Service",
-                                       "Site",
-                                       "ReportingType",
-                                       "Reporting_Date_Start",
-                                       "Reporting_Date_End",
-                                       "Question_Clean")]
+        pt_exp_new_data <- unique(
+          pt_exp_ed_monthly_summary_data[c("Service",
+                                           "Site",
+                                           "ReportingType",
+                                           "Reporting_Date_Start",
+                                           "Reporting_Date_End",
+                                           "Question_Clean")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
         # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        press_ganey_data <<- anti_join(press_ganey_data,
-                                       pg_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Question_Clean" = "Question_Clean",
-                                              "ReportingType" = "ReportingType",
-                                              "Reporting_Date_Start" = "Reporting_Date_Start",
-                                              "Reporting_Date_End" = "Reporting_Date_End")
+        pt_exp_data <<- anti_join(pt_exp_data,
+                                  pt_exp_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Question_Clean" = "Question_Clean",
+                                         "ReportingType" = "ReportingType",
+                                         "Reporting_Date_Start" = "Reporting_Date_Start",
+                                         "Reporting_Date_End" = "Reporting_Date_End")
         )
         
         # Third, combine the updated historical data with the new data
-        press_ganey_data <<- full_join(press_ganey_data,
-                                       pg_ed_monthly_summary_data)
+        pt_exp_data <<- full_join(pt_exp_data,
+                                  pt_exp_ed_monthly_summary_data)
         
         # Next, arrange the department summary by month, metric name, and site
-        press_ganey_data <<- press_ganey_data %>%
+        pt_exp_data <<- pt_exp_data %>%
           arrange(Service,
                   Site,
                   ReportingType,
                   Reporting_Date_End)
         
         # Lastly, save the updated summary data
-        write_xlsx(press_ganey_data, press_ganey_table_path)
+        write_xlsx(pt_exp_data, pt_exp_table_path)
         
         # Update metrics_final_df with latest ED Patient Experience data using custom function
-        metrics_final_df <<- press_ganey_metrics_final_df(pg_ed_monthly_summary_data)
+        metrics_final_df <<- pt_exp_metrics_final_df(pt_exp_ed_monthly_summary_data)
         
         # Save updated metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
@@ -2241,7 +2241,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           
           # Process Nursing monthly data
-          pg_nursing_monthly_summary_data <- press_ganey_dept_summary(data_nursing_monthly)
+          pt_exp_nursing_monthly_summary_data <- pt_exp_dept_summary(data_nursing_monthly)
           
           flag <- 2
           
@@ -2265,51 +2265,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(press_ganey_data,
+        write_xlsx(pt_exp_data,
                    paste0(hist_archive_path,
-                          "Press Ganey Pre-RN Monthly ",
+                          "Pt Exp Pre-RN Monthly ",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
         # Append Patient Experience summary with new data
         # First, identify the sites, months, and metrics in the new data
-        pg_new_data <- unique(
-          pg_nursing_monthly_summary_data[c("Service",
-                                            "Site",
-                                            "ReportingType",
-                                            "Reporting_Date_Start",
-                                            "Reporting_Date_End",
-                                            "Question_Clean")]
+        pt_exp_new_data <- unique(
+          pt_exp_nursing_monthly_summary_data[c("Service",
+                                                "Site",
+                                                "ReportingType",
+                                                "Reporting_Date_Start",
+                                                "Reporting_Date_End",
+                                                "Question_Clean")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
         # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        press_ganey_data <<- anti_join(press_ganey_data,
-                                       pg_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Question_Clean" = "Question_Clean",
-                                              "ReportingType" = "ReportingType",
-                                              "Reporting_Date_Start" = "Reporting_Date_Start",
-                                              "Reporting_Date_End" = "Reporting_Date_End")
+        pt_exp_data <<- anti_join(pt_exp_data,
+                                  pt_exp_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Question_Clean" = "Question_Clean",
+                                         "ReportingType" = "ReportingType",
+                                         "Reporting_Date_Start" = "Reporting_Date_Start",
+                                         "Reporting_Date_End" = "Reporting_Date_End")
         )
         
         # Third, combine the updated historical data with the new data
-        press_ganey_data <<- full_join(press_ganey_data,
-                                       pg_nursing_monthly_summary_data)
+        pt_exp_data <<- full_join(pt_exp_data,
+                                  pt_exp_nursing_monthly_summary_data)
         
         # Next, arrange the department summary by month, metric name, and site
-        press_ganey_data <<- press_ganey_data %>%
+        pt_exp_data <<- pt_exp_data %>%
           arrange(Service,
                   Site,
                   ReportingType,
                   Reporting_Date_End)
         
         # Lastly, save the updated summary data
-        write_xlsx(press_ganey_data, press_ganey_table_path)
+        write_xlsx(pt_exp_data, pt_exp_table_path)
         
         # Update metrics_final_df with latest Nursing Patient Experience data using custom function
-        metrics_final_df <<- press_ganey_metrics_final_df(pg_nursing_monthly_summary_data)
+        metrics_final_df <<- pt_exp_metrics_final_df(pt_exp_nursing_monthly_summary_data)
         
         # Save updated metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
@@ -2364,7 +2364,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           
           # Process Support Services monthly data
-          pg_support_monthly_summary_data <- press_ganey_dept_summary(data_support_monthly)
+          pt_exp_support_monthly_summary_data <- pt_exp_dept_summary(data_support_monthly)
           
           flag <- 2
           
@@ -2388,9 +2388,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(press_ganey_data,
+        write_xlsx(pt_exp_data,
                    paste0(hist_archive_path,
-                          "Press Ganey Pre-Support Monthly ",
+                          "Pt Exp Pre-Support Monthly ",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
@@ -2398,43 +2398,43 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Append Patient Experience summary with new data
         # First, identify the sites, months, and metrics in the new data
-        pg_new_data <- unique(
-          pg_support_monthly_summary_data[c("Service",
-                                            "Site",
-                                            "ReportingType",
-                                            "Reporting_Date_Start",
-                                            "Reporting_Date_End",
-                                            "Question_Clean")]
+        pt_exp_new_data <- unique(
+          pt_exp_support_monthly_summary_data[c("Service",
+                                                "Site",
+                                                "ReportingType",
+                                                "Reporting_Date_Start",
+                                                "Reporting_Date_End",
+                                                "Question_Clean")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
         # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        press_ganey_data <<- anti_join(press_ganey_data,
-                                       pg_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Question_Clean" = "Question_Clean",
-                                              "ReportingType" = "ReportingType",
-                                              "Reporting_Date_Start" = "Reporting_Date_Start",
-                                              "Reporting_Date_End" = "Reporting_Date_End")
+        pt_exp_data <<- anti_join(pt_exp_data,
+                                  pt_exp_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Question_Clean" = "Question_Clean",
+                                         "ReportingType" = "ReportingType",
+                                         "Reporting_Date_Start" = "Reporting_Date_Start",
+                                         "Reporting_Date_End" = "Reporting_Date_End")
         )
         
         # Third, combine the updated historical data with the new data
-        press_ganey_data <<- full_join(press_ganey_data,
-                                       pg_support_monthly_summary_data)
+        pt_exp_data <<- full_join(pt_exp_data,
+                                  pt_exp_support_monthly_summary_data)
         
         # Next, arrange the department summary by month, metric name, and site
-        press_ganey_data <<- press_ganey_data %>%
+        pt_exp_data <<- pt_exp_data %>%
           arrange(Service,
                   Site,
                   ReportingType,
                   Reporting_Date_End)
         
         # Lastly, save the updated summary data
-        write_xlsx(press_ganey_data, press_ganey_table_path)
+        write_xlsx(pt_exp_data, pt_exp_table_path)
         
         # Update metrics_final_df with latest Support Services Patient Experience data using custom function
-        metrics_final_df <<- press_ganey_metrics_final_df(pg_support_monthly_summary_data)
+        metrics_final_df <<- pt_exp_metrics_final_df(pt_exp_support_monthly_summary_data)
         
         # Save updated metrics_final_df
         saveRDS(metrics_final_df, metrics_final_df_path)
@@ -2487,7 +2487,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           
           # Process ED YTD data
-          pg_ed_ytd_summary_data <- press_ganey_dept_summary(data_ed_ytd)
+          pt_exp_ed_ytd_summary_data <- pt_exp_dept_summary(data_ed_ytd)
           
           flag <- 2
           
@@ -2511,9 +2511,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(press_ganey_data,
+        write_xlsx(pt_exp_data,
                    paste0(hist_archive_path,
-                          "Press Ganey Pre-ED YTD ",
+                          "Pt Exp Pre-ED YTD ",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
@@ -2521,40 +2521,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Append Patient Experience summary with new data
         # First, identify the sites, months, and metrics in the new data
-        pg_new_data <- unique(
-          pg_ed_ytd_summary_data[c("Service",
-                                   "Site",
-                                   "ReportingType",
-                                   "Reporting_Date_Start",
-                                   "Reporting_Date_End",
-                                   "Question_Clean")]
+        pt_exp_new_data <- unique(
+          pt_exp_ed_ytd_summary_data[c("Service",
+                                       "Site",
+                                       "ReportingType",
+                                       "Reporting_Date_Start",
+                                       "Reporting_Date_End",
+                                       "Question_Clean")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
         # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        press_ganey_data <<- anti_join(press_ganey_data,
-                                       pg_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Question_Clean" = "Question_Clean",
-                                              "ReportingType" = "ReportingType",
-                                              "Reporting_Date_Start" = "Reporting_Date_Start",
-                                              "Reporting_Date_End" = "Reporting_Date_End")
+        pt_exp_data <<- anti_join(pt_exp_data,
+                                  pt_exp_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Question_Clean" = "Question_Clean",
+                                         "ReportingType" = "ReportingType",
+                                         "Reporting_Date_Start" = "Reporting_Date_Start",
+                                         "Reporting_Date_End" = "Reporting_Date_End")
         )
         
         # Third, combine the updated historical data with the new data
-        press_ganey_data <<- full_join(press_ganey_data,
-                                       pg_ed_ytd_summary_data)
+        pt_exp_data <<- full_join(pt_exp_data,
+                                       pt_exp_ed_ytd_summary_data)
         
         # Next, arrange the department summary by month, metric name, and site
-        press_ganey_data <<- press_ganey_data %>%
+        pt_exp_data <<- pt_exp_data %>%
           arrange(Service,
                   Site,
                   ReportingType,
                   Reporting_Date_End)
         
         # Lastly, save the updated summary data
-        write_xlsx(press_ganey_data, press_ganey_table_path)
+        write_xlsx(pt_exp_data, pt_exp_table_path)
         
         # Update "Reporting Month" drop down in each tab
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
@@ -2604,7 +2604,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         tryCatch({
           # Process Nursing YTD data
-          pg_nursing_ytd_summary_data <- press_ganey_dept_summary(data_nursing_ytd)
+          pt_exp_nursing_ytd_summary_data <- pt_exp_dept_summary(data_nursing_ytd)
           
           flag <- 2
           
@@ -2628,9 +2628,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(press_ganey_data,
+        write_xlsx(pt_exp_data,
                    paste0(hist_archive_path,
-                          "Press Ganey Pre-RN YTD ",
+                          "Pt Exp Pre-RN YTD ",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
@@ -2638,40 +2638,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Append Patient Experience summary with new data
         # First, identify the sites, months, and metrics in the new data
-        pg_new_data <- unique(
-          pg_nursing_ytd_summary_data[c("Service",
-                                        "Site",
-                                        "ReportingType",
-                                        "Reporting_Date_Start",
-                                        "Reporting_Date_End",
-                                        "Question_Clean")]
+        pt_exp_new_data <- unique(
+          pt_exp_nursing_ytd_summary_data[c("Service",
+                                            "Site",
+                                            "ReportingType",
+                                            "Reporting_Date_Start",
+                                            "Reporting_Date_End",
+                                            "Question_Clean")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
         # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        press_ganey_data <<- anti_join(press_ganey_data,
-                                       pg_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Question_Clean" = "Question_Clean",
-                                              "ReportingType" = "ReportingType",
-                                              "Reporting_Date_Start" = "Reporting_Date_Start",
-                                              "Reporting_Date_End" = "Reporting_Date_End")
+        pt_exp_data <<- anti_join(pt_exp_data,
+                                  pt_exp_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Question_Clean" = "Question_Clean",
+                                         "ReportingType" = "ReportingType",
+                                         "Reporting_Date_Start" = "Reporting_Date_Start",
+                                         "Reporting_Date_End" = "Reporting_Date_End")
         )
         
         # Third, combine the updated historical data with the new data
-        press_ganey_data <<- full_join(press_ganey_data,
-                                       pg_nursing_ytd_summary_data)
+        pt_exp_data <<- full_join(pt_exp_data,
+                                  pt_exp_nursing_ytd_summary_data)
         
         # Next, arrange the department summary by month, metric name, and site
-        press_ganey_data <<- press_ganey_data %>%
+        pt_exp_data <<- pt_exp_data %>%
           arrange(Service,
                   Site,
                   ReportingType,
                   Reporting_Date_End)
         
         # Lastly, save the updated summary data
-        write_xlsx(press_ganey_data, press_ganey_table_path)
+        write_xlsx(pt_exp_data, pt_exp_table_path)
         
         # Update "Reporting Month" drop down in each tab
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
@@ -2722,7 +2722,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           
           # Process Support Services YTD data
-          pg_support_ytd_summary_data <- press_ganey_dept_summary(data_support_ytd)
+          pt_exp_support_ytd_summary_data <- pt_exp_dept_summary(data_support_ytd)
           
           flag <- 2
           
@@ -2746,9 +2746,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2) {
         
         # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(press_ganey_data,
+        write_xlsx(pt_exp_data,
                    paste0(hist_archive_path,
-                          "Press Ganey Pre-Support YTD ",
+                          "Pt Exp Pre-Support YTD ",
                           format(Sys.time(), "%Y%m%d_%H%M%S"),
                           ".xlsx"))
         
@@ -2756,40 +2756,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Append Patient Experience summary with new data
         # First, identify the sites, months, and metrics in the new data
-        pg_new_data <- unique(
-          pg_support_ytd_summary_data[c("Service",
-                                        "Site",
-                                        "ReportingType",
-                                        "Reporting_Date_Start",
-                                        "Reporting_Date_End",
-                                        "Question_Clean")]
+        pt_exp_new_data <- unique(
+          pt_exp_support_ytd_summary_data[c("Service",
+                                            "Site",
+                                            "ReportingType",
+                                            "Reporting_Date_Start",
+                                            "Reporting_Date_End",
+                                            "Question_Clean")]
         )
         
         # Second, remove these sites, months, and metrics from the historical data, if they exist there.
         # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        press_ganey_data <<- anti_join(press_ganey_data,
-                                       pg_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Question_Clean" = "Question_Clean",
-                                              "ReportingType" = "ReportingType",
-                                              "Reporting_Date_Start" = "Reporting_Date_Start",
-                                              "Reporting_Date_End" = "Reporting_Date_End")
+        pt_exp_data <<- anti_join(pt_exp_data,
+                                  pt_exp_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Question_Clean" = "Question_Clean",
+                                         "ReportingType" = "ReportingType",
+                                         "Reporting_Date_Start" = "Reporting_Date_Start",
+                                         "Reporting_Date_End" = "Reporting_Date_End")
         )
         
         # Third, combine the updated historical data with the new data
-        press_ganey_data <<- full_join(press_ganey_data,
-                                       pg_support_ytd_summary_data)
+        pt_exp_data <<- full_join(pt_exp_data,
+                                       pt_exp_support_ytd_summary_data)
         
         # Next, arrange the department summary by month, metric name, and site
-        press_ganey_data <<- press_ganey_data %>%
+        pt_exp_data <<- pt_exp_data %>%
           arrange(Service,
                   Site,
                   ReportingType,
                   Reporting_Date_End)
         
         # Lastly, save the updated summary data
-        write_xlsx(press_ganey_data, press_ganey_table_path)
+        write_xlsx(pt_exp_data, pt_exp_table_path)
         
         # Update "Reporting Month" drop down in each tab
         picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")

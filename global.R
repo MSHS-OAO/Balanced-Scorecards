@@ -240,7 +240,7 @@ hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 #
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
-patient_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
+pt_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 
