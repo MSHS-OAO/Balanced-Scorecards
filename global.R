@@ -70,8 +70,6 @@ suppressMessages({
   library(magrittr)
 })
 
-# source("EVS.R")
-# source("press_ganey.R")
 # Maximize R Memory Size 
 #memory.limit(size = 8000000)
 
@@ -242,7 +240,7 @@ hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 #
 key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
-press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
+patient_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 
@@ -555,7 +553,7 @@ metric_mapping_breakout <- metric_mapping_raw %>%
 # Source files for processing service line data -------------------
 source("lab_processing.R")
 source("EVS.R")
-source("press_ganey.R")
+source("patient_experience.R")
 source("security_processing.R")
 source("Transportation.R")
 source("biomed.R")
