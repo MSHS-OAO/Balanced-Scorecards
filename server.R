@@ -81,7 +81,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
 # 
-      # service_input <- "Food Services"
+      # service_input <- "Patient Transport"
       # month_input <- "11-2021"
 
       # Code Starts ---------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fytd_summary_total <- fytd_summary_all %>%
         # Use more generic filter logic
         filter(str_detect(Metric_Name_Summary,
-                          "(Budget to Actual)|(Variance to Budget)")) %>%
+                          "(Budget to Actual)|(Total Revenue to Budget Variance)")) %>%
         # filter(Metric_Name_Summary %in% c("Budget to Actual MOM",
         #                                   "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
@@ -372,7 +372,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # FYTD Summary Table - for average 
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
-        filter(Metric_Name_Summary %!in% c("Budget to Actual", "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
+        # For consistency, consider do a string detect here
+        filter(Metric_Name_Summary %!in% c("Budget to Actual", "Total Revenue to Budget Variance")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
                  Metric_Group,
@@ -399,7 +400,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       missing_sites <- setdiff(sites_inc, names(fytd_summary))
       fytd_summary[missing_sites] <- NA
-      fytd_summary$NYEE <- as.numeric(fytd_summary$NYEE)
+      #fytd_summary$NYEE <- as.numeric(fytd_summary$NYEE)
       
       
       # Merge FYTD and Current Period Metrics Summary 
@@ -504,7 +505,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       #                             by = c)
       # Not sure if we actually need to do this anymore since we are already
       # filtering out metrics based on whether or not they are included in the
-      # summary and site tabs and then filtering on whethe or not there is a status
+      # summary and site tabs and then filtering on whether or not there is a status
+      # NOTE: Revisit this after reviewing which services/metrics are shown in summary tab but not in the status section
       current_status <- current_summary_data %>%
         mutate(TestCol = paste(Metric_Group, Metric_Name_Breakout),
                Incl = TestCol %in% unique(
@@ -628,15 +630,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # colnames(budget_to_actual_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
       }
       
-      if("Variance to Budget" %in% as.vector(status_section_metrics$Metric_Name)){
+      if("Total Revenue to Budget Variance" %in% as.vector(status_section_metrics$Metric_Name)){
         #Calculate FYTD Budget to Actual Targets
         variance_to_budget_target <- metrics_final_df_new %>% 
           filter((Service == service_input) &
                    (Metric_Group == "Total Revenue to Budget Variance") &
-                   (Metric_Name %in% c("Budget", "Variance to Budget")) & 
+                   (Metric_Name %in% c("Budget", "Total Revenue to Budget Variance")) & 
                    (Reporting_Month_Ref %in%
                       unique((fytd_period %>% 
-                                filter(Metric_Name == "Variance to Budget"))$Reporting_Month_Ref))) %>%
+                                filter(Metric_Name == "Total Revenue to Budget Variance"))$Reporting_Month_Ref))) %>%
           group_by(Service, Site, Metric_Group, Metric_Name) %>%
           summarise(value_rounded = sum(value_rounded)) %>%
           pivot_wider(names_from = "Metric_Name",
@@ -646,7 +648,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           pivot_longer(4:5,
                        names_to = "Summary_Metric_Name",
                        values_to = "value_rounded") %>%
-          filter(Summary_Metric_Name == "Variance to Budget") %>%
+          filter(Summary_Metric_Name == "Total Revenue to Budget Variance") %>%
           mutate(Section = "Status")
         
         variance_to_budget_target <- variance_to_budget_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
@@ -713,16 +715,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       targets_summary <- as.data.frame(targets_summary)
 
-      # NOTE: Is there an easier way to do this using mutate?
-      # Create traffic lights for the targets
-      # col_red <- which(targets_summary == "Red", arr.ind = TRUE)
-      # # col_red_rows <- as.integer(col_red[,1])
-      # # col_red_cols <- as.integer(col_red[,2])
-      # col_yellow <- which(targets_summary == "Yellow", arr.ind = TRUE)
-      # col_green <- which(targets_summary == "Green", arr.ind = TRUE)
-      # 
-      # colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
-      
+      # Create traffic lights for the metric statuses
       targets_summary <- targets_summary %>%
         mutate(across(.cols = everything(),
                       .fns = function(x) {
@@ -754,42 +747,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       }
         ))
 
-      # if(nrow(colors_comb) != 0){
-      #   for (i in 1:nrow(colors_comb)){
-      #     targets_summary[colors_comb[i,1],colors_comb[i,2]] <- fa('fas fa-circle')
-      #   }
-      # }
-      # 
-      # if(nrow(col_red) != 0){
-      #   for (i in 1:nrow(col_red)){
-      #     targets_summary[col_red[i,1],col_red[i,2]] <- cell_spec(targets_summary[col_red[i,1],col_red[i,2]], 'html', color = 'red', escape = FALSE)
-      #   }
-      # }
-      # 
-      # if(nrow(col_green) != 0){
-      #   for(i in 1:nrow(col_green)){
-      #     targets_summary[col_green[i,1],col_green[i,2]] <- cell_spec(targets_summary[col_green[i,1],col_green[i,2]], 'html', color = 'green', escape = FALSE)
-      #   }
-      # }
-      # 
-      # if(nrow(col_yellow != 0)){
-      #   for (i in 1:nrow(col_yellow)){
-      #     targets_summary[col_yellow[i,1],col_yellow[i,2]] <- cell_spec(targets_summary[col_yellow[i,1],col_yellow[i,2]], 'html', color = 'yellow', escape = FALSE)
-      #   }
-      # }
-      
-
       summary_tab_tb <- rbind(metrics_summary, targets_summary) # Don't think we need to specify which columns anymore#2[,1:18])
       # Why do we need this? There is no NYEE, there is NYEE.x and NYEE.y
-      summary_tab_tb$NYEE <- NULL
+      #summary_tab_tb$NYEE <- NULL
       
       
       # Create and Format Table
-      # Think about whether or not these lines of code are needed.
-      summary_tab_tb[summary_tab_tb == "NA"] <- NA
-      summary_tab_tb[summary_tab_tb == "NaN"] <- NA
-      summary_tab_tb[is.na(summary_tab_tb)] <- "-"
-      row.names(summary_tab_tb) <- NULL
+      # NOTE: These lines may not be needed but keep for now and can delete later
+      # summary_tab_tb[summary_tab_tb == "NA"] <- NA
+      # summary_tab_tb[summary_tab_tb == "NaN"] <- NA
+      # summary_tab_tb[is.na(summary_tab_tb)] <- "-"
+      # row.names(summary_tab_tb) <- NULL
       
       # Rename Metric_Name_Summary as Metric_Name
       summary_tab_tb <- summary_tab_tb %>%
@@ -1058,52 +1026,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                value_rounded, Status, Target, Metric_Unit)
       
       # # Not sure if this code is needed anymore
-      # current_breakdown <- current_breakdown[,c("Metric_Group","Summary_Metric_Name","Site","value_rounded","Status","Target")]
       # current_breakdown <- as.data.frame(current_breakdown)
       
 
       ## Create target traffic lights for current month metrics
-      # # Create traffic lights for the targets
-      # col_red <- which(current_breakdown == "Red", arr.ind = TRUE)
-      # col_red_rows <- as.integer(col_red[,1])
-      # col_red_cols <- as.integer(col_red[,2])
-      # col_yellow <- which(current_breakdown == "Yellow", arr.ind = TRUE)
-      # col_green <- which(current_breakdown == "Green", arr.ind = TRUE)
-      # 
-      # colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
-      # 
-      # if(nrow(colors_comb) != 0){
-      #   for (i in 1:nrow(colors_comb)){
-      #     current_breakdown[colors_comb[i,1],colors_comb[i,2]] <-
-      #       fa('fas fa-circle')
-      #   }
-      # }
-      # 
-      # if(nrow(col_red) != 0){
-      #   for (i in 1:nrow(col_red)){
-      #     current_breakdown[col_red[i,1],col_red[i,2]] <-
-      #       cell_spec(current_breakdown[col_red[i,1],col_red[i,2]],
-      #                 'html', color = 'red', escape = FALSE)
-      #   }
-      # }
-      # 
-      # if(nrow(col_green) != 0){
-      #   for(i in 1:nrow(col_green)){
-      #     current_breakdown[col_green[i,1],col_green[i,2]] <-
-      #       cell_spec(current_breakdown[col_green[i,1],col_green[i,2]],
-      #                 'html', color = 'green', escape = FALSE)
-      #   }
-      # }
-      # 
-      # if(nrow(col_yellow != 0)){
-      #   for (i in 1:nrow(col_yellow)){
-      #     current_breakdown[col_yellow[i,1],col_yellow[i,2]] <-
-      #       cell_spec(current_breakdown[col_yellow[i,1],col_yellow[i,2]],
-      #                 'html', color = 'yellow', escape = FALSE)
-      #   }
-      # }
-      
-      # Simpler code for traffic light indicators
       current_breakdown <- current_breakdown %>%
         ungroup() %>%
         mutate(Status = ifelse(Status %in% c("Red", "Yellow", "Green"),
@@ -1120,8 +1046,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Previous Months Summary
       ## Past 12 months of Summary 
       past_avg <- data %>%
-        # Should this filter be changed since data already limits how far back we go?
-        # filter(id >= 2 & id <= 13) %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Summary, Site) %>%
         summarise(`Avg. of Past Months Shown` = round(
@@ -1129,8 +1053,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       ## Past 12 months of Breakout
       past_breakdown <- data %>%
-        # Should this filter be changed since data already limits how far back we go?
-        # filter(id >= 2 & id <= 13) %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Summary,
                  Site, Reporting_Month_Ref) %>%
@@ -1233,8 +1155,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       breakdown_all <- breakdown_all %>%
         mutate(
           # Format budget related metrics
-          # NOTE: IS THIS LOGIC CORRECT? SHOULDN'T THEY BOTH BE LESS THAN BUDGET?
-          Target = ifelse(Metric_Name_Summary %in% c("Variance to Budget"),
+          # NOTE: NEED TO FIX THIS BASED ON CORRECTED METRIC NAME
+          Target = ifelse(Metric_Name_Summary %in% c("Total Revenue to Budget Variance"),
                           ">= Budget",
                           ifelse(Metric_Name_Summary %in% c("Budget to Actual"),
                                  "<= Budget", Target)),
@@ -1418,8 +1340,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
 
-      # service_input <- "Biomed / Clinical Engineering"
-      # month_input <- "11-2021"
+      # service_input <- "Engineering"
+      # month_input <- "12-2021"
       # site_input <- "MSB"
 
 
@@ -1454,10 +1376,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Subset target mapping to select Metric_Group and Metric_Names to displayed
       # in status indicator section based on the selected service line
-      status_section_metrics <- target_mapping_analysis %>%
-        filter(Service %in% service_input) %>%
-        select(Service, Metric_Group, Metric_Name) %>%
-        distinct()
+      # status_section_metrics <- target_mapping_analysis %>%
+      #   filter(Service %in% service_input) %>%
+      #   select(Service, Metric_Group, Metric_Name) %>%
+      #   distinct()
       
       # Subset target mapping to select Targets and Status Definitions for selected service line
       metric_targets_status <- target_mapping_analysis %>%
@@ -1614,48 +1536,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # ## Create target traffic lights for current month metrics
       # # Create traffic lights for the targets
-      # col_red <- which(current_site_breakdown == "Red", arr.ind = TRUE)
-      # col_red_rows <- as.integer(col_red[,1])
-      # col_red_cols <- as.integer(col_red[,2])
-      # col_yellow <- which(current_site_breakdown == "Yellow", arr.ind = TRUE)
-      # col_green <- which(current_site_breakdown == "Green", arr.ind = TRUE)
-      # 
-      # colors_comb <- as.data.frame(rbind(col_red, col_yellow, col_green))
-      # 
-      # if(nrow(colors_comb) != 0){
-      #   for (i in 1:nrow(colors_comb)){
-      #     current_site_breakdown[colors_comb[i,1],colors_comb[i,2]] <-
-      #       fa('fas fa-circle')
-      #   }
-      # }
-      # 
-      # if(nrow(col_red) != 0){
-      #   for (i in 1:nrow(col_red)){
-      #     current_site_breakdown[col_red[i,1],col_red[i,2]] <-
-      #       cell_spec(current_site_breakdown[col_red[i,1],
-      #                                        col_red[i,2]],
-      #                 'html', color = 'red', escape = FALSE)
-      #   }
-      # }
-      # 
-      # if(nrow(col_green) != 0){
-      #   for(i in 1:nrow(col_green)){
-      #     current_site_breakdown[col_green[i,1],col_green[i,2]] <-
-      #       cell_spec(current_site_breakdown[col_green[i,1],
-      #                                        col_green[i,2]],
-      #                 'html', color = 'green', escape = FALSE)
-      #   }
-      # }
-      # 
-      # if(nrow(col_yellow != 0)){
-      #   for (i in 1:nrow(col_yellow)){
-      #     current_site_breakdown[col_yellow[i,1],col_yellow[i,2]] <-
-      #       cell_spec(current_site_breakdown[col_yellow[i,1],
-      #                                        col_yellow[i,2]],
-      #                 'html', color = 'yellow', escape = FALSE)
-      #   }
-      # }
-      # Simpler way for color coding status
       current_site_breakdown_new <- current_site_breakdown_new %>%
         mutate(Status = ifelse(Status %in% c("Red", "Yellow", "Green"),
                                paste0('<div style="text-align:center">',
@@ -1678,8 +1558,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       #                                                na.rm = TRUE))
       
       past_avg_site_new <- data_new %>%
-        # Is the <=13 filter needed since we've already filtered on month?
-        # filter(id >= 2 & id <= 13) %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit) %>%
         summarise(`Avg. of Past Months Shown` = mean(value_rounded,

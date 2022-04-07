@@ -332,9 +332,9 @@ sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
 #                               "Budget to Actual Variance - Total")
 # summary_tab_metrics <- as.factor(unique(summary_metric_filter$Metric_Group))
 
-## CAN THIS BE REMOVED? NOT USED ANYWHERE
-summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
-                        "Overtime Dollars - % (Finance)") 
+# ## CAN THIS BE REMOVED? NOT USED ANYWHERE
+# summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
+#                         "Overtime Dollars - % (Finance)") 
 
 
 
