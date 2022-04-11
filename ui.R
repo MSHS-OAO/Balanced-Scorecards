@@ -3,11 +3,12 @@ library(shinyWidgets)
 library(shinydashboard)
 
 # Default values for global filters -------------------------------------------------------------------------
-default_campus <- sort(unique(metrics_final_df$Site))
-campus_choices <- sort(unique(metrics_final_df$Site))
-default_service <- sort(unique(metrics_final_df$Service))[1]
-service_choices <- sort(unique(metrics_final_df$Service))
-metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
+default_campus <- sort(unique(metrics_final_df_new$Site))
+campus_choices <- sort(unique(metrics_final_df_new$Site))
+default_service <- sort(unique(metrics_final_df_new$Service))[1]
+service_choices <- sort(unique(metrics_final_df_new$Service))
+metric_group_choices <- sort(unique(metrics_final_df_new$Metric_Group))
+default_metric_group <- metric_group_choices
 # service_choices <- sort(
 #   unique(
 #     metrics_final_df$Service[
@@ -240,9 +241,8 @@ ui <-
                                                )
                                  )
                         ),
-                        # Press Ganey Data Submission ----
-                        tabPanel("Press Ganey", value = "press_ganey",
-                                 span("Press Ganey Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                        tabPanel("Patient Experience", value = "patient_experience",
+                                 span("Patient Experience Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
                                  span("Please only submit data if you have completed training on data submission for this tool.",
@@ -254,20 +254,20 @@ ui <-
                                  tabBox(title = NULL, id = "tabset20", width = "100%", type = 'pills',
                                         tabPanel("Monthly Data",
                                                  hr(),
-                                                 fileInput("pg_ed_monthly", label = "Please upload monthly Press Ganey ED data"),
+                                                 fileInput("pt_exp_ed_monthly", label = "Please upload monthly Patient Experience ED data"),
                                                  hr(),
-                                                 fileInput("pg_nursing_monthly", label = "Please upload monthly Press Ganey Nursing data"),
+                                                 fileInput("pt_exp_nursing_monthly", label = "Please upload monthly Patient Experience Nursing data"),
                                                  hr(),
-                                                 fileInput("pg_support_monthly", label = "Please upload monthly Press Ganey Support Services data"),
-                                                 actionButton("submit_monthly_press_ganey", label = "Submit")),
+                                                 fileInput("pt_exp_support_monthly", label = "Please upload monthly Patient Experience Support Services data"),
+                                                 actionButton("submit_monthly_pt_exp", label = "Submit")),
                                         tabPanel("YTD Data",
                                                  hr(),
-                                                 fileInput("pg_ed_ytd", label = "Please upload YTD Press Ganey ED data"),
+                                                 fileInput("pt_exp_ed_ytd", label = "Please upload YTD Patient Experience ED data"),
                                                  hr(),
-                                                 fileInput("pg_nursing_ytd", label = "Please upload YTD Press Ganey Nursing data"),
+                                                 fileInput("pt_exp_nursing_ytd", label = "Please upload YTD Patient Experience Nursing data"),
                                                  hr(),
-                                                 fileInput("pg_support_ytd", label = "Please upload YTD Press Ganey Support Services data"),
-                                                 actionButton("submit_ytd_press_ganey", label = "Submit"))
+                                                 fileInput("pt_exp_support_ytd", label = "Please upload YTD Patient Experience Support Services data"),
+                                                 actionButton("submit_ytd_pt_exp", label = "Submit"))
                                  )
                         ),
                         # Productivity Data Submission ----
@@ -698,7 +698,8 @@ ui <-
                         column(2, 
                                box(
                                  title = NULL, solidHeader = FALSE, width = 12,
-                                 pickerInput("selectedService4", label = h4("Select Department:"), 
+                                 pickerInput("selectedService4",
+                                             label = h4("Select Department:"), 
                                              choices = service_choices,
                                              multiple = FALSE,
                                              options = pickerOptions(
@@ -710,7 +711,8 @@ ui <-
                         column(2,
                                box(
                                  title = NULL, solidHeader = FALSE, width = 12,
-                                 pickerInput("selectedMetricGroup", label = h4("Select Metric Group:"),
+                                 pickerInput("selectedMetricGroup",
+                                             label = h4("Select Metric Group:"),
                                              choices = metric_group_choices,
                                              multiple = TRUE,
                                              options = pickerOptions(
@@ -718,22 +720,16 @@ ui <-
                                                actionsBox = TRUE,
                                                dropupAuto = FALSE,
                                                size = 10),
-                                             selected = default_service)))
+                                             selected = default_metric_group)))
                       ),
                       hr(), 
                       fluidRow(textOutput("targetSummary_title")),
                       tags$head(tags$style("#targetSummary_title{color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 30px}")), br(), br(),
-                      fluidRow(textOutput("targetSummary_message")),
-                      tags$body(tags$style("#targetSummary_message{
-                                           color: #black;
-                                           font-family:Calibri;
-                                           font-style:italic;
-                                           font-size:15px;
-                                           margin-left: 30px")),
                       fluidRow(
-                        column(12, tableOutput("targetSummary_table") %>% 
-                                 withSpinner(type = 8, color = "#dddedd"))
+                        column(10, 
+                               offset = 1,
+                               DT::dataTableOutput("targetSummary_table"))
                       )
              ), # Close tabPanel Summary
              
@@ -865,13 +861,13 @@ ui <-
 
   
   tags$style(HTML("
-        #submit_monthly_press_ganey {
+        #submit_monthly_pt_exp {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
  
  tags$style(HTML("
-        #submit_ytd_press_ganey {
+        #submit_ytd_pt_exp {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
