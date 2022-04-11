@@ -1087,13 +1087,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Try to do this the same was we do it in the Summary and Site tabs for consistency
       # First crosswalk metrics to include and metrics_final_df
-      data_new <- left_join(breakout_tab_metrics,
+      data <- left_join(breakout_tab_metrics,
                             metrics_final_df_new,
                             by = c("Service" = "Service",
                                    "Metric_Group" = "Metric_Group",
                                    "Metric_Name_Breakout" = "Metric_Name"))
       
-      data_new <- data_new %>%
+      data <- data %>%
         filter(Service %in% service_input,
                Site %in% site_input,
                Reporting_Month_Ref <= current_period,
@@ -1113,11 +1113,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(id = row_number()) %>%
         filter(Reporting_Month_Ref >= current_period - months(11))
       
-      data_new <- left_join(data_new, months,
+      data <- left_join(data, months,
                             by = "Reporting_Month_Ref")
       
       # Crosswalk with metric targets and determine status
-      data_new <- left_join(data_new,
+      data <- left_join(data,
                             metric_targets_status,
                             by = c("Service",
                                    "Site",
@@ -1126,7 +1126,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                    "Metric_Name_Submitted"))
       
       # Determine status based on status definitions
-      data_new <- data_new %>%
+      data <- data %>%
         mutate(Status = ifelse(is.na(Target), NA,
                                ifelse(between(value_rounded,
                                               Green_Start, Green_End),
@@ -1141,7 +1141,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # # Selected Month/Year Metric
       # # Current Period Table
-      current_site_breakdown_new <- data_new %>%
+      current_site_breakdown_new <- data %>%
         filter(Reporting_Month_Ref == current_period) %>%
         select(Metric_Group, Metric_Name_Breakout, Metric_Unit,
                value_rounded, Status, Target)
@@ -1168,7 +1168,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       '</div>')))
       
       # Previous 11 Months Summary      
-      past_avg_site_new <- data_new %>%
+      past_avg_site_new <- data %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit) %>%
         summarise(`Avg. of Past Months Shown` = mean(value_rounded,
@@ -1176,7 +1176,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # ## Breakdown of prior 11 months     
-      past_site_breakdown_new <- data_new %>%
+      past_site_breakdown_new <- data %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit,
                  Reporting_Month_Ref) %>%
