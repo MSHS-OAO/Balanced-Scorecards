@@ -241,6 +241,7 @@ ui <-
                                                )
                                  )
                         ),
+                        # Patient Experience Data Submission ---------
                         tabPanel("Patient Experience", value = "patient_experience",
                                  span("Patient Experience Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),

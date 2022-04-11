@@ -5059,6 +5059,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                    Metric_Group %in% metric_group_input) %>%
           select(-Service)
         
+        validate(
+          need(nrow(targets_table) != 0, "Please select at least one metric group.")
+        )
+        
         # Determine the number of unique targets and status definitions for each metric
         unique_targets_status <- targets_table %>%
           group_by(Metric_Group, Metric_Name) %>%
