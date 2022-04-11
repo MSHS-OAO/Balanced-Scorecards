@@ -1732,11 +1732,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       #                          ">= Budget",
       #                          ifelse(Metric_Name %in% c("Budget to Actual MOM"),
       #                                 "<= Budget", Target)))
-      # NOTE: DOUBLE CHECK THIS LOGIC.
       breakdown_all_site_new <- breakdown_all_site_new %>%
         mutate(Target = ifelse(Metric_Name_Breakout %in% c("Variance to Budget"),
                                ">= Budget",
-                               ifelse(Metric_Name_Breakout %in% c("Budget to Actual"),
+                               ifelse(str_detect(Metric_Name_Breakout,
+                                                 "(Budget to Actual)"),
                                       "<= Budget", Target)))
       
       # Determine order metrics should appear
@@ -1796,8 +1796,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       #breakdown_all <- breakdown_all %>% relocate(`Aug-2021`, .before = `Mar-2021`) ##to test ordering
       
-      # QUESTION: Why do we start at column 8 here?
-      # Can any of this be simplified?
+      # QUESTION: Can any of this be simplified?
       subset_data <- breakdown_all_site_new[, 8:ncol(breakdown_all_site_new)]
 
       date_names <- sprintf("%s-01",colnames(subset_data))
