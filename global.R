@@ -70,6 +70,8 @@ suppressMessages({
   library(magrittr)
 })
 
+options(shiny.maxRequestSize=500*1024^2)
+
 # Maximize R Memory Size 
 #memory.limit(size = 8000000)
 
@@ -110,12 +112,6 @@ MountSinai_cols <- function(...) {
   
   MountSinai_colors[cols]
 }
-
-# Color Function that can be used to call all colors is "MountSinai_cols()"
-# Use in ggplot 
-
-#MountSinai_cols()       # will provide all colors and their hex codes in a table 
-#MountSinai_cols("pink") # will provide color name and the hex code for the pink color
 
 # Create palettes 
 MountSinai_palettes <- list(
@@ -178,28 +174,17 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
   }
 }
 #### Global Filepaths
-# budget_to_actual_path <- here::here("Data/Summary Repos/Budget to Actual.xlsx")
-# metrics_final_df_path <- here::here("Data/metrics_final_df.rds")
-# key_volume_mapping_path <- "J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx"
-# target_mapping_path <- here::here("Data/MSHS Scorecards Target Mapping.xlsx")
-# operational_metrics_path <- here::here("Data/Balanced Scorecards Data Input.xlsx")
-# operational_metrics_engineering_path <- here("Data/Summary Repos/CM KPI.xlsx")
-# operational_metrics_environmental_path <- here("Data/Summary Repos/TAT - EVS.xlsx")
-# census_days_path <- "Data/Finance/Monthly Stats Summary for benchmarking 20211013.xlsx"
-# operational_metrics_lab_path <- here("Data/Summary Repos/Lab - Metrics.xlsx")
-
-
 start <- "J:" #Comment when publishing to RConnect
 home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+start_shared <- "J:"
 
 # start <- "/data"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/Scorecards_Staging/")
 # start_shared <- "/SharedDrive"
-start_shared <- "J:"
+
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
 target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping KEN.xlsx")
-# target_mapping_path <- ("C:/Users/villea04/Downloads/MSHS Scorecards Target Mapping.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
@@ -238,7 +223,7 @@ security_events_path <- paste0(home_path,
 hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 
 #
-key_volume_mapping_path <- paste0(start, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
+key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
 pt_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
@@ -255,98 +240,12 @@ metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") #
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
-# metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
-# 
-# metric_grouping_filter <- metric_grouping %>%
-#   pivot_longer(
-#     6:length(metric_grouping),
-#     names_to = "Service",
-#     values_to = "Inclusion"
-#   ) %>%
-#   filter(!is.na(Inclusion)) %>%
-#   arrange(Service)
-# 
-# 
-# 
-# summary_metric_filter <- summary_metrics %>%
-#   pivot_longer(
-#     7:length(summary_metrics),
-#     names_to = "Service",
-#     values_to = "Order"
-#   ) %>%
-#   filter(!is.na(Order)) %>%
-#   arrange(Order) 
-# 
-# metric_unit_filter <- unique(metric_grouping[, c("Metric_Group","Metric_Name","Metric_Unit")])
-# metric_unit_filter_summary <- unique(summary_metric_filter[, c("Summary_Metric_Name","Metric_Unit")])
-# metric_unit_perc <- unique((metric_unit_filter_summary %>% filter(Metric_Unit == "Percent"))$Summary_Metric_Name)
-# # Fix naming of Overtime Hours - % (Premier)
-# metric_unit_filter_summary_new <- metric_unit_filter_summary %>%
-#   mutate(Summary_Metric_Name = str_replace(Summary_Metric_Name,
-#                                            "\\ %\\ \\(Premier\\)",
-#                                            "\\ Hours\\ \\-\\ %\\ \\(Premier\\)"))
-# 
-# metric_unit_perc_new <- str_replace(metric_unit_perc,
-#                                     "\\ %\\ \\(Premier\\)",
-#                                     "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-# 
-# # Need to create a new metric_unit_filter that includes Metric_Name_Submitted
-# # This is needed since this column is used in the KPI Breakout tab and is not
-# # in metric_unit_filte, resulting in metrics not being formatted properly
-# metric_unit_filter_new <- unique(metric_grouping[, c("Metric_Group",
-#                                                      "Metric_Name",
-#                                                      "Metric_Name_Submitted",
-#                                                      "Metric_Unit")])
-# 
-# metric_unit_filter_new <- metric_unit_filter_new %>%
-#   mutate(Metric_Name = str_replace(Metric_Name,
-#                                    "\\ %\\ \\(Premier\\)",
-#                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")) %>%
-#   select(-Metric_Name)
-# 
-# # Reactive Data Functions --------------------------------------------------------------------------
-# ## CAN THESE VARIABLES/FUNCTIONS BE REMOVED? THEY DON'T APPEAR TO BE USED ANYWHERE.
-# ## Summary Tab Data
-# groupByFilters_1 <- function(dt, campus, service){
-#   result <- dt %>% filter(Site %in% campus, Service %in% service)
-#   return(result)
-# }
-# 
-# ## Comparison and Breakout Tab Data
-# groupByFilters_2 <- function(dt, campus, service, metric){
-#   result <- dt %>% filter(Site %in% campus, Service %in% service, Metric_Name %in% metric)
-#   return(result)
-# }
-
 # Sites included -----------------------------------------------------------------------------------
 sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
-
-# Metric Group Order ------------------------------------------------------------------------------- 
-# metric_group_order <- c("Productivity", "Overtime Hours", "Budget to Actual")
-## CAN THIS BE REMOVED? WE REDEFINE THIS IN SERVER.R
-# metric_group_order <- metric_grouping_order
-
-# Summary Tab Metrics ------------------------------------------------------------------------------ 
-# summary_tab_metrics <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
-#                               "Overtime Dollars - % (Finance)", "Actual Worked FTE",
-#                               "Budget to Actual Variance - Total")
-# summary_tab_metrics <- as.factor(unique(summary_metric_filter$Metric_Group))
-
-# ## CAN THIS BE REMOVED? NOT USED ANYWHERE
-# summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
-#                         "Overtime Dollars - % (Finance)") 
-
-
-
-library(DBI)
- #con <- dbConnect(odbc::odbc(), "OAO_Data", timeout = 30)
-
-
 
 dttm <- function(x) {
   as.POSIXct(x,format="%m/%d/%Y",tz=Sys.timezone(),origin = "1970-01-01")
 }
-
 
 # Import all reference / mapping files needed ----
 site_path <- here() # Set path to new data (raw data)
@@ -355,18 +254,6 @@ site_mapping <- read_excel(target_mapping_path,
 
 report_date_mapping <- read_excel(target_mapping_path, 
                                   sheet = "Report Dates",  col_names = TRUE, na = c("", "NA")) # Premier reporting-dashboard date mapping 
-
-
-## Redundant to metric_grouping_filter
-# metric_group_mapping <- read_excel(target_mapping_path,
-#                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
-# metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
-#   pivot_longer(
-#     6:length(metric_group_mapping),
-#     names_to = "Service",
-#     values_to = "Inclusion"
-#   ) %>%
-#   filter(!is.na(Inclusion))
 
 cost_rev_mapping <- read_excel(target_mapping_path, 
                                sheet = "Cost and Rev Mapping",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
@@ -377,8 +264,6 @@ key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 
 processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Reporting_Period",
                        "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
-
-
 
 
 # Code for making name filed Mandatory ----
@@ -405,8 +290,6 @@ labelMandatory <- function(label) {
   )
 }
 
-
-
 operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
@@ -418,19 +301,6 @@ transform_dt <- function(dt, names_to, values_to){
   pivot_longer(dt, c(Site, Metric), names_to = as.character(names_to), values_to = as.character(values_to)) %>%
     drop_na(values_to)
 }
-
-
-
-
-
-
-
-
-options(shiny.maxRequestSize=500*1024^2)
-
-
-
-
 
 engineering_data_process <- function(data){
   engineering_data <- data %>%
@@ -545,10 +415,6 @@ metric_mapping_breakout <- metric_mapping_raw %>%
                          "\\ %\\ \\(Premier\\)",
                          "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
            }))
-
-
-  
-
 
 # Source files for processing service line data -------------------
 source("lab_processing.R")

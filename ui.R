@@ -206,6 +206,7 @@ ui <-
              
              
              navbarMenu("Data",
+                        # Finance Data Submission ----
                         tabPanel("Finance",
                                  span("Finance Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -269,6 +270,7 @@ ui <-
                                                  actionButton("submit_ytd_pt_exp", label = "Submit"))
                                  )
                         ),
+                        # Productivity Data Submission ----
                         tabPanel("Productivity", value = "productivity",
                                  span("Productivity Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -283,6 +285,7 @@ ui <-
                                  fileInput("productiviy_data_nursing_radiology", label = "Please upload Nursing and Radiology Productivity data"),
                                  actionButton("submit_prod", label = "Submit")
                         ),
+                        # Biomed Data Input Tab ------
                         tabPanel("Operational Metrics - Biomed/Clinical Engineering",
                                  span("Operational Metrics - Biomed/Clinical Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -293,6 +296,7 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
+                                 # Biomed D&I Data Submission  -----
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
                                         tabPanel("Disruptions and Issues", hr(),
                                                  fluidRow(
@@ -321,6 +325,7 @@ ui <-
                                                    )
                                                  )
                                         ),
+                                        # Biomed KPI Data Submission ----
                                         tabPanel("KPIs", hr(),
                                                  fluidRow(
                                                    column(12,
@@ -354,6 +359,7 @@ ui <-
                                  )
                                  
                         ),
+                        # Engineering Data Submission ----
                         tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -394,6 +400,7 @@ ui <-
                                                  ))
                                  )
                         ),
+                        # Environmental Services Data Submission ----
                         tabPanel("Operational Metrics - Environmental Services",
                                  value = "evs",
                                  span("Operational Metrics - Environmental Services",
@@ -418,6 +425,7 @@ ui <-
                                         )
                                  )
                                  ),
+                        # Emergency Department Data Submission  ------
                         tabPanel("Operational Metrics - Emergency Department",
                                  span("Operational Metrics - Emergency Department", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -438,6 +446,7 @@ ui <-
                                         
                                  )
                         ),
+                        # Food Services Data Submission ----
                         
                         tabPanel("Operational Metrics - Food Services", value = "operational",
                                  shinyjs::useShinyjs(),
@@ -466,7 +475,7 @@ ui <-
                                  # )
                                  
                         ),
-                        
+                        # Imaging DR Ops Data Submission ----
                         tabPanel("Operational Metrics - Imaging", value = "operational",
                                  shinyjs::useShinyjs(),
                                  shinyjs::inlineCSS(appCSS),
@@ -512,6 +521,7 @@ ui <-
                                  )
   
                         ),
+                        # Lab Data Submission ----
                         tabPanel("Operational Metrics - Lab", value = "lab",
                                  span("Operational Metrics - Lab",
                                       style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -563,6 +573,7 @@ ui <-
                                                  )
                                         )
                         ),
+                        # Nursing Data Submission ----
                         tabPanel("Operational Metrics - Nursing",
                                  span("Operational Metrics - Nursing", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -584,7 +595,7 @@ ui <-
                                         
                                  )
                         ),
-                        
+                        # Patient Transport Data Submission ----
                         tabPanel("Operational Metrics - Patient Transport",
                                  span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -608,6 +619,7 @@ ui <-
                     
                                  )
                         ),
+                        # Security Data Submission ----
                         tabPanel("Operational Metrics - Security",
                                  span("Operational Metrics - Security", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -680,7 +692,7 @@ ui <-
                         )
              ), # Close tabPanel Breakout
              
-             # Fifth tab - Targets & Status Definitions
+             # Fifth tab - Targets & Status Definitions --------
              tabPanel("Targets & Status Definitions", value = "targets",
                       fluidRow(
                         column(2, 
@@ -737,7 +749,7 @@ ui <-
  }
                     ")),
   
-  ##Tabset pills html
+  ##Tabset pills html ----
   tags$style(HTML("
         .nav-tabs-custom > .nav > li[class=active] > a {
            background-color: #d80b8c;

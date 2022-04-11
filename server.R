@@ -46,7 +46,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService)
@@ -76,45 +77,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-# 
+
       # service_input <- "Patient Transport"
       # month_input <- "11-2021"
 
-      # Code Starts ---------------------------------------------------------------------------------
-      # summary_tab_metrics <- unique((summary_metric_filter %>% #summary_metric_filter is from summary_metrics tab reformatted 
-      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
-      
-      # Update summary tab metrics with correct name for Overtime - % (Premier)
-      # summary_tab_metrics_new <- summary_tab_metrics %>%
-      #   mutate(across(.cols = everything(),
-      #                 .fns = function(x) {
-      #                   str_replace(x,
-      #                               "\\ %\\ \\(Premier\\)",
-      #                               "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-      #                 }))
-      
-      summary_tab_metrics_new <- metric_mapping_summary_site %>%
+
+      # Code Starts ---------------------------------------------------------------------------------     
+      summary_tab_metrics <- metric_mapping_summary_site %>%
         filter(Service == service_input) %>%
         select(-General_Group, -Display_Order)
       
-      summary_metric_group_order <- unique(summary_tab_metrics_new$Metric_Group)
+      summary_metric_group_order <- unique(summary_tab_metrics$Metric_Group)
       
-      summary_metric_name_order <- unique(summary_tab_metrics_new$Metric_Name_Summary)
+      summary_metric_name_order <- unique(summary_tab_metrics$Metric_Name_Summary)
       
       # # Target mappings using original structure
-      # target_section_metrics <- unique((target_mapping %>%  #target_mapping is read in from excel sheet in target mapping file
-      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
-      # 
-      # metric_targets <- target_mapping %>% filter(Service == service_input)
-
-      # Subset target mapping to select Metric_Group and  Metric_Names to be 
-      # displayed in status indicator section based on the selected service line
-      # NOTE: Are both of these data frames really needed or can we use one and
-      # just select the relevant columns later in the code?
       status_section_metrics <- target_mapping_analysis %>%
         filter(Service %in% service_input) %>%
         select(Service, Metric_Group, Metric_Name) %>%
@@ -128,14 +110,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
-      # # Filter data by service specific metrics using original structure
-      # data <- left_join(summary_tab_metrics, metrics_final_df, by = c("Service", "Metric_Group", "Metric_Name"))  ##extract selected service from metric_final_df
-      # data <- data  %>% 
-      #   filter(Reporting_Month_Ref <= current_period) %>% #Ensure only selected service and all data before selected month is returned
-      #   filter(Service == service_input)
-      
-      # Filter data by service specific metrics using new structure
-      data <- left_join(summary_tab_metrics_new, metrics_final_df_new,
+      # # Filter data by service specific metrics
+      data <- left_join(summary_tab_metrics, metrics_final_df_new,
                         by = c("Service" = "Service",
                                "Metric_Group" = "Metric_Group",
                                "Metric_Name_Breakout" = "Metric_Name"))
@@ -210,22 +186,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Think about renaming columns at the end
       current_summary <- current_summary %>%
-        # rename(Metric_Name = Metric_Name_Summary) %>%
-        # `colnames<-` (c("Section",
-        #                 "Metric_Name",
-        #                 "Current Period",
-        #                 "Site",
-        #                 "value_rounded")) %>%
         mutate(Section = "Metrics") %>%
         relocate(Section) %>%
         ungroup() %>%
         select(-Metric_Group) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded) #%>%
-        # mutate(Metric_Name_Summary = factor(Metric_Name_Summary,
-        #                                     levels = summary_metric_name_order,
-        #                                     ordered = TRUE)) %>%
-        # arrange(Metric_Name_Summary) %>%
-        # mutate(Metric_Name_Summary = as.character(Metric_Name_Summary))
+        pivot_wider(names_from = Site, values_from = value_rounded)
 
       # Identify any sites missing for the summary and add them with NA values
       missing_sites <- setdiff(sites_inc, names(current_summary))
@@ -260,11 +225,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                     all = TRUE)
       
       fytd_summary_total <- fytd_summary_all %>%
-        # Use more generic filter logic
+        # Metrics that need to be summarized by sum (total)
         filter(str_detect(Metric_Name_Summary,
                           "(Budget to Actual)|(Total Revenue to Budget Variance)")) %>%
-        # filter(Metric_Name_Summary %in% c("Budget to Actual MOM",
-        #                                   "Variance to Budget")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name_Breakout, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
@@ -324,14 +287,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           rename(value_rounded = value)
         
         # Identify Patient Experience metrics to include in Summary tab
-        # pg_summary_tab_metrics <- summary_metric_filter %>%
-        #   filter(Service %in% service_input) %>%
-        #   select(Service,
-        #          Metric_Group,
-        #          Metric_Name,
-        #          Metric_Name_Submitted,
-        #          Summary_Metric_Name)
-        
         pt_exp_summary_tab_metrics <- metric_mapping_summary_site %>%
           filter(Service %in% service_input &
                    General_Group %in% "Patient Experience") %>%
@@ -381,9 +336,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  Metric_Name_Breakout,
                  `Fiscal Year to Date`) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
-        # mutate(value_rounded = ifelse(Summary_Metric_Name %in% metric_unit_perc_new,
-        #                               round(value_rounded, 2),
-        #                               round(value_rounded))) %>%
         ungroup()
     
       # Merge for summary 
@@ -394,9 +346,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         select(-Metric_Group, -Metric_Name_Breakout) %>%
         mutate(Section = "Metrics") %>%
         relocate(Section) %>%
-        # `colnames<-` (c("Site","Section","Metric_Name", "Fiscal Year to Date","value_rounded")) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded) #%>%
-        # mutate(Section = "Metrics")
+        pivot_wider(names_from = Site, values_from = value_rounded)
 
       missing_sites <- setdiff(sites_inc, names(fytd_summary))
       fytd_summary[missing_sites] <- NA
@@ -407,32 +357,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       metrics_summary <- merge(fytd_summary, current_summary,
                                by = c("Section","Metric_Name_Summary"), all = TRUE)
       
-      # Comment out reordering until the end
-      # metrics_summary <- metrics_summary[order(factor(metrics_summary$Metric_Name, levels=unique(summary_tab_metrics$Metric_Name))),] 
-      # metrics_summary <- metrics_summary[
-      #   order(factor(metrics_summary$Metric_Name,
-      #                levels=unique(summary_tab_metrics_new$Summary_Metric_Name))), ] 
-
-      # Crosswalk metrics with their units and format
-      # metrics_summary$Metric_Unit <- metric_unit_filter_summary_new$Metric_Unit[match(metrics_summary$Metric_Name, 
-      #                                                                             metric_unit_filter_summary_new$Summary_Metric_Name)]
-      # DON'T THINK WE NEED THIS ANYMORE SINCE METRIC_UNIT IS IN METRICS_SUMMARY
-      # metrics_summary <- left_join(metrics_summary,
-      #                              metric_unit_filter_summary_new,
-      #                              by = c("Metric_Name" = "Summary_Metric_Name"))
-      
-      # Format numbers based on metric unit
-      # metrics_summary_old <- metrics_summary %>%
-      #   mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit),
-      #                                     prettyNum(round(., digits = 1),
-      #                                               big.mark = ','),
-      #                                     ifelse(Metric_Unit == "Dollar",
-      #                                            dollar(round(.)),
-      #                                            percent(.,0.1))))) %>%
-      #   select(-Metric_Unit)
-      
-      # Clean up logic for formatting numbers since funs() is deprecated.
-      # Using %in% instead of == allows us to capture all scenarios including NA
+           
+      # Format metrics based on units and remove Metric_Unit column
       metrics_summary <- metrics_summary %>%
         mutate(across(where(is.numeric),
                       .fns = function(x) {
@@ -444,17 +370,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                 big.mark = ",")))
                       }),
                Metric_Unit = NULL)
-
-
-      # Create and Format Comparison Table
-      # metrics_summary[metrics_summary == "NA"] <- NA
-      # metrics_summary[metrics_summary == "NaN"] <- NA
-      # metrics_summary[metrics_summary == "NA%"] <- NA
-      # metrics_summary[metrics_summary == "$NA"] <- NA
-      # metrics_summary[metrics_summary == "NaN%"] <- NA
-      # metrics_summary[metrics_summary == "$NaN"] <- NA
       
       # Simpler code for fixing text NAs
+      # NOTE: Roll this into the above dplyr
       metrics_summary <- metrics_summary %>%
         mutate_all(function(x) str_replace(x,
                                            pattern = paste("NA",
@@ -470,11 +388,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       metrics_summary[is.na(metrics_summary)] <- "-"
       
       # Reorder rows based on Summary Tab Metrics order
-      # metrics_summary_old <- metrics_summary[
-      #   order(factor(metrics_summary$Metric_Name_Summary,
-      #                levels=unique(summary_tab_metrics_new$Metric_Name_Summary))), ] 
-      # row.names(metrics_summary_old) <- NULL
-      
       metrics_summary <- metrics_summary %>%
         mutate(Metric_Name_Summary = factor(Metric_Name_Summary,
                                             levels = summary_metric_name_order,
@@ -483,20 +396,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(Metric_Name_Summary = as.character(Metric_Name_Summary))
       
       # Code for comparing metrics to targets and displaying statuses ------------
-      # # Current Period Target (Original)
-      # current_target <- merge(target_section_metrics, current_summary_data, by = c("Metric_Group","Metric_Name"))
-      # ## Need to add in logic for Budget related metrics if those are to be included
-      # current_target <- current_target %>%
-      #   filter(!is.na(Status)) %>%
-      #   mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
-      #                                    paste0("Rep. Pd. Ending ", Premier_Reporting_Period), Premier_Reporting_Period)) %>%
-      #   select(Metric_Group, Summary_Metric_Name, `Current Period`, Site, Status) %>%
-      #   `colnames<-` (c("Section","Metric_Name","Current Period","Site","target")) %>%
-      #   mutate(Section = "Variance to Target") %>%
-      #   pivot_wider(names_from = Site, values_from = target) 
-      # 
-      # missing_sites <- setdiff(sites_inc, names(current_target))
-      # current_target[missing_sites] <- NA
+      
       
       # Code for Status Section -----------------------------------
       # Crosswalk Current Period Summary with metrics to be displayed in Status section
@@ -531,12 +431,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                `Current Period`,
                Site,
                Status) %>%
-        # # Consider waiting to rename columns until the end
-        # `colnames<-` (c("Section",
-        #                 "Metric_Name",
-        #                 "Current Period",
-        #                 "Site",
-        #                 "Status")) %>%
         mutate(Section = "Status") %>%
         relocate(Section) %>%
         pivot_wider(names_from = Site,
@@ -546,29 +440,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       missing_sites <- setdiff(sites_inc, names(current_status))
       current_status[missing_sites] <- NA
         
-      
-      # #FYTD Summary Target (Original)
-      # fytd_target_metrics <- merge(target_section_metrics, fytd_merged, 
-      #                                  by = c("Metric_Group","Metric_Name"))
-      # 
-      # fytd_target <- merge(fytd_target_metrics, 
-      #                      metric_targets[,c("Site","Metric_Group","Metric_Name","Target","Range_1","Range_2","Status")], 
-      #                      by = c("Site","Metric_Group","Metric_Name"))
 
-      # FYTD Summary with status indicators using new structure
-      # Crosswalk metrics to display in Status section with FYTD data
-      # Actually think this crosswalk should not happen first since there are
-      # metrics in status_section_metrics that may not be in the Summary and Site tabs
-      # ie, non-isolation TAT for EVS
-      # fytd_status <- left_join(status_section_metrics,
-      #                          fytd_merged,
-      #                          by = c("Metric_Group" = "Metric_Group",
-      #                                 "Metric_Name" = "Metric_Name_Breakout"))
-      # 
-      # # Now, crosswalk FYTD metrics to be displayed with their targets and status definitions
-      # fytd_status <- left_join(fytd_status,
-      #                          metric_targets_status)
-      
+      # FYTD Summary with status indicators using new structure     
       fytd_status <- left_join(fytd_merged,
                                 metric_targets_status,
                                 by = c("Site" = "Site",
@@ -622,12 +495,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           fytd_status$`Fiscal Year to Date`[match(budget_to_actual_target$Summary_Metric_Name, fytd_status$Metric_Name)]
       }else{
         budget_to_actual_target <- NULL
-        # budget_to_actual_target <- data.frame(Section = c("NA"),
-        #                                         Summary_Metric_Name = c("NA"),
-        #                                         `Fiscal Year to Date` = c("NA"),
-        #                                         Site = c("NA"),
-        #                                         Status = c("NA"))
-        # colnames(budget_to_actual_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
       }
       
       if("Total Revenue to Budget Variance" %in% as.vector(status_section_metrics$Metric_Name)){
@@ -655,33 +522,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         variance_to_budget_target$`Fiscal Year to Date` <- fytd_status$`Fiscal Year to Date`[match(variance_to_budget_target$Summary_Metric_Name, fytd_status$Metric_Name)]
       } else{
         variance_to_budget_target <- NULL
-        # variance_to_budget_target <- data.frame(Section = c("NA"),
-        #                                            Summary_Metric_Name = c("NA"),
-        #                                            `Fiscal Year to Date` = c("NA"),
-        #                                            Site = c("NA"),
-        #                                            Status = c("NA"))
-        # colnames(variance_to_budget_target) <- c("Section","Summary_Metric_Name","Fiscal Year to Date","Site","Status")
       }
       
       
       # # Merge with rest of the metrics 
-      # fytd_target <- fytd_target %>%
-      #   mutate(Variance =  between(value_rounded, Range_1, Range_2)) %>%
-      #   filter(Variance == TRUE) %>%
-      #   mutate(Section = "Variance to Target") %>%
-      #   select(Section, Summary_Metric_Name, `Fiscal Year to Date`, Site, Status) 
-      # 
-      # fytd_target <- bind_rows(fytd_target, budget_to_actual_target, variance_to_budget_target)
-      # 
-      # fytd_target <- fytd_target %>%
-      #   # filter(Section != "NA") %>%
-      #   pivot_wider(names_from = Site, values_from = Status)
-      # names(fytd_target)[names(fytd_target) == 'Summary_Metric_Name'] <- 'Metric_Name'
-      # 
-      # missing_sites <- setdiff(sites_inc, names(fytd_target))
-      # fytd_target[missing_sites] <- NA
-      
-      
       # Merge FYTD metrics with budget metrics
       fytd_status <- bind_rows(fytd_status,
                                budget_to_actual_target,
@@ -689,9 +533,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       # Pivot wider for dashboard format
       fytd_status <- fytd_status %>%
-        pivot_wider(names_from = Site, values_from = Status) #%>%
-        # rename(Metric_Name = Summary_Metric_Name)
-        
+        pivot_wider(names_from = Site, values_from = Status)        
       
       # Identify missing sites and populate columns
       missing_sites <- setdiff(sites_inc, names(fytd_status))
@@ -751,14 +593,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Why do we need this? There is no NYEE, there is NYEE.x and NYEE.y
       #summary_tab_tb$NYEE <- NULL
       
-      
-      # Create and Format Table
-      # NOTE: These lines may not be needed but keep for now and can delete later
-      # summary_tab_tb[summary_tab_tb == "NA"] <- NA
-      # summary_tab_tb[summary_tab_tb == "NaN"] <- NA
-      # summary_tab_tb[is.na(summary_tab_tb)] <- "-"
-      # row.names(summary_tab_tb) <- NULL
-      
       # Rename Metric_Name_Summary as Metric_Name
       summary_tab_tb <- summary_tab_tb %>%
         rename(Metric_Name = Metric_Name_Summary)
@@ -771,13 +605,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
-      
-      # summary_tab_tb[2,2] <- paste0('<span style="color:',
-      #                               c("blue"),'">',
-      #                               fa('fas fa-circle'),
-      #                               '</span>')
-      
-
       
       if(service_input == "Imaging"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
@@ -842,7 +669,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService2)
@@ -873,7 +701,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       
       service_input <- input$selectedService2
@@ -889,34 +718,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         need(!(is.na(site_input)), "Please select at least one site")
       )
 
-      # Code Starts ---------------------------------------------------------------------------------
-      # summary_tab_metrics <- unique((summary_metric_filter %>%
-      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Summary_Metric_Name")]) # Filter out summary tab metrics only
-      
-      
-      # Update summary tab metrics with correct name for Overtime - % (Premier)
-      # summary_tab_metrics <- summary_tab_metrics %>%
-      #   mutate(across(.cols = everything(),
-      #                 .fns = function(x) {
-      #                   str_replace(x,
-      #                               "\\ %\\ \\(Premier\\)",
-      #                               "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-      #                 }))
-      
-      summary_tab_metrics_new <- metric_mapping_summary_site %>%
+      # Code Starts ---------------------------------------------------------------------------------     
+      summary_tab_metrics <- metric_mapping_summary_site %>%
         filter(Service == service_input) %>%
         select(-General_Group, -Display_Order)
       
-      summary_metric_group_order <- unique(summary_tab_metrics_new$Metric_Group)
+      summary_metric_group_order <- unique(summary_tab_metrics$Metric_Group)
       
-      summary_metric_name_order <- unique(summary_tab_metrics_new$Metric_Name_Summary)
+      summary_metric_name_order <- unique(summary_tab_metrics$Metric_Name_Summary)
       
-      # Target mappings using original structure
-      # target_section_metrics <- unique((target_mapping %>%
-      #                                     filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
-      # 
-      # metric_targets <- target_mapping %>% filter(Service == service_input)
-
+      # Target mappings ---------------------
       # Subset target mapping to select Metric_Group and  Metric_Names to be 
       # displayed in status indicator section based on the selected service line
       status_section_metrics <- target_mapping_analysis %>%
@@ -931,44 +742,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
-      # NOTE: Not sure if this comment is correct
-      # Process data to include missing sites for each metric
-      # data <- metrics_final_df_new %>%
-      #   distinct() %>%
-      #   filter(Site %in% site_input) %>%
-      #   filter(Service == service_input) %>% # input$selectedService
-      #   filter(Reporting_Month_Ref <= current_period) %>%
-      #   arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
-      #   group_by(Site, Metric_Group, Metric_Name) %>%
-      #   mutate(id = row_number()) %>%
-      #   filter(Reporting_Month_Ref >= current_period - months(11))
-      #   
-      # 
-      # # data_old <- merge(data,
-      # #               summary_tab_metrics[, c("Metric_Group",
-      # #                                      "Metric_Name",
-      # #                                      "Summary_Metric_Name")], 
-      # #               by = c("Metric_Group","Metric_Name"))
-      # 
-      # # Crosswalk with summary tab metrics and remove any metrics not displayed in Summary and Site tabs
-      # data <- left_join(data, summary_tab_metrics_new %>%
-      #                     select(-Service, -Metric_Name_Submitted),
-      #                   by = c("Metric_Group" = "Metric_Group",
-      #                          "Metric_Name" = "Metric_Name_Breakout"))
-      # 
-      # data <- data %>%
-      #   filter(!is.na(Metric_Name_Summary))
-      # 
-      # # Crosswalk data with metric targets and status definitions
-      # data <- left_join(data,
-      #                       metric_targets_status %>%
-      #                     select(-Service),
-      #                   by = c("Site",
-      #                          "Metric_Group",
-      #                          "Metric_Name"))
-      
-      # Try using similar approach to Summary tab section for consistency
-      data <- left_join(summary_tab_metrics_new,
+      # Subset data for selected servicel line based on metrics to be included in Site tab
+      data <- left_join(summary_tab_metrics,
                           metrics_final_df_new,
                           by = c("Service" = "Service",
                                  "Metric_Group" = "Metric_Group",
@@ -1028,7 +803,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # # Not sure if this code is needed anymore
       # current_breakdown <- as.data.frame(current_breakdown)
       
-
       ## Create target traffic lights for current month metrics
       current_breakdown <- current_breakdown %>%
         ungroup() %>%
@@ -1078,16 +852,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       names(breakdown_all)[names(breakdown_all) == 'value_rounded'] <-
         format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
 
-      # Format metrics based on their units
-      # breakdown_all <- left_join(breakdown_all,
-      #                            metric_unit_filter_summary_new)
-      
       breakdown_all <- breakdown_all %>%
-        # mutate_if(is.numeric, funs(ifelse(is.na(Metric_Unit),
-        #                                   prettyNum(round(.,1), big.mark = ','),
-        #                                   ifelse(Metric_Unit == "Dollar",
-        #                                          dollar(round(.)),
-        #                                          percent(.,1))))) %>%
         mutate(across(where(is.numeric),
                       .fns = function(x) {
                         ifelse(Metric_Unit %in% "Dollar",
@@ -1101,16 +866,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Create and Format Comparison Table
-      # See code below for simpler implementation
-      # breakdown_all[breakdown_all == "NA"] <- NA
-      # breakdown_all[breakdown_all == "NaN"] <- NA
-      # breakdown_all[breakdown_all == "NA%"] <- NA
-      # breakdown_all[breakdown_all == "$NA"] <- NA
-      # breakdown_all[breakdown_all == "NaN%"] <- NA
-      # breakdown_all[breakdown_all == "$NaN"] <- NA
-      # 
-      # breakdown_all[is.na(breakdown_all)] <- "-"
-      
+      # NOTE: Roll this into single dplyr with above
       breakdown_all <- breakdown_all %>%
         mutate_all(function(x) str_replace(x,
                                            pattern = paste("NA",
@@ -1123,48 +879,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            NA_character_)) %>%
         replace(is.na(.), "-")
       
-      # Reorder rows
-      # Is this code needed if we are reordering below in dplyr?
-      # breakdown_all <- breakdown_all[order(
-      #   factor(breakdown_all$Metric_Group,
-      #          levels=unique(summary_tab_metrics$Metric_Group))),]
-      
-      # # Is this line of code right? Should we remove "Budget to Actual MOM"
-      # # See modified code below
-      # breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Variance to Budget", "Budget to Actual MOM")] <- ">= Budget"
-      # breakdown_all$Target[breakdown_all$Summary_Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
-      # 
-      # # Set metric groups and metric names as factors and reorder dataframe accordingly
-      # breakdown_all <- breakdown_all %>%
-      #   mutate(Metric_Group = factor(Metric_Group,
-      #                                levels = unique(summary_tab_metrics$Metric_Group),
-      #                                ordered = TRUE),
-      #          Summary_Metric_Name = factor(Summary_Metric_Name,
-      #                                       levels = unique(summary_tab_metrics$Summary_Metric_Name),
-      #                                       ordered = TRUE)) %>%
-      #   arrange(Metric_Group,
-      #           Summary_Metric_Name,
-      #           Site) %>%
-      #   mutate(Metric_Group = as.character(Metric_Group),
-      #          Summary_Metric_Name = as.character(Summary_Metric_Name))
-      # 
-      # # Not sure this row is needed
-      # row.names(breakdown_all) <- NULL
-      
+     
       
       breakdown_all <- breakdown_all %>%
         mutate(
           # Format budget related metrics
-          # NOTE: NEED TO FIX THIS BASED ON CORRECTED METRIC NAME
           Target = ifelse(Metric_Name_Summary %in% c("Total Revenue to Budget Variance"),
                           ">= Budget",
                           ifelse(Metric_Name_Summary %in% c("Budget to Actual"),
                                  "<= Budget", Target)),
           # Set columns as factors and rearrange dataframe
-          # Metric_Group = factor(
-          #   Metric_Group,
-          #   levels = summary_metric_group_order,
-          #   ordered = TRUE),
           Metric_Name_Summary = factor(
             Metric_Name_Summary,
             levels = summary_metric_name_order,
@@ -1174,14 +898,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 Site) %>%
         mutate(#Metric_Group = as.character(Metric_Group),
                Metric_Name_Summary = as.character(Metric_Name_Summary))
-      
-      # Use vectors from beginning of section instead for consistency
-      # metric_group_order <- as.vector(unique(breakdown_all$Metric_Group))
-      # metric_name_order <- as.vector(unique(breakdown_all$Summary_Metric_Name))
-      
-      #breakdown_all <- merge(breakdown_all, metric_grouping[,c("Metric_Group", "Metric_Name")])
-      
-      # breakdown_all <- breakdown_all[order(factor(breakdown_all$Metric_Group, levels=unique(summary_tab_metrics$Metric_Group))),]
       
       factor_ordering <- table(breakdown_all$Metric_Name_Summary)
       factor_ordering <- factor_ordering[order(factor(names(factor_ordering),
@@ -1283,7 +999,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     }
     
     
-    # 3. Breakout Tab Output -----------------3----------------------------------------------------------------
+    # 3. Breakout Tab Output ----------------------------------------------------------------------------------
     output$siteBreakout_title <- renderText({
       
       input$submit_prod
@@ -1302,7 +1018,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService3)
@@ -1333,7 +1050,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_pt_tat
       input$submit_sec_inc_rpts
       input$submit_sec_events
-      
+      input$submit_ed
+      input$submit_nursing
       
       
       service_input <- input$selectedService3
@@ -1345,41 +1063,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # site_input <- "MSB"
 
 
-      # Code Starts ---------------------------------------------------------------------------------
-      # breakout_tab_metrics <- unique((metric_grouping_filter %>%
-      #                                  filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name","Metric_Name_Submitted")]) # Filter out summary tab metrics only
-      # 
-      # # target_section_metrics <- unique((target_mapping %>%
-      # #                                     filter(Service == service_input))[,c("Service","Metric_Group","Metric_Name")])
-      # # 
-      # # metric_targets <- target_mapping %>% filter(Service == service_input)
-      # 
-      # # Fix naming of Overtime Hours - % (Premier)
-      # breakout_tab_metrics <- breakout_tab_metrics %>%
-      #   mutate(Metric_Name = str_replace(Metric_Name,
-      #                                    "\\ %\\ \\(Premier\\)",
-      #                                    "\\ Hours\\ \\-\\ %\\ \\(Premier\\)"))
-      
-      breakout_tab_metrics_new <- metric_mapping_breakout %>%
+      # Code Starts ---------------------------------------------------------------------------------     
+      breakout_tab_metrics <- metric_mapping_breakout %>%
         filter(Service %in% service_input) %>%
         select(-General_Group, -Metric_Name_Summary, -Display_Order)
       
       # Create a data frame with units for each metric.
       # Crosswalk this after current period, past average, and past breakout are merged to ensure all
       # metrics with units are accurately represented
-      breakout_tab_metrics_units <- breakout_tab_metrics_new %>%
+      breakout_tab_metrics_units <- breakout_tab_metrics %>%
         select(Metric_Group, Metric_Name_Breakout, Metric_Unit)
       
-      metric_group_order <- unique(breakout_tab_metrics_new$Metric_Group)
+      metric_group_order <- unique(breakout_tab_metrics$Metric_Group)
       
-      metric_name_order <- unique(breakout_tab_metrics_new$Metric_Name_Breakout)
-      
-      # Subset target mapping to select Metric_Group and Metric_Names to displayed
-      # in status indicator section based on the selected service line
-      # status_section_metrics <- target_mapping_analysis %>%
-      #   filter(Service %in% service_input) %>%
-      #   select(Service, Metric_Group, Metric_Name) %>%
-      #   distinct()
+      metric_name_order <- unique(breakout_tab_metrics$Metric_Name_Breakout)
       
       # Subset target mapping to select Targets and Status Definitions for selected service line
       metric_targets_status <- target_mapping_analysis %>%
@@ -1388,32 +1085,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
       fiscal_year <- format(current_period,  "%Y")
       
-      # data <- metrics_final_df %>% 
-      #   filter(Service == service_input) %>% # input$selectedService
-      #   filter(Site == site_input) %>%
-      #   filter(Reporting_Month_Ref <= current_period) %>%
-      #   arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
-      #   group_by(Site, Metric_Group, Metric_Name) %>%
-      #   # mutate(id = row_number())
-      #   filter(Reporting_Month_Ref >= current_period - months(11))
-      
-      # Issue with Engineering have multiple values for the same reporting period
-      # data <- metrics_final_df_new %>% 
-      #   filter(Service == service_input) %>% # input$selectedService
-      #   filter(Site == site_input) %>%
-      #   filter(Reporting_Month_Ref <= current_period) %>%
-      #   arrange(Site, Metric_Group, Metric_Name, desc(Reporting_Month_Ref)) %>%
-      #   group_by(Site, Metric_Group, Metric_Name) %>%
-      #   # mutate(id = row_number())
-      #   filter(Reporting_Month_Ref >= current_period - months(11)) %>%
-      #   # Manually remove duplicates for now
-      #   distinct () %>%
-      #   # Ungroup
-      #   ungroup()
-      
       # Try to do this the same was we do it in the Summary and Site tabs for consistency
       # First crosswalk metrics to include and metrics_final_df
-      data_new <- left_join(breakout_tab_metrics_new,
+      data_new <- left_join(breakout_tab_metrics,
                             metrics_final_df_new,
                             by = c("Service" = "Service",
                                    "Metric_Group" = "Metric_Group",
@@ -1438,39 +1112,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         arrange(desc(Reporting_Month_Ref)) %>%
         mutate(id = row_number()) %>%
         filter(Reporting_Month_Ref >= current_period - months(11))
-        
-# 
-#       data <- left_join(data, months,
-#                         by = c("Reporting_Month_Ref" = "Reporting_Month_Ref"))
-# 
-# 
-#       data <- merge(data, breakout_tab_metrics[,c("Metric_Group","Metric_Name","Metric_Name_Submitted")], 
-#                     by = c("Metric_Group","Metric_Name"))
-#       data$Metric_Name <- NULL
-#       names(data)[names(data) == "Metric_Name_Submitted"] <- "Metric_Name"
-      
-      # # Crosswalk with months
-      # data <- left_join(data, months,
-      #                   by = "Reporting_Month_Ref")
       
       data_new <- left_join(data_new, months,
                             by = "Reporting_Month_Ref")
       
-      # Crosswalk with breakout tab metrics to bring in Metric_Name_Submitted
-      # data <- left_join(data, breakout_tab_metrics,
-      #                       by = c("Service", "Metric_Group", "Metric_Name"))
-      # 
-      # # Remove unused metrics
-      # data <- data %>%
-      #   filter(!is.na(Metric_Name_Submitted))
-      # 
-      # # Crosswalk with metric targets and determine status
-      # data <- left_join(data,
-      #                   metric_targets_status,
-      #                   by = c("Service", "Site",
-      #                          "Metric_Group", "Metric_Name",
-      #                          "Metric_Name_Submitted"))
-      
+      # Crosswalk with metric targets and determine status
       data_new <- left_join(data_new,
                             metric_targets_status,
                             by = c("Service",
@@ -1478,21 +1124,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                    "Metric_Group",
                                    "Metric_Name_Breakout" = "Metric_Name",
                                    "Metric_Name_Submitted"))
-      
-      # # Determine status based on status definitions
-      # data <- data %>%
-      #   mutate(Status = ifelse(is.na(Target), NA,
-      #                          ifelse(between(value_rounded,
-      #                                         Green_Start, Green_End),
-      #                                 "Green",
-      #                                 ifelse(between(value_rounded,
-      #                                                Yellow_Start, Yellow_End),
-      #                                        "Yellow",
-      #                                        ifelse(between(value_rounded,
-      #                                                       Red_Start, Red_End),
-      #                                               "Red", NA))))) %>%
-      #   select(-contains(c("_Start", "_End")), -Metric_Name) %>%
-      #   rename(Metric_Name = Metric_Name_Submitted)
       
       # Determine status based on status definitions
       data_new <- data_new %>%
@@ -1510,24 +1141,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # # Selected Month/Year Metric
       # # Current Period Table
-      # current_site_breakdown <- data %>%
-      #   filter(Reporting_Month_Ref ==  current_period) %>%
-      #   select(Metric_Group, Metric_Name, value_rounded, Status, Target)
-      # 
-      # # Is the line below needed?
-      # current_site_breakdown <- current_site_breakdown[, c("Metric_Group",
-      #                                                      "Metric_Name",
-      #                                                      "value_rounded",
-      #                                                      "Status",
-      #                                                      "Target")]
-      
       current_site_breakdown_new <- data_new %>%
         filter(Reporting_Month_Ref == current_period) %>%
         select(Metric_Group, Metric_Name_Breakout, Metric_Unit,
                value_rounded, Status, Target)
       
       # Convert to data frame for color formatting
-      # current_site_breakdown <- as.data.frame(current_site_breakdown)
       current_site_breakdown_new <- as.data.frame(current_site_breakdown_new)
       
       validate(
@@ -1548,15 +1167,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       '-',
                                       '</div>')))
       
-      # Previous Months Summary
-      # ## Past 12 months of Summary In
-      # past_avg_site <- data %>%
-      #   # Is the <=13 filter needed since we've already filtered on month?
-      #   filter(id >= 2 & id <= 13) %>%
-      #   group_by(Metric_Group, Metric_Name) %>%
-      #   summarise(`Avg. of Past Months Shown` = mean(value_rounded,
-      #                                                na.rm = TRUE))
-      
+      # Previous 11 Months Summary      
       past_avg_site_new <- data_new %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit) %>%
@@ -1564,18 +1175,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                      na.rm = TRUE))
       
       
-      # ## Breakdown of prior 12 months
-      # past_site_breakdown <- data %>%
-      #   # Again, not sure if we need id <= 13 here
-      #   filter(id >= 2 & id <= 13) %>%
-      #   group_by(Metric_Group, Metric_Name, Reporting_Month_Ref) %>%
-      #   summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
-      #   arrange(Reporting_Month_Ref) %>%
-      #   mutate(Reporting_Month_Ref = format(
-      #     as.Date(Reporting_Month_Ref, format = "%Y-%m-%d"),"%b-%Y")) %>%
-      #   pivot_wider(names_from = Reporting_Month_Ref,
-      #               values_from = value_rounded)
-      
+      # ## Breakdown of prior 11 months     
       past_site_breakdown_new <- data_new %>%
         filter(id >= 2) %>%
         group_by(Metric_Group, Metric_Name_Breakout, Metric_Unit,
@@ -1589,23 +1189,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       # Merge Current and Previous Months Breakdown
       # Combine current reporting period with average from prior 11 months
-      # breakdown_all_site <- merge(current_site_breakdown,
-      #                             past_avg_site,
-      #                             by = c("Metric_Group","Metric_Name"),
-      #                             all = TRUE)
-      # 
-      # # Combine with monthly breakdown from prior 11 months
-      # breakdown_all_site <- merge(breakdown_all_site,
-      #                             past_site_breakdown,
-      #                             by = c("Metric_Group","Metric_Name"))
-      
       breakdown_all_site_new <- merge(current_site_breakdown_new,
                                       past_avg_site_new,
                                       by = c("Metric_Group",
                                              "Metric_Name_Breakout",
                                              "Metric_Unit"),
                                       all = TRUE)
-      
+      # # Combine with monthly breakdown from prior 11 months
       breakdown_all_site_new <- merge(breakdown_all_site_new,
                                       past_site_breakdown_new,
                                       by = c("Metric_Group",
@@ -1613,14 +1203,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                              "Metric_Unit"),
                                       all = TRUE)
       
-      # Not sure that we need to order these yet
-      # breakdown_all_site <- breakdown_all_site[order(factor(breakdown_all_site$Metric_Group, levels=unique(breakout_tab_metrics$Metric_Group))),] 
-      # metric_group_order <- as.vector(unique(breakdown_all_site$Metric_Group))
-      
+            
       # Rename value_rounded column with selected reporting period
-      # names(breakdown_all_site)[names(breakdown_all_site) == 'value_rounded'] <-
-      #   format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
-      
       names(breakdown_all_site_new)[names(breakdown_all_site_new) == 'value_rounded'] <-
         format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
       
@@ -1651,37 +1235,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Create and Format Comparison Table
-      # See code below for cleaner approach that allows us to more easily add/modify scenarions to fix
-      # breakdown_all_site[breakdown_all_site == "NA"] <- NA
-      # breakdown_all_site[breakdown_all_site == "NaN"] <- NA
-      # breakdown_all_site[breakdown_all_site == "NA%"] <- NA
-      # breakdown_all_site[breakdown_all_site == "$NA"] <- NA
-      # breakdown_all_site[breakdown_all_site == "NaN%"] <- NA
-      # breakdown_all_site[breakdown_all_site == "$NaN"] <- NA
-      # 
-      # breakdown_all_site[is.na(breakdown_all_site)] <- "-"
-      
-      # Format NA and replace with a "-"
-      # breakdown_all_site <- breakdown_all_site %>%
-      #   mutate_all(function(x) str_replace(x,
-      #                                      pattern = paste("NA",
-      #                                                      "NaN",
-      #                                                      "NA%",
-      #                                                      "%NA",
-      #                                                      "NaN%",
-      #                                                      "$NaN",
-      #                                                      sep = "|"),
-      #                                      NA_character_)) %>%
-      #   replace(is.na(.), "-")
-      # 
-      # 
-      # breakdown_all_site <- breakdown_all_site[order(
-      #   factor(breakdown_all_site$Metric_Group,
-      #          levels=unique(breakout_tab_metrics$Metric_Group))), ] 
-      # 
-      # row.names(breakdown_all_site) <- NULL
-      
-      
       breakdown_all_site_new <- breakdown_all_site_new %>%
         mutate(
           # Format numbers based on metric unit
@@ -1722,16 +1275,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                Metric_Name_Breakout = as.character(Metric_Name_Breakout))
 
       
-      # How do we account for things like "Budget to Actual - Labor", "Budget to Actual - NonLabor", etc.?
-      # Changed this to use dplyr but think this needs to be reviewed given the metrics displayed in this tab
-      # breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Variance to Budget")] <- ">= Budget"
-      # breakdown_all_site$Target[breakdown_all_site$Metric_Name %in% c("Budget to Actual MOM")] <- "<= Budget"
-      
-      # breakdown_all_site <- breakdown_all_site %>%
-      #   mutate(Target = ifelse(Metric_Name %in% c("Variance to Budget"),
-      #                          ">= Budget",
-      #                          ifelse(Metric_Name %in% c("Budget to Actual MOM"),
-      #                                 "<= Budget", Target)))
+      # Manually update Targets for budget related metrics
       breakdown_all_site_new <- breakdown_all_site_new %>%
         mutate(Target = ifelse(Metric_Name_Breakout %in% c("Variance to Budget"),
                                ">= Budget",
@@ -1740,16 +1284,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       "<= Budget", Target)))
       
       # Determine order metrics should appear
-      # metric_group_order_old <- as.vector(unique(
-      #   breakout_tab_metrics$Metric_Group[
-      #     which(breakout_tab_metrics$Metric_Group %in%
-      #             breakdown_all_site$Metric_Group)]))
-      # 
-      # factor_ordering <- table(breakdown_all_site$Metric_Group)
-      # factor_ordering <- factor_ordering[order(
-      #   factor(names(factor_ordering),
-      #          levels = metric_group_order_old))]
-      
       factor_ordering_new <- table(breakdown_all_site_new$Metric_Group)
       factor_ordering_new <- factor_ordering_new[order(
         factor(names(factor_ordering_new),
@@ -1844,7 +1378,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     }
     
     
-    # 4. Data Tab Output -----------------3----------------------------------------------------------------
+    # 4. Data Tab Output ---------------------------------------------------------------------------------
+    # MSH, MSM, and MSQ Submit Finance -----
     observeEvent(input$submit_finance,{
       inFile_msh_msm_msq <- input$finance_msh_msm_msq
       flag <- 0
@@ -1908,6 +1443,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    # MSH, MSM, and MSQ Submit Census Days -----
     observeEvent(input$submit_finance,{
       
       inFile_census <- input$finance_census
@@ -1922,6 +1458,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
     })
     
+    # MSBI, MSB, and MSW Submit Finance -----
     observeEvent(input$submit_finance,{
 
       inFile_msbi_msb_msw <- input$finance_msbi_msb_msw
@@ -2704,6 +2241,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    
+    # Submit Food Services -----
     observeEvent(input$submit_food,{
       food_file <- input$food_cost_and_revenue
       flag <- 0
@@ -2807,6 +2346,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
+    # Submit Interventional Radiology -----
     observeEvent(input$submit_imaging, {
       imaging_file <- input$imaging_IR
       flag <- 0
@@ -2901,7 +2441,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
-    
+    # Submit Engineering -----
     observeEvent(input$submit_engineering,{
       if(input$name_engineering_kpi == ""){
         showModal(modalDialog(
@@ -3096,8 +2636,104 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
     
     })
+    # Engineering Reactive dataset -----
+    data_engineering_kpi <- reactive({
+      
+      #input$submit_engineering
+      #operational_metrics_engineering <- engineering_repo_pull()
+      data  <- operational_metrics_engineering
+      data <- data[order(data$Site),]
+      
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(colnames(months_only)), "%m-%Y")
+      
+      colnames(data)[3:length(data)] <- months
+      
+      ##### Code that adds months missing months to the rhandsontable
+      months_only <- data %>% select(-Site,-Metric)
+      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+      
+      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+      
+      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+      
+      months_to_drop <- which(months < max_month %m-% months(6))
+      months_to_drop <- format(months[months_to_drop], "%m-%Y")
+      
+      complete_months <- seq.Date(months[1], max_month, by= 'month')
+      
+      missing_months <- which(!(complete_months %in% months))
+      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+      
+      data[,missing_months] <- NA
+      
+      data <- data %>% select(-all_of(months_to_drop))
+      
+      data
+      ##########
+      
+      
+      
+      
+      data <- data %>% 
+        mutate_if(is.logical, as.character) %>%
+        mutate_if(is.double, as.character)
+      
+      
+      
+      
+    })
     
+    # Engineering Rhandsontable ------ 
+    output$engineering_kpi <- renderRHandsontable({
+      #data <- data
+      data <- data_engineering_kpi()
+      
+      
+      
+      unique_sites <- unique(data$Site)
+      site_1 <- which(data$Site == unique_sites[1])
+      site_2 <- which(data$Site == unique_sites[2])
+      site_3 <- which(data$Site == unique_sites[3])
+      site_4 <- which(data$Site == unique_sites[4])
+      site_5 <- which(data$Site == unique_sites[5])
+      site_6 <- which(data$Site == unique_sites[6])
+      site_7 <- which(data$Site == unique_sites[7])
+      
+      
+      rendederer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      
+      col_highlight <- ncol(data) - 1
+      
+      
+      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = rendederer_string)  %>%
+        hot_col(1:3, readOnly = T)
+    })
     
+    # Submit Environemental Services -----
     observeEvent(input$submit_evs,{
       
       evs_file <- input$evs_data
@@ -3188,280 +2824,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
-    data_react <- reactive({
-      
-      data  <- operational_metrics %>% filter(`Revenue Type` == "Actual")
-      data <- data[order(data$Site),]
-      
-      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
-      
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-      
-      
-    })
-    
-    
-    output$hand_table <- renderRHandsontable({
-      unique_sites <- unique(data_react()$Site)
-      site_1 <- which(data_react()$Site == unique_sites[1])
-      site_2 <- which(data_react()$Site == unique_sites[2])
-      site_3 <- which(data_react()$Site == unique_sites[3])
-      site_4 <- which(data_react()$Site == unique_sites[4])
-      site_5 <- which(data_react()$Site == unique_sites[5])
-      site_6 <- which(data_react()$Site == unique_sites[6])
-      site_7 <- which(data_react()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
 
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(10:15)
-      
-      
-      rhandsontable(data_react(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_react()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-    
-    
-    
-    
-    
-    data_food_budget <- reactive({
-      data  <- operational_metrics %>% filter(Service == "Food Services" &`Revenue Type` == "Budget" & `Metric Group` == "Cost and Revenue")
-      data <- data[order(data$Site),]
-      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
-
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-    })
-    
-    
-    output$food_budget <- renderRHandsontable({
-      unique_sites <- unique(data_food_budget()$Site)
-      site_1 <- which(data_food_budget()$Site == unique_sites[1])
-      site_2 <- which(data_food_budget()$Site == unique_sites[2])
-      site_3 <- which(data_food_budget()$Site == unique_sites[3])
-      site_4 <- which(data_food_budget()$Site == unique_sites[4])
-      site_5 <- which(data_food_budget()$Site == unique_sites[5])
-      site_6 <- which(data_food_budget()$Site == unique_sites[6])
-      site_7 <- which(data_food_budget()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(10:15)
-      
-      
-      rhandsontable(data_food_budget(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_food_budget()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-    
-    data_food_census <- reactive({
-      
-      
-      
-      ### Census from template
-      data  <- operational_metrics %>% filter(Service == "Food Services" & Metric == "Census Days" & `Metric Group` == "Cost and Revenue")
-      data <- data[order(data$Site),]
-      data <- data[ , -which(names(data) %in% c("Revenue Type", "Metric Group"))]
-      
-      data <- data %>%
-        mutate_if(is.logical, as.character) %>%
-          mutate_if(is.double, as.character)
-      
-      
-    })
-    
-    
-    output$food_census <- renderRHandsontable({
-      unique_sites <- unique(data_food_census()$Site)
-      site_1 <- which(data_food_census()$Site == unique_sites[1])
-      site_2 <- which(data_food_census()$Site == unique_sites[2])
-      site_3 <- which(data_food_census()$Site == unique_sites[3])
-      site_4 <- which(data_food_census()$Site == unique_sites[4])
-      site_5 <- which(data_food_census()$Site == unique_sites[5])
-      site_6 <- which(data_food_census()$Site == unique_sites[6])
-      site_7 <- which(data_food_census()$Site == unique_sites[7])
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- as.array(9:15)
-      
-      
-      rhandsontable(data_food_census(), overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = 0, col = 0, rowspan = nrow(data_food_census()), colspan = 1),
-          list(row = min(site_1)-1, col = 1, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 1, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 1, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 1, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 1, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 1, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 1, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
-    
-    
-    data_engineering_kpi <- reactive({
-      
-      #input$submit_engineering
-      #operational_metrics_engineering <- engineering_repo_pull()
-      data  <- operational_metrics_engineering
-      data <- data[order(data$Site),]
-      
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(colnames(months_only)), "%m-%Y")
-      
-      colnames(data)[3:length(data)] <- months
-      
-      ##### Code that adds months missing months to the rhandsontable
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-      
-      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-      
-      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-      
-      months_to_drop <- which(months < max_month %m-% months(6))
-      months_to_drop <- format(months[months_to_drop], "%m-%Y")
-      
-      complete_months <- seq.Date(months[1], max_month, by= 'month')
-      
-      missing_months <- which(!(complete_months %in% months))
-      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-      
-      data[,missing_months] <- NA
-      
-      data <- data %>% select(-all_of(months_to_drop))
-      
-      data
-      ##########
-      
-      
-      
-      
-      data <- data %>% 
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
-      
-      
-      
-      
-    })
-    
-    
-    output$engineering_kpi <- renderRHandsontable({
-      #data <- data
-      data <- data_engineering_kpi()
-      
-      
-      
-      unique_sites <- unique(data$Site)
-      site_1 <- which(data$Site == unique_sites[1])
-      site_2 <- which(data$Site == unique_sites[2])
-      site_3 <- which(data$Site == unique_sites[3])
-      site_4 <- which(data$Site == unique_sites[4])
-      site_5 <- which(data$Site == unique_sites[5])
-      site_6 <- which(data$Site == unique_sites[6])
-      site_7 <- which(data$Site == unique_sites[7])
-      
-      
-      rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-      
-      
-      col_highlight <- ncol(data) - 1
-      
-      
-      rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-        hot_table(mergeCells = list(
-          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
-          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
-          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
-          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
-          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
-          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
-          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-        )) %>%
-        hot_cols(renderer = rendederer_string)  %>%
-        hot_col(1:3, readOnly = T)
-    })
+   
 
    
     # Lab KPI - Turnaround Time ------------
@@ -4433,7 +3797,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
 
-    # 5. Overtime - Data Input -----------------3----------------------------------------------------------------
+    # 5. Overtime - Data Input ---------------------------------------------------------------------------------
     observeEvent(input$submit_finance, {
       census_file <- input$finance_census
       flag <- 0
@@ -4618,7 +3982,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     # })
     
-    # Transport Metrics - Patient Data  -----------------------
+    # Transport Metrics - Non Patient Data  -----------------------
+    
       observeEvent(input$submit_npt_tat,{
         
         npt_file <- input$non_patient_transport
@@ -4715,6 +4080,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
         }
       })
+    # Transport Metrics - Patient Data  -----------------------
+    
       
       observeEvent(input$submit_pt_tat,{
         
@@ -4792,7 +4159,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
       
-      # Biomed KPI Outout Table -------
+      # KPI Biomed Output Table -------
       
       data_bimoed_kpi <- reactive({
         data  <- kpibme_reports_ui %>% ungroup()
@@ -4818,7 +4185,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA_integer_
+        data[,missing_months] <- NA_real_
         
         data <- data %>% select(-all_of(months_to_drop))
         
@@ -4875,8 +4242,123 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           hot_cols(renderer = rendederer_string)  %>%
           hot_col(1:2, readOnly = T)
       })
+      #KPIs Biomed Observe Event----- 
+      observeEvent(input$submit_biomedkpis, {
+        if(input$name_biomed_kpi == "") {
+          showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields.",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          tryCatch({
+            
+            
+            # Convert rhandsontable to R object
+            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
+            
+            flag <- 1
+          },
+          error =function(err){
+            
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            
+          })
+          
+          if(flag==1){
+            tryCatch({
+              # Reformat data from manual input table into summary repo format
+              bme_kpi_summary_data <<-
+                process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+              
+              flag <- 2
+              
+              
+              showModal(modalDialog(
+                title = "Success",
+                paste0("This Biomedical KPIs data has been submitted successfully."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            },
+            
+            error = function(err) {
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            })
+          }
+          
+          if(flag==2){
+            
+            # Save prior version of KPIs Dept Summary data
+            write_xlsx(kpibme_reports,
+                       paste0(hist_archive_path,
+                              "KPIs Biomed and Clinical Engineering ",
+                              format(Sys.time(), "%Y%m%d_%H%M%S"),
+                              ".xlsx"))
+            
+            
+            # First, identify the sites, months, and metrics in the new data
+            bme_kpi_new_data <- unique(
+              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
+            )
+            
+            # Second, remove these sites, months, and metrics from the historical data,
+            # if they exist there. This allows us to ensure no duplicate entries for
+            # the same site, metric, and time period.
+            kpi_bme <<- anti_join(kpibme_reports,
+                                  bme_kpi_new_data,
+                                  by = c("Service" = "Service",
+                                         "Site" = "Site",
+                                         "Month" = "Month",
+                                         "Metric" = "Metric"))
+            
+            # Third, combine the updated historical data with the new data
+            kpibme_reports <<- full_join(kpi_bme,
+                                         bme_kpi_summary_data)
+            
+            glimpse(kpibme_reports)
+            # Next, arrange the incident reports summary data by month, metric, and site
+            kpibme_reports <<- kpibme_reports %>%
+              arrange(Month,
+                      desc(Metric),
+                      Site)
+            
+            # Lastly, save the updated summary data
+            write_xlsx(kpibme_reports, bmekpi_table_path)
+            
+            # Update metrics_final_df with latest data using custom function
+            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
+            
+            # Save updates metrics_final_df
+            saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            
+            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            date_time$Service = "Biomed / Clinical Engineering"
+            date_time <- rbind(time_df, date_time)
+            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+          }
+        }
+      })
       
-      # Biomed Disruptions and Issues Output Table -------
+      
+      #D&I Biomed Output Table -------
       
       data_bimoed_di <- reactive({
         data  <- disruptions_issues_reports_ui %>% ungroup()
@@ -4902,7 +4384,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         missing_months <- which(!(complete_months %in% months))
         missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
         
-        data[,missing_months] <- NA_integer_
+        data[,missing_months] <- NA_real_
         
         months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
         months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
@@ -4968,122 +4450,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           hot_col(1:2, readOnly = T)
       })
       
-      # Create observer event actions for manual data submission KPIs Biomed ----- 
-      observeEvent(input$submit_biomedkpis, {
-        if(input$name_biomed_kpi == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields.",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else{
-          tryCatch({
-            
-        
-              # Convert rhandsontable to R object
-              bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
-        
-             flag <- 1
-          },
-          error =function(err){
-            
-            showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            
-          })
-          
-          if(flag==1){
-            tryCatch({
-            # Reformat data from manual input table into summary repo format
-            bme_kpi_summary_data <<-
-              process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
-            
-            flag <- 2
-            
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This Biomedical KPIs data has been submitted successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            },
-            
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-          }
-        
-          if(flag==2){
-            
-            # Save prior version of KPIs Dept Summary data
-            write_xlsx(kpibme_reports,
-                       paste0(hist_archive_path,
-                              "KPIs Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-        
-            # First, identify the sites, months, and metrics in the new data
-            bme_kpi_new_data <- unique(
-              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            kpi_bme <<- anti_join(kpibme_reports,
-                                  bme_kpi_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month",
-                                         "Metric" = "Metric"))
-            
-            # Third, combine the updated historical data with the new data
-            kpibme_reports <<- full_join(kpi_bme,
-                                         bme_kpi_summary_data)
-            
-            glimpse(kpibme_reports)
-            # Next, arrange the incident reports summary data by month, metric, and site
-            kpibme_reports <<- kpibme_reports %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(kpibme_reports, bmekpi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            
-            time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            date_time$Service = "Biomed / Clinical Engineering"
-            date_time <- rbind(time_df, date_time)
-            write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-          }
-        }
-      })
-      
-      # Create observer event actions for manual data submission D&I Biomed ----- 
+      # D&I Biomed Observe Event----- 
       observeEvent(input$submit_biomeddi, {
         if(input$name_biomed_distruptions == "") {
           showModal(modalDialog(
@@ -5196,7 +4563,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       
 
-      # Imaging DR observer event actions for X-RAY data submission ----- 
+      # Imaging DR X-RAY data submission ----- 
       observeEvent(input$submit_imagingxray, {
         if(input$imaging_xray_username == "") {
           showModal(modalDialog(
@@ -5315,7 +4682,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
       })
       
-      # Imaging DR observer event actions for Chest CT data submission ----- 
+      # Imaging DR Chest CT data submission ----- 
       observeEvent(input$submit_imagingct, {
         if(input$imaging_ct_username == "") {
           showModal(modalDialog(
@@ -5806,30 +5173,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data <- metrics_final_df %>% filter(Service == input$selectedService)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        
-        # campus_choices <- sort(unique(data$Site))
-        # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices[length(campus_choices)])
-        # updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices[length(campus_choices)])
-        
-        
-        
       })
       
       observeEvent(input$selectedService2,{
         
         data <- metrics_final_df %>% filter(Service == input$selectedService2)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
+
         campus_choices <- sort(unique(data$Site))
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
-        # updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
-        
+
       })
       
       
@@ -5837,13 +5191,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         data <- metrics_final_df %>% filter(Service == input$selectedService3)
         picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
         
         campus_choices <- sort(unique(data$Site))
-        # updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
       })
       
