@@ -13,10 +13,15 @@ security_incident_reports <- security_incident_reports %>%
 sec_inc_rpts_last_month <- max(security_incident_reports$Month)
 
 # Identify Security Incident Report metrics to include in KPI breakout tab
-sec_inc_rpt_metrics_incl <- metric_grouping %>%
+# sec_inc_rpt_metrics_incl <- metric_grouping %>%
+#   filter(Metric_Group %in% "Incident Reports" &
+#            Security %in% "Y") %>%
+#   select(`Data Table`, Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
+#   distinct()
+sec_inc_rpt_metrics_incl <- metric_mapping_breakout %>%
   filter(Metric_Group %in% "Incident Reports" &
-           Security %in% "Y") %>%
-  select(`Data Table`, Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
+           !is.na(Display_Order)) %>%
+  select(Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
   distinct()
 
 # Reformat Security Incident Reports data into wider format for manual entries

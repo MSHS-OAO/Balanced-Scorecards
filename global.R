@@ -184,7 +184,7 @@ start_shared <- "J:"
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping KEN.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
@@ -234,10 +234,11 @@ transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 data_path <- here()
 metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
-target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
-target_mapping_v2 <- read_excel(target_mapping_path, sheet = "Target v2") # Import updated target mapping file
-metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
-summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
+# target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
+target_mapping <- read_excel(target_mapping_path, sheet = "Targets and Status") # Import updated target mapping file
+metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
+# metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
+# summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
 # Sites included -----------------------------------------------------------------------------------
@@ -322,21 +323,19 @@ metrics_final_df_new <- metrics_final_df %>%
                                           "(Press Ganey)|(HCAHPS)"),
                                "Patient Experience", Metric_Group))
 
-target_mapping_analysis <- target_mapping_v2 %>%
-  select(-Range_1, -Range_2, -contains("Status")) %>%
-  filter(!(Target %in% c("Remove", "Budget"))) %>%
+target_mapping_analysis <- target_mapping %>%
+  select(-contains("Status")) %>%
+  filter(!(Target %in% c("Budget"))) %>%
   mutate_at(vars(contains(c("Target", "_Start", "_End"))), as.numeric) %>%
   distinct()
 
-target_mapping_reference <- target_mapping_v2 %>%
-  select(-Range_1, -Range_2, -Status, -contains("_Start"), -contains("_End")) %>%
-  filter(Target != "Remove") %>%
+target_mapping_reference <- target_mapping %>%
+  select(-contains("_Start"), -contains("_End")) %>%
+  # filter(Target != "Remove") %>%
   distinct()
 
 # target_mapping_reference <- left_join(target_mapping_reference,
 #                                       metric_unit_filter_new)
-
-metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
 
 high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
 
