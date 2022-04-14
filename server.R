@@ -1088,10 +1088,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Try to do this the same was we do it in the Summary and Site tabs for consistency
       # First crosswalk metrics to include and metrics_final_df
       data <- left_join(breakout_tab_metrics,
-                            metrics_final_df_new,
-                            by = c("Service",
-                                   "Metric_Group",
-                                   "Metric_Name"))
+                        metrics_final_df_new,
+                        by = c("Service",
+                               "Metric_Group",
+                               "Metric_Name"))
       
       data <- data %>%
         filter(Service %in% service_input,
@@ -1118,12 +1118,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Crosswalk with metric targets and determine status
       data <- left_join(data,
-                            metric_targets_status,
-                            by = c("Service",
-                                   "Site",
-                                   "Metric_Group",
-                                   "Metric_Name",
-                                   "Metric_Name_Submitted"))
+                        metric_targets_status,
+                        by = c("Service",
+                               "Site",
+                               "Metric_Group",
+                               "Metric_Name",
+                               "Metric_Name_Submitted"))
       
       # Determine status based on status definitions
       data <- data %>%
