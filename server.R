@@ -3464,7 +3464,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                   function(x) 
                                     all(is.na(x))))
             
+            # non_empty_cols <- !(apply(data_sec_inc_rpts,
+            #                           MARGIN = 2,
+            #                           function(x) 
+            #                             all(is.na(x))))
+            
             sec_inc_rpts_manual_updates <<- sec_inc_rpts_manual_updates[, non_empty_cols]
+            
+            # sec_inc_rpts_manual_updates <<- data_sec_inc_rpts[, non_empty_cols]
             
             flag <- 1
             
@@ -3634,7 +3641,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # site_5 <- which(data_sec_events$Site == unique_sites[5])
         # site_6 <- which(data_sec_events$Site == unique_sites[6])
         # site_7 <- which(data_sec_events$Site == unique_sites[7])
-        #
+        # 
         # col_highlight <- ncol(data_sec_events) - 1
         
         renderer_string <- "
@@ -3689,7 +3696,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       function(x) 
                                         all(is.na(x))))
             
+            # non_empty_cols <- !(apply(data_sec_events,
+            #                           MARGIN = 2,
+            #                           function(x) 
+            #                             all(is.na(x))))
+            
             sec_events_manual_updates <<- sec_events_manual_updates[, non_empty_cols]
+            
+            # sec_events_manual_updates <<- data_sec_events[, non_empty_cols]
             
             flag <- 1
             

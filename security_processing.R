@@ -13,11 +13,6 @@ security_incident_reports <- security_incident_reports %>%
 sec_inc_rpts_last_month <- max(security_incident_reports$Month)
 
 # Identify Security Incident Report metrics to include in KPI breakout tab
-# sec_inc_rpt_metrics_incl <- metric_grouping %>%
-#   filter(Metric_Group %in% "Incident Reports" &
-#            Security %in% "Y") %>%
-#   select(`Data Table`, Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
-#   distinct()
 sec_inc_rpt_metrics_incl <- metric_mapping_breakout %>%
   filter(Metric_Group %in% "Incident Reports" &
            !is.na(Display_Order)) %>%
@@ -35,9 +30,7 @@ sec_inc_rpts_manual_table <- security_incident_reports %>%
   mutate(Month = format(Month, "%m-%Y"),
          Number = as.character(Number)) %>%
   pivot_wider(names_from = Month,
-              values_from = Number) #%>%
-  # Add a column with the next month for the user to enter data
-  # mutate('{format(sec_inc_rpts_last_month + months(1), "%m-%Y")}' := "")
+              values_from = Number)
 
 
 # Custom function for converting data from manual table input to Security Incident Reports Dept Summary format
@@ -84,66 +77,35 @@ sec_inc_rpts_metrics_final_df <- function(sec_inc_rpts_summary) {
   # Merge with metric group mapping data for included metrics to get
   # "Metric_Group" and "Metric_Name" columns
   sec_inc_rpts_df <- merge(sec_inc_rpts_df,
-                        metric_group_mapping[c("Metric_Group",
-                                               "Metric_Name",
-                                               "Metric_Name_Submitted")],
-                        by = c("Metric_Name_Submitted"))
-  
-  # Combine with target mapping to include status definitions and targets
-  sec_inc_rpts_target_status <- merge(sec_inc_rpts_df[, c("Service",
-                                                    "Site",
-                                                    "Metric_Group",
-                                                    "Metric_Name",
-                                                    "Reporting_Month",
-                                                    "value_rounded")],
-                                   target_mapping,
-                                   by.x = c("Service",
-                                            "Site",
-                                            "Metric_Group",
-                                            "Metric_Name"),
-                                   by.y = c("Service",
-                                            "Site",
-                                            "Metric_Group",
-                                            "Metric_Name"),
-                                   all.x = TRUE)
-  
-  # Determine status based on target ranges
-  sec_inc_rpts_target_status <- sec_inc_rpts_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             !(Variance %in% FALSE))
-  
-  # Combine two dataframes
-  sec_inc_rpts_df_merge <- merge(sec_inc_rpts_df,
-                                 sec_inc_rpts_target_status[, c("Service",
-                                                          "Site",
-                                                          "Metric_Group",
-                                                          "Metric_Name",
-                                                          "Reporting_Month",
-                                                          "Target",
-                                                          "Status")],
-                              all = FALSE)
+                           metric_mapping_breakout[c("Metric_Group",
+                                                     "Metric_Name",
+                                                     "Metric_Name_Submitted")],
+                           # metric_group_mapping[c("Metric_Group",
+                           #                        "Metric_Name",
+                           #                        "Metric_Name_Submitted")],
+                           by = c("Metric_Name_Submitted"))
+
   
   # Select relevant columns
-  sec_inc_rpts_df_merge <- sec_inc_rpts_df_merge[, processed_df_cols]
+  sec_inc_rpts_df <- sec_inc_rpts_df[, processed_df_cols]
   
   # Add reporting month back in
-  sec_inc_rpts_df_merge <- sec_inc_rpts_df_merge %>%
+  sec_inc_rpts_df <- sec_inc_rpts_df %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(sec_inc_rpts_df_merge[, c("Metric_Name",
-                                            "Reporting_Month",
-                                            "Service",
-                                            "Site")])
+  new_rows <- unique(sec_inc_rpts_df[, c("Metric_Name",
+                                         "Reporting_Month",
+                                         "Service",
+                                         "Site")])
   
   metrics_final_df <- anti_join(metrics_final_df,
                                 new_rows)
   
   metrics_final_df <- full_join(metrics_final_df,
-                                sec_inc_rpts_df_merge)
+                                sec_inc_rpts_df)
   
   metrics_final_df <- metrics_final_df %>%
     arrange(Service,
@@ -257,66 +219,34 @@ sec_events_metrics_final_df <- function(sec_events_summary) {
   # Merge with metric group mapping data for included metrics to get
   # "Metric_Group" and "Metric_Name" columns
   sec_events_df <- merge(sec_events_df,
-                           metric_group_mapping[c("Metric_Group",
-                                                  "Metric_Name",
-                                                  "Metric_Name_Submitted")],
+                         metric_mapping_breakout[c("Metric_Group",
+                                                   "Metric_Name",
+                                                   "Metric_Name_Submitted")],
+                           # metric_group_mapping[c("Metric_Group",
+                           #                        "Metric_Name",
+                           #                        "Metric_Name_Submitted")],
                            by = c("Metric_Name_Submitted"))
   
-  # Combine with target mapping to include status definitions and targets
-  sec_events_target_status <- merge(sec_events_df[, c("Service",
-                                                          "Site",
-                                                          "Metric_Group",
-                                                          "Metric_Name",
-                                                          "Reporting_Month",
-                                                          "value_rounded")],
-                                      target_mapping,
-                                      by.x = c("Service",
-                                               "Site",
-                                               "Metric_Group",
-                                               "Metric_Name"),
-                                      by.y = c("Service",
-                                               "Site",
-                                               "Metric_Group",
-                                               "Metric_Name"),
-                                      all.x = TRUE)
-  
-  # Determine status based on target ranges
-  sec_events_target_status <- sec_events_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             !(Variance %in% FALSE))
-  
-  # Combine two dataframes
-  sec_events_df_merge <- merge(sec_events_df,
-                               sec_events_target_status[, c("Service",
-                                                                "Site",
-                                                                "Metric_Group",
-                                                                "Metric_Name",
-                                                                "Reporting_Month",
-                                                                "Target",
-                                                                "Status")],
-                               all = FALSE)
-  
   # Select relevant columns
-  sec_events_df_merge <- sec_events_df_merge[, processed_df_cols]
+  sec_events_df <- sec_events_df[, processed_df_cols]
   
   # Add reporting month back in
-  sec_events_df_merge <- sec_events_df_merge %>%
+  sec_events_df <- sec_events_df %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(sec_events_df_merge[, c("Metric_Name",
-                                             "Reporting_Month",
-                                             "Service",
-                                             "Site")])
+  new_rows <- unique(sec_events_df[, c("Metric_Name",
+                                       "Reporting_Month",
+                                       "Service",
+                                       "Site")])
   
   metrics_final_df <- anti_join(metrics_final_df,
                                 new_rows)
   
   metrics_final_df <- full_join(metrics_final_df,
-                                sec_events_df_merge)
+                                sec_events_df)
   
   metrics_final_df <- metrics_final_df %>%
     arrange(Service,
