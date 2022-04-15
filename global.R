@@ -70,8 +70,8 @@ suppressMessages({
   library(magrittr)
 })
 
-# source("EVS.R")
-# source("press_ganey.R")
+options(shiny.maxRequestSize=500*1024^2)
+
 # Maximize R Memory Size 
 #memory.limit(size = 8000000)
 
@@ -184,7 +184,7 @@ start_shared <- "J:"
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping.xlsx")
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
 operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
 operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
 operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
@@ -225,7 +225,7 @@ hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
 #
 key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
-press_ganey_table_path <- paste0(home_path, "Summary Repos/Press Ganey.xlsx")
+pt_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
 evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
 transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 
@@ -234,82 +234,19 @@ transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 data_path <- here()
 metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
-target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
-target_mapping_v2 <- read_excel(target_mapping_path, sheet = "Target v2") # Import updated target mapping file
-metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
-summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
+# target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
+target_mapping <- read_excel(target_mapping_path, sheet = "Targets and Status") # Import updated target mapping file
+metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
+# metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
+# summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
-
-budget_mapping <- budget_mapping %>% distinct()
-
-metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
-
-services <- c("Food Services", "Security", "Biomed / Clinical Engineering", "ED", 
-              "Engineering", "Environmental Services", "Imaging", "Lab", "Nursing", 
-              "Patient Transport")
-
-metric_grouping_filter <- metric_grouping %>%
-  pivot_longer(
-    all_of(services),
-    names_to = "Service",
-    values_to = "Inclusion"
-  ) %>%
-  filter(!is.na(Inclusion)) %>%
-  arrange(Service)
-
-summary_metric_filter <- summary_metrics %>%
-  pivot_longer(
-    all_of(services),
-    names_to = "Service",
-    values_to = "Order"
-  ) %>%
-  filter(!is.na(Order)) %>%
-  arrange(Order) 
-
-metric_unit_filter <- unique(metric_grouping[, c("Metric_Group","Metric_Name","Metric_Unit")])
-metric_unit_filter_summary <- unique(summary_metric_filter[, c("Summary_Metric_Name","Metric_Unit")])
-metric_unit_perc <- unique((metric_unit_filter_summary %>% filter(Metric_Unit == "Percent"))$Summary_Metric_Name)
-
-# Reactive Data Functions --------------------------------------------------------------------------
-## Summary Tab Data
-groupByFilters_1 <- function(dt, campus, service){
-  result <- dt %>% filter(Site %in% campus, Service %in% service)
-  return(result)
-}
-
-## Comparison and Breakout Tab Data
-groupByFilters_2 <- function(dt, campus, service, metric){
-  result <- dt %>% filter(Site %in% campus, Service %in% service, Metric_Name %in% metric)
-  return(result)
-}
 
 # Sites included -----------------------------------------------------------------------------------
 sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
 
-# Metric Group Order ------------------------------------------------------------------------------- 
-# metric_group_order <- c("Productivity", "Overtime Hours", "Budget to Actual")
-metric_group_order <- metric_grouping_order
-
-# Summary Tab Metrics ------------------------------------------------------------------------------ 
-# summary_tab_metrics <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
-#                               "Overtime Dollars - % (Finance)", "Actual Worked FTE",
-#                               "Budget to Actual Variance - Total")
-# summary_tab_metrics <- as.factor(unique(summary_metric_filter$Metric_Group))
-
-summary_tab_target <- c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", 
-                        "Overtime Dollars - % (Finance)") 
-
-
-
-library(DBI)
- #con <- dbConnect(odbc::odbc(), "OAO_Data", timeout = 30)
-
-
-
 dttm <- function(x) {
   as.POSIXct(x,format="%m/%d/%Y",tz=Sys.timezone(),origin = "1970-01-01")
 }
-
 
 # Import all reference / mapping files needed ----
 site_path <- here() # Set path to new data (raw data)
@@ -319,18 +256,6 @@ site_mapping <- read_excel(target_mapping_path,
 report_date_mapping <- read_excel(target_mapping_path, 
                                   sheet = "Report Dates",  col_names = TRUE, na = c("", "NA")) # Premier reporting-dashboard date mapping 
 
-
-
-metric_group_mapping <- read_excel(target_mapping_path, 
-                                   sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
-metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
-  pivot_longer(
-    all_of(services),
-    names_to = "Service",
-    values_to = "Inclusion"
-  ) %>%
-  filter(!is.na(Inclusion))
-
 cost_rev_mapping <- read_excel(target_mapping_path, 
                                sheet = "Cost and Rev Mapping",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 
@@ -338,10 +263,9 @@ key_vol_mapping <- read_excel(key_volume_mapping_path,
                               sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping  
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 
-processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Reporting_Period",
-                       "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
-
-
+processed_df_cols <- c("Service", "Site", "Metric_Group", "Metric_Name",
+                       "Premier_Reporting_Period", "Reporting_Month",
+                       "value_rounded") # All columns needed in final merged data set
 
 
 # Code for making name filed Mandatory ----
@@ -368,8 +292,6 @@ labelMandatory <- function(label) {
   )
 }
 
-
-
 operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
@@ -382,19 +304,6 @@ transform_dt <- function(dt, names_to, values_to){
     drop_na(values_to)
 }
 
-
-
-
-
-
-
-
-options(shiny.maxRequestSize=500*1024^2)
-
-
-
-
-
 engineering_data_process <- function(data){
   engineering_data <- data %>%
     pivot_longer(c(-Metric, -Site),
@@ -405,38 +314,112 @@ engineering_data_process <- function(data){
 }
 
 
-# Code for processing and using new target mapping file
-target_mapping_new <- target_mapping_v2 %>%
-  select(-Range_1, -Range_2, -Status) %>%
-  filter(Target != "Remove") %>%
-  group_by(Service,
-           Site,
-           Metric_Group,
-           Metric_Name,
-           Target,
-           Green_Status,
-           Yellow_Status,
-           Red_Status,
-           Green_Start, Green_End,
-           Yellow_Start, Yellow_End,
-           Red_Start, Red_End) %>%
-  summarize(nRow = n())
+# Code for processing and using new target mapping file and metrics_final_df without Target and Status included
+metrics_final_df_new <- metrics_final_df %>%
+  select(-Target, -Status) %>%
+  mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
+                              "Overtime Hours - % (Premier)",
+                              str_replace(Metric_Name, "\\sMOM", "")),
+         Metric_Group = ifelse(str_detect(Metric_Group,
+                                          "(Press Ganey)|(HCAHPS)"),
+                               "Patient Experience", Metric_Group))
 
-target_mapping_analysis <- target_mapping_v2 %>%
-  select(-Range_1, -Range_2, -contains("Status")) %>%
-  filter(Target != "Remove") %>%
+target_mapping_analysis <- target_mapping %>%
+  select(-contains("Status")) %>%
+  filter(!(Target %in% c("Budget"))) %>%
+  mutate_at(vars(contains(c("Target", "_Start", "_End"))), as.numeric) %>%
   distinct()
 
-target_mapping_reference <- target_mapping_v2 %>%
-  select(-Range_1, -Range_2, -Status, -contains("_Start"), -contains("_End")) %>%
-  filter(Target != "Remove") %>%
+target_mapping_reference <- target_mapping %>%
+  select(-contains("_Start"), -contains("_End")) %>%
+  # filter(Target != "Remove") %>%
   distinct()
 
+# target_mapping_reference <- left_join(target_mapping_reference,
+#                                       metric_unit_filter_new)
+
+high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
+
+metric_mapping_summary_site <- metric_mapping_raw %>%
+  # Remove Data Table column since it isn't used anywhere
+  # Remove columns ending in _Incl since this is used for the KPI Breakout tab
+  select(-`Data Table`, -contains("_Breakout_Order")) %>%
+  # Pivot longer based on service line columns
+  pivot_longer(cols = contains("_Summary_Site_Order"),
+               names_to = "Service",
+               values_to = "Display_Order") %>%
+  # Remove any metrics that are not displayed in the Summary or Site tabs
+  filter(!is.na(Display_Order)) %>%
+  # Convert General_Group to an ordered factor
+  # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
+  mutate(General_Group = factor(General_Group,
+                                levels = high_level_order,
+                                ordered = TRUE)) %>%
+  # Arrange by service line, general grouping, and display order to ensure consistency
+  arrange(Service, General_Group, Display_Order) %>%
+  mutate(
+    # Remove _Order from service column
+    Service = str_extract(Service, ".*(?=_Summary_Site_Order)"),
+    # Fix abbreviated service names
+    Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
+                     ifelse(str_detect(Service, "Biomed"),
+                            "Biomed / Clinical Engineering",
+                            ifelse(str_detect(Service, "Food"), "Food Services",
+                                   ifelse(str_detect(Service, "Transport"),
+                                          "Patient Transport",
+                                          Service)))),
+    # Convert General_Group from factor back to character now that data is ordered properly
+    General_Group = as.character(General_Group),
+    # Update Overtime Hours - % (Premier)
+    across(.cols = everything (),
+           .fns = function(x) {
+             str_replace(x,
+                         "\\ %\\ \\(Premier\\)",
+                         "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+             }))
+
+metric_mapping_breakout <- metric_mapping_raw %>%
+  # Remove Data Table column since it isn't used anywhere
+  # Remove columns ending in _Incl since this is used for the KPI Breakout tab
+  select(-`Data Table`, -contains("_Summary_Site_Order")) %>%
+  # Pivot longer based on service line columns
+  pivot_longer(cols = contains("_Breakout_Order"),
+               names_to = "Service",
+               values_to = "Display_Order") %>%
+  # Remove any metrics that are not displayed in the Summary or Site tabs
+  filter(!is.na(Display_Order)) %>%
+  # Convert General_Group to an ordered factor
+  # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
+  mutate(General_Group = factor(General_Group,
+                                levels = high_level_order,
+                                ordered = TRUE)) %>%
+  # Arrange by service line, general grouping, and display order to ensure consistency
+  arrange(Service, General_Group, Display_Order) %>%
+  mutate(
+    # Remove _Order from service column
+    Service = str_extract(Service, ".*(?=_Breakout_Order)"),
+    # Fix abbreviated service names
+    Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
+                     ifelse(str_detect(Service, "Biomed"),
+                            "Biomed / Clinical Engineering",
+                            ifelse(str_detect(Service, "Food"), "Food Services",
+                                   ifelse(str_detect(Service, "Transport"),
+                                          "Patient Transport",
+                                          Service)))),
+    # Convert General_Group from factor back to character now that data is ordered properly
+    General_Group = as.character(General_Group),
+    # Update Overtime Hours - % (Premier)
+    across(.cols = everything (),
+           .fns = function(x) {
+             str_replace(x,
+                         "\\ %\\ \\(Premier\\)",
+                         "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+           }))
 
 # Source files for processing service line data -------------------
 source("lab_processing.R")
 source("EVS.R")
-source("press_ganey.R")
+source("patient_experience.R")
 source("security_processing.R")
 source("Transportation.R")
 source("biomed.R")

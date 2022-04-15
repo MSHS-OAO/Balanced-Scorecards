@@ -264,60 +264,28 @@ lab_scc_tat_metrics_final_df <- function(scc_summary) {
   # Merge with metric group mapping data for included metrics to get
   # "Metric_Group" and "Metric_Name" columns
   scc_tat_df <- merge(scc_tat_df,
-                      metric_group_mapping[c("Metric_Group",
-                                             "Metric_Name",
-                                             "Metric_Name_Submitted")],
+                      metric_mapping_breakout[c("Metric_Group",
+                                                "Metric_Name",
+                                                "Metric_Name_Submitted")],
+                      # metric_group_mapping[c("Metric_Group",
+                      #                        "Metric_Name",
+                      #                        "Metric_Name_Submitted")],
                       by = c("Metric_Name_Submitted"))
   
-  # Combine with target mapping to include status definitions and targets
-  scc_tat_target_status <- merge(scc_tat_df[, c("Service",
-                                                "Site",
-                                                "Metric_Group",
-                                                "Metric_Name",
-                                                "Reporting_Month",
-                                                "value_rounded")],
-                                 target_mapping,
-                                 by.x = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 by.y = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 all.x = TRUE)
-  
-  # Determine status based on target ranges
-  scc_tat_target_status <- scc_tat_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             !(Variance %in% FALSE))
-  
-  # Combine two dataframes
-  scc_tat_df_merge <- merge(scc_tat_df,
-                            scc_tat_target_status[, c("Service",
-                                                      "Site",
-                                                      "Metric_Group",
-                                                      "Metric_Name",
-                                                      "Reporting_Month",
-                                                      "Target",
-                                                      "Status")],
-                            all = FALSE)
-  
   # Select relevant columns
-  scc_tat_df_merge <- scc_tat_df_merge[, processed_df_cols]
+  scc_tat_df <- scc_tat_df[, processed_df_cols]
   
   # Add reporting month back in
-  scc_tat_df_merge <- scc_tat_df_merge %>%
+  scc_tat_df <- scc_tat_df %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(scc_tat_df_merge[, c("Metric_Name",
-                                          "Reporting_Month",
-                                          "Service",
-                                          "Site")])
+  new_rows <- unique(scc_tat_df[, c("Metric_Name",
+                                    "Reporting_Month",
+                                    "Service",
+                                    "Site")])
   
   metrics_final_df <- anti_join(metrics_final_df,
                                 new_rows)
@@ -359,60 +327,29 @@ lab_sun_tat_metrics_final_df <- function(sun_summary) {
   # Merge with metric group mapping data for included metrics to get
   # "Metric_Group" and "Metric_Name" columns
   sun_tat_df <- merge(sun_tat_df,
-                      metric_group_mapping[c("Metric_Group",
-                                             "Metric_Name",
-                                             "Metric_Name_Submitted")],
+                      metric_mapping_breakout[c("Metric_Group",
+                                                "Metric_Name",
+                                                "Metric_Name_Submitted")],
+                      # metric_group_mapping[c("Metric_Group",
+                      #                        "Metric_Name",
+                      #                        "Metric_Name_Submitted")],
                       by = c("Metric_Name_Submitted"))
   
-  # Combine with target mapping to include status definitions and targets
-  sun_tat_target_status <- merge(sun_tat_df[, c("Service",
-                                                "Site",
-                                                "Metric_Group",
-                                                "Metric_Name",
-                                                "Reporting_Month",
-                                                "value_rounded")],
-                                 target_mapping,
-                                 by.x = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 by.y = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 all.x = TRUE)
-  
-  # Determine status based on target ranges
-  sun_tat_target_status <- sun_tat_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             !(Variance %in% FALSE))
-  
-  # Combine two dataframes
-  sun_tat_df_merge <- merge(sun_tat_df,
-                            sun_tat_target_status[, c("Service",
-                                                      "Site",
-                                                      "Metric_Group",
-                                                      "Metric_Name",
-                                                      "Reporting_Month",
-                                                      "Target",
-                                                      "Status")],
-                            all = FALSE)
-  
+
   # Select relevant columns
-  sun_tat_df_merge <- sun_tat_df_merge[, processed_df_cols]
+  sun_tat_df <- sun_tat_df[, processed_df_cols]
   
   # Add reporting month back in
-  sun_tat_df_merge <- sun_tat_df_merge %>%
+  sun_tat_df <- sun_tat_df %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(sun_tat_df_merge[, c("Metric_Name",
-                                          "Reporting_Month",
-                                          "Service",
-                                          "Site")])
+  new_rows <- unique(sun_tat_df[, c("Metric_Name",
+                                    "Reporting_Month",
+                                    "Service",
+                                    "Site")])
   
   metrics_final_df <- anti_join(metrics_final_df,
                                 new_rows)
@@ -478,60 +415,28 @@ lab_prof_test_metrics_final_df <- function(prof_test_summary) {
   # Merge with metric group mapping data for included metrics to get
   # "Metric_Group" and "Metric_Name" columns
   prof_test_df <- merge(prof_test_df,
-                      metric_group_mapping[c("Metric_Group",
-                                             "Metric_Name",
-                                             "Metric_Name_Submitted")],
-                      by = c("Metric_Name_Submitted"))
-  
-  # Combine with target mapping to include status definitions and targets
-  prof_test_target_status <- merge(prof_test_df[, c("Service",
-                                                "Site",
-                                                "Metric_Group",
-                                                "Metric_Name",
-                                                "Reporting_Month",
-                                                "value_rounded")],
-                                 target_mapping,
-                                 by.x = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 by.y = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 all.x = TRUE)
-  
-  # Determine status based on target ranges
-  prof_test_target_status <- prof_test_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             !(Variance %in% FALSE))
-  
-  # Combine two dataframes
-  prof_test_df_merge <- merge(prof_test_df,
-                              prof_test_target_status[, c("Service",
-                                                      "Site",
-                                                      "Metric_Group",
-                                                      "Metric_Name",
-                                                      "Reporting_Month",
-                                                      "Target",
-                                                      "Status")],
-                            all = FALSE)
+                        metric_mapping_breakout[c("Metric_Group",
+                                                  "Metric_Name",
+                                                  "Metric_Name_Submitted")],
+                        # metric_group_mapping[c("Metric_Group",
+                        #                        "Metric_Name",
+                        #                        "Metric_Name_Submitted")],
+                        by = c("Metric_Name_Submitted"))
   
   # Select relevant columns
-  prof_test_df_merge <- prof_test_df_merge[, processed_df_cols]
+  prof_test_df <- prof_test_df[, processed_df_cols]
   
   # Add reporting month back in
-  prof_test_df_merge <- prof_test_df_merge %>%
+  prof_test_df <- prof_test_df %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(prof_test_df_merge[, c("Metric_Name",
-                                          "Reporting_Month",
-                                          "Service",
-                                          "Site")])
+  new_rows <- unique(prof_test_df[, c("Metric_Name",
+                                      "Reporting_Month",
+                                      "Service",
+                                      "Site")])
   
   metrics_final_df <- anti_join(metrics_final_df,
                                 new_rows)
