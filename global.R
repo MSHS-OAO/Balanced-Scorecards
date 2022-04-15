@@ -263,8 +263,9 @@ key_vol_mapping <- read_excel(key_volume_mapping_path,
                               sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping  
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 
-processed_df_cols <- c("Service","Site","Metric_Group","Metric_Name","Premier_Reporting_Period",
-                       "Reporting_Month","value_rounded","Target","Status") # All columns needed in final merged data set
+processed_df_cols <- c("Service", "Site", "Metric_Group", "Metric_Name",
+                       "Premier_Reporting_Period", "Reporting_Month",
+                       "value_rounded") # All columns needed in final merged data set
 
 
 # Code for making name filed Mandatory ----
