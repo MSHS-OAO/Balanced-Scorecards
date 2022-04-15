@@ -1,16 +1,18 @@
+bislr_raw <- read_xlsx("J:/deans/Presidents/HSPI-PM/Operations Planning/Financials/2022/2022-01/Cost Center/January 2021 and 2022 Actual 2022 Budget BISLR at 2-23-22 mp.xlsx")
+
 bislr_preprocess <- function(finance_bislr){
   ### Split out to actual data
   actual_index <- which(colnames(finance_bislr) == "Actual")
   finance_bislr_actual <- finance_bislr[,1:actual_index]
   col_names <- colnames(finance_bislr_actual)
   year_index <- str_find(col_names, "ACTUAL", 0)[1]
-  year <- gsub(".*ACTUAL", "", col_names[6])
-  
+  #year <- gsub(".*ACTUAL", "", col_names[6])
+  year <- "2021"
   finance_bislr_actual <- finance_bislr_actual %>% row_to_names(row_number = 1)  
   
   colname <- names(finance_bislr_actual)
-  colname[7:length(finance_bislr_actual)-1] <- paste0(colname[7:length(finance_bislr_actual)-1], "-01-",year)
-  colname[7:length(finance_bislr_actual)-1] <- format(as.Date(colname[7:length(finance_bislr_actual)-1], "%B-%d-%Y"),"%Y-%m-%d")
+  colname[9:length(colname)-1] <- paste0(colname[9:length(colname)-1], "-01-",year)
+  colname[9:length(colname)-1] <- format(as.Date(colname[9:length(colname)-1], "%B-%d-%Y"),"%Y-%m-%d")
   
   
   colnames(finance_bislr_actual) <- colname
@@ -96,9 +98,10 @@ exptrend_process <- function(finance_exptrend){
   finance_exptrend$`Account Category Desc2` <- gsub(".*SALARIES", "Salary", finance_exptrend$`Account Category Desc2`)
   
   finance_exptrend$Month <- paste0(month, " 01")
-  finance_exptrend$Month <- format(as.Date(finance_exptrend$Month, format = '%B %Y %d'),"%Y-%m-%d")
+  finance_exptrend$Month <- format(as.Date(finance_exptrend$Month, format = '%Y-%m-%d'),"%Y-%m-%d")
   
   finance_exptrend$`Cost Center2` <- stringr::str_replace(finance_exptrend$`Cost Center2`, '\\-', "")
+  finance_exptrend$`Cost Center2` <- stringr::str_remove(finance_exptrend$`Cost Center2`, "^0+")
   
   finance_exptrend <- merge(finance_exptrend, budget_mapping[,c("Service", "Site","Cost Center2", "FTI - Mapping")],
                             by.x = c("Cost Center2"), by.y = c("Cost Center2"))

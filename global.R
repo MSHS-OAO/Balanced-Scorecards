@@ -240,11 +240,17 @@ metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") #
 summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
+budget_mapping <- budget_mapping %>% distinct()
+
 metric_grouping_order <- as.factor(unique(metric_grouping$Metric_Group)) # Define order of metrics displayed
+
+services <- c("Food Services", "Security", "Biomed / Clinical Engineering", "ED", 
+              "Engineering", "Environmental Services", "Imaging", "Lab", "Nursing", 
+              "Patient Transport")
 
 metric_grouping_filter <- metric_grouping %>%
   pivot_longer(
-    6:length(metric_grouping),
+    all_of(services),
     names_to = "Service",
     values_to = "Inclusion"
   ) %>%
@@ -253,7 +259,7 @@ metric_grouping_filter <- metric_grouping %>%
 
 summary_metric_filter <- summary_metrics %>%
   pivot_longer(
-    7:length(summary_metrics),
+    all_of(services),
     names_to = "Service",
     values_to = "Order"
   ) %>%
@@ -319,7 +325,7 @@ metric_group_mapping <- read_excel(target_mapping_path,
                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
 metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
   pivot_longer(
-    6:length(metric_group_mapping),
+    all_of(services),
     names_to = "Service",
     values_to = "Inclusion"
   ) %>%
@@ -443,3 +449,6 @@ source("nursing.R")
 source("ED.R")
 source("productivity.R")
 source("budget_to_actual.R")
+
+function_sources <- list.files("Functions", full.names = T)
+sapply(function_sources, source)
