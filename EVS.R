@@ -93,12 +93,6 @@ evs__metrics_final_df_process <- function(data){
     mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
             Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%m-%Y"))
   
-  TAT_EVS_df <- merge(TAT_EVS_df, metric_mapping_breakout[c("Metric_Group",
-                                                            "Metric_Name",
-                                                            "Metric_Name_Submitted")
-                                                          ],
-                      by = c("Metric_Name_Submitted"))
-  
   # Subset processed data for merge 
   metrics_final_df <- metrics_final_df_subset_and_merge(TAT_EVS_df)
   

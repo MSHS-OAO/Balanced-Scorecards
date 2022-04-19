@@ -1,4 +1,10 @@
 metrics_final_df_subset_and_merge <- function(df) {
+  df <- merge(df, metric_mapping_breakout[c("Metric_Group",
+                                            "Metric_Name",
+                                            "Metric_Name_Submitted")
+  ],
+  by = c("Metric_Name_Submitted"))
+  
   df <- df[,processed_df_cols]
   df <- df %>% 
     mutate(Reporting_Month_Ref = as.Date(paste('01', as.yearmon(df$Reporting_Month, 
