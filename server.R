@@ -84,8 +84,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth
 
 
-      # service_input <- "Patient Transport"
-      # month_input <- "11-2021"
+      # service_input <- "Lab"
+      # month_input <- "12-2021"
 
 
       # Code Starts ---------------------------------------------------------------------------------     
@@ -157,8 +157,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 Metric_Name, desc(Reporting_Month_Ref)) %>%
         group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
         mutate(id = row_number())
-        
-      
+
       # Current Period Table -----------------
       current_summary_data <- left_join((period_filter %>% filter(id == 1)),
                                         data,
@@ -329,7 +328,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
-        filter(Metric_Name_Summary %!in% c("Budget to Actual", "Total Revenue to Budget Variance")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance")) %>% # Metrics that need to be summarized by sum (total)
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
                  Metric_Group,
