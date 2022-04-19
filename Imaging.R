@@ -72,76 +72,12 @@ imaging_dept_summary <- function(data){
 
 
 imaging_metrics_final_df <- function(data){
-  
-  
-  imaging_df <- merge(data,
-                        metric_group_mapping[c("Metric_Group",
-                                               "Metric_Name",
-                                               "Metric_Name_Submitted")],
-                        by = c("Metric_Name_Submitted"))
-  
-  
-  
-  # Combine with target mapping to include status definitions and targets
-  imaging_target_status <- merge(imaging_df[, c("Service",
-                                                "Site",
-                                                "Metric_Group",
-                                                "Metric_Name",
-                                                "Reporting_Month",
-                                                "value_rounded")],
-                                 target_mapping,
-                                 by.x = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 by.y = c("Service",
-                                          "Site",
-                                          "Metric_Group",
-                                          "Metric_Name"),
-                                 all.x = TRUE)
-  
-  # Determine status based on target ranges
-  imaging_target_status <- imaging_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             (Variance %in% TRUE))
-  
-  
-  # Combine two dataframes
-  imaging_df_merge <- merge(imaging_df,
-                            imaging_target_status[, c("Service",
-                                                      "Site",
-                                                      "Metric_Group",
-                                                      "Metric_Name",
-                                                      "Reporting_Month",
-                                                      "Target",
-                                                      "Status")],
-                            all.x = TRUE)
-  
-  imaging_df_merge$Premier_Reporting_Period <- format(imaging_df_merge$Reporting_Month_Ref, "%b-%Y")
-  
-  imaging_df_merge <- imaging_df_merge %>% select(-Category)
+  imaging_df <- imaging_df %>%
+                        mutate(Premier_Reporting_Period = format(Reporting_Month_Ref, 
+                                                                 "%b-%Y")) %>%
+                        select(-Category)
   
   # Select relevant columns
-  imaging_df_merge <- imaging_df_merge[, processed_df_cols]
-  
-  imaging_df_merge <- imaging_df_merge %>%
-    mutate(Reporting_Month_Ref = as.Date(paste("01",
-                                               as.yearmon(Reporting_Month,
-                                                          "%m-%Y")),
-                                         format = "%d %b %Y"))
-  
-  
-  new_rows <- unique(imaging_df_merge[, c("Metric_Name",
-                                          "Reporting_Month",
-                                          "Service",
-                                          "Site")])
-  
-  metrics_final_df <- anti_join(metrics_final_df,
-                                new_rows)
-  
-  metrics_final_df <- full_join(metrics_final_df,
-                                imaging_df_merge)
-  
-  
+  metrics_final_df_test <- metrics_final_df_subset_and_merge(imaging_df)
+  return(metrics_final_df)
 }
