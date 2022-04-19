@@ -231,7 +231,7 @@ pt_exp_metrics_final_df <- function(pt_exp_summary) {
                                 new_rows)
   
   metrics_final_df <- full_join(metrics_final_df,
-                                pt_exp_metrics_df_merge)
+                                pt_exp_metrics_final_df)
   
   return(metrics_final_df)
   
