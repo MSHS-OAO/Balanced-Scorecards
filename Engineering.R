@@ -1,12 +1,23 @@
 engineering_repo_pull <- function(){
 
-    operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
-      mutate_if(is.logical, as.character) %>%
-      mutate_if(is.double, as.character) %>%
-      pivot_longer(cols = c(-Month, -Site),
-                   names_to = "Metric",
-                   values_to = "Value") %>%
-      pivot_wider(names_from = "Month", values_from = Value)
+    # operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
+    #   mutate_if(is.logical, as.character) %>%
+    #   mutate_if(is.double, as.character) %>%
+    #   pivot_longer(cols = c(-Month, -Site),
+    #                names_to = "Metric",
+    #                values_to = "Value") %>%
+    #   pivot_wider(names_from = "Month", values_from = Value)
+  
+  
+  
+  operational_metrics_engineering <- sql_summary_repo_data("ENGINEERING_SUMMARY_REPO", "2021-08-01", "2022-02-01")
+
+  operational_metrics_engineering <- operational_metrics_engineering %>%
+                                        arrange(MONTH) %>%
+                                        pivot_wider(names_from = "MONTH", values_from = VALUE)
+
+  operational_metrics_engineering <- operational_metrics_engineering %>% rename(Site = SITE,
+                                                                                Metric = METRIC)
     
     return(operational_metrics_engineering)
 }
@@ -43,28 +54,8 @@ cm_kpi <- function(data){
            Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y"),
            value_rounded = value)
   
-  cm_kpi_df$Metric_Group <- metric_group_mapping$Metric_Group[match(cm_kpi_df$Metric_Name_Submitted, metric_group_mapping$Metric_Name_Submitted)]
-  cm_kpi_df$Metric_Name <- metric_group_mapping$Metric_Name[match(cm_kpi_df$Metric_Name_Submitted, metric_group_mapping$Metric_Name_Submitted)]
-  
-  ### Create Target Variance Column
-  cm_kpi_target_status <- merge(cm_kpi_df[, c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","value_rounded")],
-                                target_mapping, 
-                                by = c("Service","Site","Metric_Group","Metric_Name"),
-                                all = TRUE)
-  
-  cm_kpi_target_status <- cm_kpi_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>% # Target mapping
-    filter(Variance == TRUE)
-  
-  cm_kpi_df_final <- merge(cm_kpi_df, cm_kpi_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
-                           all = TRUE)
-  
   
   # Subset processed data for merge 
-  cm_kpi_df_final <- cm_kpi_df_final[,processed_df_cols]
-  
-  cm_kpi_df_final$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(cm_kpi_df_final$Reporting_Month, "%m-%Y")), format='%d %b %Y')
-  
-  
-  metrics_final_df <- full_join(metrics_final_df,cm_kpi_df_final)
+    metrics_final_df <- metrics_final_df_subset_and_merge(cm_kpi_df)
+    return(metrics_final_df)
 }

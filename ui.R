@@ -732,7 +732,7 @@ ui <-
                                offset = 1,
                                DT::dataTableOutput("targetSummary_table"))
                       )
-             ), # Close tabPanel Summary
+             ) # Close tabPanel Summary
              
           ), # Close NavBar
   

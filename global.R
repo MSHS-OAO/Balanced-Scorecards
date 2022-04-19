@@ -417,6 +417,8 @@ metric_mapping_breakout <- metric_mapping_raw %>%
            }))
 
 # Source files for processing service line data -------------------
+function_sources <- list.files("Functions", full.names = T)
+sapply(function_sources, source)
 source("lab_processing.R")
 source("EVS.R")
 source("patient_experience.R")
@@ -432,3 +434,4 @@ source("nursing.R")
 source("ED.R")
 source("productivity.R")
 source("budget_to_actual.R")
+
