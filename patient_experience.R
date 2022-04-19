@@ -204,63 +204,25 @@ pt_exp_metrics_final_df <- function(pt_exp_summary) {
   # Crosswalk with metric grouping
   pt_exp_metrics_final_df <- merge(pt_exp_metrics_final_df,
                                    metric_mapping_breakout[c("Metric_Group",
-                                                             "Metric_Name_Breakout",
+                                                             "Metric_Name",
                                                              "Metric_Name_Submitted")],
                                    # metric_group_mapping[c("Metric_Group",
                                    #                        "Metric_Name",
                                    #                        "Metric_Name_Submitted")],
                                    by = c("Metric_Name_Submitted"))
-  
-  pt_exp_metrics_final_df <- pt_exp_metrics_final_df %>%
-    rename(Metric_Name = Metric_Name_Breakout)
-  
-  # No longer need lines 219 on since target mapping is done within the server file.
-  # Crosswalk with targets
-  pt_exp_metrics_target_status <- merge(
-    pt_exp_metrics_final_df[, c("Service",
-                                "Site",
-                                "Metric_Group",
-                                "Metric_Name",
-                                "Reporting_Month",
-                                "value_rounded")],
-    target_mapping,
-    by.x = c("Service",
-             "Site",
-             "Metric_Group",
-             "Metric_Name"),
-    by.y = c("Service",
-             "Site",
-             "Metric_Group",
-             "Metric_Name"),
-    all.x = TRUE)
-  
-  pt_exp_metrics_target_status <- pt_exp_metrics_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(!is.na(Reporting_Month) &
-             !(Variance %in% FALSE))
-  
-  # Combine the two dataframes
-  pt_exp_metrics_df_merge <- merge(
-    pt_exp_metrics_final_df,
-    pt_exp_metrics_target_status[, c("Service",
-                                     "Site",
-                                     "Metric_Group",
-                                     "Metric_Name",
-                                     "Reporting_Month",
-                                     "Target",
-                                     "Status")],
-    all = FALSE)
 
-  pt_exp_metrics_df_merge <- pt_exp_metrics_df_merge[, processed_df_cols]  
+  
+  # Select relevant columns
+  pt_exp_metrics_final_df <- pt_exp_metrics_final_df[, processed_df_cols]  
     
   # Add reporting month back in
-  pt_exp_metrics_df_merge <- pt_exp_metrics_df_merge %>%
+  pt_exp_metrics_final_df <- pt_exp_metrics_final_df %>%
     mutate(Reporting_Month_Ref = as.Date(paste("01",
                                                as.yearmon(Reporting_Month,
                                                           "%m-%Y")),
                                          format = "%d %b %Y"))
   
-  new_rows <- unique(pt_exp_metrics_df_merge[, c("Metric_Name",
+  new_rows <- unique(pt_exp_metrics_final_df[, c("Metric_Name",
                                                  "Reporting_Month",
                                                  "Service",
                                                  "Site")])
