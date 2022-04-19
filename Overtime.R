@@ -22,7 +22,7 @@ overtime_file_processs <- function(data){
                    `Associated Dashboard Month` = `Discharge Fisc Year-Period`)
   
   data <- data %>% group_by(Site, Service, `Associated Dashboard Month`, Metric_Name) %>%
-          mutate(Value = round((sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`)),4)) %>%
+          mutate(Value = (sum(`Actual Overtime Dollars`)/sum(`Actual Dollars`))) %>%
           select(-`Cost Center Group`,-`Pay Category`,-`Actual Overtime Dollars`, -`Actual Dollars`) %>%
           distinct()
   
@@ -48,7 +48,7 @@ overtime_metrics_final_df_process <- function(data){
     rename(Metric_Name_Submitted = Metric_Name) %>%
     mutate(Reporting_Month = format(as.Date(`Associated Dashboard Month`, 
                                             format = "%Y-%m-%d"),"%m-%Y"),
-           value_rounded = round(as.numeric(Value),2),
+           value_rounded = as.numeric(Value),
            Premier_Reporting_Period = format(as.Date(`Associated Dashboard Month`,
                                                      format = "%Y-%m-%d"),
                                              format = "%b %Y")) %>%
