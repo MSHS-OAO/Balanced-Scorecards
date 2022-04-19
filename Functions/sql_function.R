@@ -7,12 +7,12 @@ con <- dbConnect(odbc::odbc(), "OAO Cloud DB", timeout = 30)
 # table <- "ENGINEERING_SUMMARY_REPO"
 
 sql_summary_repo_data <- function(table, min_month, max_month){
-  
-  sql_statement <- paste0("SELECT * FROM ", table, 
+
+  sql_statement <- paste0("SELECT * FROM ", table,
   " WHERE Month BETWEEN TO_DATE('",min_month, " 00:00:00', 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE('", max_month, " 00:00:00', 'YYYY-MM-DD HH24:MI:SS')")
-  
+
   results <- dbGetQuery(con, sql_statement)
-  
+
 }
 
 

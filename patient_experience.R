@@ -201,39 +201,42 @@ pt_exp_metrics_final_df <- function(pt_exp_summary) {
            Incl_AllHosp_Rank = NULL,
            Metric = NULL)
   
-  # Crosswalk with metric grouping
-  pt_exp_metrics_final_df <- merge(pt_exp_metrics_final_df,
-                                   metric_mapping_breakout[c("Metric_Group",
-                                                             "Metric_Name",
-                                                             "Metric_Name_Submitted")],
-                                   # metric_group_mapping[c("Metric_Group",
-                                   #                        "Metric_Name",
-                                   #                        "Metric_Name_Submitted")],
-                                   by = c("Metric_Name_Submitted"))
-
+  # Use custom function for updating metrics_final_df using standard process
+  metrics_final_df <- metrics_final_df_subset_and_merge(pt_exp_metrics_final_df)
   
-  # Select relevant columns
-  pt_exp_metrics_final_df <- pt_exp_metrics_final_df[, processed_df_cols]  
-    
-  # Add reporting month back in
-  pt_exp_metrics_final_df <- pt_exp_metrics_final_df %>%
-    mutate(Reporting_Month_Ref = as.Date(paste("01",
-                                               as.yearmon(Reporting_Month,
-                                                          "%m-%Y")),
-                                         format = "%d %b %Y"))
-  
-  new_rows <- unique(pt_exp_metrics_final_df[, c("Metric_Name",
-                                                 "Reporting_Month",
-                                                 "Service",
-                                                 "Site")])
-  
-  metrics_final_df <- anti_join(metrics_final_df,
-                                new_rows)
-  
-  metrics_final_df <- full_join(metrics_final_df,
-                                pt_exp_metrics_final_df)
-  
-  return(metrics_final_df)
+  # # Crosswalk with metric grouping
+  # pt_exp_metrics_final_df <- merge(pt_exp_metrics_final_df,
+  #                                  metric_mapping_breakout[c("Metric_Group",
+  #                                                            "Metric_Name",
+  #                                                            "Metric_Name_Submitted")],
+  #                                  # metric_group_mapping[c("Metric_Group",
+  #                                  #                        "Metric_Name",
+  #                                  #                        "Metric_Name_Submitted")],
+  #                                  by = c("Metric_Name_Submitted"))
+  # 
+  # 
+  # # Select relevant columns
+  # pt_exp_metrics_final_df <- pt_exp_metrics_final_df[, processed_df_cols]  
+  #   
+  # # Add reporting month back in
+  # pt_exp_metrics_final_df <- pt_exp_metrics_final_df %>%
+  #   mutate(Reporting_Month_Ref = as.Date(paste("01",
+  #                                              as.yearmon(Reporting_Month,
+  #                                                         "%m-%Y")),
+  #                                        format = "%d %b %Y"))
+  # 
+  # new_rows <- unique(pt_exp_metrics_final_df[, c("Metric_Name",
+  #                                                "Reporting_Month",
+  #                                                "Service",
+  #                                                "Site")])
+  # 
+  # metrics_final_df <- anti_join(metrics_final_df,
+  #                               new_rows)
+  # 
+  # metrics_final_df <- full_join(metrics_final_df,
+  #                               pt_exp_metrics_final_df)
+  # 
+  # return(metrics_final_df)
   
 }
 

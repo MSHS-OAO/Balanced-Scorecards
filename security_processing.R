@@ -74,46 +74,49 @@ sec_inc_rpts_metrics_final_df <- function(sec_inc_rpts_summary) {
            Month = NULL,
            Number = NULL)
   
-  # Merge with metric group mapping data for included metrics to get
-  # "Metric_Group" and "Metric_Name" columns
-  sec_inc_rpts_df <- merge(sec_inc_rpts_df,
-                           metric_mapping_breakout[c("Metric_Group",
-                                                     "Metric_Name",
-                                                     "Metric_Name_Submitted")],
-                           # metric_group_mapping[c("Metric_Group",
-                           #                        "Metric_Name",
-                           #                        "Metric_Name_Submitted")],
-                           by = c("Metric_Name_Submitted"))
-
+  # Use custom function for updating metrics_final_df using standard process
+  metrics_final_df <- metrics_final_df_subset_and_merge(sec_inc_rpts_df)
   
-  # Select relevant columns
-  sec_inc_rpts_df <- sec_inc_rpts_df[, processed_df_cols]
-  
-  # Add reporting month back in
-  sec_inc_rpts_df <- sec_inc_rpts_df %>%
-    mutate(Reporting_Month_Ref = as.Date(paste("01",
-                                               as.yearmon(Reporting_Month,
-                                                          "%m-%Y")),
-                                         format = "%d %b %Y"))
-  
-  new_rows <- unique(sec_inc_rpts_df[, c("Metric_Name",
-                                         "Reporting_Month",
-                                         "Service",
-                                         "Site")])
-  
-  metrics_final_df <- anti_join(metrics_final_df,
-                                new_rows)
-  
-  metrics_final_df <- full_join(metrics_final_df,
-                                sec_inc_rpts_df)
-  
-  metrics_final_df <- metrics_final_df %>%
-    arrange(Service,
-            Site,
-            Metric_Group,
-            Reporting_Month_Ref)
-  
-  return(metrics_final_df)
+  # # Merge with metric group mapping data for included metrics to get
+  # # "Metric_Group" and "Metric_Name" columns
+  # sec_inc_rpts_df <- merge(sec_inc_rpts_df,
+  #                          metric_mapping_breakout[c("Metric_Group",
+  #                                                    "Metric_Name",
+  #                                                    "Metric_Name_Submitted")],
+  #                          # metric_group_mapping[c("Metric_Group",
+  #                          #                        "Metric_Name",
+  #                          #                        "Metric_Name_Submitted")],
+  #                          by = c("Metric_Name_Submitted"))
+  # 
+  # 
+  # # Select relevant columns
+  # sec_inc_rpts_df <- sec_inc_rpts_df[, processed_df_cols]
+  # 
+  # # Add reporting month back in
+  # sec_inc_rpts_df <- sec_inc_rpts_df %>%
+  #   mutate(Reporting_Month_Ref = as.Date(paste("01",
+  #                                              as.yearmon(Reporting_Month,
+  #                                                         "%m-%Y")),
+  #                                        format = "%d %b %Y"))
+  # 
+  # new_rows <- unique(sec_inc_rpts_df[, c("Metric_Name",
+  #                                        "Reporting_Month",
+  #                                        "Service",
+  #                                        "Site")])
+  # 
+  # metrics_final_df <- anti_join(metrics_final_df,
+  #                               new_rows)
+  # 
+  # metrics_final_df <- full_join(metrics_final_df,
+  #                               sec_inc_rpts_df)
+  # 
+  # metrics_final_df <- metrics_final_df %>%
+  #   arrange(Service,
+  #           Site,
+  #           Metric_Group,
+  #           Reporting_Month_Ref)
+  # 
+  # return(metrics_final_df)
   
 }
 
@@ -216,45 +219,48 @@ sec_events_metrics_final_df <- function(sec_events_summary) {
            Month = NULL,
            Number = NULL)
   
-  # Merge with metric group mapping data for included metrics to get
-  # "Metric_Group" and "Metric_Name" columns
-  sec_events_df <- merge(sec_events_df,
-                         metric_mapping_breakout[c("Metric_Group",
-                                                   "Metric_Name",
-                                                   "Metric_Name_Submitted")],
-                           # metric_group_mapping[c("Metric_Group",
-                           #                        "Metric_Name",
-                           #                        "Metric_Name_Submitted")],
-                           by = c("Metric_Name_Submitted"))
+  # Use custom function for updating metrics_final_df using standard process
+  metrics_final_df <- metrics_final_df_subset_and_merge(sec_events_df)
   
-  # Select relevant columns
-  sec_events_df <- sec_events_df[, processed_df_cols]
-  
-  # Add reporting month back in
-  sec_events_df <- sec_events_df %>%
-    mutate(Reporting_Month_Ref = as.Date(paste("01",
-                                               as.yearmon(Reporting_Month,
-                                                          "%m-%Y")),
-                                         format = "%d %b %Y"))
-  
-  new_rows <- unique(sec_events_df[, c("Metric_Name",
-                                       "Reporting_Month",
-                                       "Service",
-                                       "Site")])
-  
-  metrics_final_df <- anti_join(metrics_final_df,
-                                new_rows)
-  
-  metrics_final_df <- full_join(metrics_final_df,
-                                sec_events_df)
-  
-  metrics_final_df <- metrics_final_df %>%
-    arrange(Service,
-            Site,
-            Metric_Group,
-            Reporting_Month_Ref)
-  
-  return(metrics_final_df)
+  # # Merge with metric group mapping data for included metrics to get
+  # # "Metric_Group" and "Metric_Name" columns
+  # sec_events_df <- merge(sec_events_df,
+  #                        metric_mapping_breakout[c("Metric_Group",
+  #                                                  "Metric_Name",
+  #                                                  "Metric_Name_Submitted")],
+  #                          # metric_group_mapping[c("Metric_Group",
+  #                          #                        "Metric_Name",
+  #                          #                        "Metric_Name_Submitted")],
+  #                          by = c("Metric_Name_Submitted"))
+  # 
+  # # Select relevant columns
+  # sec_events_df <- sec_events_df[, processed_df_cols]
+  # 
+  # # Add reporting month back in
+  # sec_events_df <- sec_events_df %>%
+  #   mutate(Reporting_Month_Ref = as.Date(paste("01",
+  #                                              as.yearmon(Reporting_Month,
+  #                                                         "%m-%Y")),
+  #                                        format = "%d %b %Y"))
+  # 
+  # new_rows <- unique(sec_events_df[, c("Metric_Name",
+  #                                      "Reporting_Month",
+  #                                      "Service",
+  #                                      "Site")])
+  # 
+  # metrics_final_df <- anti_join(metrics_final_df,
+  #                               new_rows)
+  # 
+  # metrics_final_df <- full_join(metrics_final_df,
+  #                               sec_events_df)
+  # 
+  # metrics_final_df <- metrics_final_df %>%
+  #   arrange(Service,
+  #           Site,
+  #           Metric_Group,
+  #           Reporting_Month_Ref)
+  # 
+  # return(metrics_final_df)
   
 }
 
