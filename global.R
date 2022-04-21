@@ -370,13 +370,14 @@ metric_mapping_summary_site <- metric_mapping_raw %>%
                                           Service)))),
     # Convert General_Group from factor back to character now that data is ordered properly
     General_Group = as.character(General_Group),
-    # Update Overtime Hours - % (Premier)
-    across(.cols = everything (),
-           .fns = function(x) {
-             str_replace(x,
-                         "\\ %\\ \\(Premier\\)",
-                         "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-             }))
+    # # Update Overtime Hours - % (Premier)
+    # across(.cols = everything (),
+    #        .fns = function(x) {
+    #          str_replace(x,
+    #                      "\\ %\\ \\(Premier\\)",
+    #                      "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+    #          })
+    )
 
 metric_mapping_breakout <- metric_mapping_raw %>%
   # Remove Data Table column since it isn't used anywhere
@@ -408,13 +409,14 @@ metric_mapping_breakout <- metric_mapping_raw %>%
                                           Service)))),
     # Convert General_Group from factor back to character now that data is ordered properly
     General_Group = as.character(General_Group),
-    # Update Overtime Hours - % (Premier)
-    across(.cols = everything (),
-           .fns = function(x) {
-             str_replace(x,
-                         "\\ %\\ \\(Premier\\)",
-                         "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-           }))
+    # # Update Overtime Hours - % (Premier)
+    # across(.cols = everything (),
+    #        .fns = function(x) {
+    #          str_replace(x,
+    #                      "\\ %\\ \\(Premier\\)",
+    #                      "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+    #        })
+    )
 
 # Source files for processing service line data -------------------
 # function_sources <- list.files("Functions", full.names = T)
@@ -428,7 +430,7 @@ source("Transportation.R")
 source("biomed.R")
 source("ImagingDR.R")
 source("Imaging.R")
-source("Engineering.R")
+# source("Engineering.R")
 source("Overtime.R")
 source("Census Days.R")
 source("nursing.R")
