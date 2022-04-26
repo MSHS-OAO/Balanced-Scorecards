@@ -324,7 +324,7 @@ metrics_final_df_new <- metrics_final_df %>%
   #                                         "(Press Ganey)|(HCAHPS)"),
   #                              "Patient Experience", Metric_Group))
   mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
-                              "Overtime Hours = % (Premier)",
+                              "Overtime Hours - % (Premier)",
                               Metric_Name))
 
 target_mapping_analysis <- target_mapping %>%
