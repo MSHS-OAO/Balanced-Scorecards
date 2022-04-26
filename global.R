@@ -316,13 +316,16 @@ engineering_data_process <- function(data){
 
 # Code for processing and using new target mapping file and metrics_final_df without Target and Status included
 metrics_final_df_new <- metrics_final_df %>%
-  select(-Target, -Status) %>%
+  # select(-Target, -Status) %>%
+  # mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
+  #                             "Overtime Hours - % (Premier)",
+  #                             str_replace(Metric_Name, "\\sMOM", "")),
+  #        Metric_Group = ifelse(str_detect(Metric_Group,
+  #                                         "(Press Ganey)|(HCAHPS)"),
+  #                              "Patient Experience", Metric_Group))
   mutate(Metric_Name = ifelse(Metric_Name %in% "Overtime % (Premier)",
-                              "Overtime Hours - % (Premier)",
-                              str_replace(Metric_Name, "\\sMOM", "")),
-         Metric_Group = ifelse(str_detect(Metric_Group,
-                                          "(Press Ganey)|(HCAHPS)"),
-                               "Patient Experience", Metric_Group))
+                              "Overtime Hours = % (Premier)",
+                              Metric_Name))
 
 target_mapping_analysis <- target_mapping %>%
   select(-contains("Status")) %>%

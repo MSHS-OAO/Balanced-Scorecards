@@ -2792,6 +2792,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         return(NULL)
       }else{
         scc_file_path <- scc_file$datapath
+        # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+        #                         "/Operations Analytics and Optimization",
+        #                         "/Projects/System Operations",
+        #                         "/Balanced Scorecards Automation",
+        #                         "/Data_Dashboard/Input Data Raw",
+        #                         "/Lab & Blood Bank/SCC",
+        #                         "/SCC HGB Report Mar 2022.xlsx")
         #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
         # Try catch statement to ensure file type is correct
         tryCatch({

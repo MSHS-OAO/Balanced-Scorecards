@@ -255,7 +255,7 @@ lab_scc_tat_metrics_final_df <- function(scc_summary) {
     mutate(Site = as.character(Site)) %>%
     # Start formatting for metrics_final_df format
     rename(Metric_Name_Submitted = Metric) %>%
-    mutate(value_rounded = round(Number, digits = 2),
+    mutate(value_rounded = round(Number, digits = 4),
            Premier_Reporting_Period = format(Month, "%b %Y"),
            Reporting_Month = format(Month, "%m-%Y"),
            Month = NULL,
@@ -321,7 +321,7 @@ lab_sun_tat_metrics_final_df <- function(sun_summary) {
     mutate(Site = as.character(Site)) %>%
     # Start formatting for metrics_final_df format
     rename(Metric_Name_Submitted = Metric) %>%
-    mutate(value_rounded = round(Number, digits = 2),
+    mutate(value_rounded = round(Number, digits = 4),
            Premier_Reporting_Period = format(Month, "%b %Y"),
            Reporting_Month = format(Month, "%m-%Y"),
            Month = NULL,
@@ -412,7 +412,7 @@ lab_prof_test_metrics_final_df <- function(prof_test_summary) {
     # mutate(Site = as.character(Site)) %>%
     # Start formatting for metrics_final_df format
     rename(Metric_Name_Submitted = Metric) %>%
-    mutate(value_rounded = round(Number, digits = 2),
+    mutate(value_rounded = round(Number, digits = 4),
            Premier_Reporting_Period = format(Month, "%b %Y"),
            Reporting_Month = format(Month, "%m-%Y"),
            Month = NULL,
