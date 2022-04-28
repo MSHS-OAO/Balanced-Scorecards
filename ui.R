@@ -3,11 +3,11 @@ library(shinyWidgets)
 library(shinydashboard)
 
 # Default values for global filters -------------------------------------------------------------------------
-default_campus <- sort(unique(metrics_final_df_new$Site))
-campus_choices <- sort(unique(metrics_final_df_new$Site))
-default_service <- sort(unique(metrics_final_df_new$Service))[1]
-service_choices <- sort(unique(metrics_final_df_new$Service))
-metric_group_choices <- sort(unique(metrics_final_df_new$Metric_Group))
+default_campus <- sort(unique(metrics_final_df$Site))
+campus_choices <- sort(unique(metrics_final_df$Site))
+default_service <- sort(unique(metrics_final_df$Service))[1]
+service_choices <- sort(unique(metrics_final_df$Service))
+metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
 default_metric_group <- metric_group_choices
 # service_choices <- sort(
 #   unique(

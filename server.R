@@ -112,7 +112,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fiscal_year <- format(current_period,  "%Y")
       
       # # Filter data by service specific metrics
-      data <- left_join(summary_tab_metrics, metrics_final_df_new,
+      data <- left_join(summary_tab_metrics, metrics_final_df,
                         by = c("Service",
                                "Metric_Group",
                                "Metric_Name"))
@@ -472,7 +472,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if("Budget to Actual" %in% as.vector(status_section_metrics$Metric_Name)){
         
         #Calculate FYTD Budget to Actual Targets
-        budget_to_actual_target <- metrics_final_df_new %>% 
+        budget_to_actual_target <- metrics_final_df %>% 
           filter((Service == service_input) &
                    (Metric_Name %in% c("Budget_Total", "Budget to Actual")) & 
                    (Reporting_Month_Ref %in%
@@ -499,7 +499,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if("Total Revenue to Budget Variance" %in% as.vector(status_section_metrics$Metric_Name)){
         #Calculate FYTD Budget to Actual Targets
-        variance_to_budget_target <- metrics_final_df_new %>% 
+        variance_to_budget_target <- metrics_final_df %>% 
           filter((Service == service_input) &
                    (Metric_Group == "Total Revenue to Budget Variance") &
                    (Metric_Name %in% c("Budget", "Total Revenue to Budget Variance")) & 
@@ -744,7 +744,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Subset data for selected servicel line based on metrics to be included in Site tab
       data <- left_join(summary_tab_metrics,
-                          metrics_final_df_new,
+                          metrics_final_df,
                           by = c("Service",
                                  "Metric_Group",
                                  "Metric_Name"))
@@ -1088,7 +1088,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Try to do this the same was we do it in the Summary and Site tabs for consistency
       # First crosswalk metrics to include and metrics_final_df
       data <- left_join(breakout_tab_metrics,
-                        metrics_final_df_new,
+                        metrics_final_df,
                         by = c("Service",
                                "Metric_Group",
                                "Metric_Name"))
@@ -1104,7 +1104,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Do we need this?
       # This will be needed until duplicate monthly entries are corrected in metrics_final_df
-      months <- metrics_final_df_new %>% 
+      months <- metrics_final_df %>% 
         filter(Service == service_input) %>% # input$selectedService
         filter(Site == site_input) %>%
         filter(Reporting_Month_Ref <= current_period) %>%
