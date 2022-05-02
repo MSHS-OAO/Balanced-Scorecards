@@ -271,21 +271,14 @@ census_days_metrics_final_df <- function(data) {
   
   cost_rev_df_final <- merge(cost_rev_df, cost_rev_mapping, 
                              by = c("Metric", "Metric_Name_Submitted"))
+  cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
+  cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(value_rounded)))
   
-  
+
   # Subset processed data for merge 
-  cost_rev_df_merge <- cost_rev_df_final[,processed_df_cols] 
-  cost_rev_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(cost_rev_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
-  
-  cost_rev_df_merge <- cost_rev_df_merge %>% filter(!(is.na(value_rounded)))
-  cost_rev_df_merge <- cost_rev_df_merge %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
-  
-  
-  updated_rows <- unique(cost_rev_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
-  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-  
-  cost_rev_df_merge$Target <- as.numeric(cost_rev_df_merge$Target)
-  metrics_final_df <- full_join(metrics_final_df,cost_rev_df_merge)
+  metrics_final_df <- metrics_final_df_subset_and_merge(cm_kpi_df)
+  return(metrics_final_df)
+
   
 }
 
