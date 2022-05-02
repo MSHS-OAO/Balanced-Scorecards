@@ -68,7 +68,7 @@ sec_inc_rpts_metrics_final_df <- function(sec_inc_rpts_summary) {
             Site) %>%
     # Start formatting for metrics_final_df format
     rename(Metric_Name_Submitted = Metric) %>%
-    mutate(value_rounded = round(Number, digits = 2),
+    mutate(value_rounded = Number,
            Premier_Reporting_Period = format(Month, "%b %Y"),
            Reporting_Month = format(Month, "%m-%Y"),
            Month = NULL,
@@ -213,7 +213,7 @@ sec_events_metrics_final_df <- function(sec_events_summary) {
             Site) %>%
     # Start formatting for metrics_final_df format
     rename(Metric_Name_Submitted = Metric) %>%
-    mutate(value_rounded = round(Number, digits = 2),
+    mutate(value_rounded = Number,
            Premier_Reporting_Period = format(Month, "%b %Y"),
            Reporting_Month = format(Month, "%m-%Y"),
            Month = NULL,
