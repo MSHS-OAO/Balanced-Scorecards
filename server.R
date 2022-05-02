@@ -1499,7 +1499,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ## Read in Patient Experience data -----------------------------------
     # ED Monthly Data Observe Event -------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      
+      flag <- 0
       # Name ED monthly data
       ed_monthly <- input$pt_exp_ed_monthly
       
@@ -1618,7 +1618,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Nursing Patient Experience Monthly Data Observe Event -------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      
+      flag <- 0
       # Name Nursing monthly data
       nursing_monthly <- input$pt_exp_nursing_monthly
       
@@ -1740,7 +1740,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Support Services Patient Experience Monthly Data Observe Event -------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      
+      flag <- 0
       # Name Support Services monthly data
       support_monthly <- input$pt_exp_support_monthly
       
@@ -1864,7 +1864,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
     # ED YTD Data Observe Event -------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      
+      flag <- 0
       # Name ED YTD data
       ed_ytd <- input$pt_exp_ed_ytd
       
@@ -1982,7 +1982,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Nursing YTD Data Observe Event -------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      
+      flag <- 0
       # Name Nursing YTD data
       nursing_ytd <- input$pt_exp_nursing_ytd
       
@@ -2099,7 +2099,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Support Services YTD Data Observe Event -------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      
+      flag <- 0
       # Name Support Services YTD data
       support_ytd <- input$pt_exp_support_ytd
       
