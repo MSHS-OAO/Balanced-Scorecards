@@ -126,16 +126,23 @@ metric_mapping_summary_site <- metric_mapping_raw %>%
 metric_mapping_db_format <- metric_mapping_raw %>%
   pivot_longer(cols = contains("_Order"),
                names_to = "Service_Tab",
-               values_to = "Order") %>%
+               values_to = "Display_Order") %>%
   mutate(Service = str_extract(Service_Tab, ".+?(?=_)"),
+         Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
+                          ifelse(str_detect(Service, "Biomed"),
+                                 "Biomed / Clinical Engineering",
+                                 ifelse(str_detect(Service, "Food"), "Food Services",
+                                        ifelse(str_detect(Service, "Transport"),
+                                               "Patient Transport",
+                                               Service)))),
          Reporting_Tab = ifelse(str_detect(Service_Tab, "Summary_Site"),
                                 "Summary and Site",
                                 ifelse(str_detect(Service_Tab,
                                                   "Breakout"),
                                        "Breakout", NA))) %>%
-  select(-Service_Tab) %>%
-  filter(!is.na(Order)) %>% 
-  relocate(Order, .after = Reporting_Tab) %>%
+  select(-Service_Tab, -`Data Table`) %>%
+  filter(!is.na(Display_Order)) %>% 
+  relocate(Display_Order, .after = Reporting_Tab) %>%
   relocate(Service) %>%
   mutate(General_Group = factor(General_Group,
                                 levels = high_level_order,
@@ -143,7 +150,7 @@ metric_mapping_db_format <- metric_mapping_raw %>%
   arrange(Service,
           desc(Reporting_Tab),
           General_Group,
-          Order)
+          Display_Order)
 
 write_xlsx(metric_mapping_db_format,
            path = paste0(home_path,
