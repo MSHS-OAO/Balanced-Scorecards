@@ -237,6 +237,7 @@ metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier prod
 # target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
 target_mapping <- read_excel(target_mapping_path, sheet = "Targets and Status") # Import updated target mapping file
 metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
+metric_mapping_database <- read_excel(target_mapping_path, sheet = "Metric Mapping Database")
 # metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
 # summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
 budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
@@ -329,83 +330,111 @@ target_mapping_reference <- target_mapping %>%
 
 high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
 
-metric_mapping_summary_site <- metric_mapping_raw %>%
-  # Remove Data Table column since it isn't used anywhere
-  # Remove columns ending in _Incl since this is used for the KPI Breakout tab
-  select(-`Data Table`, -contains("_Breakout_Order")) %>%
-  # Pivot longer based on service line columns
-  pivot_longer(cols = contains("_Summary_Site_Order"),
-               names_to = "Service",
-               values_to = "Display_Order") %>%
-  # Remove any metrics that are not displayed in the Summary or Site tabs
-  filter(!is.na(Display_Order)) %>%
-  # Convert General_Group to an ordered factor
-  # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
-  mutate(General_Group = factor(General_Group,
-                                levels = high_level_order,
-                                ordered = TRUE)) %>%
-  # Arrange by service line, general grouping, and display order to ensure consistency
-  arrange(Service, General_Group, Display_Order) %>%
-  mutate(
-    # Remove _Order from service column
-    Service = str_extract(Service, ".*(?=_Summary_Site_Order)"),
-    # Fix abbreviated service names
-    Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
-                     ifelse(str_detect(Service, "Biomed"),
-                            "Biomed / Clinical Engineering",
-                            ifelse(str_detect(Service, "Food"), "Food Services",
-                                   ifelse(str_detect(Service, "Transport"),
-                                          "Patient Transport",
-                                          Service)))),
-    # Convert General_Group from factor back to character now that data is ordered properly
-    General_Group = as.character(General_Group),
-    # # Update Overtime Hours - % (Premier)
-    # across(.cols = everything (),
-    #        .fns = function(x) {
-    #          str_replace(x,
-    #                      "\\ %\\ \\(Premier\\)",
-    #                      "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-    #          })
-    )
+# metric_mapping_summary_site <- metric_mapping_raw %>%
+#   # Remove Data Table column since it isn't used anywhere
+#   # Remove columns ending in _Incl since this is used for the KPI Breakout tab
+#   select(-`Data Table`, -contains("_Breakout_Order")) %>%
+#   # Pivot longer based on service line columns
+#   pivot_longer(cols = contains("_Summary_Site_Order"),
+#                names_to = "Service",
+#                values_to = "Display_Order") %>%
+#   # Remove any metrics that are not displayed in the Summary or Site tabs
+#   filter(!is.na(Display_Order)) %>%
+#   # Convert General_Group to an ordered factor
+#   # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
+#   mutate(General_Group = factor(General_Group,
+#                                 levels = high_level_order,
+#                                 ordered = TRUE)) %>%
+#   # Arrange by service line, general grouping, and display order to ensure consistency
+#   arrange(Service, General_Group, Display_Order) %>%
+#   mutate(
+#     # Remove _Order from service column
+#     Service = str_extract(Service, ".*(?=_Summary_Site_Order)"),
+#     # Fix abbreviated service names
+#     Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
+#                      ifelse(str_detect(Service, "Biomed"),
+#                             "Biomed / Clinical Engineering",
+#                             ifelse(str_detect(Service, "Food"), "Food Services",
+#                                    ifelse(str_detect(Service, "Transport"),
+#                                           "Patient Transport",
+#                                           Service)))),
+#     # Convert General_Group from factor back to character now that data is ordered properly
+#     General_Group = as.character(General_Group),
+#     # # Update Overtime Hours - % (Premier)
+#     # across(.cols = everything (),
+#     #        .fns = function(x) {
+#     #          str_replace(x,
+#     #                      "\\ %\\ \\(Premier\\)",
+#     #                      "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+#     #          })
+#     )
 
-metric_mapping_breakout <- metric_mapping_raw %>%
-  # Remove Data Table column since it isn't used anywhere
-  # Remove columns ending in _Incl since this is used for the KPI Breakout tab
-  select(-`Data Table`, -contains("_Summary_Site_Order")) %>%
-  # Pivot longer based on service line columns
-  pivot_longer(cols = contains("_Breakout_Order"),
-               names_to = "Service",
-               values_to = "Display_Order") %>%
-  # Remove any metrics that are not displayed in the Summary or Site tabs
-  filter(!is.na(Display_Order)) %>%
-  # Convert General_Group to an ordered factor
-  # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
+metric_mapping_summary_site <- metric_mapping_database %>%
+  filter(Reporting_Tab %in% "Summary and Site") %>%
+  select(-Reporting_Tab) %>%
   mutate(General_Group = factor(General_Group,
                                 levels = high_level_order,
                                 ordered = TRUE)) %>%
-  # Arrange by service line, general grouping, and display order to ensure consistency
   arrange(Service, General_Group, Display_Order) %>%
-  mutate(
-    # Remove _Order from service column
-    Service = str_extract(Service, ".*(?=_Breakout_Order)"),
-    # Fix abbreviated service names
-    Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
-                     ifelse(str_detect(Service, "Biomed"),
-                            "Biomed / Clinical Engineering",
-                            ifelse(str_detect(Service, "Food"), "Food Services",
-                                   ifelse(str_detect(Service, "Transport"),
-                                          "Patient Transport",
-                                          Service)))),
-    # Convert General_Group from factor back to character now that data is ordered properly
-    General_Group = as.character(General_Group),
-    # # Update Overtime Hours - % (Premier)
-    # across(.cols = everything (),
-    #        .fns = function(x) {
-    #          str_replace(x,
-    #                      "\\ %\\ \\(Premier\\)",
-    #                      "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
-    #        })
-    )
+  mutate(General_Group = as.character(General_Group))
+
+# metric_mapping_breakout <- metric_mapping_raw %>%
+#   # Remove Data Table column since it isn't used anywhere
+#   # Remove columns ending in _Incl since this is used for the KPI Breakout tab
+#   select(-`Data Table`, -contains("_Summary_Site_Order")) %>%
+#   # Pivot longer based on service line columns
+#   pivot_longer(cols = contains("_Breakout_Order"),
+#                names_to = "Service",
+#                values_to = "Display_Order") %>%
+#   # Remove any metrics that are not displayed in the Summary or Site tabs
+#   filter(!is.na(Display_Order)) %>%
+#   # Convert General_Group to an ordered factor
+#   # This ensures consistent visualization even if numbers entered in Display_Order are incorrect (ie, ED and Nursing)
+#   mutate(General_Group = factor(General_Group,
+#                                 levels = high_level_order,
+#                                 ordered = TRUE),
+#          # Remove _Order from service column
+#          Service = str_extract(Service, ".*(?=_Breakout_Order)"),
+#          # Fix abbreviated service names
+#          Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
+#                           ifelse(str_detect(Service, "Biomed"),
+#                                  "Biomed / Clinical Engineering",
+#                                  ifelse(str_detect(Service, "Food"), "Food Services",
+#                                         ifelse(str_detect(Service, "Transport"),
+#                                                "Patient Transport",
+#                                                Service))))) %>%
+#   # Arrange by service line, general grouping, and display order to ensure consistency
+#   arrange(Service, General_Group, Display_Order) %>%
+#   mutate(
+#     # # Remove _Order from service column
+#     # Service = str_extract(Service, ".*(?=_Breakout_Order)"),
+#     # # Fix abbreviated service names
+#     # Service = ifelse(str_detect(Service, "EVS"), "Environmental Services",
+#     #                  ifelse(str_detect(Service, "Biomed"),
+#     #                         "Biomed / Clinical Engineering",
+#     #                         ifelse(str_detect(Service, "Food"), "Food Services",
+#     #                                ifelse(str_detect(Service, "Transport"),
+#     #                                       "Patient Transport",
+#     #                                       Service)))),
+#     # Convert General_Group from factor back to character now that data is ordered properly
+#     General_Group = as.character(General_Group),
+#     # # Update Overtime Hours - % (Premier)
+#     # across(.cols = everything (),
+#     #        .fns = function(x) {
+#     #          str_replace(x,
+#     #                      "\\ %\\ \\(Premier\\)",
+#     #                      "\\ Hours\\ \\-\\ %\\ \\(Premier\\)")
+#     #        })
+#     )
+
+metric_mapping_breakout <- metric_mapping_database %>%
+  filter(Reporting_Tab %in% "Breakout") %>%
+  select(-Reporting_Tab) %>%
+  mutate(General_Group = factor(General_Group,
+                                levels = high_level_order,
+                                ordered = TRUE)) %>%
+  arrange(Service, General_Group, Display_Order) %>%
+  mutate(General_Group = as.character(General_Group))
 
 # Source files for processing service line data -------------------
 # function_sources <- list.files("Functions", full.names = T)
