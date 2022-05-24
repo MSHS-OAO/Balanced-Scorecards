@@ -1,0 +1,216 @@
+rm(list = ls())
+
+# Install and load packages ----------------------------------------
+suppressMessages({
+  # library(xlsx)
+  library(assertr)
+  library(readxl)
+  library(writexl)
+  library(plyr)
+  library(dplyr)
+  library(data.table)
+  library(zoo)
+  library(shiny)
+  library(shinydashboard)
+  library(shinydashboardPlus)
+  library(shinyWidgets)
+  library(htmlwidgets)
+  library(lubridate)
+  library(tcltk)
+  library(tidyverse)
+  library(plotly)
+  library(knitr)
+  library(kableExtra)
+  library(leaflet)
+  library(grid)
+  library(gridExtra)
+  library(eeptools)
+  library(ggQC)
+  library(utils)
+  library(scales)
+  library(chron)
+  library(bupaR)
+  library(shiny)
+  library(DT)
+  library(DiagrammeR)
+  library(shinyalert)
+  library(edeaR)
+  library(processmapR)
+  library(processmonitR)
+  library(processanimateR)
+  library(tidyr)
+  library(lubridate)
+  library(RColorBrewer)
+  library(DiagrammeR)
+  library(ggplot2)
+  library(leaflet)
+  library(readr)
+  library(highcharter)
+  library(ggforce) # for 'geom_arc_bar'
+  library(packcircles) # for packed circle graph
+  library(viridis)
+  library(ggiraph)
+  library(treemapify)
+  library(treemap)
+  library(broom)
+  library(extrafont)
+  library(tis) # for US holidays
+  library(vroom)
+  library(openxlsx)
+  library(sjmisc)
+  library(tools)
+  library(here)
+  library(shinyBS)
+  library(shinyscreenshot)
+  library(fasttime)
+  library(shinycssloaders)
+  library(fontawesome)
+  library(rhandsontable)
+  library(janitor)
+  library(stringr)
+  library(glue)
+  library(magrittr)
+})
+
+# Reference paths and files -----------------------
+start <- "J:" #Comment when publishing to RConnect
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+
+# Import metrics_final_df
+metrics_final_df_path <- paste0(home_path, "metrics_final_df_server_5-12.rds")
+metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
+
+# Import reference data for targets and metric mapping
+target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
+
+target_mapping <- read_excel(target_mapping_path, sheet = "Targets and Status") # Import updated target mapping file
+metric_mapping_database <- read_excel(target_mapping_path, sheet = "Metric Mapping Database")
+
+target_mapping_analysis <- target_mapping %>%
+  select(-contains("Status")) %>%
+  filter(!(Target %in% c("Budget"))) %>%
+  mutate_at(vars(contains(c("Target", "_Start", "_End"))), as.numeric) %>%
+  distinct()
+
+target_mapping_reference <- target_mapping %>%
+  select(-contains("_Start"), -contains("_End")) %>%
+  # filter(Target != "Remove") %>%
+  distinct()
+
+high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
+
+metric_mapping_summary_site <- metric_mapping_database %>%
+  filter(Reporting_Tab %in% "Summary and Site") %>%
+  select(-Reporting_Tab) %>%
+  mutate(General_Group = factor(General_Group,
+                                levels = high_level_order,
+                                ordered = TRUE)) %>%
+  arrange(Service, General_Group, Display_Order) %>%
+  mutate(General_Group = as.character(General_Group))
+
+metric_mapping_breakout <- metric_mapping_database %>%
+  filter(Reporting_Tab %in% "Breakout") %>%
+  select(-Reporting_Tab) %>%
+  mutate(General_Group = factor(General_Group,
+                                levels = high_level_order,
+                                ordered = TRUE)) %>%
+  arrange(Service, General_Group, Display_Order) %>%
+  mutate(General_Group = as.character(General_Group))
+
+# Create dataframes with unique metric names for each service line
+metrics_final_df_naming <- metrics_final_df %>%
+  select(Service,
+         Metric_Group,
+         Metric_Name) %>%
+  distinct()
+
+target_mapping_naming <- target_mapping %>%
+  select(Service,
+         Metric_Group,
+         Metric_Name,
+         Metric_Name_Submitted) %>%
+  distinct()
+
+metric_mapping_naming <- metric_mapping_database %>%
+  select(Service,
+         Metric_Group,
+         Metric_Name_Summary,
+         Metric_Name,
+         Metric_Name_Submitted) %>%
+  distinct()
+
+# Identify missing/incorrect names in metrics_final_df
+metrics_final_df_naming <- metrics_final_df_naming %>%
+  mutate(Group_Target_Mapping = Metric_Group %in% target_mapping_naming$Metric_Group,
+         Name_Target_Mapping = Metric_Name %in% target_mapping_naming$Metric_Name,
+         Group_Metric_Mapping = Metric_Group %in% metric_mapping_naming$Metric_Group,
+         Name_Metric_Mapping = Metric_Name %in% metric_mapping_naming$Metric_Name)
+
+service_metrics_to_fix <- metrics_final_df_naming %>%
+  filter(!Group_Metric_Mapping | !Name_Metric_Mapping)
+
+# Verify naming consistency between target mapping and metric mapping
+target_mapping_naming <- target_mapping_naming %>%
+  mutate(Group_Metric_Mapping = Metric_Group %in% metric_mapping_naming$Metric_Group,
+         Name_Metric_Mapping = Metric_Name %in% metric_mapping_naming$Metric_Name,
+         Submitted_Metric_Mapping = Metric_Name_Submitted %in% metric_mapping_naming$Metric_Name_Submitted)
+
+# test2 <- metrics_final_df_naming %>%
+#   mutate(StrDetectTest = str_detect(Metric_Name,
+#                                     "(Overtime \\% \\(Premier\\))"))
+
+# # Update appropriate metric groups and metric names
+metrics_final_df <- metrics_final_df %>%
+  mutate(
+    # Fix Patient Experience metric group
+    Metric_Group = str_replace(Metric_Group,
+                               "((Press Ganey)|(HCAHPS)).*",
+                               "Patient Experience"),
+    Metric_Name2 = Metric_Name,
+    # Standardize Overtime Hours - % Premier
+    Metric_Name2 = str_replace(Metric_Name2,
+                               "Overtime \\% \\(Premier\\)",
+                               "Overtime Hours - % (Premier)"),
+    # Remove MOM from Budget to Actual
+    Metric_Name2 = str_replace(Metric_Name2, "\\sMOM", ""),
+    # Fix typos for Budget to Actual Non Labor
+    Metric_Name2 = str_replace(Metric_Name2, "Actual\\-\\sNon\\sLabor",
+                               "Actual - Non Labor"),
+    # Standardize Lab metric names
+    Metric_Name2 = ifelse(Service %in% "Lab" &
+                            str_detect(Metric_Name2, "Budget to Actual") &
+                            !str_detect(Metric_Name2, "Blood Bank"),
+                          paste(Metric_Name2, "(Lab)"), Metric_Name2),
+    Metric_Name = Metric_Name2) %>%
+  select(-Metric_Name2)
+
+# 
+# Identify missing/incorrect names in metrics_final_df
+metrics_final_df_naming2 <- metrics_final_df %>%
+  select(Service,
+         Metric_Group,
+         Metric_Name) %>%
+  distinct() %>%
+  mutate(Group_Target_Mapping = Metric_Group %in% target_mapping_naming$Metric_Group,
+         Name_Target_Mapping = Metric_Name %in% target_mapping_naming$Metric_Name,
+         Group_Metric_Mapping = Metric_Group %in% metric_mapping_naming$Metric_Group,
+         Name_Metric_Mapping = Metric_Name %in% metric_mapping_naming$Metric_Name)
+
+service_metrics_to_fix2 <- metrics_final_df_naming2 %>%
+  filter(!Group_Metric_Mapping | !Name_Metric_Mapping) #%>%
+  # mutate(
+  #   # Fix Patient Experience metric group
+  #   Metric_Group = str_replace(Metric_Group,
+  #                              "((Press Ganey)|(HCAHPS)).*",
+  #                              "Patient Experience"),
+  #   Metric_Name2 = Metric_Name,
+  #   # Remove MOM from Budget to Actual
+  #   Metric_Name2 = str_replace(Metric_Name2, "\\sMOM", ""),
+  #   # Fix typos for Budget to Actual Non Labor
+  #   Metric_Name2 = str_replace(Metric_Name2, "Actual\\-\\sNon\\sLabor",
+  #                              "Actual - Non Labor"),
+  #   # Standardize Lab metric names
+  #   Metric_Name2 = ifelse(Service %in% "Lab" &
+  #                           Metric_Group %in% "Budget to Actual" &
+  #                           !str_detect(Metric_Name2, "Blood Bank"),
+  #                         paste(Metric_Name2, "(Lab)"), Metric_Name2))
