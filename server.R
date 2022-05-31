@@ -143,7 +143,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                             Red_End),
                                                     "Red", NA))))) %>%
         # Filter on selected reporting period
-        f ilter(Reporting_Month_Ref <= current_period)
+        filter(Reporting_Month_Ref <= current_period)
       print("2")
       # Data Period Filtering
       period_filter <- data %>% 
