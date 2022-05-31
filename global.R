@@ -174,13 +174,13 @@ scale_fill_MountSinai <- function(palette = "all", discrete = TRUE, reverse = FA
   }
 }
 #### Global Filepaths
-start <- "J:" #Comment when publishing to RConnect
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-start_shared <- "J:"
+# start <- "J:" #Comment when publishing to RConnect
+# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+# start_shared <- "J:"
 
-# start <- "/data"  #Uncomment when publishing to RConnect
-# home_path <- paste0(start,"/Scorecards_Staging/")
-# start_shared <- "/SharedDrive"
+start <- "/data"  #Uncomment when publishing to RConnect
+home_path <- paste0(start,"/Scorecards_Staging/")
+start_shared <- "/SharedDrive"
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
@@ -448,7 +448,7 @@ source("Transportation.R")
 source("biomed.R")
 source("ImagingDR.R")
 source("Imaging.R")
-# source("Engineering.R")
+source("Engineering.R")
 source("Overtime.R")
 source("Census Days.R")
 source("nursing.R")

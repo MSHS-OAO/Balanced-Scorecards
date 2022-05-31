@@ -1,23 +1,23 @@
 engineering_repo_pull <- function(){
 
-    # operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
-    #   mutate_if(is.logical, as.character) %>%
-    #   mutate_if(is.double, as.character) %>%
-    #   pivot_longer(cols = c(-Month, -Site),
-    #                names_to = "Metric",
-    #                values_to = "Value") %>%
-    #   pivot_wider(names_from = "Month", values_from = Value)
+  operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
+    mutate_if(is.logical, as.character) %>%
+    mutate_if(is.double, as.character) %>%
+    pivot_longer(cols = c(-Month, -Site),
+                 names_to = "Metric",
+                 values_to = "Value") %>%
+    pivot_wider(names_from = "Month", values_from = Value)
   
   
   
-  operational_metrics_engineering <- sql_summary_repo_data("ENGINEERING_SUMMARY_REPO", "2021-08-01", "2022-02-01")
-
-  operational_metrics_engineering <- operational_metrics_engineering %>%
-                                        arrange(MONTH) %>%
-                                        pivot_wider(names_from = "MONTH", values_from = VALUE)
-
-  operational_metrics_engineering <- operational_metrics_engineering %>% rename(Site = SITE,
-                                                                                Metric = METRIC)
+  # operational_metrics_engineering <- sql_summary_repo_data("ENGINEERING_SUMMARY_REPO", "2021-08-01", "2022-02-01")
+  # 
+  # operational_metrics_engineering <- operational_metrics_engineering %>%
+  #                                       arrange(MONTH) %>%
+  #                                       pivot_wider(names_from = "MONTH", values_from = VALUE)
+  # 
+  # operational_metrics_engineering <- operational_metrics_engineering %>% rename(Site = SITE,
+  #                                                                               Metric = METRIC)
     
     return(operational_metrics_engineering)
 }
