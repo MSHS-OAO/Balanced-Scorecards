@@ -39,7 +39,7 @@ kpibme_reports_ui <- kpibme_reports %>%
   select(-Service) %>%
   filter(Month >= kpibme_last_month - months(7)) %>%
   mutate(Month = format(Month, "%b-%Y"),
-         Number = round(as.numeric(Number),2)) %>%
+         Number = as.numeric(Number)) %>%
   pivot_wider(names_from = "Month",values_from = Number,values_fill=NA_integer_) %>%
   group_by(Site) %>%
   # mutate('{format(kpibme_last_month + months(1), "%b-%Y")}' := NA) %>%

@@ -71,5 +71,8 @@ nursing__metrics_final_df_process <- function(data){
   
 }
 
-# data <- process_nursing_data(data)
-# data <- nursing__metrics_final_df_process(data)
+
+#data <- process_nursing_data(data)
+
+
+data <- nursing__metrics_final_df_process(NursingSummaryRepo)
