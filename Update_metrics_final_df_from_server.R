@@ -182,7 +182,7 @@ metrics_final_df <- metrics_final_df %>%
                             !str_detect(Metric_Name2, "Blood Bank"),
                           paste(Metric_Name2, "(Lab)"), Metric_Name2),
     Metric_Name = Metric_Name2) %>%
-  select(-Metric_Name2)
+  select(-Metric_Name2,Target,Status,Month)
 
 # 
 # Identify missing/incorrect names in metrics_final_df
