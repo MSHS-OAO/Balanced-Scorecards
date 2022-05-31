@@ -126,7 +126,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                "Metric_Name",
                                "Metric_Name_Submitted"))
       print("1")
-      print(names(data))
+      print(metric_targets_status)
       data <- data %>%
         # Determine status based on status definitions
         mutate(Status = ifelse(is.na(Target), NA,
