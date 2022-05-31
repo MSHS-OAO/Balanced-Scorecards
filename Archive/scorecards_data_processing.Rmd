@@ -27,7 +27,6 @@ suppressMessages({
   library(gridExtra)
   library(eeptools)
   library(ggQC)
-  library(zipcode)
   library(utils)
   library(scales)
   library(chron)
