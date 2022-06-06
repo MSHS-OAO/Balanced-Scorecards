@@ -28,7 +28,7 @@ process_xray_data <- function(xraydata){
     pivot_longer(cols = -Month,
                  names_to = "Site",
                  values_to = "value_rounded") %>%
-    mutate( value_rounded = round(as.numeric(value_rounded),2),
+    mutate( value_rounded = as.numeric(value_rounded),
       Service="Imaging",
       Metric_Name_Submitted = "ED Chest X-Ray PA & Lateral (Exam Code CH2PAL) - Order to Scan Completed, % <= 60m")
   
@@ -41,7 +41,7 @@ process_xray_data <- function(xraydata){
     pivot_longer(cols = -Month,
                  names_to = "Site",
                  values_to = "value_rounded") %>%
-    mutate( value_rounded = round(as.numeric(value_rounded),2),
+    mutate( value_rounded = as.numeric(value_rounded),
             Service="Imaging",
             Metric_Name_Submitted = "ED Chest X-Ray PA & Lateral (Exam Code CH2PAL) - Order to Scan Completed, Total Volume")
   
@@ -65,7 +65,7 @@ process_ctdata_data <- function(ctdata){
     pivot_longer(cols = -Month,
                  names_to = "Site",
                  values_to = "value_rounded") %>%
-    mutate( value_rounded = round(as.numeric(value_rounded),2),
+    mutate( value_rounded = as.numeric(value_rounded),
             Service="Imaging",
             Metric_Name_Submitted = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")
   
@@ -78,7 +78,7 @@ process_ctdata_data <- function(ctdata){
     pivot_longer(cols = -Month,
                  names_to = "Site",
                  values_to = "value_rounded") %>%
-    mutate( value_rounded = round(as.numeric(value_rounded),2),
+    mutate( value_rounded = as.numeric(value_rounded),
             Service="Imaging",
             Metric_Name_Submitted = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, Total Volume")
   
