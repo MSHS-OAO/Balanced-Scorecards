@@ -139,7 +139,7 @@ metric_mapping_naming <- metric_mapping_database %>%
          Metric_Name_Submitted) %>%
   distinct()
 
-# Identify missing/incorrect names in metrics_final_df
+# Identify missing/incorrect names in metrics_final_df ----
 metrics_final_df_naming <- metrics_final_df_naming %>%
   mutate(Group_Target_Mapping = Metric_Group %in% target_mapping_naming$Metric_Group,
          Name_Target_Mapping = Metric_Name %in% target_mapping_naming$Metric_Name,
@@ -149,7 +149,7 @@ metrics_final_df_naming <- metrics_final_df_naming %>%
 service_metrics_to_fix <- metrics_final_df_naming %>%
   filter(!Group_Metric_Mapping | !Name_Metric_Mapping)
 
-# Verify naming consistency between target mapping and metric mapping
+# Verify naming consistency between target mapping and metric mapping ----
 target_mapping_naming <- target_mapping_naming %>%
   mutate(Group_Metric_Mapping = Metric_Group %in% metric_mapping_naming$Metric_Group,
          Name_Metric_Mapping = Metric_Name %in% metric_mapping_naming$Metric_Name,
@@ -159,7 +159,7 @@ target_mapping_naming <- target_mapping_naming %>%
 #   mutate(StrDetectTest = str_detect(Metric_Name,
 #                                     "(Overtime \\% \\(Premier\\))"))
 
-# # Update appropriate metric groups and metric names
+# # Update appropriate metric groups and metric names ----
 metrics_final_df <- metrics_final_df %>%
   mutate(
     # Fix Patient Experience metric group
@@ -184,8 +184,30 @@ metrics_final_df <- metrics_final_df %>%
     Metric_Name = Metric_Name2) %>%
   select(-Metric_Name2)
 
-# 
-# Identify missing/incorrect names in metrics_final_df
+# Biomedical Update "Daily Avg. # of Disruptions and Issues" to "Total Disruptions or Equipment Issues" ----
+metrics_final_df <- metrics_final_df %>% 
+  mutate(Metric_Name = str_replace(Metric_Name,
+                                   "Daily Avg. # of Disruptions and Issues",
+                                   "Total Disruptions or Equipment Issues"))
+
+# Update Nursing Metric Group ----
+NursingOps <-  metrics_final_df %>% 
+  filter(Metric_Group %in% c("Nursing Ops")) %>%
+  select(-Metric_Group) 
+
+metrics_final_df_naming_nursing <- metric_mapping_naming %>%
+  select(Service,Metric_Group,Metric_Name)
+
+NursingOps <- left_join(NursingOps,
+                        metrics_final_df_naming_nursing,
+                        by=c("Service", "Metric_Name"))
+
+metrics_final_df <- metrics_final_df %>% 
+  filter(!Metric_Group %in% c("Nursing Ops"))
+
+metrics_final_df <- rbind(metrics_final_df,NursingOps)
+
+# Identify missing/incorrect names in metrics_final_df ----
 metrics_final_df_naming2 <- metrics_final_df %>%
   select(Service,
          Metric_Group,
