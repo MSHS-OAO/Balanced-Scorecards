@@ -3156,7 +3156,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     })
     
     
-    # Create observe event actions for manual data submission
+    # Create observe event actions for manual data submission-----
     observeEvent(input$submit_lab_pt, {
       if(input$lab_pt_username == "") {
         showModal(modalDialog(
@@ -4288,12 +4288,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
-        }else{
+        }
+        else{
           tryCatch({
             
             
             # Convert rhandsontable to R object
-            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)
+            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)          
+            
+            # Identify columns with no data in them and remove before further processing
+            # This ensures months with no data do not get added to the department summary
+            # repo and metrics_final_df repository
+            non_empty_cols <- !(apply(bme_kpi_manual_updates,
+                                      MARGIN = 2,
+                                      function(x) 
+                                        all(is.na(x))))
+            
+            bme_kpi_manual_updates <<- bme_kpi_manual_updates[, non_empty_cols]
+            
+            
+            
             
             flag <- 1
           },
@@ -4309,20 +4323,35 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
           
           if(flag==1){
-            tryCatch({
-              # Reformat data from manual input table into summary repo format
-              bme_kpi_summary_data <<-
-                process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
-              
-              flag <- 2
-              
+            user_format_error <<- manual_format_check(bme_kpi_manual_updates%>%
+                                                        filter(Metric %in% c("PM Compliance - High Risk Equipment",
+                                                                             "PM Compliance - All Medical Equipment")))
+            
+            if (user_format_error) {
               
               showModal(modalDialog(
-                title = "Success",
-                paste0("This Biomedical KPIs data has been submitted successfully."),
+                title = "Error",
+                paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
                 easyClose = TRUE,
                 footer = NULL
               ))
+              
+            } 
+            else{
+              tryCatch({
+                # Reformat data from manual input table into summary repo format
+                bme_kpi_summary_data <<-
+                  process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+                
+                flag <- 2
+                
+                
+                showModal(modalDialog(
+                  title = "Success",
+                  paste0("This Biomedical KPIs data has been submitted successfully."),
+                  easyClose = TRUE,
+                  footer = NULL
+                ))
             },
             
             error = function(err) {
@@ -4333,7 +4362,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 footer = NULL
               ))
             })
-          }
+          
           
           if(flag==2){
             
@@ -4395,8 +4424,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             record_timestamp("Biomed / Clinical Engineering")
             
           }
+          }
         }
-      })
+      }
+    })
       
       
       #D&I Biomed Output Table -------
@@ -4504,7 +4535,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Convert rhandsontable to R object
             bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-          print("trcatch1_after")
+            
+            # Identify columns with no data in them and remove before further processing
+            # This ensures months with no data do not get added to the department summary
+            # repo and metrics_final_df repository
+            non_empty_cols <- !(apply(bme_di_manual_updates,
+                                      MARGIN = 2,
+                                      function(x) 
+                                        all(is.na(x))))
+            
+            bme_di_manual_updates <<- bme_di_manual_updates[, non_empty_cols]
+            
+            
             flag <- 1
         
           },
@@ -4524,7 +4566,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             bme_di_summary_data <-
               process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
             
-            print("trcacth 2")
             flag <- 2
             
             showModal(modalDialog(

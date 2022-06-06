@@ -100,12 +100,12 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
          `Door to Admit (Median)` = `Door to Admit (Median)`/60,
          `Admit to Depart (Median Boarder Hours)` = `Admit to Depart (Median Boarder Hours)`/60,
          `Acuity Total` = `Acuity Null`+`Acuity 1`+ `Acuity 2` +`Acuity 3`+`Acuity 4`+`Acuity 5`,
-         `Acuity 1 count AAAEM` = round(`Acuity 1`/`Acuity Total`,4),
-         `Acuity 2 count AAAEM` = round(`Acuity 2`/`Acuity Total`,4),
-         `Acuity 3 count AAAEM` = round(`Acuity 3`/`Acuity Total`,4),
-         `Acuity 4 count AAAEM` = round(`Acuity 4`/`Acuity Total`,4),
-         `Acuity 5 count AAAEM` = round(`Acuity 5`/`Acuity Total`,4),
-         `Acuity Null count AAAEM` = round(`Acuity Null`/`Acuity Total`,4)) %>%
+         `Acuity 1 count AAAEM` = round(`Acuity 1`/`Acuity Total`,5),
+         `Acuity 2 count AAAEM` = round(`Acuity 2`/`Acuity Total`,5),
+         `Acuity 3 count AAAEM` = round(`Acuity 3`/`Acuity Total`,5),
+         `Acuity 4 count AAAEM` = round(`Acuity 4`/`Acuity Total`,5),
+         `Acuity 5 count AAAEM` = round(`Acuity 5`/`Acuity Total`,5),
+         `Acuity Null count AAAEM` = round(`Acuity Null`/`Acuity Total`,5)) %>%
     select(-`Acuity Total`) %>%
     pivot_longer(cols = c(-Site,-Month),
                  names_to = "KPI",
