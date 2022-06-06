@@ -1405,7 +1405,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       budget_process <- budget_raw_file_process(data)
       
       metrics_final_df <<- budget_to_actual_metrics_final_df(budget_process)
-      #saveRDS(metrics_final_df, metrics_final_df_path)
+      saveRDS(metrics_final_df, metrics_final_df_path)
       
       
       budget_to_actual_current_summary_repo <- read_excel(budget_to_actual_path_new)
