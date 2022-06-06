@@ -1377,30 +1377,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     
     # 4. Data Tab Output ---------------------------------------------------------------------------------
-    # MSH, MSM, and MSQ Submit Finance -----
     observeEvent(input$submit_finance,{
-      inFile_msh_msm_msq <- input$finance_msh_msm_msq
+      inFile_budget <- input$finance_budget
       flag <- 0
       
       
-      if (is.null(inFile_msh_msm_msq)) {
+      if (is.null(inFile_budget)) {
         return(NULL)
       }else{
-        tryCatch({sheet_names <- excel_sheets(inFile_msh_msm_msq$datapath)
-           sheet_names <- sheet_names[sheet_names != "Sheet3"]
-            for (i in 1:length(sheet_names)){
-              data <- read_excel(inFile_msh_msm_msq$datapath, sheet = sheet_names[i])
-              sheet_month <- colnames(data)[1]
-              data <- data %>% row_to_names(row_number = 1)
-              data$Month <- sheet_month
-              
-              if(i == 1){
-                prev <- data
-              } else{
-                data <- full_join(data,prev)
-              }
-              prev <- data
-            }
+        tryCatch({
+          data <- read_excel(inFile_budget$datapath,  sheet = "1-Pivot Summary by Site", skip = 5)
            flag <- 1
            showModal(modalDialog(
              title = "Success",
@@ -1414,29 +1400,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           easyClose = TRUE,
           footer = NULL
         ))})
-        
-        if(flag == 1){
-          
-          tryCatch({exptrend_data <- exptrend_process(prev)
-          showModal(modalDialog(
-            title = "Success",
-            paste0("The data has been imported succesfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-          }, error = function(err){  showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with one of the files"),
-            easyClose = TRUE,
-            footer = NULL
-          ))})
-          
-        }
       }
       
-      metrics_final_df <<- budget_to_actual_process(exptrend_data)
-      saveRDS(metrics_final_df, metrics_final_df_path)
+      budget_process <- budget_raw_file_process(data)
       
+      metrics_final_df <<- budget_to_actual_metrics_final_df(budget_process)
+      #saveRDS(metrics_final_df, metrics_final_df_path)
+      
+      
+      budget_to_actual_current_summary_repo <- read_excel(budget_to_actual_path_new)
+      updated_rows <- unique(budget_process[c("Service", "Site", "Metric_Name_Submitted", "Month")])
+      
+      budget_to_actual_current_summary_repo <- anti_join(budget_to_actual_current_summary_repo, updated_rows)
+      budget_to_actual_current_summary_repo <- full_join(budget_to_actual_current_summary_repo,budget_process)
+      
+      write_xlsx(budget_to_actual_current_summary_repo, budget_to_actual_path_new)
 
       
     })
@@ -1455,43 +1433,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
 
     })
-    
-    # MSBI, MSB, and MSW Submit Finance -----
-    observeEvent(input$submit_finance,{
 
-      inFile_msbi_msb_msw <- input$finance_msbi_msb_msw
-      flag <- 0
-
-      if (is.null(inFile_msbi_msb_msw)) {
-        return(NULL)
-      }else{
-        bislr_data <- read_excel(inFile_msbi_msb_msw$datapath)
-        # bislr_data <- read_excel("Data_Dashboard/Finance/September 2020 and 2021 Actual BISLR at 10-20-21 mp.xlsx")
-        
-      }
-      
-      bislr_data <- bislr_preprocess(bislr_data)
-      metrics_final_df <<- budget_to_actual_process(bislr_data)
-      
-      saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      budget_to_actual_tbl <- read_excel(budget_to_actual_path)
-      
-      updated_rows <- unique(bislr_data[c("Service","Site","Cost Center2", "Account Category Desc2", "Month")])
-      updated_rows$Month <- as.Date(updated_rows$Month, "%Y-%m-%d")
-      
-      budget_to_actual_tbl <- anti_join(budget_to_actual_tbl, updated_rows)
-      budget_to_actual_tbl <- budget_to_actual_tbl %>% filter(!is.na(Month))
-      
-      bislr_data$Month <- as.Date(bislr_data$Month, "%Y-%m-%d")
-      bislr_data$`Month Actual` <- as.double(bislr_data$`Month Actual`)
-      budget_to_actual_tbl <- full_join(budget_to_actual_tbl, bislr_data)
-      
-      
-      budget_to_actual_tbl <- as.data.frame(budget_to_actual_tbl)
-      write_xlsx(budget_to_actual_tbl, budget_to_actual_path, row.names = FALSE)
-      
-      })
     
     
     ## Read in Patient Experience data -----------------------------------
