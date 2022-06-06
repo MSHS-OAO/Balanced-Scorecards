@@ -103,7 +103,7 @@ biomed__metrics_final_df_process <- function(data,type){
              Reporting_Month_Ref = Month) %>%
       mutate(Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
              Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
-             value_rounded = round(as.numeric(value_rounded),2))
+             value_rounded = as.numeric(value_rounded))
     
     summary_metric_filter_subset <- summary_metric_filter %>% select(Metric_Group,Metric_Name,Metric_Name_Submitted)
     
@@ -145,7 +145,7 @@ biomed__metrics_final_df_process <- function(data,type){
              Reporting_Month_Ref = Month) %>%
       mutate(Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
              Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
-             Metric_Name_Submitted = "Daily Avg. # of Disruptions and Issues")
+             Metric_Name_Submitted = "Total Disruptions or Equipment Issues")
     
     summary_metric_filter_subset <- summary_metric_filter %>% 
       select(Metric_Group,Metric_Name,Metric_Name_Submitted)
