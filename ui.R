@@ -226,8 +226,7 @@ ui <-
                                         ),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = "pills",
                                         tabPanel("Finance", br(),
-                                                 fileInput("finance_msh_msm_msq", label = "Please upload Finance data for MSH and MSQ"),
-                                                 fileInput("finance_msbi_msb_msw", label = "Please upload Finance data for MSBI, MSB, MSM, and MSW"),
+                                                 fileInput("finance_budget", label = "Please upload Budget data"),
                                                  actionButton("submit_finance", label = "Submit")
                                
                                       ),
