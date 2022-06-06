@@ -3615,6 +3615,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         data <- data %>% select(-all_of(months_to_drop))
         
+        month_cols <- colnames(data %>%
+                                 select(-Site, -Metric))
+        
+        month_cols <- format(sort(as.Date(paste0(month_cols, "-01"),
+                                          format = "%m-%Y-%d")),
+                             "%m-%Y")
+        
+        data <- data[, c("Site", "Metric", month_cols)]
+        
         data
         ##########
         
