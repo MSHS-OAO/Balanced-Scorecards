@@ -3627,6 +3627,42 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data
         ##########
         
+        data2 <- sec_events_manual_table
+        
+        data2_months <- as.Date(paste0(colnames(data2 %>%
+                                                  select(-Site, -Metric)),
+                                       "-01"),
+                                format = "%m-%Y-%d")
+        
+        max_month_2 <- as.Date(
+          paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"),
+          format = "%m-%Y-%d")
+        
+        months_to_drop_2 <- data2_months[which(
+          data2_months < max_month %m-% months(6))]
+        
+        complete_months_2 <- seq.Date(from = min(data2_months), 
+                                      to = max_month_2,
+                                      by = "month")
+        
+        missing_months_2 <- complete_months_2[which(!(complete_months_2 %in% data2_months))]
+        missing_months_2 <- format(missing_months_2, "%m-%Y")
+        
+        data2[, missing_months_2] <- NA_character_
+        
+        data2 <- data2 %>%
+          pivot_longer(cols = !contains(c("Site", "Metric")),
+                       names_to = "Month",
+                       values_to = "value") %>%
+          mutate(Month = as.Date(paste0(Month, "-01"),
+                                 format = "%m-%Y-%d")) %>%
+          arrange(Site, Month) %>%
+          filter(!(Month %in% months_to_drop_2)) %>%
+          mutate(Month = format(Month, "%m-%Y")) %>%
+          pivot_wider(names_from = Month,
+                      values_from = value,
+                      names_sort = FALSE)
+        
       }
       )
       
