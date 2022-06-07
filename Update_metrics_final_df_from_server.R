@@ -255,3 +255,10 @@ service_metrics_to_fix2 <- metrics_final_df_naming2 %>%
   #                           Metric_Group %in% "Budget to Actual" &
   #                           !str_detect(Metric_Name2, "Blood Bank"),
   #                         paste(Metric_Name2, "(Lab)"), Metric_Name2))
+
+
+# # Update metrics_final_df with Lab TAT data with greater accuracy --------
+# metrics_final_df <- lab_scc_tat_metrics_final_df(ops_metrics_lab_tat)
+# 
+# saveRDS(metrics_final_df, metrics_final_df_path)
+
