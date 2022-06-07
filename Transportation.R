@@ -1,7 +1,7 @@
 # start <- "J:" #Comment when publishing to RConnect
 # # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/PTET.xlsx")
+# pt_raw_data <- paste0(home_path, "Input Data Raw/Transport/Support Services Data Collection Template.xlsx")
 
 
 
@@ -144,6 +144,7 @@ process_PT_data <- function(pt_data_raw){
 
 }
 
+# pt_raw_data <- read_excel(pt_raw_data)
 # summary_repos_transport <- process_PT_data(pt_raw_data)
 
 
@@ -184,7 +185,7 @@ process_NPT_raw_data <- function(data){
                                                   ifelse(data$Site == "MSH Region", "MSH", NA))))))
   
   data_metrics <- data%>%
-    mutate(`% of Trips Over 45 Minutes` = round((`No of Trips Over 45 Minutes`)/`No of Transports`,2),
+    mutate(`% of Trips Over 45 Minutes` = `No of Trips Over 45 Minutes`/`No of Transports`,
            Month = format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y"),
            Service = "Patient Transport") %>%
     mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
@@ -215,37 +216,45 @@ process_NPT_raw_data <- function(data){
 }
 
 transport__metrics_final_df_process <- function(data){
+  
+  data <- data %>%
+    rename(Metric_Name_Submitted = Metric_Name) %>%
+    select(-Metric_Group)
+
+  metrics_final_df <- metrics_final_df_subset_and_merge(data)
+  return(metrics_final_df)
+  
 ### Create Target Variance Column
-  TAT_Transport_target_status <- left_join(data[, c("Service","Site","Metric_Group", "Metric_Name","Reporting_Month","value_rounded")],
-                                     target_mapping, 
-                                     by = c("Service","Site","Metric_Group", "Metric_Name"))
+  # TAT_Transport_target_status <- left_join(data[, c("Service","Site","Metric_Group", "Metric_Name","Reporting_Month","value_rounded")],
+  #                                    target_mapping, 
+  #                                    by = c("Service","Site","Metric_Group", "Metric_Name"))
 
-  TAT_Transport_target_status <- TAT_Transport_target_status %>%
-    mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    filter(Variance %in% c(TRUE,NA))
+  # TAT_Transport_target_status <- TAT_Transport_target_status %>%
+  #   mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
+  #   filter(Variance %in% c(TRUE,NA))
 
-  TAT_Transport_df_final <- merge(data, 
-                            TAT_Transport_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
-                            all = TRUE)
+  # TAT_Transport_df_final <- merge(data, 
+  #                           TAT_Transport_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
+  #                           all = TRUE)
+  # 
+  # TAT_Transport_df_merge <- TAT_Transport_df_final[,processed_df_cols]
   
-  TAT_Transport_df_merge <- TAT_Transport_df_final[,processed_df_cols]
   
-  
-  TAT_Transport_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(TAT_Transport_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
+  #TAT_Transport_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(TAT_Transport_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
   
 
-  updated_rows <- unique(TAT_Transport_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
-  
-  
-  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-
-  metrics_final_df <- full_join(metrics_final_df,TAT_Transport_df_merge)
+  # updated_rows <- unique(TAT_Transport_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
+  # 
+  # 
+  # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  # 
+  # metrics_final_df <- full_join(metrics_final_df,TAT_Transport_df_merge)
   
 }
 
 
 # NPT_Data <- paste0(home_path,"Input Data Raw/Transport/MSHS_Transport_Metrics_Report.xlsx")
 # npt_data <- read_excel(NPT_Data)
-
+# 
 # npt_datasum <- process_NPT_raw_data(npt_data)
-# transport__metrics_final_df_process(npt_datasum[[1]])
+# mdf_pt <- transport__metrics_final_df_process(npt_datasum[[1]])

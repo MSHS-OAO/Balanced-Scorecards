@@ -207,6 +207,25 @@ metrics_final_df <- metrics_final_df %>%
 
 metrics_final_df <- rbind(metrics_final_df,NursingOps)
 
+
+# Update ED Metric Group ----
+EDOps <-  metrics_final_df %>% 
+  filter(Metric_Group %in% c("Operational") & Service %in% c("ED")) %>%
+  select(-Metric_Group) 
+
+metrics_final_df_naming_ED <- metric_mapping_naming %>%
+  select(Service,Metric_Group,Metric_Name)
+
+EDOps <- left_join(EDOps,
+                   metrics_final_df_naming_ED,
+                   by=c("Service", "Metric_Name"))
+
+metrics_final_df <- metrics_final_df %>% 
+  filter(!(Metric_Group %in% c("Operational") & Service %in% c("ED")))
+
+metrics_final_df <- rbind(metrics_final_df,NursingOps)
+
+
 # Identify missing/incorrect names in metrics_final_df ----
 metrics_final_df_naming2 <- metrics_final_df %>%
   select(Service,

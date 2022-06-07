@@ -91,7 +91,7 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
     select(-`Measure Names`) %>%
     pivot_wider(names_from = "KPI",
                 values_from = "Metric",values_fill=0) %>%
-   mutate(`LWBS %` = round(`LWBS`/`Visit Volume (Epic)`,4),
+   mutate(`LWBS %` = `LWBS`/`Visit Volume (Epic)`,
          `Admit to Depart (90th Percentile Boarder Hours)` = `Admit to Depart (90th Percentile Boarder Hours)`/60,
          `ED LOS Admitted Patients (90th Percentile Hours)` = `ED LOS Admitted Patients (90th Percentile Hours)`/60,
          `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat&Release Patients (90th Percentile Hours)`/60,
@@ -100,12 +100,12 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
          `Door to Admit (Median)` = `Door to Admit (Median)`/60,
          `Admit to Depart (Median Boarder Hours)` = `Admit to Depart (Median Boarder Hours)`/60,
          `Acuity Total` = `Acuity Null`+`Acuity 1`+ `Acuity 2` +`Acuity 3`+`Acuity 4`+`Acuity 5`,
-         `Acuity 1 count AAAEM` = round(`Acuity 1`/`Acuity Total`,5),
-         `Acuity 2 count AAAEM` = round(`Acuity 2`/`Acuity Total`,5),
-         `Acuity 3 count AAAEM` = round(`Acuity 3`/`Acuity Total`,5),
-         `Acuity 4 count AAAEM` = round(`Acuity 4`/`Acuity Total`,5),
-         `Acuity 5 count AAAEM` = round(`Acuity 5`/`Acuity Total`,5),
-         `Acuity Null count AAAEM` = round(`Acuity Null`/`Acuity Total`,5)) %>%
+         `Acuity 1 count AAAEM` = `Acuity 1`/`Acuity Total`,
+         `Acuity 2 count AAAEM` = `Acuity 2`/`Acuity Total`,
+         `Acuity 3 count AAAEM` = `Acuity 3`/`Acuity Total`,
+         `Acuity 4 count AAAEM` = `Acuity 4`/`Acuity Total`,
+         `Acuity 5 count AAAEM` = `Acuity 5`/`Acuity Total`,
+         `Acuity Null count AAAEM` = `Acuity Null`/`Acuity Total`) %>%
     select(-`Acuity Total`) %>%
     pivot_longer(cols = c(-Site,-Month),
                  names_to = "KPI",
@@ -121,35 +121,32 @@ ed__metrics_final_df_process <- function(summary_data){
   
   metrics_final_df_form <- summary_data %>%
     rename(Reporting_Month_Ref = Month,
-           Metric_Name = KPI,
+           Metric_Name_Submitted = KPI,
            value_rounded = Metric) %>%
     mutate(Reporting_Month_Ref = parse_date_time(Reporting_Month_Ref,orders = "ymd"),
            Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
-           Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
-           Metric_Group = ifelse(Metric_Name %in% c("Acuity Null",
-                                                    "Acuity 5",
-                                                    "Acuity 4",
-                                                    "Acuity 3",
-                                                    "Acuity 2",
-                                                    "Acuity 1"),"ESI // Total Volume", ifelse(grepl("AAAEM",Metric_Name),"ESI % Breakout","Operational")),
-           Target = NA,
-           Status = NA)
+           Reporting_Month = format(Reporting_Month_Ref,"%m-%Y")) %>%
+    select(-Reporting_Month_Ref)
   
-  metrics_final_df_form <- metrics_final_df_form %>% 
-    select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
-  
-  updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
-  
-  
-  metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-  
-  metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
-  
+  metrics_final_df <- metrics_final_df_subset_and_merge(metrics_final_df_form)
   return(metrics_final_df)
+  
+  
+  # metrics_final_df_form <- metrics_final_df_form %>% 
+  #   select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
+  # 
+  # updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
+  # 
+  # 
+  # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
+  # 
+  # metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
+  # 
+  # return(metrics_final_df)
   
 }
 
-# data <- nursing_data_preprocess(ed_data_ts,ed_data_percentiles)
+# data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
 # 
 # ed_data_ts <- data[[1]]
 # ed_data_percentiles <- data[[2]]
