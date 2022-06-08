@@ -5083,6 +5083,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           },
           error = function(err){
+            print("Yo!")
             showModal(modalDialog(
               title = "Error",
               paste0("There seems to be an issue with this data file."),

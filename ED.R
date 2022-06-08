@@ -94,7 +94,7 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
    mutate(`LWBS %` = `LWBS`/`Visit Volume (Epic)`,
          `Admit to Depart (90th Percentile Boarder Hours)` = `Admit to Depart (90th Percentile Boarder Hours)`/60,
          `ED LOS Admitted Patients (90th Percentile Hours)` = `ED LOS Admitted Patients (90th Percentile Hours)`/60,
-         `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat&Release Patients (90th Percentile Hours)`/60,
+         `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat & Release Patients (90th Percentile Hours)`/60,
          `ED LOS Admit (Median)` = `ED LOS Admit (Median)`/60,
          `ED LOS Treat & Release (Median)` = `ED LOS Treat & Release (Median)`/60,
          `Door to Admit (Median)` = `Door to Admit (Median)`/60,
@@ -147,10 +147,10 @@ ed__metrics_final_df_process <- function(summary_data){
 }
 
 # data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
-# 
+# # 
 # ed_data_ts <- data[[1]]
 # ed_data_percentiles <- data[[2]]
-# 
+# # 
 # data <- ed_dept_summary(ed_data_ts,ed_data_percentiles)
 # mdf <- ed__metrics_final_df_process(data)
 # # write_xlsx(data,ed_path)
