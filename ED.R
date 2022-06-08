@@ -75,7 +75,7 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
                           "ED LOS Admit (Median)",
                           "LWBS",
                           "Visit Volume (Epic)",
-                          "ED LOS Treat&Release Patients (90th Percentile Hours)",
+                          "ED LOS Treat & Release Patients (90th Percentile Hours)",
                           "ED LOS Admitted Patients (90th Percentile Hours)",
                           "Admit to Depart (90th Percentile Boarder Hours)"))
   
