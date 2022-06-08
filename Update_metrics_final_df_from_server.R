@@ -223,7 +223,12 @@ EDOps <- left_join(EDOps,
 metrics_final_df <- metrics_final_df %>% 
   filter(!(Metric_Group %in% c("Operational") & Service %in% c("ED")))
 
-metrics_final_df <- rbind(metrics_final_df,NursingOps)
+metrics_final_df <- rbind(metrics_final_df,EDOps)
+
+# Change the ED's treat & release to maintain consistency ----
+metrics_final_df <- metrics_final_df %>% 
+  mutate(Metric_Name = ifelse(str_detect(Metric_Name,'90th Percentile Hours'),
+                              "ED LOS Treat & Release Patients (90th Percentile Hours)", Metric_Name))
 
 
 # Identify missing/incorrect names in metrics_final_df ----
