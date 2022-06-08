@@ -5158,13 +5158,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                     Site)
           
           # Lastly, save the updated summary data
-          #write_xlsx(ed_reports, ed_path)
+          write_xlsx(ed_reports, ed_path)
           
           # Update metrics_final_df with latest data using custom function
           metrics_final_df <<- ed__metrics_final_df_process(ed_summary_data)
           
           # Save updates metrics_final_df
-          #saveRDS(metrics_final_df, metrics_final_df_path)
+          saveRDS(metrics_final_df, metrics_final_df_path)
           
           # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
           # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
