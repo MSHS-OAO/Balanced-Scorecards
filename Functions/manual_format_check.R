@@ -3,7 +3,6 @@
 
 manual_format_check <- function(manual_table){
   
-  View(manual_table)
   user_format_error <<- any(
     apply(X = manual_table[, 3:ncol(manual_table)],
           MARGIN = 2,
