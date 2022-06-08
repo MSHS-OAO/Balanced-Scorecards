@@ -4370,7 +4370,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           if(flag==1){
             user_format_error <<- manual_format_check(bme_kpi_manual_updates%>%
                                                         filter(Metric %in% c("PM Compliance - High Risk Equipment",
-                                                                             "PM Compliance - All Medical Equipment")))
+                                                                             "PM Compliance - All Medical Equipment",
+                                                                             "Documented Status")))
             
             if (user_format_error) {
               
