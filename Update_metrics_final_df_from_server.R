@@ -199,8 +199,8 @@ metrics_final_df_naming_nursing <- metric_mapping_naming %>%
   select(Service,Metric_Group,Metric_Name)
 
 NursingOps <- left_join(NursingOps,
-                        metrics_final_df_naming_nursing,
-                        by=c("Service", "Metric_Name"))
+                    metrics_final_df_naming_nursing,
+                    by=c("Service", "Metric_Name"))
 
 metrics_final_df <- metrics_final_df %>% 
   filter(!Metric_Group %in% c("Nursing Ops"))
@@ -222,6 +222,9 @@ EDOps <- left_join(EDOps,
 
 metrics_final_df <- metrics_final_df %>% 
   filter(!(Metric_Group %in% c("Operational") & Service %in% c("ED")))
+
+EDOps <- EDOps %>%
+  select(names(metrics_final_df))
 
 metrics_final_df <- rbind(metrics_final_df,EDOps)
 
