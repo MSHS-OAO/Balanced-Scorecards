@@ -24,10 +24,10 @@ save_append_join_updates <- function(summary_repos_data, updated_data, hist_file
   
   
   # Lastly, save the updated summary data
-  #write_xlsx(summary_repos_data, summary_repos_path)
+  write_xlsx(summary_repos_data, summary_repos_path)
   
   metrics_final_df <<- metrics_final_df_function(updated_data)
   
   # Save updated metrics_final_df
-  #saveRDS(metrics_final_df, metrics_final_df_path)
+  saveRDS(metrics_final_df, metrics_final_df_path)
 }
