@@ -207,6 +207,11 @@ metrics_final_df <- metrics_final_df %>%
 
 metrics_final_df <- rbind(metrics_final_df,NursingOps)
 
+# Change the ED's treat & release to maintain consistency ----
+metrics_final_df <- metrics_final_df %>% 
+  mutate(Metric_Name = ifelse(str_detect(Metric_Name,'ED LOS Treat&Release Patients'),
+                              "ED LOS Treat & Release Patients (90th Percentile Hours)", Metric_Name))
+
 
 # Update ED Metric Group ----
 EDOps <-  metrics_final_df %>% 
@@ -227,11 +232,6 @@ EDOps <- EDOps %>%
   select(names(metrics_final_df))
 
 metrics_final_df <- rbind(metrics_final_df,EDOps)
-
-# Change the ED's treat & release to maintain consistency ----
-metrics_final_df <- metrics_final_df %>% 
-  mutate(Metric_Name = ifelse(str_detect(Metric_Name,'90th Percentile Hours'),
-                              "ED LOS Treat & Release Patients (90th Percentile Hours)", Metric_Name))
 
 
 # Identify missing/incorrect names in metrics_final_df ----
@@ -268,5 +268,5 @@ service_metrics_to_fix2 <- metrics_final_df_naming2 %>%
 # # Update metrics_final_df with Lab TAT data with greater accuracy --------
 # metrics_final_df <- lab_scc_tat_metrics_final_df(ops_metrics_lab_tat)
 # 
-# saveRDS(metrics_final_df, metrics_final_df_path)
+#saveRDS(metrics_final_df, metrics_final_df_path)
 
