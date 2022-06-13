@@ -440,8 +440,8 @@ metric_mapping_breakout <- metric_mapping_database %>%
   mutate(General_Group = as.character(General_Group))
 
 # Source files for processing service line data -------------------
-# function_sources <- list.files("Functions", full.names = T)
-# sapply(function_sources, source)
+function_sources <- list.files("Functions", full.names = T)
+sapply(function_sources, source)
 source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
 source("lab_processing.R")
