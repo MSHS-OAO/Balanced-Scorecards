@@ -199,18 +199,108 @@ metrics_final_df_naming_nursing <- metric_mapping_naming %>%
   select(Service,Metric_Group,Metric_Name)
 
 NursingOps <- left_join(NursingOps,
-                        metrics_final_df_naming_nursing,
-                        by=c("Service", "Metric_Name"))
+                    metrics_final_df_naming_nursing,
+                    by=c("Service", "Metric_Name"))
 
 metrics_final_df <- metrics_final_df %>% 
   filter(!Metric_Group %in% c("Nursing Ops"))
 
 metrics_final_df <- rbind(metrics_final_df,NursingOps)
 
+# Change the ED's treat & release to maintain consistency ----
+# Tibble to map new KPI Names ----
+
+mapping <- tibble(KPI=c("Acuity Null",
+                        "Acuity 5",
+                        "Acuity 4",
+                        "Acuity 3",
+                        "Acuity 2",
+                        "Acuity 1",
+                        "Total Boarder Hours",
+                        "Admit to Depart (Median Boarder Hours)",
+                        "Door to Admit (Median)",
+                        "ED LOS Treat & Release (Median)",
+                        "ED LOS Admit (Median)",
+                        "LWBS",
+                        "Visit Volume (Epic)",
+                        "ED LOS Treat&Release Patients (90th Percentile Hours)",
+                        "ED LOS Admitted Patients (90th Percentile Hours)",
+                        "Admit to Depart (90th Percentile Boarder Hours)",
+                        "Acuity 1 count AAAEM",
+                        "Acuity 2 count AAAEM",
+                        "Acuity 3 count AAAEM",
+                        "Acuity 4 count AAAEM",
+                        "Acuity 5 count AAAEM",
+                        "Acuity Null count AAAEM",
+                        "LWBS %"), 
+                  KPINew=c("Acuity Null",
+                           "Acuity 5",
+                           "Acuity 4",
+                           "Acuity 3",
+                           "Acuity 2",
+                           "Acuity 1",
+                           "Total Boarder Hours",
+                           "Admit to Depart Boarder Hours (Median)",
+                           "Door to Admit (Median)",
+                           "ED LOS T&R Patients (Median)",
+                           "ED LOS Admitted Patients (Median)",
+                           "LWBS",
+                           "Visit Volume (Epic)",
+                           "ED LOS T&R Patients (90th Percentile)",
+                           "ED LOS Admitted Patients (90th Percentile)",
+                           "Admit to Depart Boarder Hours (90th Percentile)",
+                           "Acuity 1 count AAAEM",
+                           "Acuity 2 count AAAEM",
+                           "Acuity 3 count AAAEM",
+                           "Acuity 4 count AAAEM",
+                           "Acuity 5 count AAAEM",
+                           "Acuity Null count AAAEM",
+                           "LWBS %"))
+# ED metrics to remap ----
+KPI=c("Acuity Null",
+      "Acuity 5",
+      "Acuity 4",
+      "Acuity 3",
+      "Acuity 2",
+      "Acuity 1",
+      "Total Boarder Hours",
+      "Admit to Depart (Median Boarder Hours)",
+      "Door to Admit (Median)",
+      "ED LOS Treat & Release (Median)",
+      "ED LOS Admit (Median)",
+      "LWBS",
+      "Visit Volume (Epic)",
+      "ED LOS Treat&Release Patients (90th Percentile Hours)",
+      "ED LOS Admitted Patients (90th Percentile Hours)",
+      "Admit to Depart (90th Percentile Boarder Hours)",
+      "Acuity 1 count AAAEM",
+      "Acuity 2 count AAAEM",
+      "Acuity 3 count AAAEM",
+      "Acuity 4 count AAAEM",
+      "Acuity 5 count AAAEM",
+      "Acuity Null count AAAEM",
+      "LWBS %")
+metrics_final_df_from_server_ED <- metrics_final_df %>% 
+  filter(Metric_Name %in% KPI)
+
+metrics_final_df <- metrics_final_df %>% 
+  filter(!Metric_Name %in% KPI)
+
+# Code to change the metric names in metrics final df ----
+metrics_final_df_from_server_ED <- merge(metrics_final_df_from_server_ED,
+                                         mapping,
+                                         by.x = "Metric_Name",
+                                         by.y = "KPI") %>%
+  select(-Metric_Name) %>%
+  rename(Metric_Name = KPINew) %>%
+  select(names(metrics_final_df))
+
+metrics_final_df <- rbind(metrics_final_df,metrics_final_df_from_server_ED)
+
 
 # Update ED Metric Group ----
 EDOps <-  metrics_final_df %>% 
-  filter(Metric_Group %in% c("Operational") & Service %in% c("ED")) %>%
+  filter(Metric_Group %in% c("Operational" ,"Left Without Being Seen (LWBS)") & Service %in% c("ED")) %>%
   select(-Metric_Group) 
 
 metrics_final_df_naming_ED <- metric_mapping_naming %>%
@@ -221,14 +311,12 @@ EDOps <- left_join(EDOps,
                    by=c("Service", "Metric_Name"))
 
 metrics_final_df <- metrics_final_df %>% 
-  filter(!(Metric_Group %in% c("Operational") & Service %in% c("ED")))
+  filter(!(Metric_Group %in% c("Operational","Left Without Being Seen (LWBS)") & Service %in% c("ED")))
+
+EDOps <- EDOps %>%
+  select(names(metrics_final_df))
 
 metrics_final_df <- rbind(metrics_final_df,EDOps)
-
-# Change the ED's treat & release to maintain consistency ----
-metrics_final_df <- metrics_final_df %>% 
-  mutate(Metric_Name = ifelse(str_detect(Metric_Name,'90th Percentile Hours'),
-                              "ED LOS Treat & Release Patients (90th Percentile Hours)", Metric_Name))
 
 
 # Identify missing/incorrect names in metrics_final_df ----
@@ -265,5 +353,5 @@ service_metrics_to_fix2 <- metrics_final_df_naming2 %>%
 # # Update metrics_final_df with Lab TAT data with greater accuracy --------
 # metrics_final_df <- lab_scc_tat_metrics_final_df(ops_metrics_lab_tat)
 # 
-# saveRDS(metrics_final_df, metrics_final_df_path)
+#saveRDS(metrics_final_df, metrics_final_df_path)
 
