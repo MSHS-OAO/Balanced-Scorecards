@@ -3527,68 +3527,102 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Create reactive data table for manual entry
       data_sec_events <- reactive({
         
-        data <- sec_events_manual_table
-        
-        # Arrange by sites in alphabetical order
-        data <- data %>%
-          arrange(Site)
-        
-        
-        ##### Code that adds months missing months to the rhandsontable
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-        
-        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-        
-        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        
-        months_to_drop <- which(months < max_month %m-% months(6))
-        months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        
-        complete_months <- seq.Date(months[1], max_month, by= 'month')
-        
-        missing_months <- which(!(complete_months %in% months))
-        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        
-        data[,missing_months] <- NA_character_
-        
-        data <- data %>% select(-all_of(months_to_drop))
-        
-        month_cols <- colnames(data %>%
-                                 select(-Site, -Metric))
-        
-        month_cols <- format(sort(as.Date(paste0(month_cols, "-01"),
-                                          format = "%m-%Y-%d")),
-                             "%m-%Y")
-        
-        data <- data[, c("Site", "Metric", month_cols)]
-        
-        data
+        # data <- sec_events_manual_table
+        # 
+        # # Original approach
+        # # Arrange by sites in alphabetical order
+        # data <- data %>%
+        #   arrange(Site)
+        # 
+        # ##### Code that adds months missing months to the rhandsontable
+        # months_only <- data %>% select(-Site,-Metric)
+        # months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        # 
+        # max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        # 
+        # months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        # 
+        # months_to_drop <- which(months < max_month %m-% months(6))
+        # months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        # 
+        # complete_months <- seq.Date(months[1], max_month, by= 'month')
+        # 
+        # missing_months <- which(!(complete_months %in% months))
+        # missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        # 
+        # data[,missing_months] <- NA_character_
+        # 
+        # data <- data %>% select(-all_of(months_to_drop))
+        # 
+        # data
+        # 
+        # # Modified to sort months
+        # # Arrange by sites in alphabetical order
+        # data <- data %>%
+        #   arrange(Site)
+        # 
+        # 
+        # ##### Code that adds months missing months to the rhandsontable
+        # months_only <- data %>% select(-Site,-Metric)
+        # months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        # 
+        # max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        # 
+        # months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        # 
+        # months_to_drop <- which(months < max_month %m-% months(6))
+        # months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        # 
+        # complete_months <- seq.Date(months[1], max_month, by= 'month')
+        # 
+        # missing_months <- which(!(complete_months %in% months))
+        # missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        # 
+        # data[,missing_months] <- NA_character_
+        # 
+        # data <- data %>% select(-all_of(months_to_drop))
+        # 
+        # month_cols <- colnames(data %>%
+        #                          select(-Site, -Metric))
+        # 
+        # month_cols <- format(sort(as.Date(paste0(month_cols, "-01"),
+        #                                   format = "%m-%Y-%d")),
+        #                      "%m-%Y")
+        # 
+        # data <- data[, c("Site", "Metric", month_cols)]
+        # 
+        # data
         ##########
-        
+
         data2 <- sec_events_manual_table
-        
+
         data2_months <- as.Date(paste0(colnames(data2 %>%
                                                   select(-Site, -Metric)),
                                        "-01"),
                                 format = "%m-%Y-%d")
-        
+
         max_month_2 <- as.Date(
           paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"),
           format = "%m-%Y-%d")
-        
-        months_to_drop_2 <- data2_months[which(
-          data2_months < max_month %m-% months(6))]
-        
-        complete_months_2 <- seq.Date(from = min(data2_months), 
+
+        # months_to_drop_2 <- data2_months[which(
+        #   data2_months < max_month_2 %m-% months(6))]
+
+        complete_months_2 <- seq.Date(from = min(data2_months),
                                       to = max_month_2,
                                       by = "month")
         
+        # Move this after complete_months in case multiple months of data is missing
+        months_to_drop_2 <- complete_months_2[which(
+          complete_months_2 < max_month_2 %m-% months(6)
+        )
+        ]
+
         missing_months_2 <- complete_months_2[which(!(complete_months_2 %in% data2_months))]
         missing_months_2 <- format(missing_months_2, "%m-%Y")
-        
+
         data2[, missing_months_2] <- NA_character_
-        
+
         data2 <- data2 %>%
           pivot_longer(cols = !contains(c("Site", "Metric")),
                        names_to = "Month",
