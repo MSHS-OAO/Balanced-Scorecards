@@ -215,7 +215,7 @@ metrics_final_df <- metrics_final_df %>%
 
 # Update ED Metric Group ----
 EDOps <-  metrics_final_df %>% 
-  filter(Metric_Group %in% c("Operational") & Service %in% c("ED")) %>%
+  filter(Metric_Group %in% c("Operational" ,"Left Without Being Seen (LWBS)") & Service %in% c("ED")) %>%
   select(-Metric_Group) 
 
 metrics_final_df_naming_ED <- metric_mapping_naming %>%
@@ -226,7 +226,7 @@ EDOps <- left_join(EDOps,
                    by=c("Service", "Metric_Name"))
 
 metrics_final_df <- metrics_final_df %>% 
-  filter(!(Metric_Group %in% c("Operational") & Service %in% c("ED")))
+  filter(!(Metric_Group %in% c("Operational","Left Without Being Seen (LWBS)") & Service %in% c("ED")))
 
 EDOps <- EDOps %>%
   select(names(metrics_final_df))
