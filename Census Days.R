@@ -276,7 +276,7 @@ census_days_metrics_final_df <- function(data) {
   
 
   # Subset processed data for merge 
-  metrics_final_df <- metrics_final_df_subset_and_merge(cm_kpi_df)
+  metrics_final_df <- metrics_final_df_subset_and_merge(cost_rev_df_final)
   return(metrics_final_df)
 
   
