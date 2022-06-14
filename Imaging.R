@@ -72,7 +72,7 @@ imaging_dept_summary <- function(data){
 
 
 imaging_metrics_final_df <- function(data){
-  imaging_df <- imaging_df %>%
+  imaging_df <- data %>%
                         mutate(Premier_Reporting_Period = format(Reporting_Month_Ref, 
                                                                  "%b-%Y")) %>%
                         select(-Category)
