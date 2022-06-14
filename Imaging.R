@@ -78,6 +78,6 @@ imaging_metrics_final_df <- function(data){
                         select(-Category)
   
   # Select relevant columns
-  metrics_final_df_test <- metrics_final_df_subset_and_merge(imaging_df)
+  metrics_final_df <- metrics_final_df_subset_and_merge(imaging_df)
   return(metrics_final_df)
 }
