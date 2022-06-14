@@ -1,7 +1,7 @@
-update_picker_choices <- function(session){
+update_picker_choices <- function(session, service_input_summary, service_input_site, service_input_breakdown){
   
   # Summary tab month drop down update
-  service_input_summary <- input$selectedService
+  #service_input_summary <- input$selectedService
   
   picker_choices_summary <- format(
     metrics_final_df %>%
@@ -18,7 +18,7 @@ update_picker_choices <- function(session){
                     selected = picker_choices_summary[length(picker_choices_summary)])
   
   # Site tab month drop down update
-  service_input_site <- input$selectedService2
+  #service_input_site <- input$selectedService2
   
   picker_choices_site <- format(
     metrics_final_df %>%
@@ -35,7 +35,7 @@ update_picker_choices <- function(session){
                     selected = picker_choices_site[length(picker_choices_site)])
   
   # KPI Breakout tab month drop down update
-  service_input_breakdown <- input$selectedService3
+  #service_input_breakdown <- input$selectedService3
   
   picker_choices_breakdown <- format(
     metrics_final_df %>%

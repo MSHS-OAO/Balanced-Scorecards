@@ -1556,7 +1556,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("ED Monthly Patient Experience")
         
       }
@@ -1681,7 +1681,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Nursing Monthly Patient Experience")
         
       }
@@ -1809,7 +1809,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Support Services Monthly Patient Experience")
         
         
@@ -1930,7 +1930,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
        
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("ED YTD Patient Experience")
         
         
@@ -2051,7 +2051,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Nursing YTD Patient Experience")
         
         
@@ -2173,7 +2173,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Support Services YTD Patient Transport")
         
         
@@ -2301,7 +2301,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         
         record_timestamp("Food Services")
         # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
@@ -2399,7 +2399,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         
         
         record_timestamp("Imaging")
@@ -2549,7 +2549,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               # saveRDS(metrics_final_df, metrics_final_df_path)
               # 
               
-              update_picker_choices(session)
+              update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
               record_timestamp("Engineering")
               
               
@@ -2741,7 +2741,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
         # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
         # date_time$Service = "Environmental Services"
@@ -2879,7 +2879,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # date_time <- rbind(time_df, date_time)
         # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
         
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Lab")
         
         
@@ -2998,7 +2998,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # date_time$Service = "Lab"
         # date_time <- rbind(time_df, date_time)
         # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Lab")
         
       }
@@ -3264,7 +3264,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               # date_time$Service = "Lab"
               # date_time <- rbind(time_df, date_time)
               # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-              update_picker_choices(session)
+              update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
               record_timestamp("Lab")
               
 
@@ -3516,7 +3516,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time$Service = "Security"
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Security")
             
             
@@ -3832,7 +3832,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Security")
             
             
@@ -4018,7 +4018,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        update_picker_choices(session)
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         record_timestamp("Overtime")
         
       }
@@ -4128,7 +4128,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Patient Transport")
             
             
@@ -4209,7 +4209,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # date_time$Service = "Patient Transport"
           # date_time <- rbind(time_df, date_time)
           # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-          update_picker_choices(session)
+          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
           record_timestamp("Patient Transport")
           
           
@@ -4442,7 +4442,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Biomed / Clinical Engineering")
             
           }
@@ -4660,7 +4660,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time$Service = "Biomed / Clinical Engineering"
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Biomed / Clinical Engineering")
             
             
@@ -4786,7 +4786,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Imaging")
             
         }
@@ -4913,7 +4913,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
-            update_picker_choices(session)
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
             record_timestamp("Imaging")
             
         }
@@ -5025,7 +5025,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           
-          update_picker_choices(session)
+          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
           record_timestamp("Nurisng")
           
         }
@@ -5148,7 +5148,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           
-          update_picker_choices(session)
+          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
           record_timestamp("ED")
           
         }
