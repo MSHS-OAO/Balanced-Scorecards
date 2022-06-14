@@ -69,15 +69,15 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
                           "Acuity 2",
                           "Acuity 1",
                           "Total Boarder Hours",
-                          "Admit to Depart (Median Boarder Hours)",
+                          "Admit to Depart Boarder Hours (Median)",
                           "Door to Admit (Median)",
-                          "ED LOS Treat & Release (Median)",
-                          "ED LOS Admit (Median)",
+                          "ED LOS T&R Patients (Median)",
+                          "ED LOS Admitted Patients (Median)",
                           "LWBS",
                           "Visit Volume (Epic)",
-                          "ED LOS Treat & Release Patients (90th Percentile Hours)",
-                          "ED LOS Admitted Patients (90th Percentile Hours)",
-                          "Admit to Depart (90th Percentile Boarder Hours)"))
+                          "ED LOS T&R Patients (90th Percentile)",
+                          "ED LOS Admitted Patients (90th Percentile)",
+                          "Admit to Depart Boarder Hours (90th Percentile)"))
   
   summary_repo <- rbind(ed_data_ts,ed_data_percentiles)
   
@@ -92,13 +92,13 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
     pivot_wider(names_from = "KPI",
                 values_from = "Metric",values_fill=0) %>%
    mutate(`LWBS %` = `LWBS`/`Visit Volume (Epic)`,
-         `Admit to Depart (90th Percentile Boarder Hours)` = `Admit to Depart (90th Percentile Boarder Hours)`/60,
-         `ED LOS Admitted Patients (90th Percentile Hours)` = `ED LOS Admitted Patients (90th Percentile Hours)`/60,
-         `ED LOS Treat&Release Patients (90th Percentile Hours)` = `ED LOS Treat & Release Patients (90th Percentile Hours)`/60,
-         `ED LOS Admit (Median)` = `ED LOS Admit (Median)`/60,
-         `ED LOS Treat & Release (Median)` = `ED LOS Treat & Release (Median)`/60,
+         `Admit to Depart Boarder Hours (90th Percentile))` = `Admit to Depart Boarder Hours (90th Percentile)`/60,
+         `ED LOS Admitted Patients (90th Percentile)` = `ED LOS Admitted Patients (90th Percentile)`/60,
+         `ED LOS T&R Patients (90th Percentile)` = `ED LOS T&R Patients (90th Percentile)`/60,
+         `ED LOS Admitted Patients (Median)` = `ED LOS Admitted Patients (Median)`/60,
+         `ED LOS T&R Patients (Median)` = `ED LOS T&R Patients (Median)`/60,
          `Door to Admit (Median)` = `Door to Admit (Median)`/60,
-         `Admit to Depart (Median Boarder Hours)` = `Admit to Depart (Median Boarder Hours)`/60,
+         `Admit to Depart Boarder Hours (Median)` = `Admit to Depart Boarder Hours (Median)`/60,
          `Acuity Total` = `Acuity Null`+`Acuity 1`+ `Acuity 2` +`Acuity 3`+`Acuity 4`+`Acuity 5`,
          `Acuity 1 count AAAEM` = `Acuity 1`/`Acuity Total`,
          `Acuity 2 count AAAEM` = `Acuity 2`/`Acuity Total`,

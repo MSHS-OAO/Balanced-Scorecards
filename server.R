@@ -79,6 +79,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_sec_events
       input$submit_ed
       input$submit_nursing
+      input$submit_finance_ot
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -701,15 +702,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_sec_events
       input$submit_ed
       input$submit_nursing
+      input$submit_finance_ot
       
       
       service_input <- input$selectedService2
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
-      # 
-      # service_input <- "Engineering"
-      # month_input <- "11-2021"
-      # site_input <- "MSH"
+# 
+#       service_input <- "ED"
+#       month_input <- "03-2021"
+#       site_input <- "MSH"
 
       
       validate(
@@ -1050,6 +1052,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_sec_events
       input$submit_ed
       input$submit_nursing
+      input$submit_finance_ot
       
       
       service_input <- input$selectedService3
