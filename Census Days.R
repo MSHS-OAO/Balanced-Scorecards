@@ -274,6 +274,7 @@ census_days_metrics_final_df <- function(data) {
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(value_rounded)))
   
+  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name)
 
   # Subset processed data for merge 
   metrics_final_df <- metrics_final_df_subset_and_merge(cost_rev_df_final)
