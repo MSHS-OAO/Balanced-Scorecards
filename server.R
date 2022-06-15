@@ -2292,6 +2292,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Update metrics_final_df with latest SCC data using custom function
         metrics_final_df <<- census_days_metrics_final_df(food_summary_data)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         # Save updated metrics_final_df
         #saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
   

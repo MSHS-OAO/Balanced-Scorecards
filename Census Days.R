@@ -242,7 +242,7 @@ census_days_metrics_final_df <- function(data) {
     summary_repo_data <- summary_repo_data %>% distinct()
     
     if(nrow(summary_repo_data) != 0){
-      raw_cost_rev_df <- merge(summary_repo_data, raw_cost_rev_df)
+      raw_cost_rev_df <- left_join(raw_cost_rev_df,summary_repo_data)
     }else{
       raw_cost_rev_df$`Census Days` <- NA
     }
