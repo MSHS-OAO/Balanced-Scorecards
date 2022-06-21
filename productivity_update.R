@@ -53,4 +53,25 @@ productivity_dept_summary <- function(raw_data){
     fill(Metrics) %>%
     filter(!is.na(`Corporation Code`)) %>%
     unique()
+  
+  ## Map Site and Service Group
+  prod_df_all <- left_join(prod_df_final, key_vol_mapping[, c("DEFINITION.CODE",
+                                                              "KEY.VOLUME", "SITE",
+                                                              "Service")
+  ],
+  by = c("Department Reporting Definition ID" = "DEFINITION.CODE",
+         "Key Volume" = "KEY.VOLUME")
+  )
+  
+  #Remove unmapped Services and remove everything after "-"
+  prod_df_all <- prod_df_all %>% filter(!is.na(Service)) %>%
+    rename(Site = SITE) %>%
+    mutate(Metric_Name = trim(gsub("-.*", "", Metrics)
+    ),
+    Metric_Group = ifelse(grepl("Overtime", 
+                                Metric_Name
+    ),
+    "Overtime Hours", 
+    "Productivity")
+    )
 }
