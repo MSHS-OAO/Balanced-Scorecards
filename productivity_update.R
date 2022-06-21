@@ -1,3 +1,5 @@
+#raw_data <- read_excel("C:/Users/villea04/Documents/Productivity Update/System Reports.xlsx")
+
 productivity_dept_summary <- function(raw_data){
   key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
@@ -154,7 +156,9 @@ productivity_dept_summary <- function(raw_data){
                                   "Actual Worked Hours per Unit"
                )
     )
-    )
+    )%>%
+    ungroup() %>%
+    select(-Metric_Group)
   
   
   nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
@@ -174,7 +178,9 @@ productivity_dept_summary <- function(raw_data){
                  values_to = "value") %>%
     filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
-    mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))
+    mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
+    ungroup() %>%
+    select(-Metric_Group)
   
   
   #Claulate WHPU
@@ -194,7 +200,9 @@ productivity_dept_summary <- function(raw_data){
     filter(Metric_Name == "Actual Worked Hours per Unit") %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
     mutate_at(vars(value), ~replace(., is.infinite(.), 0)) %>%
-    mutate(Metric_Group = "Productivity")
+    mutate(Metric_Group = "Productivity") %>%
+    ungroup() %>%
+    select(-Metric_Group)
   
   
   
@@ -203,11 +211,21 @@ productivity_dept_summary <- function(raw_data){
   
   prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
   
-  prod_df_aggregate_all$Metric_Name <- metric_group_mapping$Metric_Name[match(prod_df_aggregate_all$Metric_Name,
-                                                                              metric_group_mapping$Metric_Name_Submitted)] # Map final Metric_Name
   
-  
-  prod_df_aggregate_all <- prod_df_aggregate_all %>% mutate(Reporting_Month = format(Reporting_Month_Ref, "%Y-%m"))
+  prod_df_aggregate_all <- prod_df_aggregate_all %>% separate(Premier_Reporting_Period, c("Report_Start","Report_End"), sep = " - ", remove = FALSE) %>%
+                            select(-Report_Start, -Premier_Reporting_Period) %>%
+                            rename(Premier_Reporting_Period = Report_End)
+
+  prod_df_aggregate_all <- prod_df_aggregate_all %>% 
+                            mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y")) %>%
+                            rename(Metric_Name_Submitted = Metric_Name,
+                                   value_rounded = value) 
+                            
+                      
   
 
+}
+
+productivity_metrics_final_df <- function(data){
+  mdf <- metrics_final_df_subset_and_merge(data)
 }
