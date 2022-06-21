@@ -68,6 +68,7 @@ suppressMessages({
   library(stringr)
   library(glue)
   library(magrittr)
+  library(reshape2)
 })
 
 options(shiny.maxRequestSize=500*1024^2)
