@@ -111,4 +111,23 @@ productivity_dept_summary <- function(raw_data){
   by = c("Report_End" = "Report Data Updated until"
   )
   )
+  
+  prod_df_all <- prod_df_all %>%
+    rename(Reporting_Month_Ref = `Dashboard Month`) %>%
+    mutate(Reporting_Month_Ref = as.Date(Reporting_Month_Ref, 
+                                         format = "%m/%d/%Y"
+    )
+    )
+  
+  
+  prod_df_all <- prod_df_all %>% unique() %>%
+    select(-`Corporation Code`,-`Corporation Name`, -`Entity Code`,
+           -Entity, `Department Reporting Definition ID`,
+           -`Department Reporting Definition Name`, -`Key Volume`,
+           -`Mapped Facility Cost Centers`, -Reporting_Month_Start,
+           -Metrics, -Report_Start, -Report_End
+    ) %>%
+    mutate(Metric_Name = str_trim(Metric_Name),
+           value = as.numeric(value)
+    ) 
 }
