@@ -74,4 +74,41 @@ productivity_dept_summary <- function(raw_data){
     "Overtime Hours", 
     "Productivity")
     )
+  
+  ### Map Premier Reporting Period -> Dashboard Month
+  report_date_mapping <- report_date_mapping %>%
+    mutate(`Report Data Updated until` = format(as.Date(`Report Data Updated until`,
+                                                        format ="%m/%d/%Y"),
+                                                "%m/%d/%Y"),
+           `Report Release Date` = format(as.Date(`Report Release Date`,
+                                                  format = "%m/%d/%Y"
+           ),
+           "%m/%d/%Y"
+           ),
+           `Dashboard Month` = format(as.Date(`Dashboard Month`,
+                                              format = "%m/%d/%Y"
+           ), "%m/%d/%Y")
+    )
+  
+  
+  #Create vector to filter out only reporting periods from mapping file
+  report_data <- as.data.frame(report_date_mapping$`Report Data Updated until`)
+  report_data <- col_concat(report_data, sep = "|") #return vector
+  report_data <- paste(report_data, collapse = "|")
+  
+  #filter out reporting periods
+  prod_df_all <- prod_df_all %>% filter(grepl(report_data, Premier_Reporting_Period)) 
+  prod_df_all <- prod_df_all %>% separate(Premier_Reporting_Period, 
+                                          c("Report_Start","Report_End"), 
+                                          sep = " - ", remove = FALSE
+  )
+  
+  #Create Reporting Month Ref column by matching Report_End with Report Data Updates Until
+  prod_df_all <- left_join(prod_df_all, report_date_mapping[,c("Report Data Updated until", 
+                                                               "Dashboard Month"
+  )
+  ],
+  by = c("Report_End" = "Report Data Updated until"
+  )
+  )
 }
