@@ -19,6 +19,16 @@ productivity_dept_summary <- function(raw_data){
     filter(!is.na(Service)) %>%
     filter(FTE.TREND == 1)
   
+  metric_group_mapping <- read_excel(target_mapping_path, 
+                                     sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
+  metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
+    pivot_longer(
+      6:length(metric_group_mapping),
+      names_to = "Service",
+      values_to = "Inclusion"
+    ) %>%
+    filter(!is.na(Inclusion))
+  
   
   raw_data <- raw_data %>% select(!`Entity Time Period Desc`)
   
@@ -193,4 +203,11 @@ productivity_dept_summary <- function(raw_data){
   
   prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
   
+  prod_df_aggregate_all$Metric_Name <- metric_group_mapping$Metric_Name[match(prod_df_aggregate_all$Metric_Name,
+                                                                              metric_group_mapping$Metric_Name_Submitted)] # Map final Metric_Name
+  
+  
+  prod_df_aggregate_all <- prod_df_aggregate_all %>% mutate(Reporting_Month = format(Reporting_Month_Ref, "%Y-%m"))
+  
+
 }
