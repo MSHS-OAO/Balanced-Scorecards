@@ -2191,7 +2191,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       tryCatch({prod_summary <- productivity_dept_summary(data)
         metrics_final_df <<- productivity_metrics_final_df(prod_summary)
-        #saveRDS(metrics_final_df, metrics_final_df_path)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         write_xlsx(prod_summary, productivity_file_path)
         
       showModal(modalDialog(
