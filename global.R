@@ -71,6 +71,7 @@ suppressMessages({
   #library(reshape2)
 })
 
+install.packages("reshape2")
 options(shiny.maxRequestSize=500*1024^2)
 
 # Maximize R Memory Size 
