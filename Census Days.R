@@ -242,7 +242,7 @@ census_days_metrics_final_df <- function(data) {
     summary_repo_data <- summary_repo_data %>% distinct()
     
     if(nrow(summary_repo_data) != 0){
-      raw_cost_rev_df <- merge(summary_repo_data, raw_cost_rev_df)
+      raw_cost_rev_df <- left_join(raw_cost_rev_df,summary_repo_data)
     }else{
       raw_cost_rev_df$`Census Days` <- NA
     }
@@ -257,23 +257,26 @@ census_days_metrics_final_df <- function(data) {
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
       rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
-      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2))),
-      Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
-      Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
+      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
+      #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
+      #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
     pivot_longer(
-      6:9,
+      5:9,
       names_to = "Metric_Name_Submitted",
       values_to = "value") %>%
     mutate(
       Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
-      Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y"),
-      value_rounded = round(value, 2))
+      Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
+    rename(value_rounded = value)
   
-  cost_rev_df_final <- merge(cost_rev_df, cost_rev_mapping, 
+  
+  cost_rev_df_final <- left_join(cost_rev_df, cost_rev_mapping, 
                              by = c("Metric", "Metric_Name_Submitted"))
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(value_rounded)))
   
+  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted) %>% rename(Metric_Name_Submitted = Metric_Name) %>% 
+    filter(!(is.na(Metric_Name_Submitted)))
 
   # Subset processed data for merge 
   metrics_final_df <- metrics_final_df_subset_and_merge(cost_rev_df_final)

@@ -68,8 +68,10 @@ suppressMessages({
   library(stringr)
   library(glue)
   library(magrittr)
+  #library(reshape2)
 })
 
+install.packages("reshape2", repos = "http://cran.us.r-project.org")
 options(shiny.maxRequestSize=500*1024^2)
 
 # Maximize R Memory Size 
@@ -459,4 +461,5 @@ source("nursing.R")
 source("ED.R")
 source("productivity.R")
 source("budget_to_actual_new_file.R")
+source("productivity_update.R")
 

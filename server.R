@@ -2186,12 +2186,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
       inFile <- input$productiviy_data
-      inFile_nursing_radiology <- input$productiviy_data_nursing_radiology 
       data <- read_excel(inFile$datapath)
-      data_nursing_radiology <- read_excel(inFile_nursing_radiology$datapath)
-      
 
-      tryCatch({metrics_final_df <<- productivity_process(data,data_nursing_radiology)
+
+      tryCatch({prod_summary <- productivity_dept_summary(data)
+        metrics_final_df <<- productivity_metrics_final_df(prod_summary)
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        write_xlsx(prod_summary, productivity_file_path)
+        
       showModal(modalDialog(
         title = "Success",
         paste0("The data has been imported succesfully"),
@@ -2292,6 +2294,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # Update metrics_final_df with latest SCC data using custom function
         metrics_final_df <<- census_days_metrics_final_df(food_summary_data)
+        saveRDS(metrics_final_df, metrics_final_df_path)
         # Save updated metrics_final_df
         #saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
   

@@ -282,7 +282,6 @@ ui <-
                                  br(),
                                  hr(),
                                  fileInput("productiviy_data", label = "Please upload Productivity data"), br(),
-                                 fileInput("productiviy_data_nursing_radiology", label = "Please upload Nursing and Radiology Productivity data"),
                                  actionButton("submit_prod", label = "Submit")
                         ),
                         # Biomed Data Input Tab ------
