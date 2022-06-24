@@ -3619,8 +3619,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       by = "month")
         
         # Move this after complete_months in case multiple months of data is missing
-        months_to_drop_2 <- complete_months_2[which(
-          complete_months_2 < max_month_2 %m-% months(6)
+        months_to_drop_2 <- data2_month[which(
+          data2_months < max_month_2 %m-% months(6)
         )
         ]
 
