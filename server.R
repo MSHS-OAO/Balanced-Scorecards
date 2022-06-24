@@ -3611,7 +3611,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # months_to_drop_2 <- data2_months[which(
         #   data2_months < max_month_2 %m-% months(6))]
 
-        complete_months_2 <- seq.Date(from = min(data2_months),
+        complete_months_2 <- seq.Date(from = max_month_2 - months(6),
                                       to = max_month_2,
                                       by = "month")
         
