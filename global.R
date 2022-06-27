@@ -71,7 +71,7 @@ suppressMessages({
   #library(reshape2)
 })
 
-install.packages("reshape2", repos = "http://cran.us.r-project.org")
+
 options(shiny.maxRequestSize=500*1024^2)
 
 # Maximize R Memory Size 
@@ -185,6 +185,7 @@ if(file.exists("J:/")){
   start <- "/data"  #Uncomment when publishing to RConnect
   home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
+  install.packages("reshape2", repos = "http://cran.us.r-project.org")
 }
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
