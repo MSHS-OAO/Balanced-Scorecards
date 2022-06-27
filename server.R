@@ -3287,7 +3287,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # 
         # data
         ##########
-        tbl <- manual_table_month_order(sec_inc_rpts_manual_table, "Lab")
+        tbl <- manual_table_month_order(sec_inc_rpts_manual_table)
         
         
       }
