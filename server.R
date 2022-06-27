@@ -3536,23 +3536,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # 
         # data2[, missing_months_2] <- NA_character_
         
-        tbl <- manual_table_month_order(sec_events_manual_table, "Lab")
-        # data2 <- result[[1]]
-        # months_to_drop_2 <- result[[2]]
-
-        # data2 <- data2 %>%
-        #   pivot_longer(cols = !contains(c("Site", "Metric")),
-        #                names_to = "Month",
-        #                values_to = "value") %>%
-        #   mutate(Month = as.Date(paste0(Month, "-01"),
-        #                          format = "%m-%Y-%d")) %>%
-        #   arrange(Site, Month) %>%
-        #   filter(!(Month %in% months_to_drop_2)) %>%
-        #   mutate(Month = format(Month, "%m-%Y")) %>%
-        #   pivot_wider(names_from = Month,
-        #               values_from = value,
-        #               names_sort = FALSE)
-        
+        tbl <- manual_table_month_order(sec_events_manual_table)
       }
       )
       
