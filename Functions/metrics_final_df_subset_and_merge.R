@@ -1,4 +1,8 @@
 metrics_final_df_subset_and_merge <- function(df) {
+  
+  df <- df %>% 
+    mutate(across(where(is.character), str_trim))
+  
   df <- merge(df, metric_mapping_breakout[c("Metric_Group",
                                             "Metric_Name",
                                             "Metric_Name_Submitted")

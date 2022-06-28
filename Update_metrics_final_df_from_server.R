@@ -318,6 +318,8 @@ EDOps <- EDOps %>%
 
 metrics_final_df <- rbind(metrics_final_df,EDOps)
 
+metrics_final_df <- metrics_final_df %>% select(-Target, -Status)
+
 
 # Identify missing/incorrect names in metrics_final_df ----
 metrics_final_df_naming2 <- metrics_final_df %>%
