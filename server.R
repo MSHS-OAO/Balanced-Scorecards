@@ -3507,35 +3507,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Create reactive data table for manual entry
       data_sec_events <- reactive({
         
-        #data2 <- sec_events_manual_table
 
-        # data2_months <- as.Date(paste0(colnames(data2 %>%
-        #                                           select(-Site, -Metric)),
-        #                                "-01"),
-        #                         format = "%m-%Y-%d")
-        # 
-        # max_month_2 <- as.Date(
-        #   paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"),
-        #   format = "%m-%Y-%d")
-        # 
-        # # months_to_drop_2 <- data2_months[which(
-        # #   data2_months < max_month_2 %m-% months(6))]
-        # 
-        # complete_months_2 <- seq.Date(from = min(data2_months),
-        #                               to = max_month_2,
-        #                               by = "month")
-        # 
-        # # Move this after complete_months in case multiple months of data is missing
-        # months_to_drop_2 <- complete_months_2[which(
-        #   complete_months_2 < max_month_2 %m-% months(6)
-        # )
-        # ]
-        # 
-        # missing_months_2 <- complete_months_2[which(!(complete_months_2 %in% data2_months))]
-        # missing_months_2 <- format(missing_months_2, "%m-%Y")
-        # 
-        # data2[, missing_months_2] <- NA_character_
-        
         tbl <- manual_table_month_order(sec_events_manual_table)
       }
       )
