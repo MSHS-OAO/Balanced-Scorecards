@@ -9,7 +9,7 @@ manual_table_month_order <- function(manual_repo){
     paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"),
     format = "%m-%Y-%d")
   
-  complete_months_2 <- seq.Date(from = min(data2_months),
+  complete_months_2 <- seq.Date(from = max_month_2 - months(6),
                                 to = max_month_2,
                                 by = "month")
   
