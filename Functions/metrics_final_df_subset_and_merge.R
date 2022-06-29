@@ -9,10 +9,11 @@ metrics_final_df_subset_and_merge <- function(df) {
   ],
   by = c("Metric_Name_Submitted"))
   df <- df[,processed_df_cols]
-  df <- df %>% distinct() %>%
+  df <- df %>%
     mutate(Reporting_Month_Ref = as.Date(paste('01', as.yearmon(df$Reporting_Month, 
                                                                 "%m-%Y")), 
-                                         format='%d %b %Y'))
+                                         format='%d %b %Y')) %>%
+  distinct()
   updated_rows <- unique(df[c("Metric_Name", 
                               "Reporting_Month", 
                               "Service", 
