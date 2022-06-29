@@ -183,7 +183,7 @@ if(file.exists("J:/")){
   start_shared <- "J:"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
-  home_path <- paste0(start,"/Scorecards_Staging/")
+  home_path <- paste0(start,"/Scorecards/")
   start_shared <- "/SharedDrive"
   install.packages("reshape2", repos = "http://cran.us.r-project.org")
 }
