@@ -4067,28 +4067,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         colnames(data)[3:length(data)] <- months
         
-        ##### Code that adds months missing months to the rhandsontable
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        data <- data %>% 
+          mutate(across(!Site & !Metric,as.character))
         
-        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
         
-        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        
-        months_to_drop <- which(months < max_month %m-% months(6))
-        months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        
-        complete_months <- seq.Date(months[1], max_month, by= 'month')
-        
-        missing_months <- which(!(complete_months %in% months))
-        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        
-        data[,missing_months] <- NA_real_
-        
-        data <- data %>% select(-all_of(months_to_drop))
-        
-        data
-
+        result <- manual_table_month_order(data)
         
       })
       
@@ -4167,8 +4150,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             bme_kpi_manual_updates <<- bme_kpi_manual_updates[, non_empty_cols]
             
-            
-            
+            bme_kpi_manual_updates <<- bme_kpi_manual_updates %>% 
+              mutate(across(!Site & !Metric,as.numeric))
             
             flag <- 1
           },
@@ -4302,42 +4285,46 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         colnames(data)[3:length(data)] <- months
         
-        ##### Code that adds months missing months to the rhandsontable
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        data <- data %>% 
+          mutate(across(!Site & !Metric,as.character))
         
-        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        result <- manual_table_month_order(data)
         
-        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        
-        months_to_drop <- which(months < max_month %m-% months(6))
-        months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        
-        complete_months <- seq.Date(months[1], max_month, by= 'month')
-        
-        missing_months <- which(!(complete_months %in% months))
-        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        
-        data[,missing_months] <- NA_real_
-        
-        months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
-        months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
-        order_months <- months_df[months]
-        
-        
-        index <- months+2
-        index <- c(1:2,index)
-        
-        data <- data[index]
-        
-        data <- data %>% select(-all_of(months_to_drop))
+        # ##### Code that adds months missing months to the rhandsontable
+        # months_only <- data %>% select(-Site,-Metric)
+        # months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
+        # 
+        # max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
+        # 
+        # months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
+        # 
+        # months_to_drop <- which(months < max_month %m-% months(6))
+        # months_to_drop <- format(months[months_to_drop], "%m-%Y")
+        # 
+        # complete_months <- seq.Date(months[1], max_month, by= 'month')
+        # 
+        # missing_months <- which(!(complete_months %in% months))
+        # missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
+        # 
+        # data[,missing_months] <- NA_character_
+        # 
+        # months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
+        # months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
+        # order_months <- months_df[months]
+        # 
+        # 
+        # index <- months+2
+        # index <- c(1:2,index)
+        # 
+        # data <- data[index]
+        # 
+        # data <- data %>% select(-all_of(months_to_drop))
         
         
       })
       
       
       output$bimoed_di <- renderRHandsontable({
-        #data <- data
         data <- data_bimoed_di()
         
         
@@ -4408,6 +4395,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             bme_di_manual_updates <<- bme_di_manual_updates[, non_empty_cols]
             
+            bme_di_manual_updates <<- bme_di_manual_updates %>% 
+              mutate(across(!Site & !Metric,as.numeric))
             
             flag <- 1
         
