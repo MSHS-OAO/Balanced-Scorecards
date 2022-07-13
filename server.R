@@ -4578,7 +4578,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Second, remove these sites, months, and metrics from the historical data,
             # if they exist there. This allows us to ensure no duplicate entries for
             # the same site, metric, and time period.
-            xray_imaging <<- anti_join(ImagingSummaryRepo,
+            ImagingSummaryRepo <<- anti_join(ImagingSummaryRepo,
                                  xray_new_data,
                                  by = c("Service" = "Service",
                                         "Site" = "Site",
@@ -4586,16 +4586,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         "Metric_Name_Submitted" = "Metric_Name_Submitted"))
             
             # Third, combine the updated historical data with the new data
-            imaging_xray_reports <<- full_join(xray_imaging,
+            ImagingSummaryRepo <<- full_join(ImagingSummaryRepo,
                                                xray_summary_data)
             
             # Next, arrange the incident reports summary data by month, metric, and site
-            imaging_xray_reports <<- imaging_xray_reports %>%
+            ImagingSummaryRepo <<- ImagingSummaryRepo %>%
               arrange(Month,
                       Site)
             
             # Lastly, save the updated summary data
-            write_xlsx(imaging_xray_reports, imagingDR_path)
+            write_xlsx(ImagingSummaryRepo, imagingDR_path)
             
             # Update metrics_final_df with latest data using custom function
             metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
@@ -4706,7 +4706,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Second, remove these sites, months, and metrics from the historical data,
             # if they exist there. This allows us to ensure no duplicate entries for
             # the same site, metric, and time period.
-            ct_imaging <<- anti_join(ImagingSummaryRepo,
+            ImagingSummaryRepo <<- anti_join(ImagingSummaryRepo,
                                        ct_new_data,
                                        by = c("Service" = "Service",
                                               "Site" = "Site",
@@ -4714,16 +4714,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                               "Metric_Name_Submitted" = "Metric_Name_Submitted"))
             
             # Third, combine the updated historical data with the new data
-            imaging_ct_reports <<- full_join(ct_imaging,
+            ImagingSummaryRepo <<- full_join(ImagingSummaryRepo,
                                              ct_summary_data)
             
             # Next, arrange the imaging reports summary data by month, metric, and site
-            imaging_ct_reports <<- imaging_ct_reports %>%
+            ImagingSummaryRepo <<- ImagingSummaryRepo %>%
               arrange(Month,
                       Site)
             
             # Lastly, save the updated summary data
-            write_xlsx(imaging_ct_reports, imagingDR_path)
+            write_xlsx(ImagingSummaryRepo, imagingDR_path)
             
             # Update metrics_final_df with latest data using custom function
             metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)
