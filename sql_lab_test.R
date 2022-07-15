@@ -29,6 +29,99 @@ read_table_from_db <- function(connection_string,
   
 }
 
+# connection_str <- global var
+
+merge_staging_summary_repo <- function(connection_string, staging_table_name){
+  
+  
+  query = glue('MERGE INTO SUMMARY_REPO SR
+                  USING "{staging_table_name}" SOURCE_TABLE
+                  ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
+                        SR."MONTH" = SOURCE_TABLE."MONTH" AND
+                        SR."SERVICE" = SOURCE_TABLE."SERVICE" AND
+                        SR."METRIC_NAME_SUBMITTED" = SOURCE_TABLE."METRIC_NAME_SUBMITTED")
+                  WHEN MATCHED THEN 
+                  UPDATE  SET SR."VALUE" = SOURCE_TABLE."VALUE",
+                              SR."UPDATE_TIME" = SOURCE_TABLE."UPDATE_TIME",
+                              SR."PREMIER_REPORTING_PERIOD" = SOURCE_TABLE."PREMIER_REPORTING_PERIOD"
+                  WHEN NOT MATCHED THEN
+                  INSERT( SR."SITE",
+                          SR."MONTH",
+                          SR."SERVICE",
+                          SR."METRIC_NAME_SUBMITTED",
+                          SR."VALUE", 
+                          SR."UPDATE_TIME", 
+                          SR."PREMIER_REPORTING_PERIOD")  
+                  VALUES( SOURCE_TABLE."SITE",
+                          SOURCE_TABLE."MONTH",
+                          SOURCE_TABLE."SERVICE",
+                          SOURCE_TABLE."METRIC_NAME_SUBMITTED",
+                          SOURCE_TABLE."VALUE", 
+                          SOURCE_TABLE."UPDATE_TIME",
+                          SOURCE_TABLE."PREMIER_REPORTING_PERIOD");')
+  
+
+  dbSendStatement(connection_string,query)
+  
+}
+
+
+# function to write the  summary repo table to database: ----
+# Inputs : connection_string : connection variable returned by  dbConnect() method
+#          data (dplyr data frame) : data to be written to Oracle cloud. data should have Service
+#                                                                                         Site ,
+#                                                                                         Month ,
+#                                                                                         Metric_Name_Submitted ,
+#                                                                                         Value ,
+#                                                                                         `Premier Reporting Period`, and
+#                                                                                         Update_time fields
+#         table_name (String) : Example : "LAB_TAT" in all letters UPPER_CASE
+# Output  Boolean: TRUE
+
+write_temporary_table_to_database_and_merge <- function(connection_string,processed_input_data,table_name){
+  
+  # Constants
+  DATA_TYPES <- c(SERVICE = "Varchar2(10 CHAR)",
+                  SITE = "Varchar2(10 CHAR)",
+                  MONTH = "DATE",
+                  METRIC_NAME_SUBMITTED = "Varchar2(20 CHAR)",
+                  VALUE = "numeric(10,10)",
+                  PREMIER_REPORTING_PERIOD = "Varchar2(20 CHAR)",
+                  UPDATE_TIME = "Timestamp")
+  
+  # Add UPDATE_TIME 
+  processed_input_data <- processed_scc_may_data
+  processed_input_data <- processed_input_data %>%
+    mutate(UPDATE_TIME = as.character(Sys.time()),
+           PREMIER_REPORTING_PERIOD = format(Month,"%b %Y"),
+           Month = format(Month,"%Y-%m-%d")) %>%
+    rename(METRIC_NAME_SUBMITTED = Metric,
+           VALUE=Number)
+  
+  
+  
+  # Rename the column names to database format
+  fields <- str_replace_all( toupper(names(processed_input_data)),
+                             " ",
+                             "_")
+  
+  names(processed_input_data) <- fields
+  
+  table_name <- "TEST"
+  table_name = paste0("STAGING.",table_name)
+  
+  dbWriteTable(con,
+               table_name,
+               processed_input_data,
+               overwrite = TRUE,
+               field.types = DATA_TYPES)
+  
+  #merge_staging_summary_repo(connection_string, table_name)
+  
+}
+
+
+
 
 
 # read raw scc data & process it ----
@@ -38,122 +131,17 @@ processed_scc_may_data <- lab_scc_tat_dept_summary(scc_may_data)
 sunquest_may_data <- read_excel(paste0(home_path,"Input Data Raw/Lab & Blood Bank/SUNQUEST/SQ Monthly TROP-HGB May 2022.xls"))
 processed_sunquest_may_data <- lab_sun_tat_dept_summary(sunquest_may_data)
 
-processed_scc_may_data <- processed_scc_may_data%>%
-  mutate(`Premier Reporting Period` = format(Month,"%b %Y"),
-         Update_time = NA_character_)%>%
-  rename(Value = Number,
-         Metric_Name_Submitted = Metric)
-
-processed_sunquest_may_data <- processed_sunquest_may_data%>%
-  mutate(`Premier Reporting Period` = format(Month,"%b %Y"),
-         Update_time = NA_character_)%>%
-  rename(Value = Number,
-         Metric_Name_Submitted = Metric)
 
 
 
-processed_scc_may_data$Month <- format(processed_scc_may_data$Month,"%Y-%m-%d")
-processed_sunquest_may_data$Month <- format(processed_sunquest_may_data$Month, "%Y-%m-%d")
+data<- write_temporary_table_to_database(con,processed_sunquest_may_data,"SUNQUEST")
+data<- write_temporary_table_to_database(con,processed_scc_may_data,"SCC")
 
 
 
-# Add Processed data to table ----
-lab_data_for_db <- read_excel(paste0(home_path,"Summary Repos for Database/Lab TAT Metrics.xlsx"))
-
-lab_data_for_db <- lab_data_for_db%>%
-  mutate(`Premier Reporting Period` = format(Month,"%b %Y"),
-         Update_time = NA_character_,
-         Month = format(Month,"%Y-%m-%d"))
-
-
-dbWriteTable(con,
-             "LAB_TAT",
-             lab_data_for_db,
-             #field.types = dbDataType(con,processed_scc_may_data)),
-             overwrite = TRUE,
-             field.types = c(Service = "Varchar2(10 CHAR)",
-                             Site = "Varchar2(10 CHAR)",
-                             Month = "Date",
-                             Metric_Name_Submitted = "Varchar2(20 CHAR)",
-                             Value = "numeric(10,10)",
-                             `Premier Reporting Period` = "Varchar2(20 CHAR)",
-                             Update_time = "Timestamp"))
-
-
-# write the processed data to database before adding ----
-
-if(DBI::dbExistsTable(con, "STAGING.LAB_TAT_SCC") & DBI::dbExistsTable(con, "STAGING.LAB_TAT_SUNQUEST")){
-  
-  
-  
-  dbWriteTable(con,
-               "STAGING.LAB_TAT_SCC",
-               processed_scc_may_data,
-               overwrite = TRUE,
-               #field.types = dbDataType(con,processed_scc_may_data))
-               field.types = c(Service = "Varchar2(10 CHAR)",
-                               Site = "Varchar2(10 CHAR)",
-                               Month = "DATE",
-                               Metric_Name_Submitted = "Varchar2(20 CHAR)",
-                               Value = "numeric(10,10)",
-                               `Premier Reporting Period` = "Varchar2(20 CHAR)",
-                               Update_time = "Timestamp"))
-  
-  dbWriteTable(con,
-               "STAGING.LAB_TAT_SUNQUEST",
-               processed_sunquest_may_data,
-               overwrite = TRUE,
-               #field.types = dbDataType(con,processed_scc_may_data))
-               field.types = c(Service = "Varchar2(10 CHAR)",
-                               Site = "Varchar2(10 CHAR)",
-                               Month = "Date",
-                               Metric_Name_Submitted = "Varchar2(20 CHAR)",
-                               Value = "numeric(10,10)",
-                               `Premier Reporting Period` = "Varchar2(20 CHAR)",
-                               Update_time = "Timestamp"))
-} else{
-  
-
-  dbWriteTable(con,
-               "STAGING.LAB_TAT_SCC",
-               processed_scc_may_data,
-               #field.types = dbDataType(con,processed_scc_may_data))
-               field.types = c(Service = "Varchar2(10 CHAR)",
-                               Site = "Varchar2(10 CHAR)",
-                               Month = "Date",
-                               Metric_Name_Submitted = "Varchar2(20 CHAR)",
-                               Value = "numeric(10,10)",
-                               `Premier Reporting Period` = "Varchar2(20 CHAR)",
-                               Update_time = "Timestamp"))
-  
-  dbWriteTable(con,
-               "STAGING.LAB_TAT_SUNQUEST",
-               processed_sunquest_may_data,
-               #field.types = dbDataType(con,processed_scc_may_data))
-               field.types = c(Service = "Varchar2(10 CHAR)",
-                               Site = "Varchar2(10 CHAR)",
-                               Month = "Date",
-                               Metric_Name_Submitted = "Varchar2(20 CHAR)",
-                               Value = "numeric(10,10)",
-                               `Premier Reporting Period` = "Varchar2(20 CHAR)",
-                               Update_time = "Timestamp"))
-}
 
 data <- read_table_from_db(con,"STAGING.LAB_TAT_SUNQUEST")
 
-query = 'MERGE INTO LAB_TAT LT
-USING "STAGING.LAB_TAT_SUNQUEST" SOURCE_TABLE
-ON (LT."Site" = SOURCE_TABLE."Site" AND
-    LT."Month" = SOURCE_TABLE."Month" AND
-    LT."Service" = SOURCE_TABLE."Service" AND
-    LT."Metric_Name_Submitted" = SOURCE_TABLE."Metric_Name_Submitted")
-WHEN MATCHED THEN 
-UPDATE  SET LT."Value" = SOURCE_TABLE."Value",
-LT."Update_time" = SOURCE_TABLE."Update_time",
-LT."Premier Reporting Period" = SOURCE_TABLE."Premier Reporting Period"
-WHEN NOT MATCHED THEN
-INSERT(LT."Site",LT."Month",LT."Service",LT."Metric_Name_Submitted",LT."Value", LT."Update_time", LT."Premier Reporting Period")  
-VALUES(SOURCE_TABLE."Site",SOURCE_TABLE."Month",SOURCE_TABLE."Service",SOURCE_TABLE."Metric_Name_Submitted",SOURCE_TABLE."Value", SOURCE_TABLE."Update_time",SOURCE_TABLE."Premier Reporting Period");'
 
-dbSendStatement(con,query)
+
 
