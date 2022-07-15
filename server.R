@@ -1389,7 +1389,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         return(NULL)
       }else{
         tryCatch({
-          data <- read_excel(inFile_budget$datapath,  sheet = "1-Pivot Summary by Site", skip = 5)
+          data <- read_excel(inFile_budget$datapath,  sheet = "5-BSC Cost Center Detail", skip = 3)
            budget_process <- budget_raw_file_process(data)
            showModal(modalDialog(
              title = "Success",

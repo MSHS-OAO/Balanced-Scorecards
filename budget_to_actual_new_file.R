@@ -1,4 +1,4 @@
-#data <- read_excel("C:/Users/villea04/Desktop/Draft for BSC - Back Office FiSRO Dashboard Feb YTD.xlsx", sheet = "1-Pivot Summary by Site", skip = 5)
+#data <- read_excel("C:/Users/villea04/Desktop/Back Office FiSRO Dashboard May Steering Committee (Apr 22 YTD)_061522.xlsx", sheet = "5-BSC Cost Center Detail", skip = 3)
 
 budget_to_actual_path_new <- paste0(home_path, "Summary Repos/Budget to Actual New.xlsx")
 budget_raw_file_process <- function(data){
@@ -13,8 +13,8 @@ budget_raw_file_process <- function(data){
   
   data <- bind_rows(data,data_ed,data_rad)
   
-  list_of_services <- c("Blood Bank", "Biomedical Engineering", "Emergency Department",
-                        "Engineering", "Environmental Services", "Food Services", "Lab", 
+  list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", "Emergency Department",
+                        "Engineering", "Environmental Services", "Food Services", 
                         "Nursing", "Patient & Equipment Transport", "Security", 
                         "Radiology")
   
@@ -52,59 +52,31 @@ budget_raw_file_process <- function(data){
                 mutate_at(vars(c("Function")), ~ifelse(Function == "Food", 
                                                        "Food Services", Function)
                 ) %>%
+                mutate_at(vars(c("Function")), ~ifelse(Function == "Lab and Blood Bank", 
+                                                       "Lab", Function)
+                ) %>%
                 mutate_at(vars(c("EXPTYPE")), ~ifelse(EXPTYPE == "Salaries", 
                                                       "Budget to Actual Variance - Labor", 
                                                       "Budget to Actual Variance - Non Labor"
                                                       )
                           ) %>%
-                mutate_at(vars(c("EXPTYPE")), ~ifelse(EXPTYPE == "Budget to Actual Variance - Labor" & 
-                                                        Function == "Lab", 
-                                                       "Budget to Actual Variance - Labor (Lab)", 
-                                                      EXPTYPE)
-                ) %>%
-                mutate_at(vars(c("EXPTYPE")), ~ifelse(EXPTYPE == "Budget to Actual Variance - Non Labor" & 
-                                                      Function == "Lab", 
-                                                      "Budget to Actual Variance - Non Labor (Lab)", 
-                                                      EXPTYPE)
-                ) %>%
-              mutate_at(vars(c("EXPTYPE")), ~ifelse(EXPTYPE == "Budget to Actual Variance - Non Labor" & 
-                                                      Function == "Blood Bank", 
-                                                    "Budget to Actual Variance - Non Labor (Blood Bank)", 
-                                                    EXPTYPE)
-              ) %>%
-            mutate_at(vars(c("EXPTYPE")), ~ifelse(EXPTYPE == "Budget to Actual Variance - Labor" & 
-                                                    Function == "Blood Bank", 
-                                                  "Budget to Actual Variance - Labor (Blood Bank)", 
-                                                  EXPTYPE)
-            )%>%
             mutate(`Sum of Month Budget` = ifelse(is.na(`Sum of Month Budget`), 0 ,`Sum of Month Budget`), 
                    `Sum of Month Actual` =  ifelse(is.na(`Sum of Month Actual`), 0 ,`Sum of Month Actual`)) %>%
-            mutate(Value = `Sum of Month Budget` - `Sum of Month Actual`,
+            group_by(Function, SITE, Month, EXPTYPE) %>%
+            summarise(Value = sum(`Sum of Month Budget`) - sum(`Sum of Month Actual`),
                    Month = paste0(Month,"01")) %>%
-            select(Function, SITE, EXPTYPE, Month, Value, CC) %>%
+            select(Function, SITE, EXPTYPE, Month, Value) %>%
             rename(Service = Function, 
                    Site = SITE,
                    Metric_Name_Submitted = EXPTYPE) %>%
-          mutate(Month = as.Date(Month, format = "%b%Y%d"))
+          mutate(Month = as.Date(Month, format = "%b%Y%d")) %>%
+          distinct()
             
           
         total <- budget_data %>% group_by(Service, Site, Month) %>%
                  summarise(Value = sum(Value)) %>%
-                 mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
-                mutate_at(vars(c("Metric_Name_Submitted")), ~ifelse(Metric_Name_Submitted == "Budget to Actual Variance - Total" & 
-                                                        Service == "Blood Bank", 
-                                                      "Budget to Actual Variance - Total (Blood Bank)", 
-                                                      Metric_Name_Submitted)
-                ) %>%
-              mutate_at(vars(c("Metric_Name_Submitted")), ~ifelse(Metric_Name_Submitted == "Budget to Actual Variance - Total" & 
-                                                                    Service == "Lab", 
-                                                                  "Budget to Actual Variance - Total (Lab)", 
-                                                                  Metric_Name_Submitted)
-              )
+                 mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
         budget_data_df <- full_join(budget_data, total)
-        budget_data_df <- budget_data_df %>% mutate_at(vars(c("Service")), 
-                                                       ~ifelse(Service == "Blood Bank", "Lab", Service)
-                                                       )
             
 }
 
