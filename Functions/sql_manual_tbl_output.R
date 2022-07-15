@@ -1,7 +1,7 @@
 con <- dbConnect(odbc::odbc(), driver_name, timeout = 30)
 summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
 
-sql_manual_table_output <- function(service) {
+sql_manual_table_output <- function(service, table_name) {
   
   max_month <- (Sys.Date() - months(1)) - months(7)
   format <- "YYYY-MM-DD"
