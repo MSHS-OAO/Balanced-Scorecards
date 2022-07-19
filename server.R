@@ -195,21 +195,77 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       missing_sites <- setdiff(sites_inc, names(current_summary))
       current_summary[missing_sites] <- NA
       
-      # FYTD Period Filter 
-      fytd_period <- period_filter %>%        #Get all data from YTD
-        # Remove monthly Patient Experience data from YTD sections since there is separate YTD data for this
-        filter(!(Metric_Group %in% c("Patient Experience"))) %>%
-        group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
-        #filter(total == max(total)) %>%
-        #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
-        filter(format(Reporting_Month_Ref, "%Y",) == max(format(Reporting_Month_Ref, "%Y"))) %>%
-        group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
-        mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
-                                              paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
-                                              ifelse(which.max(id) == 1,
-                                                     Premier_Reporting_Period[which.min(id)],
-                                                     paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
-                                                            Premier_Reporting_Period[which.min(id)]))))
+      month_selected_format <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
+      if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
+        month_in_repo <- unique(format(budget_data_repo$Month, "%Y-%m-%d"))
+        month_selected <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
+        budget_metrics <- summary_tab_metrics %>% filter(Metric_Group == "Budget to Actual") 
+        budget_metrics <- unique(budget_metrics$Metric_Name_Submitted)
+        
+        
+        if (as.character(month_selected )%in% month_in_repo) {
+          ytd_budget <- budget_data_repo %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted %in% budget_metrics)
+        } else {
+          ytd_budget <- budget_data_repo %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted %in% budget_metrics)
+        }
+        
+        
+        #ytd_budget <- budget_data_repo %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted %in% budget_metrics)
+        
+        ytd_join <- left_join(ytd_budget, summary_tab_metrics)
+        ytd_join <- ytd_join %>% select(-Service, -Metric_Unit, -Value, - Metric_Name_Submitted) %>% rename(value_rounded = Value_ytd)
+        
+        month_in_data <- unique(format(ytd_join$Month,"%b"))
+        
+        if(month_in_data != "Jan"){
+          month_in_data <- unique(format(ytd_join$Month, "%b %Y"))
+          fytd_name <- paste0("Jan - ", month_in_data, " Total")
+        }else {
+          fytd_name <- paste0(unique(format(ytd_join$Month, "%b %Y")), " Total")
+        }
+        
+        ytd_join$Month <- fytd_name
+        ytd_join <- ytd_join %>% rename(`Fiscal Year to Date` = Month)
+        
+      } else{
+        ytd_join <- NULL
+      }
+      
+      
+      if(!is.null(ytd_join)){
+        # FYTD Period Filter 
+        fytd_period <- period_filter %>%        #Get all data from YTD
+          # Remove monthly Patient Experience data from YTD sections since there is separate YTD data for this
+          filter(!(Metric_Group %in% c("Patient Experience", "Budget to Actual"))) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          #filter(total == max(total)) %>%
+          #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
+          filter(format(Reporting_Month_Ref, "%Y",) == max(format(Reporting_Month_Ref, "%Y"))) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+                                                paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
+                                                ifelse(which.max(id) == 1,
+                                                       Premier_Reporting_Period[which.min(id)],
+                                                       paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
+                                                              Premier_Reporting_Period[which.min(id)]))))
+      } else{
+        # FYTD Period Filter 
+        fytd_period <- period_filter %>%        #Get all data from YTD
+          # Remove monthly Patient Experience data from YTD sections since there is separate YTD data for this
+          filter(!(Metric_Group %in% c("Patient Experience"))) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          #filter(total == max(total)) %>%
+          #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
+          filter(format(Reporting_Month_Ref, "%Y",) == max(format(Reporting_Month_Ref, "%Y"))) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+                                                paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
+                                                ifelse(which.max(id) == 1,
+                                                       Premier_Reporting_Period[which.min(id)],
+                                                       paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
+                                                              Premier_Reporting_Period[which.min(id)]))))
+        
+      }
       
       
       
@@ -338,7 +394,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ungroup()
     
       # Merge for summary 
-      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat)
+      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
       fytd_summary <- fytd_merged
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
@@ -1389,7 +1445,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         return(NULL)
       }else{
         tryCatch({
-          data <- read_excel(inFile_budget$datapath,  sheet = "1-Pivot Summary by Site", skip = 5)
+          data <- read_excel(inFile_budget$datapath,  sheet = "5-BSC Cost Center Detail", skip = 3)
            budget_process <- budget_raw_file_process(data)
            showModal(modalDialog(
              title = "Success",
@@ -1407,7 +1463,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       metrics_final_df <<- budget_to_actual_metrics_final_df(budget_process)
-      saveRDS(metrics_final_df, metrics_final_df_path)
+      #saveRDS(metrics_final_df, metrics_final_df_path)
       
       
       budget_to_actual_current_summary_repo <- read_excel(budget_to_actual_path_new)
