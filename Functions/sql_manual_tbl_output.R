@@ -1,14 +1,21 @@
 con <- dbConnect(odbc::odbc(), driver_name, timeout = 30)
 summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
+manual_tbl_mapping <- tbl(con, "BSC_MANUAL_TABLE_MAPPING")
 
 sql_manual_table_output <- function(service, table_name) {
   
-  max_month <- (Sys.Date() - months(1)) - months(7)
+  max_month <- as.character(Sys.Date() - months(8))
   format <- "YYYY-MM-DD"
   
-  df <- summary_repo_tbl %>% filter(SERVICE %in% service) %>%
+  manual_mapping_metrics <- manual_tbl_mapping %>% 
+    filter(SERVICE %in% service, TABLE_NAME %in% table_name) %>% 
+    collect()
+  manual_mapping_metrics <- unique(manual_mapping_metrics$METRIC_NAME_SUBMITTED)
+  
+  df <- summary_repo_tbl %>% filter(SERVICE %in% service & METRIC_NAME_SUBMITTED %in% manual_mapping_metrics
+                                    ) %>%
           select(-SERVICE, -PREMIER_REPORTING_PERIOD, -UPDATE_TIME) %>%
-          filter(MONTH >= TO_DATE(max_month, format)) %>%
+          filter(MONTH >= TO_DATE(max_month, format)) %>% 
           arrange(MONTH, SITE) %>%
           collect() %>%
           mutate(MONTH = format(MONTH, "%m-%Y"),

@@ -2985,7 +2985,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
     # Create reactive data table for manual entry
     data_lab_prof_test <- reactive({
-      data <- sql_manual_table_output("Lab")
+      data <- sql_manual_table_output("Lab", "proficiency_testing")
       # Arrange by sites in alphabetical order
       data <- data %>%
         arrange(Site)
