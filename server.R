@@ -4,6 +4,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
   server <- function(input, output, session) {
     
+    
+  
     # 0. Observe Events for Filters ----------------------------------------------------------------
     observeEvent(input$selectedService2,{
       metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
@@ -2983,35 +2985,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
     # Create reactive data table for manual entry
     data_lab_prof_test <- reactive({
-      
-      data <- prof_test_manual_table
-      
+      data <- sql_manual_table_output("Lab", "proficiency_testing")
       # Arrange by sites in alphabetical order
       data <- data %>%
         arrange(Site)
 
 
-      ##### Code that adds months missing months to the rhandsontable
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-
-      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-
-      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-
-      months_to_drop <- which(months < max_month %m-% months(6))
-      months_to_drop <- format(months[months_to_drop], "%m-%Y")
-
-      complete_months <- seq.Date(months[1], max_month, by= 'month')
-
-      missing_months <- which(!(complete_months %in% months))
-      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-
-      data[,missing_months] <- NA_character_
-
-      data <- data %>% select(-all_of(months_to_drop))
-
-      data
+      data <- manual_table_month_order(data)
 
     }
     )

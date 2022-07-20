@@ -66,7 +66,7 @@ ui <-
                useShinydashboard()
              ),
              
-             # First Tab - Summary - All Sites
+             # First Tab - Summary - All Sites -----------------------
              tabPanel("Summary", value = "summary",
                       fluidRow(
                         column(2, 
@@ -103,7 +103,7 @@ ui <-
                       )
              ), # Close tabPanel Summary
              
-             # Second Tab - All Sites by KPI
+             # Second Tab - All Sites by KPI -----------------------
              tabPanel("Site Comparison", value = "comparison",
                       fluidRow(
                         column(2, 
@@ -152,8 +152,7 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Comparison
-             
-             # Third Tab - Breakout
+             # Third Tab - Breakout-----------------------
              tabPanel("KPI Breakout", value = "breakout",
                       fluidRow(
                         column(2, 
