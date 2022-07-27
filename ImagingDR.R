@@ -60,27 +60,29 @@ process_ctdata_data <- function(ctdata){
   ctdata <- ctdata[2:nrow(ctdata),]
   ctdata <- ctdata %>%
     select(-X2) %>%
-    rename(Month = X1) %>%
-    filter(!Month==current_month) %>%
-    pivot_longer(cols = -Month,
-                 names_to = "Site",
-                 values_to = "value_rounded") %>%
-    mutate( value_rounded = as.numeric(value_rounded),
-            Service="Imaging",
-            Metric_Name_Submitted = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")
+    rename(REPORTING_MONTH = X1) %>%
+    filter(!REPORTING_MONTH==current_month) %>%
+    pivot_longer(cols = -REPORTING_MONTH,
+                 names_to = "SITE",
+                 values_to = "VALUE") %>%
+    mutate( VALUE = as.numeric(VALUE),
+            SERVICE="Imaging",
+            METRIC_NAME_SUBMITTED = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")
   
   volume_info <- volume_info[, !duplicated(colnames(volume_info))]
   volume_info <- volume_info[2:nrow(volume_info),]
   volume_info <- volume_info %>%
     select(-X2) %>%
-    rename(Month = X1) %>%
-    filter(!Month==current_month) %>%
+    rename(REPORTING_MONTH = X1) %>%
+    filter(!REPORTING_MONTH==current_month) %>%
     pivot_longer(cols = -Month,
-                 names_to = "Site",
-                 values_to = "value_rounded") %>%
-    mutate( value_rounded = as.numeric(value_rounded),
-            Service="Imaging",
-            Metric_Name_Submitted = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, Total Volume")
+                 names_to = "SITE",
+                 values_to = "VALUE") %>%
+    mutate( VALUE = as.numeric(VALUE),
+            SERVICE="Imaging",
+            METRIC_NAME_SUBMITTED = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, Total Volume",
+            PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+            REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
   
   summary_repo <- rbind(volume_info, ctdata)
   

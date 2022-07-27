@@ -190,8 +190,8 @@ if(file.exists("J:/")){
 
 
 # Uncomment when working on R workbench to acesss SharedDrive and comment back when pushing to Github for merging the code -----
-start <- "/SharedDrive/data/"
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
+# start <- "/SharedDrive/data/"
+# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
