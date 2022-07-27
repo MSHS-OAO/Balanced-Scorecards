@@ -85,6 +85,11 @@ home_path <- paste0(start,
 
 start_shared <- "J:"
 
+# Import data with last time service line was updated
+time_updated <- read_excel(path = paste0(home_path,
+                                         "/Summary Repos Production 7-20",
+                                         "/time_updated.xlsx"))
+
 # Import Lab and Security repositories -------------------
 lab_tat_repo_name <- "Lab TAT Metrics.xlsx"
 lab_prof_test_repo_name <- "Lab Prof Testing Metrics.xlsx"
@@ -117,6 +122,10 @@ standardize_repo <- function(filename) {
                                    "/",
                                    filename))
   
+  last_updated <- max(
+    time_updated[which(time_updated$Service %in% unique(data$Service)), ]$Updated)
+  
+  
   data <- data %>%
     mutate(Month = date(Month)) %>%
     rename(SERVICE = Service,
@@ -125,7 +134,7 @@ standardize_repo <- function(filename) {
            METRIC_NAME_SUBMITTED = Metric,
            VALUE = Number) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
-           UPDATED_TIME = NA,
+           UPDATED_TIME = last_updated,
            UPDATED_USER = NA) %>%
     relocate(PREMIER_REPORTING_PERIOD, .after = REPORTING_MONTH)
   
