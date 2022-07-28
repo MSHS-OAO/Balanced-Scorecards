@@ -1,7 +1,8 @@
 # start <- "J:" #Comment when publishing to RConnect
 # # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# raw_TAT_EVS_df <- read_xlsx(paste0(home_path, "Summary Repos/TAT - EVS.xlsx"))
+# raw_TAT_EVS_df <- read_xlsx(paste0(home_path, "File Examples/EVS/MSHS Normal Clean vs Iso Clean TAT Dec.xlsx"))
+# month <- excel_sheets(paste0(home_path, "File Examples/EVS/MSHS Normal Clean vs Iso Clean TAT Dec.xlsx"))[1]
 
 
 summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>%
@@ -66,7 +67,15 @@ evs_file_process <- function(data, month) {
     relocate(Service, .before = Hospital) %>%
     relocate(Site, .after = Hospital) %>%
     relocate(Month, .after = Site) %>%  
-    select(-Hospital)
+    select(-Hospital) %>%
+    pivot_longer(cols = c(-Service,-Site,-Month),
+                 names_to = "METRIC_NAME_SUBMITTED",
+                 values_to = "VALUE") %>%
+    rename(SERVICE = Service,
+           SITE = Site,
+           REPORTING_MONTH = Month) %>%
+    mutate(PREMIER_REPORTING_PERIOD = format(as.Date(REPORTING_MONTH,"%m/%d/%Y"),"%b %Y"),
+           REPORTING_MONTH = format(as.Date(REPORTING_MONTH,"%m/%d/%Y"),"%Y-%m-%d"))
   
 
   data
@@ -98,3 +107,6 @@ evs__metrics_final_df_process <- function(data){
   
   return(metrics_final_df)
 }
+
+
+# data <- evs_file_process(raw_TAT_EVS_df,month)

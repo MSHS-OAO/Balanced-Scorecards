@@ -63,7 +63,14 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   # Add UPDATE_TIME 
   processed_input_data <- processed_input_data %>%
-    mutate(UPDATED_TIME = as.character(Sys.time()))#,
+    mutate(UPDATED_TIME = as.character(Sys.time()))%>%
+    select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)#,
            # PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
            # REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
            # UPDATED_USER = NA_character_) %>%
@@ -83,6 +90,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   all_data <- glue('INSERT ALL
                       {values}
                     SELECT 1 from DUAL;')
+  
   query = glue('MERGE INTO SUMMARY_REPO SR
                   USING "{TABLE_NAME}" SOURCE_TABLE
                   ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
@@ -133,7 +141,8 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
 # scc_may_data <- read.xlsx(paste0(home_path,"Input Data Raw/Lab & Blood Bank/SCC/SCC HGB Report May 2022.xlsx"))
 # processed_scc_may_data <- lab_scc_tat_dept_summary(scc_may_data)
 # # read raw sunsquest data & process it ----
-# sunquest_may_data <- read_excel(paste0(home_path,"Input Data Raw/Lab & Blood Bank/SUNQUEST/SQ Monthly TROP-HGB May 2022.xls"))
+# sunquest_may_data <- read_excel(paste0(home_path,"Summary Repos for Database/Lab TAT Metrics.xlsx")) %>%
+#   mutate(UPDATED_USER = NA_character_)
 # processed_sunquest_may_data <- lab_sun_tat_dept_summary(sunquest_may_data)
 # 
 # #read LAB TAT summary repo:
