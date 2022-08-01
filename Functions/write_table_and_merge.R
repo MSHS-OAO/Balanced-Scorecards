@@ -85,8 +85,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # rename(METRIC_NAME_SUBMITTED = Metric,
     #        VALUE=Number)
   
-  view(processed_input_data)
-  
+
   inserts <- lapply(
     lapply(
       lapply(split(processed_input_data , 
@@ -136,14 +135,16 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   print(drop_query)
   
-  dbCreateTable(con,
-                TABLE_NAME,
-                processed_input_data,
-                field.types  = DATA_TYPES)
-  
-  dbExecute(con,all_data)
-  dbExecute(con,query)
-  dbExecute(con,drop_query)
+  poolWithTransaction(poolcon, function(conn) {
+      dbCreateTable(conn,
+                    TABLE_NAME,
+                    processed_input_data,
+                    field.types  = DATA_TYPES)
+      
+      dbExecute(conn,all_data)
+      dbExecute(conn,query)
+      dbExecute(conn,drop_query)
+  })
 }
 
 
@@ -179,6 +180,9 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
 # data<- write_temporary_table_to_database_and_merge(processed_sunquest_may_data,"SUNQUEST")
 # data<- write_temporary_table_to_database_and_merge(processed_scc_may_data,"SCC")
 
+# SecInc <- read_excel(paste0(home_path,"Summary Repos for Database/Security Incident Reports.xlsx")) %>%
+#   mutate(REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
+# data<- write_temporary_table_to_database_and_merge(SecInc,"SecInc")
 
 
 
