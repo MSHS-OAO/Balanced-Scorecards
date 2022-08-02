@@ -161,7 +161,7 @@ productivity_dept_summary <- function(raw_data){
     ungroup() %>%
     select(-Metric_Group)
   
-  
+ if(c("Nursing", "Imaging") %in% unique(prod_df_all$Service)){  
   nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
     filter(Service %in% c("Nursing","Imaging")) %>%
     filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
@@ -203,12 +203,12 @@ productivity_dept_summary <- function(raw_data){
     mutate_at(vars(value), ~replace(., is.infinite(.), 0)) %>%
     mutate(Metric_Group = "Productivity") %>%
     ungroup() %>%
-    select(-Metric_Group)
-  
-  
-  
+    select(-Metric_Group) 
   
   prod_df_aggregate_all <- bind_rows(prod_df_aggregate, nursing_rad_metric_calc,nursing_rad_whpu) # Merge newly calculated productivity index and overtime % for nursing and radiology 
+  } else {
+   prod_df_aggregate_all <- prod_df_aggregate
+ }
   
   prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
   
