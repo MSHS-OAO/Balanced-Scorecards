@@ -12,13 +12,14 @@ library(pool)
 #                  Trusted_Connection = "True",
 #                  uid = .username,
 #                  pwd = .password)
-con <- dbConnect(odbc::odbc(), "OAO Cloud DB", timeout = 30)
+# con <- dbConnect(odbc::odbc(), "OAO Cloud DB", timeout = 30)
 
 options(odbc.batch_rows = 1000000)
 
 poolcon <- dbPool(drv = odbc::odbc(), 
                   dsn = "OAO Cloud DB")
 
+# function to convert the record of data frame to into satement
 get_values <- function(x,table_name){
   
   service <- x[1]
@@ -38,16 +39,6 @@ get_values <- function(x,table_name){
 
 
 # function to write the summary repo table to database: ----
-# Inputs : 
-#          processed_input_data (dplyr data frame) : data to be written to Oracle cloud. data should have Service
-#                                                                                         Site ,
-#                                                                                         Month ,
-#                                                                                         Metric_Name_Submitted ,
-#                                                                                         Value ,
-#                                                                                         `Premier Reporting Period`, and
-#                                                                                         Update_time fields
-#         table_name (String) : Example : "LAB_TAT" in all letters UPPER_CASE
-# Output  Boolean: TRUE
 
 write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name){
   
@@ -64,10 +55,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   TABLE_NAME <- paste0("STAGING.",table_name)
   
   
-  # Add UPDATE_TIME 
-  
-  # check for all the fields are characters
-  
+  # Add UPDATE_TIME and check for all the fields are characters
   processed_input_data <- processed_input_data %>%
     mutate(UPDATED_TIME = as.character(Sys.time()),
            VALUE = as.character(VALUE),
@@ -78,14 +66,9 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
            PREMIER_REPORTING_PERIOD, 
            METRIC_NAME_SUBMITTED,
            VALUE,UPDATED_TIME,
-           UPDATED_USER)#,
-           # PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
-           # REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
-           # UPDATED_USER = NA_character_) %>%
-    # rename(METRIC_NAME_SUBMITTED = Metric,
-    #        VALUE=Number)
+           UPDATED_USER)
   
-
+  # Convert the each record/row of tibble to INTO clause of insert statment
   inserts <- lapply(
     lapply(
       lapply(split(processed_input_data , 
@@ -96,12 +79,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   values <- glue_collapse(inserts,sep = "\n\n")
   
+  # Combine into statements from get_values() function and combine with
+  # insert statements
   all_data <- glue('INSERT ALL
                       {values}
                     SELECT 1 from DUAL;')
   
-  print(all_data)
-  
+  # glue() query to merge data from temporary table to summary_repo table
   query = glue('MERGE INTO SUMMARY_REPO SR
                   USING "{TABLE_NAME}" SOURCE_TABLE
                   ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
@@ -131,58 +115,21 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
                           SOURCE_TABLE."UPDATED_USER",
                           SOURCE_TABLE."PREMIER_REPORTING_PERIOD");')
   
+  # glue query for dropping the table
   drop_query <- glue('DROP TABLE "{TABLE_NAME}";')
   
-  print(drop_query)
-  
+  # Combining all SQL transactions into one atomic unit
   poolWithTransaction(poolcon, function(conn) {
       dbCreateTable(conn,
                     TABLE_NAME,
                     processed_input_data,
                     field.types  = DATA_TYPES)
-      
+
       dbExecute(conn,all_data)
       dbExecute(conn,query)
       dbExecute(conn,drop_query)
   })
 }
-
-
-
-
-# Tests ----
-# # read raw scc data & process it ----
-# scc_may_data <- read.xlsx(paste0(home_path,"Input Data Raw/Lab & Blood Bank/SCC/SCC HGB Report May 2022.xlsx"))
-# processed_scc_may_data <- lab_scc_tat_dept_summary(scc_may_data)
-# # read raw sunsquest data & process it ----
-# sunquest_may_data <- read_excel(paste0(home_path,"Summary Repos for Database/Lab TAT Metrics.xlsx")) %>%
-#   mutate(UPDATED_USER = NA_character_)
-# processed_sunquest_may_data <- lab_sun_tat_dept_summary(sunquest_may_data)
-# 
-# #read LAB TAT summary repo:
-# summary_repo_lab_tat <- read_excel(paste0(home_path,"Summary Repos for Database/Lab TAT Metrics.xlsx"))
-# 
-# summary_repo_lab_tat1 <- summary_repo_lab_tat%>%head(10)
-# data<- write_temporary_table_to_database_and_merge(summary_repo_lab_tat1,"SR3")
-
-
-# EVS <- read_excel(paste0(home_path,"Summary Repos for Database/TAT - EVS.xlsx"))
-# Nursing <- read_excel(paste0(home_path,"Summary Repos for Database/Nursing.xlsx"))
-# 
-# data<- write_temporary_table_to_database_and_merge(ImagingDR,"ImagingDR")
-# data<- write_temporary_table_to_database_and_merge(ImagingIR,"ImagingIR")
-# data<- write_temporary_table_to_database_and_merge(BiomedKPIS,"BiomedKPIS")
-# data<- write_temporary_table_to_database_and_merge(BiomedDI,"BiomedDI")
-# data<- write_temporary_table_to_database_and_merge(EVS,"EVS")
-# data<- write_temporary_table_to_database_and_merge(Nursing,"Nursing")
-
-
-# data<- write_temporary_table_to_database_and_merge(processed_sunquest_may_data,"SUNQUEST")
-# data<- write_temporary_table_to_database_and_merge(processed_scc_may_data,"SCC")
-
-# SecInc <- read_excel(paste0(home_path,"Summary Repos for Database/Security Incident Reports.xlsx")) %>%
-#   mutate(REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
-# data<- write_temporary_table_to_database_and_merge(SecInc,"SecInc")
 
 
 
