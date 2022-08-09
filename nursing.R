@@ -1,7 +1,7 @@
 # start <- "J:" #Comment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 # path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/Nursing/MSHS Nursing Indicators 2021 YTD.xlsx")
-# 
+
 # data <- read_excel(path_raw)
 
 NursingSummaryRepo <- read_excel(nursing_path) # change the variable name lower_case
@@ -16,14 +16,20 @@ process_nursing_data <- function(data){ #service_dept_summary
   
   
   data <- data %>%
-    rename( Month =`Year-Month`,
-            Service = Unit,
-            Site = Facility) %>%
-    mutate(Month = format(as.Date(parse_date_time(paste0(Month,"-01"),orders = "ymd")),"%Y-%m-%d"), #get rid of parse_date_time
-           Service = "Nursing",
+    rename( REPORTING_MONTH =`Year-Month`,
+            SERVICE = Unit,
+            SITE = Facility) %>%
+    mutate(REPORTING_MONTH = as.Date(parse_date_time(paste0(REPORTING_MONTH,"-01"),orders = "ymd")), #get rid of parse_date_time
+           SERVICE = "Nursing",
            `All Falls (per 1,000 PD)` = `All Falls`/(`Denominator (Patient Days)`/1000),
            `Falls with Injury (per 1,000 PD)` = `Falls with Injury`/(`Denominator (Patient Days)`/1000),
-           `HAPU (per 1,000 PD)` = HAPU/(`Denominator (Patient Days)`/1000))
+           `HAPU (per 1,000 PD)` = HAPU/(`Denominator (Patient Days)`/1000),
+           PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+           REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d")) %>%
+    select(-`Denominator (Patient Days)`) %>%
+    pivot_longer(cols = c(-REPORTING_MONTH,-SERVICE,-SITE,-PREMIER_REPORTING_PERIOD),
+                names_to = "METRIC_NAME_SUBMITTED",
+                values_to = "VALUE")
   
   return(data)
   
@@ -72,7 +78,7 @@ nursing__metrics_final_df_process <- function(data){
 }
 
 
-#data <- process_nursing_data(data)
+# data <- process_nursing_data(data)
 
 
 data <- nursing__metrics_final_df_process(NursingSummaryRepo)

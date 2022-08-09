@@ -1,4 +1,4 @@
-# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/AutoHSO-BalancedScorecard-2022-DUMMYDATA.xlsx")
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File Examples/Imaging/IR/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx")
 # 
 imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
 
@@ -65,7 +65,19 @@ imaging_dept_summary <- function(data){
   data_filter <- data %>% filter(!(Metric_Name_Submitted %in% budget_metrics)) %>% filter(!is.na(value_rounded))
   data_max_month <- max(data_filter$Reporting_Month_Ref)
   
-  data <- data %>% filter(Reporting_Month_Ref <= data_max_month)
+  data <- data %>% filter(Reporting_Month_Ref <= data_max_month) %>%
+    rename(SITE = Site,
+           SERVICE = Service,
+           METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+           VALUE = value_rounded) %>%
+    mutate(REPORTING_MONTH = format(Reporting_Month_Ref,"%Y-%m-%d"),
+           PREMIER_REPORTING_PERIOD = format(Reporting_Month_Ref,"%b %Y")) %>%
+    select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE)
   
   data
 }
@@ -81,3 +93,5 @@ imaging_metrics_final_df <- function(data){
   metrics_final_df <- metrics_final_df_subset_and_merge(imaging_df)
   return(metrics_final_df)
 }
+
+# data <- imaging_dept_summary(data)
