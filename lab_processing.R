@@ -380,18 +380,23 @@ lab_sun_tat_metrics_final_df <- function(sun_summary) {
 # Custom function for processing and formatting manual inputs into department summary format
 lab_prof_test_dept_summary <- function(data) {
   prof_test_summary <- data %>%
+    rename(SITE = Site,
+           METRIC_NAME_SUBMITTED = Metric) %>%
     # Convert from wide to long format for consistency with department summary
-    pivot_longer(cols = c(-Metric, -Site),
-                 names_to = "Month",
-                 values_to = "Number") %>%
+    pivot_longer(cols = c(-METRIC_NAME_SUBMITTED, -SITE),
+                 names_to = "REPORTING_MONTH",
+                 values_to = "VALUE") %>%
     mutate(
       # Change format to be consistent with dept summary repo
-      Number = as.numeric(Number),
-      Month = as.Date(my(Month)),
-      Service = "Lab") %>%
+      VALUE = as.numeric(VALUE),
+      REPORTING_MONTH = as.Date(my(REPORTING_MONTH)),
+      SERVICE = "Lab",
+      PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
+      UPDATED_USER = updated_user) %>%
     # Reorder columns
-    relocate(Service) %>%
-    relocate(Month, .before = Metric)
+    relocate(SERVICE) %>%
+    relocate(REPORTING_MONTH, .before = METRIC_NAME_SUBMITTED)
+
   
   return(prof_test_summary)
   

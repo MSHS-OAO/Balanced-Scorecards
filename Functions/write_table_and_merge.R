@@ -57,7 +57,9 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   # Add UPDATE_TIME and check for all the fields are characters
   processed_input_data <- processed_input_data %>%
-    mutate(UPDATED_TIME = as.character(Sys.time()),
+    mutate(REPORTING_MONTH = as.character(REPORTING_MONTH),
+           # UPDATED_TIME = as.character(Sys.time()),
+           UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
            VALUE = as.character(VALUE),
            VALUE = coalesce(VALUE,"NULL"))%>%
     select(SERVICE, 
