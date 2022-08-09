@@ -144,9 +144,20 @@ standardize_repo <- function(filename) {
                            "/",
                            filename))
   
+  return(data)
+  
 }
 
 updated_lab_tat_repo <- standardize_repo(lab_tat_repo_name)
 updated_lab_prof_testing_repo <- standardize_repo(lab_prof_test_repo_name)
-updated_sec_events_repo <- standardize_repo(sec_events_repo_name)
-updated_sec_incident_repo <- standardize_repo(sec_incidents_repo_name)
+
+compile_all_lab_ops_metrics <- rbind(updated_lab_tat_repo,
+                                     updated_lab_prof_testing_repo)
+
+write_csv(compile_all_lab_ops_metrics,
+          file = paste0(home_path,
+                        "/Summary Repos for Database",
+                        "/Compiled Lab Ops Metrics 2022-08-09.csv"))
+
+# updated_sec_events_repo <- standardize_repo(sec_events_repo_name)
+# updated_sec_incident_repo <- standardize_repo(sec_incidents_repo_name)

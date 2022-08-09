@@ -28,27 +28,29 @@ ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
 ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
   mutate(Month = date(Month))
 
-# Reformat "Month" column in Proficiency Testing data for merging
-ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
-  mutate(Month = date(Month))
+# # Reformat "Month" column in Proficiency Testing data for merging
+# ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
+#   mutate(Month = date(Month))
 
-prof_test_last_month <- max(ops_metrics_lab_pt$Month)
+# prof_test_last_month <- max(ops_metrics_lab_pt$Month)
 # next_month <- prof_test_last_month + months(1)
 
-# Reformat Proficiency Testing data into wider format for manual entries
-prof_test_manual_table <- ops_metrics_lab_pt %>%
-  select(-Service) %>%
-  filter(Month >= prof_test_last_month - months(7)) %>%
-  # mutate(Number = percent(Number, 1)) %>%
-  arrange(Month,
-          Site) %>%
-  mutate(Month = format(Month, "%m-%Y"),
-         Number = as.character(Number)) %>%
-  pivot_wider(names_from = Month,
-              values_from = Number) #%>%
-  # Add a column with the next month for the user to enter data
-  # mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
+# # Reformat Proficiency Testing data into wider format for manual entries
+# prof_test_manual_table <- ops_metrics_lab_pt %>%
+#   select(-Service) %>%
+#   filter(Month >= prof_test_last_month - months(7)) %>%
+#   # mutate(Number = percent(Number, 1)) %>%
+#   arrange(Month,
+#           Site) %>%
+#   mutate(Month = format(Month, "%m-%Y"),
+#          Number = as.character(Number)) %>%
+#   pivot_wider(names_from = Month,
+#               values_from = Number) #%>%
+#   # Add a column with the next month for the user to enter data
+#   # mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
 
+# Pull in Proficiency Testing Data from Oracle table using new function
+# ops_metrics_pt_sql <- sql_manual_table_output("Lab", "proficiency_testing")
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
