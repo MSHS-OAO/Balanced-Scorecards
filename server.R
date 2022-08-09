@@ -4,6 +4,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
   server <- function(input, output, session) {
     
+    
+  
     # 0. Observe Events for Filters ----------------------------------------------------------------
     observeEvent(input$selectedService2,{
       metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
@@ -2983,35 +2985,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
     # Create reactive data table for manual entry
     data_lab_prof_test <- reactive({
-      
-      data <- prof_test_manual_table
-      
+      data <- sql_manual_table_output("Lab", "proficiency_testing")
       # Arrange by sites in alphabetical order
       data <- data %>%
         arrange(Site)
 
 
-      ##### Code that adds months missing months to the rhandsontable
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-
-      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-
-      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-
-      months_to_drop <- which(months < max_month %m-% months(6))
-      months_to_drop <- format(months[months_to_drop], "%m-%Y")
-
-      complete_months <- seq.Date(months[1], max_month, by= 'month')
-
-      missing_months <- which(!(complete_months %in% months))
-      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-
-      data[,missing_months] <- NA_character_
-
-      data <- data %>% select(-all_of(months_to_drop))
-
-      data
+      data <- manual_table_month_order(data)
 
     }
     )
@@ -4578,7 +4558,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Second, remove these sites, months, and metrics from the historical data,
             # if they exist there. This allows us to ensure no duplicate entries for
             # the same site, metric, and time period.
-            xray_imaging <<- anti_join(ImagingSummaryRepo,
+            ImagingSummaryRepo <<- anti_join(ImagingSummaryRepo,
                                  xray_new_data,
                                  by = c("Service" = "Service",
                                         "Site" = "Site",
@@ -4586,16 +4566,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         "Metric_Name_Submitted" = "Metric_Name_Submitted"))
             
             # Third, combine the updated historical data with the new data
-            imaging_xray_reports <<- full_join(xray_imaging,
+            ImagingSummaryRepo <<- full_join(ImagingSummaryRepo,
                                                xray_summary_data)
             
             # Next, arrange the incident reports summary data by month, metric, and site
-            imaging_xray_reports <<- imaging_xray_reports %>%
+            ImagingSummaryRepo <<- ImagingSummaryRepo %>%
               arrange(Month,
                       Site)
             
             # Lastly, save the updated summary data
-            write_xlsx(imaging_xray_reports, imagingDR_path)
+            write_xlsx(ImagingSummaryRepo, imagingDR_path)
             
             # Update metrics_final_df with latest data using custom function
             metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
@@ -4706,7 +4686,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Second, remove these sites, months, and metrics from the historical data,
             # if they exist there. This allows us to ensure no duplicate entries for
             # the same site, metric, and time period.
-            ct_imaging <<- anti_join(ImagingSummaryRepo,
+            ImagingSummaryRepo <<- anti_join(ImagingSummaryRepo,
                                        ct_new_data,
                                        by = c("Service" = "Service",
                                               "Site" = "Site",
@@ -4714,16 +4694,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                               "Metric_Name_Submitted" = "Metric_Name_Submitted"))
             
             # Third, combine the updated historical data with the new data
-            imaging_ct_reports <<- full_join(ct_imaging,
+            ImagingSummaryRepo <<- full_join(ImagingSummaryRepo,
                                              ct_summary_data)
             
             # Next, arrange the imaging reports summary data by month, metric, and site
-            imaging_ct_reports <<- imaging_ct_reports %>%
+            ImagingSummaryRepo <<- ImagingSummaryRepo %>%
               arrange(Month,
                       Site)
             
             # Lastly, save the updated summary data
-            write_xlsx(imaging_ct_reports, imagingDR_path)
+            write_xlsx(ImagingSummaryRepo, imagingDR_path)
             
             # Update metrics_final_df with latest data using custom function
             metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)

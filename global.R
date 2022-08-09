@@ -43,13 +43,13 @@ suppressMessages({
   library(ggplot2)
   library(leaflet)
   library(readr)
-  #library(highcharter)
+  library(highcharter)
   library(ggforce) # for 'geom_arc_bar'
   library(packcircles) # for packed circle graph
   library(viridis)
   library(ggiraph)
   library(treemapify)
-  #library(treemap)
+  library(treemap)
   library(broom)
   library(extrafont)
   library(tis) # for US holidays
@@ -181,18 +181,14 @@ if(file.exists("J:/")){
   start <- "J:" #Comment when publishing to RConnect
   home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
   start_shared <- "J:"
+  driver_name <- "OAO Cloud DB"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
   home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
   install.packages("reshape2", repos = "http://cran.us.r-project.org")
+  driver_name <- "OAO Cloud DB" 
 }
-
-
-# Uncomment when working on R workbench to acesss SharedDrive and comment back when pushing to Github for merging the code -----
-# start <- "/SharedDrive/data/"
-# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
 budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
@@ -469,4 +465,3 @@ source("ED.R")
 source("productivity.R")
 source("budget_to_actual_new_file.R")
 source("productivity_update.R")
-
