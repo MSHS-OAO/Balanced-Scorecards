@@ -534,6 +534,12 @@ ui <-
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
                                         tabPanel("Turnaround Time",
                                                  hr(),
+                                                 textInput("lab_tat_username",
+                                                           labelMandatory(
+                                                             "Please enter name:"
+                                                           )
+                                                           ),
+                                                 hr(),
                                                  fileInput("lab_scc", label = "Please upload SCC lab data"),
                                                  hr(),
                                                  fileInput("lab_sun", label = "Please upload Sunquest lab data"),
@@ -927,7 +933,6 @@ ui <-
   tags$style(type = 'text/css', 
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
              '.navbar-default .navbar-brand{color: black; font-size: 24px;}'
-  ) 
-             
-             
+             )
+
   ) # Close navbarPage
