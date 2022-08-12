@@ -2627,7 +2627,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       #input$submit_engineering
       #operational_metrics_engineering <- engineering_repo_pull()
-      data  <- operational_metrics_engineering
+      input$eng
+      data <- engineering_repo_pull()
 
       colnames(data)[grepl("-",colnames(data))] <- format(as.Date(colnames(data)[grepl("-",colnames(data))]), "%m-%Y")
       
