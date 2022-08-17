@@ -252,7 +252,8 @@ census_days_metrics_final_df <- function(data) {
     summary_repo_data <- summary_repo_data %>% select(-`Census Days`)
     raw_cost_rev_df <- left_join(raw_cost_rev_df, summary_repo_data, by = c("Service" = "Service",
                                                                             "Month" = "Month",
-    flag <- 1                                                                        "Site" = "Site"))
+                                                                            "Site" = "Site"))
+    flag <- 1
     
   }
   
