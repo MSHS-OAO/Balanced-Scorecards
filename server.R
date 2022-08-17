@@ -48,6 +48,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_sec_events
       input$submit_ed
       input$submit_nursing
+      input$submit_finance_census
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService)
@@ -80,6 +81,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_ot
+      input$submit_finance_census
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -726,6 +728,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_sec_events
       input$submit_ed
       input$submit_nursing
+      input$submit_finance_census
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService2)
@@ -759,6 +762,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_ot
+      input$submit_finance_census
       
       
       service_input <- input$selectedService2
@@ -1076,6 +1080,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_sec_events
       input$submit_ed
       input$submit_nursing
+      input$submit_finance_census
       
       time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
       time_df <- time_df %>% filter(Service == input$selectedService3)
@@ -1109,6 +1114,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_ot
+      input$submit_finance_census
       
       
       service_input <- input$selectedService3
@@ -1477,22 +1483,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
-    # MSH, MSM, and MSQ Submit Census Days -----
-    observeEvent(input$submit_finance,{
-      
-      inFile_census <- input$finance_census
 
-      
-      
-      if (is.null(inFile_census)) {
-        return(NULL)
-      }else{
-        data_census <- read_excel(inFile_census$datapath)
-      }
-
-    })
-
-    
     
     ## Read in Patient Experience data -----------------------------------
     # ED Monthly Data Observe Event -------------------
@@ -3743,7 +3734,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
 
     # 5. Overtime - Data Input ---------------------------------------------------------------------------------
-    observeEvent(input$submit_finance, {
+    observeEvent(input$submit_finance_census, {
       census_file <- input$finance_census
       flag <- 0
       

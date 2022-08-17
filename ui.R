@@ -232,7 +232,7 @@ ui <-
                                       ),
                                       tabPanel("Census Days", br(),
                                                fileInput("finance_census", label = "Please upload Census Days data"),
-                                               actionButton("submit_finance", label = "Submit")
+                                               actionButton("submit_finance_census", label = "Submit")
                                                ),
                                       tabPanel("Overtime", br(),
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
