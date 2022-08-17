@@ -132,14 +132,19 @@ lab_scc_tat_dept_summary <- function(scc_raw_data) {
                                       digits = 4),
               .groups = "keep") %>%
     ungroup() %>%
-    # Format for department summary repo structure
-    mutate(Service = "Lab",
-           LabsWithinTarget = NULL,
-           TotalLabs = NULL,
-           Test = NULL) %>%
-    rename(Month = ResultMonthYr,
-           Number = PercentInTarget) %>%
-    relocate(Service)
+    # Format for standardized department summary repo structure
+    select(-LabsWithinTarget,
+           -TotalLabs,
+           -Test) %>%
+    rename(SITE = Site,
+           REPORTING_MONTH = ResultMonthYr,
+           METRIC_NAME_SUBMITTED = Metric,
+           VALUE = PercentInTarget) %>%
+    mutate(SERVICE = "Lab",
+           PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
+           UPDATED_USER = updated_user) %>%
+    relocate(SERVICE) %>%
+    relocate(PREMIER_REPORTING_PERIOD, .after = REPORTING_MONTH)
   
   return(scc_summary)
   
@@ -227,14 +232,19 @@ lab_sun_tat_dept_summary <- function(sun_raw_data) {
                                       digits = 4),
               .groups = "keep") %>%
     ungroup() %>%
-    # Format for department summary repo structure
-    mutate(Service = "Lab",
-           LabsWithinTarget = NULL,
-           TotalLabs = NULL,
-           Test = NULL) %>%
-    rename(Month = ResultMonthYr,
-           Number = PercentInTarget) %>%
-    relocate(Service)
+    # Format for standardized department summary repo structure
+    select(-LabsWithinTarget,
+           -TotalLabs,
+           -Test) %>%
+    rename(SITE = Site,
+           REPORTING_MONTH = ResultMonthYr,
+           METRIC_NAME_SUBMITTED = Metric,
+           VALUE = PercentInTarget) %>%
+    mutate(SERVICE = "Lab",
+           PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
+           UPDATED_USER = updated_user) %>%
+    relocate(SERVICE) %>%
+    relocate(PREMIER_REPORTING_PERIOD, .after = REPORTING_MONTH)
   
   return(sun_summary)
   
