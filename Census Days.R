@@ -119,7 +119,9 @@ census_days_dept_summary <- function(data){
                        values_to = "Census Days") %>%
                     rename(Month = Date)
   data$Service <- "Food Services"
-  
+  data <- data %>% mutate_at(vars(c("Site")), ~ifelse(Site == "MSSL", "MSM", 
+                                                      Site)
+  )
   data
   
 }
