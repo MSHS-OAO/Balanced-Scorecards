@@ -2625,9 +2625,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Engineering Reactive dataset -----
     data_engineering_kpi <- reactive({
       
-      #input$submit_engineering
+      input$eng
+      print("test")
       #operational_metrics_engineering <- engineering_repo_pull()
-      data  <- operational_metrics_engineering
+      data <- engineering_repo_pull()
+      # data  <- operational_metrics_engineering
 
       colnames(data)[grepl("-",colnames(data))] <- format(as.Date(colnames(data)[grepl("-",colnames(data))]), "%m-%Y")
       

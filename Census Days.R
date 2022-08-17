@@ -230,6 +230,7 @@ cost_and_revenue_dept_summary <- function(data){
 
 
 census_days_metrics_final_df <- function(data) {
+  flag <- 0
   raw_cost_rev_df <- data
   min_month <- min(raw_cost_rev_df$Month)
   max_month <- max(raw_cost_rev_df$Month)
@@ -246,6 +247,13 @@ census_days_metrics_final_df <- function(data) {
     }else{
       raw_cost_rev_df$`Census Days` <- NA
     }
+  } else {
+    summary_repo_data <- read_excel(paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+    summary_repo_data <- summary_repo_data %>% select(-`Census Days`)
+    raw_cost_rev_df <- left_join(raw_cost_rev_df, summary_repo_data, by = c("Service" = "Service",
+                                                                            "Month" = "Month",
+    flag <- 1                                                                        "Site" = "Site"))
+    
   }
   
   raw_cost_rev_df$`Actual Revenue` <- as.numeric(raw_cost_rev_df$`Actual Revenue`)
@@ -253,6 +261,7 @@ census_days_metrics_final_df <- function(data) {
   raw_cost_rev_df$`Census Days` <- as.numeric(raw_cost_rev_df$`Census Days`)
   
   # Cost and Revenue data pre-processing
+  if (flag == 0) {
   cost_rev_df <- raw_cost_rev_df %>%
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
@@ -268,6 +277,23 @@ census_days_metrics_final_df <- function(data) {
       Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
       Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
     rename(value_rounded = value)
+  } else {
+    cost_rev_df <- raw_cost_rev_df %>%
+      mutate(
+        `Actual Revenue` = as.numeric(`Actual Revenue`),
+        rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
+        budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
+      #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
+      #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
+      pivot_longer(
+        6:9,
+        names_to = "Metric_Name_Submitted",
+        values_to = "value") %>%
+      mutate(
+        Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
+        Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
+      rename(value_rounded = value)
+  }
   
   
   cost_rev_df_final <- left_join(cost_rev_df, cost_rev_mapping, 
