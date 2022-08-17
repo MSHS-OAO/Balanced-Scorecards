@@ -2744,128 +2744,148 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if (is.null(scc_file)) {
         return(NULL)
       }else{
-        scc_file_path <- scc_file$datapath
-        # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
-        #                         "/Operations Analytics and Optimization",
-        #                         "/Projects/System Operations",
-        #                         "/Balanced Scorecards Automation",
-        #                         "/Data_Dashboard/Input Data Raw",
-        #                         "/Lab & Blood Bank/SCC",
-        #                         "/SCC HGB Report Mar 2022.xlsx")
-        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          # Read in SCC file
-          scc_data <- read_excel(scc_file_path)
-          
-          flag <- 1
-          
-        },
-        error = function(err){
+        
+        if(input$lab_tat_username == "") {
           showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        } else {
+          
+          updated_user <<- input$lab_tat_username
+          
+          scc_file_path <- scc_file$datapath
+          # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+          #                         "/Operations Analytics and Optimization",
+          #                         "/Projects/System Operations",
+          #                         "/Balanced Scorecards Automation",
+          #                         "/Data_Dashboard/Input Data Raw",
+          #                         "/Lab & Blood Bank/SCC",
+          #                         "/SCC HGB Report Mar 2022.xlsx")
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          # Try catch statement to ensure file type is correct
+          
+          tryCatch({
+            # Read in SCC file
+            scc_data <- read_excel(scc_file_path)
+            
+            flag <- 1
+            
+          },
+          
+          error = function(err){
+            showModal(modalDialog(
             title = "Error",
             paste0("There seems to be an issue with this SCC file."),
             easyClose = TRUE,
             footer = NULL
           ))
+          }
+          )
+          
+          # Process data if the right file format was submitted
+          if(flag == 1) {
+            tryCatch({
+              # Process SCC data
+              scc_summary_data <- lab_scc_tat_dept_summary(scc_data)
+              
+              flag <- 2
+              
+              showModal(modalDialog(
+                title = "Success",
+                paste0("This SCC data has been imported successfully."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            },
+            error = function(err){
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with this SCC file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            })
+          }
+          
+          if(flag == 2){
+            
+            write_temporary_table_to_database_and_merge(scc_summary_data,
+                                                        "TEMP_SCC_TAT")
+            #
+            # # Save prior version of Lab TAT Dept Summary data
+            # write_xlsx(ops_metrics_lab_tat,
+            #            paste0(hist_archive_path,
+            #                   "Lab TAT Metrics Pre-SCC Updates ",
+            #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+            #                   ".xlsx"))
+            #
+            # # Append Lab TAT summary with new data
+            # # First, identify the sites, months, and metrics in the new data
+            # scc_new_data <- unique(
+            #   scc_summary_data[  c("Service", "Site", "Month", "Metric")]
+            # )
+            #
+            # # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+            # # This allows us to ensure no duplicate entries for the same site, metric, and time period
+            # ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
+            #                                   scc_new_data,
+            #                                   by = c("Service" = "Service",
+            #                                          "Site" = "Site",
+            #                                          "Month" = "Month",
+            #                                          "Metric" = "Metric")
+            # )
+            #
+            # # Third, combine the updated historical data with the new data
+            # ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
+            #                                   scc_summary_data)
+            #
+            # # Next, arrange the department summary by month, metric name, and site
+            # ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
+            #   # mutate(Site = factor(Site,
+            #   #                      levels = lab_sites_ordered,
+            #   #                      ordered = TRUE)) %>%
+            #   arrange(Month,
+            #           desc(Metric),
+            #           Site) #%>%
+            # # mutate(Site = as.character(Site))
+            #
+            # # Lastly, save the updated summary data
+            # write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+            #
+            # # Update metrics_final_df with latest SCC data using custom function
+            # metrics_final_df <<- lab_scc_tat_metrics_final_df(scc_summary_data)
+            #
+            # # Save updated metrics_final_df
+            # saveRDS(metrics_final_df, metrics_final_df_path)
+            
+            # Update "Reporting Month" drop down in each tab
+            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            #
+            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            # date_time$Service = "Lab"
+            # date_time <- rbind(time_df, date_time)
+            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+            
+            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
+            # record_timestamp("Lab")
+            
+            
+          }
         }
-        )
       }
       
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        tryCatch({
-          # Process SCC data
-          scc_summary_data <- lab_scc_tat_dept_summary(scc_data)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This SCC data has been imported successfully."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this SCC file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
       
-      if(flag == 2){
-        
-        write_temporary_table_to_database_and_merge(scc_summary_data,
-                                                    "TEMP_SCC_TAT")
-        
-        # # Save prior version of Lab TAT Dept Summary data
-        # write_xlsx(ops_metrics_lab_tat,
-        #            paste0(hist_archive_path,
-        #                   "Lab TAT Metrics Pre-SCC Updates ",
-        #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-        #                   ".xlsx"))
-        # 
-        # # Append Lab TAT summary with new data
-        # # First, identify the sites, months, and metrics in the new data
-        # scc_new_data <- unique(
-        #   scc_summary_data[  c("Service", "Site", "Month", "Metric")]
-        # )
-        # 
-        # # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        # ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
-        #                                   scc_new_data,
-        #                                   by = c("Service" = "Service",
-        #                                          "Site" = "Site",
-        #                                          "Month" = "Month",
-        #                                          "Metric" = "Metric")
-        # )
-        # 
-        # # Third, combine the updated historical data with the new data
-        # ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
-        #                                   scc_summary_data)
-        # 
-        # # Next, arrange the department summary by month, metric name, and site
-        # ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
-        #   # mutate(Site = factor(Site,
-        #   #                      levels = lab_sites_ordered,
-        #   #                      ordered = TRUE)) %>%
-        #   arrange(Month,
-        #           desc(Metric),
-        #           Site) #%>%
-        # # mutate(Site = as.character(Site))
-        # 
-        # # Lastly, save the updated summary data
-        # write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-        # 
-        # # Update metrics_final_df with latest SCC data using custom function
-        # metrics_final_df <<- lab_scc_tat_metrics_final_df(scc_summary_data)
-        # 
-        # # Save updated metrics_final_df
-        # saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # 
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Lab"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Lab")
-        
-        
+
+      
       }
-      })
+      )
     
     # Sunquest data submission -------------------
     observeEvent(input$submit_lab_tat,{
@@ -2877,30 +2897,43 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if (is.null(sun_file)) {
         return(NULL)
       }else{
-        sun_file_path <- sun_file$datapath
-        # sun_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
-        #                     "/Operations Analytics and Optimization",
-        #                     "/Projects/System Operations",
-        #                     "/Balanced Scorecards Automation/Data_Dashboard",
-        #                     "/Input Data Raw/Lab & Blood Bank/SUNQUEST",
-        #                     "/SQ Monthly TROP-HGB-June 2022withTROPHS-Kate.xlsx")
-                            
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          # Read in Sunquest file
-          sun_data <- read_excel(sun_file_path)
-          
-          flag <- 1
-        },
-        error = function(err){
+        
+        if(input$lab_tat_username == "") {
           showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        } else {
+          
+          updated_user <<- input$lab_tat_username
+          
+          sun_file_path <- sun_file$datapath
+          # sun_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+          #                     "/Operations Analytics and Optimization",
+          #                     "/Projects/System Operations",
+          #                     "/Balanced Scorecards Automation/Data_Dashboard",
+          #                     "/Input Data Raw/Lab & Blood Bank/SUNQUEST",
+          #                     "/SQ Monthly TROP-HGB-June 2022withTROPHS-Kate.xlsx")
+          
+          # Try catch statement to ensure file type is correct
+          tryCatch({
+            # Read in Sunquest file
+            sun_data <- read_excel(sun_file_path)
+            
+            flag <- 1
+          },
+          error = function(err){
+            showModal(modalDialog(
             title = "Error",
             paste0("There seems to be an issue with this Sunquest file."),
             easyClose = TRUE,
             footer = NULL
-          ))
-        }
+            ))
+          }
         )
+        }
       }
       
       # Process data if the right file format was submitted
@@ -2929,65 +2962,65 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       if(flag == 2) {
-        # Save prior version of Lab TAT Dept Summary data
-        write_xlsx(ops_metrics_lab_tat,
-                   paste0(hist_archive_path,
-                          "Lab TAT Metrics Pre-Sun Updates ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Append Lab TAT summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        sun_new_data <- unique(
-          sun_summary_data[  c("Service", "Site", "Month", "Metric")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
-                                          sun_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Month" = "Month",
-                                                 "Metric" = "Metric")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
-                                          sun_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
-          # mutate(Site = factor(Site,
-          #                      levels = lab_sites_ordered,
-          #                      ordered = TRUE)) %>%
-          arrange(Month,
-                  desc(Metric),
-                  Site) #%>%
-        # mutate(Site = as.character(Site))
-        
-        # Lastly, save the updated summary data
-        write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-        
-        # Update metrics_final_df with latest Sunquest data using custom function
-        metrics_final_df <<- lab_sun_tat_metrics_final_df(sun_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # # Save prior version of Lab TAT Dept Summary data
+        # write_xlsx(ops_metrics_lab_tat,
+        #            paste0(hist_archive_path,
+        #                   "Lab TAT Metrics Pre-Sun Updates ",
+        #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+        #                   ".xlsx"))
         # 
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Lab"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Lab")
+        # # Append Lab TAT summary with new data
+        # # First, identify the sites, months, and metrics in the new data
+        # sun_new_data <- unique(
+        #   sun_summary_data[  c("Service", "Site", "Month", "Metric")]
+        # )
+        # 
+        # # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        # ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
+        #                                   sun_new_data,
+        #                                   by = c("Service" = "Service",
+        #                                          "Site" = "Site",
+        #                                          "Month" = "Month",
+        #                                          "Metric" = "Metric")
+        # )
+        # 
+        # # Third, combine the updated historical data with the new data
+        # ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
+        #                                   sun_summary_data)
+        # 
+        # # Next, arrange the department summary by month, metric name, and site
+        # ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
+        #   # mutate(Site = factor(Site,
+        #   #                      levels = lab_sites_ordered,
+        #   #                      ordered = TRUE)) %>%
+        #   arrange(Month,
+        #           desc(Metric),
+        #           Site) #%>%
+        # # mutate(Site = as.character(Site))
+        # 
+        # # Lastly, save the updated summary data
+        # write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
+        # 
+        # # Update metrics_final_df with latest Sunquest data using custom function
+        # metrics_final_df <<- lab_sun_tat_metrics_final_df(sun_summary_data)
+        # 
+        # # Save updated metrics_final_df
+        # saveRDS(metrics_final_df, metrics_final_df_path)
+        # 
+        # 
+        # # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        # # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # # 
+        # # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        # # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        # # date_time$Service = "Lab"
+        # # date_time <- rbind(time_df, date_time)
+        # # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        # update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
+        # record_timestamp("Lab")
         
       }
     })
@@ -3236,7 +3269,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               # date_time <- rbind(time_df, date_time)
               # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
               update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-              record_timestamp("Lab")
+              # record_timestamp("Lab")
               
 
             }
