@@ -129,7 +129,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
 
       dbExecute(conn,all_data)
       dbExecute(conn,query)
-      dbExecute(conn,drop_query)
+      # dbExecute(conn,drop_query)
   })
 }
 
