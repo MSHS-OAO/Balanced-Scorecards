@@ -2547,11 +2547,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
               
               
-              engineering_columns <- c("Site", "Month", "% of Critical PM's Completed on Time", 
-                "Total Critical PMs","Work Order Completion Rate",
-                "Number of Work Orders Created with a Life Safety Priority",
-                "EOC/Patient Care Work Orders Received",
-                "EOC/Patient Care Work Order Completion Rate")
+              # engineering_columns <- c("Site", "Month", "% of Critical PM's Completed on Time", 
+              #   "Total Critical PMs","Work Order Completion Rate",
+              #   "Number of Work Orders Created with a Life Safety Priority",
+              #   "EOC/Patient Care Work Orders Received",
+              #   "EOC/Patient Care Work Order Completion Rate")
+              
+              engineering_columns <- c("Site", "Month")
               
               save_append_join_updates(engineering_summary_repos_data, 
                                        engineering_summary_data, 
