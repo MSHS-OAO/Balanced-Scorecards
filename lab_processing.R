@@ -19,14 +19,14 @@ mshs_icu <- lab_icu %>%
 lab_sites_ordered <- c("MSH", "MSQ", "MSW", "MSM", "MSBI", "MSB", "NYEE")
 
 # Import historical repositories -------------------------
-# Read in lab department summary repos for both TAT and Proficiency testing
-ops_metrics_lab_tat <- read_excel(ops_metrics_lab_tat_path)
-ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
-
-# Fix format of imported data for easier exporting ------------
-# Reformat "Month" column in TAT data for merging
-ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-  mutate(Month = date(Month))
+# # Read in lab department summary repos for both TAT and Proficiency testing
+# ops_metrics_lab_tat <- read_excel(ops_metrics_lab_tat_path)
+# ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
+# 
+# # Fix format of imported data for easier exporting ------------
+# # Reformat "Month" column in TAT data for merging
+# ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
+#   mutate(Month = date(Month))
 
 # # Reformat "Month" column in Proficiency Testing data for merging
 # ops_metrics_lab_pt <- ops_metrics_lab_pt %>%

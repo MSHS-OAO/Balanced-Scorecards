@@ -2985,6 +2985,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Create observe event actions for manual data submission-----
     observeEvent(input$submit_lab_pt, {
+      
+      flag <- 0
+      
       if(input$lab_pt_username == "") {
         showModal(modalDialog(
           title = "Error",
