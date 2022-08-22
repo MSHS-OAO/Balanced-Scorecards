@@ -4917,7 +4917,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
           
           update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("Nurisng")
+          record_timestamp("Nursing")
           
         }
       })
