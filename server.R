@@ -3072,10 +3072,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             # Check that data can be reformatted for department summary repo
             tryCatch({
+              
+              existing_data <- sql_manual_table_output("Lab",
+                                                       "proficiency_testing")
+              # Arrange by sites in alphabetical order
+              existing_data <- existing_data %>%
+                arrange(Site)
+              
+              
+              existing_data <- manual_table_month_order(existing_data)
+              
+              existing_data <- existing_data %>%
+                pivot_longer(cols = -contains(c("Site", "Metric")),
+                             names_to = "Month",
+                             values_to = "Value") %>%
+                mutate(Value = as.numeric(Value),
+                       Month = as.Date(paste0(Month, "-01"),
+                                       format = "%m-%Y-%d"))
+              
               # Reformat data from manual input table into department summary format
-              prof_test_summary_data <<-
+              prof_test_summary_data <-
                 # lab_prof_test_dept_summary(prof_test_manual_table)
                 lab_prof_test_dept_summary(prof_test_manual_updates)
+              
+              prof_test_summary_data <<- anti_join(prof_test_summary_data,
+                                                   existing_data,
+                                                   by = c(
+                                                     "SITE" = "Site",
+                                                     "METRIC_NAME_SUBMITTED" =
+                                                       "Metric",
+                                                     "REPORTING_MONTH" =
+                                                       "Month",
+                                                     "VALUE" = "Value"))
               
               flag <- 2
               
@@ -3099,7 +3127,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
               write_temporary_table_to_database_and_merge(prof_test_summary_data,
                                                           "TEMP_PROF_TEST")
-              
+
               update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
 
             }
