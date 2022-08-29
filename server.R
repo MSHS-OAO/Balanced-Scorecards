@@ -2756,7 +2756,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         } else {
           
-          updated_user <<- input$lab_tat_username
+          updated_user <- input$lab_tat_username
           
           scc_file_path <- scc_file$datapath
           # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
@@ -2847,7 +2847,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         } else {
           
-          updated_user <<- input$lab_tat_username
+          updated_user <- input$lab_tat_username
           
           sun_file_path <- sun_file$datapath
           # sun_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
@@ -2997,7 +2997,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       } else {
         
-        updated_user <<- input$lab_pt_username
+        updated_user <- input$lab_pt_username
         
         tryCatch({
           # Convert rhandsontable to R object
