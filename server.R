@@ -3095,7 +3095,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 # lab_prof_test_dept_summary(prof_test_manual_table)
                 lab_prof_test_dept_summary(prof_test_manual_updates)
               
-              prof_test_summary_data <<- anti_join(prof_test_summary_data,
+              prof_test_summary_data <- anti_join(prof_test_summary_data,
                                                    existing_data,
                                                    by = c(
                                                      "SITE" = "Site",
