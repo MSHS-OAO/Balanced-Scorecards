@@ -54,7 +54,7 @@ lab_sites_ordered <- c("MSH", "MSQ", "MSW", "MSM", "MSBI", "MSB", "NYEE")
 
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
-lab_scc_tat_dept_summary <- function(scc_raw_data) {
+lab_scc_tat_dept_summary <- function(scc_raw_data, updated_user) {
   scc_df <- scc_raw_data
   
   # Crosswalk sites
@@ -151,7 +151,7 @@ lab_scc_tat_dept_summary <- function(scc_raw_data) {
 }
 
 # Custom function for processing raw Sunquest data
-lab_sun_tat_dept_summary <- function(sun_raw_data) {
+lab_sun_tat_dept_summary <- function(sun_raw_data, updated_user) {
   sun_df <- sun_raw_data
   
   # Crosswalk sites
@@ -388,7 +388,7 @@ lab_sun_tat_metrics_final_df <- function(sun_summary) {
 
 # Proficiency Testing ----------------
 # Custom function for processing and formatting manual inputs into department summary format
-lab_prof_test_dept_summary <- function(data) {
+lab_prof_test_dept_summary <- function(data, updated_user) {
   prof_test_summary <- data %>%
     rename(SITE = Site,
            METRIC_NAME_SUBMITTED = Metric) %>%

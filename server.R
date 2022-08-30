@@ -2793,7 +2793,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 1) {
         tryCatch({
           # Process SCC data
-          scc_summary_data <- lab_scc_tat_dept_summary(scc_data)
+          scc_summary_data <- lab_scc_tat_dept_summary(scc_data, updated_user)
           
           flag <- 2
           
@@ -2880,7 +2880,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 1) {
         tryCatch({
           # Process Sunquest data
-          sun_summary_data <- lab_sun_tat_dept_summary(sun_data)
+          sun_summary_data <- lab_sun_tat_dept_summary(sun_data, updated_user)
           
           flag <- 2
           
@@ -3093,7 +3093,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               # Reformat data from manual input table into department summary format
               prof_test_summary_data <-
                 # lab_prof_test_dept_summary(prof_test_manual_table)
-                lab_prof_test_dept_summary(prof_test_manual_updates)
+                lab_prof_test_dept_summary(prof_test_manual_updates,
+                                           updated_user)
               
               prof_test_summary_data <- anti_join(prof_test_summary_data,
                                                    existing_data,
