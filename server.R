@@ -2766,9 +2766,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           #                         "/Data_Dashboard/Input Data Raw",
           #                         "/Lab & Blood Bank/SCC",
           #                         "/SCC HGB Report Mar 2022.xlsx")
-          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+
           # Try catch statement to ensure file type is correct
-          
           tryCatch({
             # Read in SCC file
             scc_data <- read_excel(scc_file_path)
@@ -2832,8 +2831,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Name Sunquest file
       sun_file <- input$lab_sun
-      # sun_file <- NULL
-      
+
       if (is.null(sun_file)) {
         return(NULL)
       }else{

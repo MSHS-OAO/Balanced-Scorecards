@@ -18,40 +18,6 @@ mshs_icu <- lab_icu %>%
 # Create vector with order of sites for department summary output
 lab_sites_ordered <- c("MSH", "MSQ", "MSW", "MSM", "MSBI", "MSB", "NYEE")
 
-# Import historical repositories -------------------------
-# # Read in lab department summary repos for both TAT and Proficiency testing
-# ops_metrics_lab_tat <- read_excel(ops_metrics_lab_tat_path)
-# ops_metrics_lab_pt <- read_excel(ops_metrics_lab_prof_test_path)
-# 
-# # Fix format of imported data for easier exporting ------------
-# # Reformat "Month" column in TAT data for merging
-# ops_metrics_lab_tat <- ops_metrics_lab_tat %>%
-#   mutate(Month = date(Month))
-
-# # Reformat "Month" column in Proficiency Testing data for merging
-# ops_metrics_lab_pt <- ops_metrics_lab_pt %>%
-#   mutate(Month = date(Month))
-
-# prof_test_last_month <- max(ops_metrics_lab_pt$Month)
-# next_month <- prof_test_last_month + months(1)
-
-# # Reformat Proficiency Testing data into wider format for manual entries
-# prof_test_manual_table <- ops_metrics_lab_pt %>%
-#   select(-Service) %>%
-#   filter(Month >= prof_test_last_month - months(7)) %>%
-#   # mutate(Number = percent(Number, 1)) %>%
-#   arrange(Month,
-#           Site) %>%
-#   mutate(Month = format(Month, "%m-%Y"),
-#          Number = as.character(Number)) %>%
-#   pivot_wider(names_from = Month,
-#               values_from = Number) #%>%
-#   # Add a column with the next month for the user to enter data
-#   # mutate('{format(prof_test_last_month + months(1), "%m-%Y")}' := "")
-
-# Pull in Proficiency Testing Data from Oracle table using new function
-# ops_metrics_pt_sql <- sql_manual_table_output("Lab", "proficiency_testing")
-
 # Custom functions for processing monthly raw data for TAT analysis --------------
 # Custom function for processing raw SCC data
 lab_scc_tat_dept_summary <- function(scc_raw_data, updated_user) {
@@ -276,45 +242,7 @@ lab_scc_tat_metrics_final_df <- function(scc_summary) {
   # Use custom function for updating metrics_final_df using standard process
   metrics_final_df <- metrics_final_df_subset_and_merge(scc_tat_df)
   
-  # # Merge with metric group mapping data for included metrics to get
-  # # "Metric_Group" and "Metric_Name" columns
-  # scc_tat_df <- merge(scc_tat_df,
-  #                     metric_mapping_breakout[c("Metric_Group",
-  #                                               "Metric_Name",
-  #                                               "Metric_Name_Submitted")],
-  #                     # metric_group_mapping[c("Metric_Group",
-  #                     #                        "Metric_Name",
-  #                     #                        "Metric_Name_Submitted")],
-  #                     by = c("Metric_Name_Submitted"))
-  # 
-  # # Select relevant columns
-  # scc_tat_df <- scc_tat_df[, processed_df_cols]
-  # 
-  # # Add reporting month back in
-  # scc_tat_df <- scc_tat_df %>%
-  #   mutate(Reporting_Month_Ref = as.Date(paste("01",
-  #                                              as.yearmon(Reporting_Month,
-  #                                                         "%m-%Y")),
-  #                                        format = "%d %b %Y"))
-  # 
-  # new_rows <- unique(scc_tat_df[, c("Metric_Name",
-  #                                   "Reporting_Month",
-  #                                   "Service",
-  #                                   "Site")])
-  # 
-  # metrics_final_df <- anti_join(metrics_final_df,
-  #                               new_rows)
-  # 
-  # metrics_final_df <- full_join(metrics_final_df,
-  #                               scc_tat_df_merge)
-  # 
-  # metrics_final_df <- metrics_final_df %>%
-  #   arrange(Service,
-  #           Site,
-  #           Metric_Group,
-  #           Reporting_Month_Ref)
-  # 
-  # return(metrics_final_df)
+  return(metrics_final_df)
   
 }
 
@@ -342,46 +270,7 @@ lab_sun_tat_metrics_final_df <- function(sun_summary) {
   # Use custom function for updating metrics_final_df using standard process
   metrics_final_df <- metrics_final_df_subset_and_merge(sun_tat_df)
   
-  # # Merge with metric group mapping data for included metrics to get
-  # # "Metric_Group" and "Metric_Name" columns
-  # sun_tat_df <- merge(sun_tat_df,
-  #                     metric_mapping_breakout[c("Metric_Group",
-  #                                               "Metric_Name",
-  #                                               "Metric_Name_Submitted")],
-  #                     # metric_group_mapping[c("Metric_Group",
-  #                     #                        "Metric_Name",
-  #                     #                        "Metric_Name_Submitted")],
-  #                     by = c("Metric_Name_Submitted"))
-  # 
-  # 
-  # # Select relevant columns
-  # sun_tat_df <- sun_tat_df[, processed_df_cols]
-  # 
-  # # Add reporting month back in
-  # sun_tat_df <- sun_tat_df %>%
-  #   mutate(Reporting_Month_Ref = as.Date(paste("01",
-  #                                              as.yearmon(Reporting_Month,
-  #                                                         "%m-%Y")),
-  #                                        format = "%d %b %Y"))
-  # 
-  # new_rows <- unique(sun_tat_df[, c("Metric_Name",
-  #                                   "Reporting_Month",
-  #                                   "Service",
-  #                                   "Site")])
-  # 
-  # metrics_final_df <- anti_join(metrics_final_df,
-  #                               new_rows)
-  # 
-  # metrics_final_df <- full_join(metrics_final_df,
-  #                               sun_tat_df_merge)
-  # 
-  # metrics_final_df <- metrics_final_df %>%
-  #   arrange(Service,
-  #           Site,
-  #           Metric_Group,
-  #           Reporting_Month_Ref)
-  # 
-  # return(metrics_final_df)
+  return(metrics_final_df)
   
 }
 
@@ -437,46 +326,8 @@ lab_prof_test_metrics_final_df <- function(prof_test_summary) {
   
   # Use custom function for updating metrics_final_df using standard process
   metrics_final_df <- metrics_final_df_subset_and_merge(prof_test_df)
-  
-  # # Merge with metric group mapping data for included metrics to get
-  # # "Metric_Group" and "Metric_Name" columns
-  # prof_test_df <- merge(prof_test_df,
-  #                       metric_mapping_breakout[c("Metric_Group",
-  #                                                 "Metric_Name",
-  #                                                 "Metric_Name_Submitted")],
-  #                       # metric_group_mapping[c("Metric_Group",
-  #                       #                        "Metric_Name",
-  #                       #                        "Metric_Name_Submitted")],
-  #                       by = c("Metric_Name_Submitted"))
-  # 
-  # # Select relevant columns
-  # prof_test_df <- prof_test_df[, processed_df_cols]
-  # 
-  # # Add reporting month back in
-  # prof_test_df <- prof_test_df %>%
-  #   mutate(Reporting_Month_Ref = as.Date(paste("01",
-  #                                              as.yearmon(Reporting_Month,
-  #                                                         "%m-%Y")),
-  #                                        format = "%d %b %Y"))
-  # 
-  # new_rows <- unique(prof_test_df[, c("Metric_Name",
-  #                                     "Reporting_Month",
-  #                                     "Service",
-  #                                     "Site")])
-  # 
-  # metrics_final_df <- anti_join(metrics_final_df,
-  #                               new_rows)
-  # 
-  # metrics_final_df <- full_join(metrics_final_df,
-  #                               prof_test_df_merge)
-  # 
-  # metrics_final_df <- metrics_final_df %>%
-  #   arrange(Service,
-  #           Site,
-  #           Metric_Group,
-  #           Reporting_Month_Ref)
-  # 
-  # return(metrics_final_df)
+
+  return(metrics_final_df)
   
 }
 
