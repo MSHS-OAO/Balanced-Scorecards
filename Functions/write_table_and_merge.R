@@ -121,16 +121,46 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   drop_query <- glue('DROP TABLE "{TABLE_NAME}";')
   
   # Combining all SQL transactions into one atomic unit
-  poolWithTransaction(poolcon, function(conn) {
-      dbCreateTable(conn,
-                    TABLE_NAME,
-                    processed_input_data,
-                    field.types  = DATA_TYPES)
+  # poolWithTransaction(poolcon, function(conn) {
+  #     dbCreateTable(conn,
+  #                   TABLE_NAME,
+  #                   processed_input_data,
+  #                   field.types  = DATA_TYPES)
+  # 
+  #     dbExecute(conn,all_data)
+  #     dbExecute(conn,query)
+  #     dbExecute(conn,drop_query)
+  # })
+  
+  
+  conn <- poolCheckout(poolcon)
+  
+  tryCatch({
+        dbBegin(conn)
+        dbCreateTable(conn,
+                      TABLE_NAME,
+                      processed_input_data,
+                      field.types  = DATA_TYPES)
 
-      dbExecute(conn,all_data)
-      dbExecute(conn,query)
-      dbExecute(conn,drop_query)
+        dbExecute(conn,all_data)
+        dbExecute(conn,query)
+        dbExecute(conn,drop_query)
+        #dbExecute(conn, "SELECT * FROM TBALE_NOT_EXISt")
+        dbCommit(conn)
+        poolReturn(conn)
+    
+  },
+  error = function(err){
+    dbRollback(conn)
+    poolReturn(conn)
+    showModal(modalDialog(
+      title = "Error",
+      paste0("There seems to be an issue with writing to the Database"),
+      easyClose = TRUE,
+      footer = NULL
+    ))
   })
+  
 }
 
 
