@@ -5029,33 +5029,54 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       # Code to update drop down selections based on selected service line -------------
-      # observeEvent(input$selectedService,{
-      #   
-      #   data <- metrics_final_df %>% filter(Service == input$selectedService)
-      #   picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
-      #   updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      # })
-      
+      observeEvent(input$selectedService,{
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = "OAO Cloud DB")
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService
+        
+        
+
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        dbDisconnect(conn)
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      })
+
       observeEvent(input$selectedService2,{
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService2)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = "OAO Cloud DB")
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService2
+        
+        
+        
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
 
-        campus_choices <- sort(unique(data$Site))
+        campus_choices <- sort(unique(data$SITE))
+        dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
 
       })
       
       
       observeEvent(input$selectedService3,{
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = "OAO Cloud DB")
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService3
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService3)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        
+        
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        
-        campus_choices <- sort(unique(data$Site))
+        campus_choices <- sort(unique(data$SITE))
+        dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
       })
       
