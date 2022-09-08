@@ -3101,7 +3101,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               write_temporary_table_to_database_and_merge(prof_test_summary_data,
                                                           "TEMP_PROF_TEST")
 
-              update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+              update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                        input$selectedService3)
             
             }
             
