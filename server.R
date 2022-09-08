@@ -86,27 +86,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       
-      min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(12)
-
-      # service_input <- "Lab"
-      # month_input <- "05-2022"
-      format <- "YYYY-MM-DD HH24:MI:SS"
-      conn <- dbConnect(drv = odbc::odbc(), 
-                        dsn = "OAO Cloud DB")
-      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
-      metrics_final_df <- mdf_tbl %>% filter(SERVICE %in% service_input, 
-                                                TO_DATE(min_month, format) <= REPORTING_MONTH) %>%
-                                        select(-UPDATED_TIME, -UPDATED_USER, -METRIC_NAME_SUBMITTED) %>% collect() %>%
-                                        rename(Service = SERVICE,
-                                               Site = SITE,
-                                               Metric_Group = METRIC_GROUP,
-                                               Metric_Name = METRIC_NAME,
-                                               Premier_Reporting_Period = PREMIER_REPORTING_PERIOD,
-                                               value_rounded = VALUE,
-                                               Reporting_Month_Ref = REPORTING_MONTH
-                                        ) %>%
-                                      mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"))
-      dbDisconnect(conn)
+      metrics_final_df <- mdf_from_db(service_input, month_input)
       
 
 
@@ -730,6 +710,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService2
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
 #       service_input <- "ED"
 #       month_input <- "03-2021"
@@ -3047,35 +3029,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           # Check Proficiency Test data to make sure user entered data in correct format
           # ie, number between 0 and 1, no spaces, percentage signs, etc.
-          user_format_error <<- any(
-            apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-                  MARGIN = 2,
-                  function(x)
-                    # Determine if there are issues converting any user entries to numeric values
-                    # ie, if the user enters "%" or text, the entry will be converted to NA
-                    is.na(
-                      suppressWarnings(
-                        as.numeric(
-                          str_replace_na(x, replacement = "0")
-                        )
-                      )
-                    )
-            )
-          ) |
-            any(
-              apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-                    MARGIN = 2,
-                    function(x)
-                      # Determine if numeric value is greater than 1
-                      max(
-                        suppressWarnings(
-                          as.numeric(
-                            str_replace_na(x, replacement = "0")
-                          )
-                        ), na.rm = TRUE
-                      ) > 1
-              )
-            )
+          user_format_error <- user_format_error(prof_test_manual_updates)
           
           if (user_format_error) {
             
