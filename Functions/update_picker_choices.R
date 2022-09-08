@@ -85,7 +85,7 @@ update_picker_choices_sql <- function(session, service_input_summary, service_in
     mdf_tbl %>%
       filter(SERVICE %in% service_input_site) %>%
       select(REPORTING_MONTH) %>%
-      distinct() %>%
+      distinct() %>% collect() %>%
       arrange(REPORTING_MONTH) %>%
       pull(REPORTING_MONTH),
     "%m-%Y"
@@ -102,7 +102,7 @@ update_picker_choices_sql <- function(session, service_input_summary, service_in
     mdf_tbl %>%
       filter(SERVICE %in% service_input_breakdown) %>%
       select(REPORTING_MONTH) %>%
-      distinct() %>%
+      distinct() %>% collect() %>%
       arrange(REPORTING_MONTH) %>%
       pull(REPORTING_MONTH),
     "%m-%Y"
