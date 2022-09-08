@@ -135,6 +135,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   conn <- poolCheckout(poolcon)
   
+  ## Execute staments and if there is an error  with one of them rollback changes
   tryCatch({
         dbBegin(conn)
         dbCreateTable(conn,
