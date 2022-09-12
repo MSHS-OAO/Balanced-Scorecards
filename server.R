@@ -85,10 +85,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
+      
 
-
-      # service_input <- "Lab"
-      # month_input <- "12-2021"
 
 
       # Code Starts ---------------------------------------------------------------------------------     
@@ -710,6 +710,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService2
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
 #       service_input <- "ED"
 #       month_input <- "03-2021"
@@ -2999,7 +3001,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         tryCatch({
           # Convert rhandsontable to R object
-          prof_test_manual_updates <<- hot_to_r(input$lab_prof_test)
+          prof_test_manual_updates <- hot_to_r(input$lab_prof_test)
           
           # Identify columns with no data in them and remove before further processing
           # This ensures months with no data do not get added to the department summary
@@ -3009,14 +3011,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                     function(x) 
                                       all(is.na(x))))
           
-          prof_test_manual_updates <<- prof_test_manual_updates[, non_empty_cols]
+          prof_test_manual_updates <- prof_test_manual_updates[, non_empty_cols]
+          #prof_test_manual_updates <- prof_test_manual_updates[, non_empty_cols]
           
           flag <- 1
         },
         error = function(err){
           showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the Proficiency Test data entered."),
+            paste0("There seems to be an issue with the Proficiency Test data entered"),
             easyClose = TRUE,
             footer = NULL
           ))
@@ -3027,35 +3030,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           # Check Proficiency Test data to make sure user entered data in correct format
           # ie, number between 0 and 1, no spaces, percentage signs, etc.
-          user_format_error <<- any(
-            apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-                  MARGIN = 2,
-                  function(x)
-                    # Determine if there are issues converting any user entries to numeric values
-                    # ie, if the user enters "%" or text, the entry will be converted to NA
-                    is.na(
-                      suppressWarnings(
-                        as.numeric(
-                          str_replace_na(x, replacement = "0")
-                        )
-                      )
-                    )
-            )
-          ) |
-            any(
-              apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-                    MARGIN = 2,
-                    function(x)
-                      # Determine if numeric value is greater than 1
-                      max(
-                        suppressWarnings(
-                          as.numeric(
-                            str_replace_na(x, replacement = "0")
-                          )
-                        ), na.rm = TRUE
-                      ) > 1
-              )
-            )
+          # user_format_error <- user_format_error(prof_test_manual_updates)
+          # Check Proficiency Test data to make sure user entered data in correct format
+          # ie, number between 0 and 1, no spaces, percentage signs, etc.
+          user_format_error <- user_format_error(prof_test_manual_updates)
           
           if (user_format_error) {
             
@@ -3070,39 +3048,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             # Check that data can be reformatted for department summary repo
             tryCatch({
-              
-              existing_data <- sql_manual_table_output("Lab",
-                                                       "proficiency_testing")
-              # Arrange by sites in alphabetical order
-              existing_data <- existing_data %>%
-                arrange(Site)
-              
-              
-              existing_data <- manual_table_month_order(existing_data)
-              
-              existing_data <- existing_data %>%
-                pivot_longer(cols = -contains(c("Site", "Metric")),
-                             names_to = "Month",
-                             values_to = "Value") %>%
-                mutate(Value = as.numeric(Value),
-                       Month = as.Date(paste0(Month, "-01"),
-                                       format = "%m-%Y-%d"))
-              
+       
               # Reformat data from manual input table into department summary format
               prof_test_summary_data <-
                 # lab_prof_test_dept_summary(prof_test_manual_table)
                 lab_prof_test_dept_summary(prof_test_manual_updates,
                                            updated_user)
-              
-              prof_test_summary_data <- anti_join(prof_test_summary_data,
-                                                   existing_data,
-                                                   by = c(
-                                                     "SITE" = "Site",
-                                                     "METRIC_NAME_SUBMITTED" =
-                                                       "Metric",
-                                                     "REPORTING_MONTH" =
-                                                       "Month",
-                                                     "VALUE" = "Value"))
+     
+
+              prof_test_summary_data <- return_updated_manual_data("Lab", "proficiency_testing", prof_test_summary_data)
+           
+
               
               flag <- 2
               
@@ -3124,11 +3080,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             if(flag == 2) {
               
+              prof_test_summary_data_test <<- prof_test_summary_data
               write_temporary_table_to_database_and_merge(prof_test_summary_data,
                                                           "TEMP_PROF_TEST")
 
-              update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-
+              update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                        input$selectedService3)
+            
             }
             
           }
@@ -5010,32 +4968,52 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Code to update drop down selections based on selected service line -------------
       observeEvent(input$selectedService,{
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = dsn)
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        dbDisconnect(conn)
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       })
-      
+
       observeEvent(input$selectedService2,{
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService2)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = dsn)
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService2
+        
+        
+        
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
 
-        campus_choices <- sort(unique(data$Site))
+        campus_choices <- sort(unique(data$SITE))
+        dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
 
       })
       
       
       observeEvent(input$selectedService3,{
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = dsn)
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService3
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService3)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        
+        
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        
-        campus_choices <- sort(unique(data$Site))
+        campus_choices <- sort(unique(data$SITE))
+        dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
       })
       

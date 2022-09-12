@@ -9,23 +9,19 @@ default_service <- sort(unique(metrics_final_df$Service))[1]
 service_choices <- sort(unique(metrics_final_df$Service))
 metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
 default_metric_group <- metric_group_choices
-# service_choices <- sort(
-#   unique(
-#     metrics_final_df$Service[
-#       which(!(
-#         metrics_final_df$Service %in% c("Emergency Department", "Nursing")
-#         )
-#         )
-#       ]
-#     )
-#   )
-
 # default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
 # month_choices <- unique(metrics_final_df$Reporting_Month)
 default_month <- format(max(metrics_final_df$Reporting_Month_Ref, na.rm = TRUE), "%m-%Y")
 month_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
 
-
+# conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+#                   dsn = dsn) 
+# mdf_tbl <- tbl("BSC_METRICS_FINAL_DF")
+# service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE))
+# service_choices <- sort(service_choices$SERVICE)
+#   default_campus <- mdf_tbl %>% select(SITE) %>% summarise()
+  
+  
 
 ui <- 
   fluidPage(
