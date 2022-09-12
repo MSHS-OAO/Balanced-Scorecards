@@ -71,7 +71,7 @@ suppressMessages({
   library(magrittr)
   #library(reshape2)
 })
-
+dsn <- "OAO Cloud DB"
 
 options(shiny.maxRequestSize=500*1024^2)
 

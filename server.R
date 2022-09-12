@@ -3001,7 +3001,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         tryCatch({
           # Convert rhandsontable to R object
-          prof_test_manual_updates <<- hot_to_r(input$lab_prof_test)
+          prof_test_manual_updates <- hot_to_r(input$lab_prof_test)
           
           # Identify columns with no data in them and remove before further processing
           # This ensures months with no data do not get added to the department summary
@@ -3011,14 +3011,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                     function(x) 
                                       all(is.na(x))))
           
-          prof_test_manual_updates <<- prof_test_manual_updates[, non_empty_cols]
+          prof_test_manual_updates <- prof_test_manual_updates[, non_empty_cols]
+          #prof_test_manual_updates <- prof_test_manual_updates[, non_empty_cols]
           
           flag <- 1
         },
         error = function(err){
           showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the Proficiency Test data entered."),
+            paste0("There seems to be an issue with the Proficiency Test data entered"),
             easyClose = TRUE,
             footer = NULL
           ))
@@ -3027,6 +3028,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if (flag == 1) {
           
+          # Check Proficiency Test data to make sure user entered data in correct format
+          # ie, number between 0 and 1, no spaces, percentage signs, etc.
+          # user_format_error <- user_format_error(prof_test_manual_updates)
           # Check Proficiency Test data to make sure user entered data in correct format
           # ie, number between 0 and 1, no spaces, percentage signs, etc.
           user_format_error <- user_format_error(prof_test_manual_updates)
@@ -3044,39 +3048,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             # Check that data can be reformatted for department summary repo
             tryCatch({
-              
-              existing_data <- sql_manual_table_output("Lab",
-                                                       "proficiency_testing")
-              # Arrange by sites in alphabetical order
-              existing_data <- existing_data %>%
-                arrange(Site)
-              
-              
-              existing_data <- manual_table_month_order(existing_data)
-              
-              existing_data <- existing_data %>%
-                pivot_longer(cols = -contains(c("Site", "Metric")),
-                             names_to = "Month",
-                             values_to = "Value") %>%
-                mutate(Value = as.numeric(Value),
-                       Month = as.Date(paste0(Month, "-01"),
-                                       format = "%m-%Y-%d"))
-              
+       
               # Reformat data from manual input table into department summary format
               prof_test_summary_data <-
                 # lab_prof_test_dept_summary(prof_test_manual_table)
                 lab_prof_test_dept_summary(prof_test_manual_updates,
                                            updated_user)
-              
-              prof_test_summary_data <- anti_join(prof_test_summary_data,
-                                                   existing_data,
-                                                   by = c(
-                                                     "SITE" = "Site",
-                                                     "METRIC_NAME_SUBMITTED" =
-                                                       "Metric",
-                                                     "REPORTING_MONTH" =
-                                                       "Month",
-                                                     "VALUE" = "Value"))
+     
+
+              prof_test_summary_data <- return_updated_manual_data("Lab", "proficiency_testing", prof_test_summary_data)
+           
+
               
               flag <- 2
               
@@ -3098,6 +3080,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             if(flag == 2) {
               
+              prof_test_summary_data_test <<- prof_test_summary_data
               write_temporary_table_to_database_and_merge(prof_test_summary_data,
                                                           "TEMP_PROF_TEST")
 
@@ -4989,7 +4972,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                           dsn = "OAO Cloud DB")
         mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
         service_selected <- input$selectedService
-        
         
 
         data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
