@@ -4969,7 +4969,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Code to update drop down selections based on selected service line -------------
       observeEvent(input$selectedService,{
         conn <- dbConnect(drv = odbc::odbc(), 
-                          dsn = "OAO Cloud DB")
+                          dsn = dsn)
         mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
         service_selected <- input$selectedService
         
@@ -4983,7 +4983,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       observeEvent(input$selectedService2,{
         
         conn <- dbConnect(drv = odbc::odbc(), 
-                          dsn = "OAO Cloud DB")
+                          dsn = dsn)
         mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
         service_selected <- input$selectedService2
         
@@ -5002,7 +5002,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       observeEvent(input$selectedService3,{
         conn <- dbConnect(drv = odbc::odbc(), 
-                          dsn = "OAO Cloud DB")
+                          dsn = dsn)
         mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
         service_selected <- input$selectedService3
         
