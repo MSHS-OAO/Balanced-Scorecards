@@ -9,23 +9,19 @@ default_service <- sort(unique(metrics_final_df$Service))[1]
 service_choices <- sort(unique(metrics_final_df$Service))
 metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
 default_metric_group <- metric_group_choices
-# service_choices <- sort(
-#   unique(
-#     metrics_final_df$Service[
-#       which(!(
-#         metrics_final_df$Service %in% c("Emergency Department", "Nursing")
-#         )
-#         )
-#       ]
-#     )
-#   )
-
 # default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
 # month_choices <- unique(metrics_final_df$Reporting_Month)
 default_month <- format(max(metrics_final_df$Reporting_Month_Ref, na.rm = TRUE), "%m-%Y")
 month_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
 
-
+# conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+#                   dsn = dsn) 
+# mdf_tbl <- tbl("BSC_METRICS_FINAL_DF")
+# service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE))
+# service_choices <- sort(service_choices$SERVICE)
+#   default_campus <- mdf_tbl %>% select(SITE) %>% summarise()
+  
+  
 
 ui <- 
   fluidPage(
@@ -534,6 +530,12 @@ ui <-
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
                                         tabPanel("Turnaround Time",
                                                  hr(),
+                                                 textInput("lab_tat_username",
+                                                           labelMandatory(
+                                                             "Please enter name:"
+                                                           )
+                                                           ),
+                                                 hr(),
                                                  fileInput("lab_scc", label = "Please upload SCC lab data"),
                                                  hr(),
                                                  fileInput("lab_sun", label = "Please upload Sunquest lab data"),
@@ -927,7 +929,6 @@ ui <-
   tags$style(type = 'text/css', 
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
              '.navbar-default .navbar-brand{color: black; font-size: 24px;}'
-  ) 
-             
-             
+             )
+
   ) # Close navbarPage

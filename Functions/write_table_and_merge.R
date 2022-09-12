@@ -1,23 +1,9 @@
 library(odbc)
 library(DBI)
 library(dbplyr)
-library(pool)
-
-# get the credentials ----
-#source("credentials.R")
-
-# establish connection ----
-# con <- dbConnect(odbc(), 
-#                  Driver = "Oracle 21_5 ODBC driver", 
-#                  Trusted_Connection = "True",
-#                  uid = .username,
-#                  pwd = .password)
-# con <- dbConnect(odbc::odbc(), "OAO Cloud DB", timeout = 30)
 
 options(odbc.batch_rows = 1000000)
 
-poolcon <- dbPool(drv = odbc::odbc(), 
-                  dsn = "OAO Cloud DB")
 
 # function to convert the record of data frame to into satement
 get_values <- function(x,table_name){
@@ -57,7 +43,9 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   # Add UPDATE_TIME and check for all the fields are characters
   processed_input_data <- processed_input_data %>%
-    mutate(UPDATED_TIME = as.character(Sys.time()),
+    mutate(REPORTING_MONTH = as.character(REPORTING_MONTH),
+           # UPDATED_TIME = as.character(Sys.time()),
+           UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
            VALUE = as.character(VALUE),
            VALUE = coalesce(VALUE,"NULL"))%>%
     select(SERVICE, 
@@ -118,17 +106,32 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   # glue query for dropping the table
   drop_query <- glue('DROP TABLE "{TABLE_NAME}";')
   
-  # Combining all SQL transactions into one atomic unit
-  poolWithTransaction(poolcon, function(conn) {
-      dbCreateTable(conn,
-                    TABLE_NAME,
-                    processed_input_data,
-                    field.types  = DATA_TYPES)
+  
+  conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+                    dsn = dsn)
 
-      dbExecute(conn,all_data)
-      dbExecute(conn,query)
-      dbExecute(conn,drop_query)
+  # ## Execute staments and if there is an error  with one of them rollback changes
+  tryCatch({
+        dbBegin(conn)
+        dbCreateTable(conn,
+                      TABLE_NAME,
+                      processed_input_data,
+                      field.types  = DATA_TYPES)
+
+        dbExecute(conn,all_data)
+        dbExecute(conn,query)
+        dbExecute(conn,drop_query)
+        dbCommit(conn)
+        dbDisconnect(conn)
+
+  },
+  error = function(err){
+    print(err)
+    dbRollback(conn)
+    dbDisconnect(conn)
+    print("error")
   })
+  
 }
 
 

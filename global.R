@@ -72,7 +72,6 @@ suppressMessages({
   #library(reshape2)
 })
 
-
 options(shiny.maxRequestSize=500*1024^2)
 
 # Maximize R Memory Size 
@@ -182,13 +181,13 @@ if(file.exists("J:/")){
   start <- "J:" #Comment when publishing to RConnect
   home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
   start_shared <- "J:"
-  driver_name <- "OAO Cloud DB"
+  dsn <- "OAO Cloud DB"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
   home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
   install.packages("reshape2", repos = "http://cran.us.r-project.org")
-  driver_name <- "OAO Cloud DB" 
+  dsn <- "OAO Cloud DB" 
 }
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")

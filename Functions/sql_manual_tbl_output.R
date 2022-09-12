@@ -1,4 +1,4 @@
-con <- dbConnect(odbc::odbc(), driver_name, timeout = 30)
+con <- dbConnect(odbc::odbc(), dsn, timeout = 30)
 summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
 manual_tbl_mapping <- tbl(con, "BSC_MANUAL_TABLE_MAPPING")
 
@@ -12,19 +12,20 @@ sql_manual_table_output <- function(service, table_name) {
     collect()
   manual_mapping_metrics <- unique(manual_mapping_metrics$METRIC_NAME_SUBMITTED)
   
-  df <- summary_repo_tbl %>% filter(SERVICE %in% service & METRIC_NAME_SUBMITTED %in% manual_mapping_metrics
-                                    ) %>%
-          select(-SERVICE, -PREMIER_REPORTING_PERIOD, -UPDATE_TIME) %>%
-          filter(MONTH >= TO_DATE(max_month, format)) %>% 
-          arrange(MONTH, SITE) %>%
-          collect() %>%
-          mutate(MONTH = format(MONTH, "%m-%Y"),
-                 VALUE = as.character(VALUE)) %>%
-          rename(Month = MONTH,
-                 Site = SITE,
-                 Metric = METRIC_NAME_SUBMITTED,
-                 Value = VALUE) %>%
-        pivot_wider(names_from = Month,
-                    values_from = Value)
+  df <- summary_repo_tbl %>%
+    filter(SERVICE %in% service &
+             METRIC_NAME_SUBMITTED %in% manual_mapping_metrics) %>%
+    select(-SERVICE, -PREMIER_REPORTING_PERIOD, -UPDATED_TIME, -UPDATED_USER) %>%
+    filter(REPORTING_MONTH >= TO_DATE(max_month, format)) %>% 
+    arrange(REPORTING_MONTH, SITE) %>%
+    collect() %>%
+    mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%m-%Y"),
+           VALUE = as.character(VALUE)) %>%
+    rename(Month = REPORTING_MONTH,
+           Site = SITE,
+           Metric = METRIC_NAME_SUBMITTED,
+           Value = VALUE) %>%
+    pivot_wider(names_from = Month,
+                values_from = Value)
     
 }

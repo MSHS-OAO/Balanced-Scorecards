@@ -1,6 +1,6 @@
 library(DBI)
 library(odbc)
-#con <- dbConnect(odbc::odbc(), "OAO Cloud DB", timeout = 30)
+# con <- dbConnect(odbc::odbc(), "OAO Cloud DB", timeout = 30)
 
 # min_month <- "2022-01-01"
 # max_month <- "2022-02-01"
