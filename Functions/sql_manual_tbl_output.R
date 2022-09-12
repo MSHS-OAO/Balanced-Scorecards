@@ -1,4 +1,4 @@
-con <- dbConnect(odbc::odbc(), driver_name, timeout = 30)
+con <- dbConnect(odbc::odbc(), dsn, timeout = 30)
 summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
 manual_tbl_mapping <- tbl(con, "BSC_MANUAL_TABLE_MAPPING")
 
