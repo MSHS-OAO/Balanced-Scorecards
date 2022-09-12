@@ -108,7 +108,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   
   
   conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
-                    dsn = "OAO Cloud DB")
+                    dsn = dsn)
 
   # ## Execute staments and if there is an error  with one of them rollback changes
   tryCatch({
