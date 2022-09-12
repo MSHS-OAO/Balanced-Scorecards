@@ -1062,6 +1062,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
 
       # service_input <- "Engineering"
       # month_input <- "12-2021"
@@ -4978,7 +4980,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         dbDisconnect(conn)
         picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      })
+      }, ignoreInit = T)
 
       observeEvent(input$selectedService2,{
         
@@ -4997,7 +4999,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
 
-      })
+      }, ignoreInit = T)
       
       
       observeEvent(input$selectedService3,{
@@ -5015,7 +5017,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         campus_choices <- sort(unique(data$SITE))
         dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
-      })
+      }, ignoreInit = T)
       
       observeEvent(input$selectedService4, {
         
@@ -5028,7 +5030,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                           choices = picker_choices_metric_group,
                           selected = picker_choices_metric_group)
         
-      })
+      }, ignoreInit = T)
 
 
       

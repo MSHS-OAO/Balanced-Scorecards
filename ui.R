@@ -3,26 +3,27 @@ library(shinyWidgets)
 library(shinydashboard)
 
 # Default values for global filters -------------------------------------------------------------------------
-default_campus <- sort(unique(metrics_final_df$Site))
-campus_choices <- sort(unique(metrics_final_df$Site))
-default_service <- sort(unique(metrics_final_df$Service))[1]
-service_choices <- sort(unique(metrics_final_df$Service))
-metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
+conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+                  dsn = dsn)
+mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+# Get choices of service from db
+service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect()
+service_choices <- sort(service_choices$SERVICE)
+default_service <- service_choices[1]
+#Get campus choices from db
+default_campus <- mdf_tbl %>% select(SITE) %>% summarise(SITE = unique(SITE)) %>% collect()
+default_campus <- sort(default_campus$SITE)
+campus_choices <- default_campus
+#Get metric group choices from db
+metric_group_choices <- mdf_tbl %>% select(METRIC_GROUP) %>% summarise(METRIC_GROUP = unique(METRIC_GROUP)) %>% collect()
+metric_group_choices <- sort(metric_group_choices$METRIC_GROUP)
 default_metric_group <- metric_group_choices
-# default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
-# month_choices <- unique(metrics_final_df$Reporting_Month)
-default_month <- format(max(metrics_final_df$Reporting_Month_Ref, na.rm = TRUE), "%m-%Y")
-month_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-
-# conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
-#                   dsn = dsn) 
-# mdf_tbl <- tbl("BSC_METRICS_FINAL_DF")
-# service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE))
-# service_choices <- sort(service_choices$SERVICE)
-#   default_campus <- mdf_tbl %>% select(SITE) %>% summarise()
-  
-  
-
+#Get month choices from db
+default_month <- mdf_tbl %>% filter(SERVICE == default_service) %>% summarise(REPORTING_MONTH = max(REPORTING_MONTH)) %>% collect()
+default_month <- format(sort(default_month$REPORTING_MONTH), "%m-%Y")
+month_choices <- mdf_tbl %>% filter(SERVICE == default_service) %>% select(REPORTING_MONTH) %>% summarise(REPORTING_MONTH = unique(REPORTING_MONTH)) %>% collect()
+month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
+dbDisconnect(conn)
 ui <- 
   fluidPage(
     
