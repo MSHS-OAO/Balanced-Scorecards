@@ -59,7 +59,7 @@ update_picker_choices <- function(session, service_input_summary, service_input_
 update_picker_choices_sql <- function(session, service_input_summary, service_input_site, service_input_breakdown){
   
   conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
-                    dsn = "OAO Cloud DB") 
+                    dsn = dsn) 
   mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") # Create link to mdf table in Oracle
   # Summary tab month drop down update
   #service_input_summary <- input$selectedService
