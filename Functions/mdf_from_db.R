@@ -4,9 +4,9 @@ mdf_from_db <- function(service_input, month_input) {
   # service_input <- "Lab"
   # month_input <- "05-2022"
   format <- "YYYY-MM-DD HH24:MI:SS"
-  # conn <- dbConnect(drv = odbc::odbc(), 
-  #                   dsn = "OAO Cloud DB")
-  mdf_tbl <- tbl(poolcon, "BSC_METRICS_FINAL_DF")
+  conn <- dbConnect(drv = odbc::odbc(),
+                    dsn = "OAO Cloud DB")
+  mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
   metrics_final_df <- mdf_tbl %>% filter(SERVICE %in% service_input, 
                                          TO_DATE(min_month, format) <= REPORTING_MONTH) %>%
     select(-UPDATED_TIME, -UPDATED_USER, -METRIC_NAME_SUBMITTED) %>% collect() %>%
@@ -19,7 +19,7 @@ mdf_from_db <- function(service_input, month_input) {
            Reporting_Month_Ref = REPORTING_MONTH
     ) %>%
     mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"))
-  #dbDisconnect(conn)
+  dbDisconnect(conn)
   
   return(metrics_final_df)
 }
