@@ -1479,6 +1479,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       budget_to_actual_current_summary_repo <- full_join(budget_to_actual_current_summary_repo,budget_process)
       
       write_xlsx(budget_to_actual_current_summary_repo, budget_to_actual_path_new)
+      budget_data_repo <<- read_excel(budget_to_actual_path_new)
 
       
     })
