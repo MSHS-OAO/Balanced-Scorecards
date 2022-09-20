@@ -87,8 +87,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth
 
 
-      # service_input <- "Lab"
-      # month_input <- "12-2021"
+      # service_input <- "Engineering"
+      # month_input <- "08-2022"
 
 
       # Code Starts ---------------------------------------------------------------------------------     
@@ -216,6 +216,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         ytd_join <- left_join(ytd_budget, summary_tab_metrics)
         ytd_join <- ytd_join %>% select(-Service, -Metric_Unit, -Value, - Metric_Name_Submitted) %>% rename(value_rounded = Value_ytd)
+        # ytd_join <- ytd_join %>% select(-Metric_Unit, -Value, - Metric_Name_Submitted) %>% rename(value_rounded = Value_ytd)
+        
         
         month_in_data <- unique(format(ytd_join$Month,"%b"))
         
@@ -238,7 +240,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # FYTD Period Filter 
         fytd_period <- period_filter %>%        #Get all data from YTD
           # Remove monthly Patient Experience data from YTD sections since there is separate YTD data for this
-          filter(!(Metric_Group %in% c("Patient Experience", "Budget to Actual"))) %>%
+          filter(!(Metric_Group %in% c("Patient Experience"))) %>%
           group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
           #filter(total == max(total)) %>%
           #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
@@ -396,7 +398,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ungroup()
     
       # Merge for summary 
-      fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+      # fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+      fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
       fytd_summary <- fytd_merged
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
@@ -464,6 +467,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # filtering out metrics based on whether or not they are included in the
       # summary and site tabs and then filtering on whether or not there is a status
       # NOTE: Revisit this after reviewing which services/metrics are shown in summary tab but not in the status section
+      
+      
       current_status <- current_summary_data %>%
         mutate(TestCol = paste(Metric_Group, Metric_Name),
                Incl = TestCol %in% unique(
@@ -492,6 +497,43 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         relocate(Section) %>%
         pivot_wider(names_from = Site,
                     values_from = Status)
+      
+      if("Budget to Actual" %in% current_summary_data$Metric_Group) {
+        current_status_budget <- current_summary_data %>%
+          filter(Metric_Group == "Budget to Actual")
+        
+        budget_target_current <- read_excel(paste0(home_path, "Summary Repos/Budget to Actual New.xlsx"))
+        
+        if (as.character(month_selected )%in% month_in_repo) {
+          budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
+            select(-Service, -Month, -Value_ytd) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+        } else {
+          budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget_Total") %>%
+            select(-Service, -Month, -Value_ytd) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+        }
+        
+        budget_target_current <- left_join(current_status_budget, budget_target_current) 
+        
+        budget_target_current <- budget_target_current %>% select(-Target) %>%
+          rename(Target = Value) %>%
+          mutate(Target = value_rounded/Target,
+                 Status = ifelse(Target >= 0, "Green", ifelse(Target < -0.02, "Red", "Yellow"))) %>%
+          filter(!is.na(Target)) %>%
+          mutate(Section = "Status",
+                 `Current Period` = ifelse(
+                   str_detect(Premier_Reporting_Period, "/"), 
+                   paste0("Rep. Pd. Ending ",
+                          Premier_Reporting_Period),
+                   Premier_Reporting_Period)) %>%
+          ungroup() %>%
+          select(Metric_Group, Section, Metric_Name_Summary, `Current Period`, Site, Status) %>%
+          relocate(Section) %>%
+          pivot_wider(names_from = Site,
+                      values_from = Status)
+        
+        current_status <- full_join(current_status, budget_target_current)
+        
+      }
       
       # Find and add any missing sites
       missing_sites <- setdiff(sites_inc, names(current_status))
@@ -524,32 +566,84 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(!is.na(Target)) %>%
         mutate(Section = "Status") %>%
         select(Section, Metric_Name_Summary, `Fiscal Year to Date`, Site, Status)
+      
+      
+      budget_target_check <- target_mapping %>%
+        select(-contains("Status")) %>%
+        filter(Target %in% c("Budget")) %>%
+        filter(Service %in% service_input) %>%
+        select(Service, Metric_Group, Metric_Name) %>%
+        distinct()
             
       # NOTE: Should we use a str_detect instead here so we can capture Labor and Non Labor as well?
-      if("Budget to Actual" %in% as.vector(status_section_metrics$Metric_Name)){
+      if("Budget to Actual" %in% as.vector(budget_target_check$Metric_Name)){
+        
+        fytd_status_budget <- left_join(fytd_merged,
+                                 metric_targets_status,
+                                 by = c("Site",
+                                        "Metric_Group",
+                                        "Metric_Name"))
+        
+        fytd_status_budget <- fytd_status_budget %>%
+                              filter(Metric_Group == "Budget to Actual") %>%
+                              mutate(Service = service_input,
+                                     Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+                              select(-value_rounded)
+        
+        
+        budget_actual <- read_excel(paste0(home_path, "Summary Repos/Budget to Actual New.xlsx"))
+        if (as.character(month_selected )%in% month_in_repo) {
+          budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
+            select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
+        } else {
+          budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
+            select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
+        }
+        fytd_status_budget <- left_join(fytd_status_budget, budget_actual)
+        
+        
+        budget_target <- read_excel(paste0(home_path, "Summary Repos/Budget to Actual New.xlsx"))
+        
+        if (as.character(month_selected )%in% month_in_repo) {
+          budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
+            select(-Service, -Month, -Value) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+        } else {
+          budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget_Total") %>%
+            select(-Service, -Month, -Value) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+        }
+        
+        budget_to_actual_target <- left_join(fytd_status_budget, budget_target)
+        budget_to_actual_target <- budget_to_actual_target %>% select(-Target) %>%
+                                    rename(Target = Value_ytd) %>%
+          mutate(Target = value_rounded/Target,
+                 Status = ifelse(Target >= 0, "Green", ifelse(Target < -0.02, "Red", "Yellow"))) %>%
+          filter(!is.na(Target)) %>%
+          mutate(Section = "Status") %>%
+          select(Section, Metric_Name_Summary, `Fiscal Year to Date`, Site, Status)
+        
         
         #Calculate FYTD Budget to Actual Targets
-        budget_to_actual_target <- metrics_final_df %>% 
-          filter((Service == service_input) &
-                   (Metric_Name %in% c("Budget_Total", "Budget to Actual")) & 
-                   (Reporting_Month_Ref %in%
-                      unique((fytd_period %>% 
-                                filter(Metric_Name == "Budget to Actual"))$Reporting_Month_Ref))) %>%
-          group_by(Service, Site, Metric_Group, Metric_Name) %>%
-          summarise(value_rounded = sum(value_rounded)) %>%
-          pivot_wider(names_from = "Metric_Name",
-                      values_from = "value_rounded") %>%
-          mutate(Target = round(`Budget to Actual`/ Budget_Total, 2),
-                 Status = ifelse(Target >= 0, "Green", ifelse(Target < -0.02, "Red", "Yellow"))) %>%
-          pivot_longer(4:5,
-                       names_to = "Summary_Metric_Name",
-                       values_to = "value_rounded") %>%
-          filter(Summary_Metric_Name == "Budget to Actual") %>%
-          mutate(Section = "Status")
-        
-        budget_to_actual_target <- budget_to_actual_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
-        budget_to_actual_target$`Fiscal Year to Date` <-
-          fytd_status$`Fiscal Year to Date`[match(budget_to_actual_target$Summary_Metric_Name, fytd_status$Metric_Name)]
+        # budget_to_actual_target <- metrics_final_df %>% 
+        #   filter((Service == service_input) &
+        #            (Metric_Name %in% c("Budget_Total", "Budget to Actual")) & 
+        #            (Reporting_Month_Ref %in%
+        #               unique((fytd_period %>% 
+        #                         filter(Metric_Name == "Budget to Actual"))$Reporting_Month_Ref))) %>%
+        #   group_by(Service, Site, Metric_Group, Metric_Name) %>%
+        #   summarise(value_rounded = sum(value_rounded)) %>%
+        #   pivot_wider(names_from = "Metric_Name",
+        #               values_from = "value_rounded") %>%
+        #   mutate(Target = round(`Budget to Actual`/ Budget_Total, 2),
+        #          Status = ifelse(Target >= 0, "Green", ifelse(Target < -0.02, "Red", "Yellow"))) %>%
+        #   pivot_longer(4:5,
+        #                names_to = "Summary_Metric_Name",
+        #                values_to = "value_rounded") %>%
+        #   filter(Summary_Metric_Name == "Budget to Actual") %>%
+        #   mutate(Section = "Status")
+        # 
+        # budget_to_actual_target <- budget_to_actual_target[,c("Section", "Summary_Metric_Name", "Site", "Status")]
+        # budget_to_actual_target$`Fiscal Year to Date` <-
+        #   fytd_status$`Fiscal Year to Date`[match(budget_to_actual_target$Summary_Metric_Name, fytd_status$Metric_Name_Summary)]
       }else{
         budget_to_actual_target <- NULL
       }
@@ -1452,7 +1546,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         tryCatch({
           data <- read_excel(inFile_budget$datapath,  sheet = "5-BSC Cost Center Detail", skip = 3)
-           budget_process <- budget_raw_file_process(data)
+          #data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail - Balanced Scorecards/Back Office FiSRO Dashboard Sept. Steering Committee (Aug 22 YTD) BSC.xlsx", sheet = "5-BSC Cost Center Detail", skip = 3)
+          budget_process <- budget_raw_file_process(data)
            showModal(modalDialog(
              title = "Success",
              paste0("The data has been imported succesfully"),

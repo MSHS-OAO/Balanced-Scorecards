@@ -1,4 +1,4 @@
-#data <- read_excel("C:/Users/villea04/Desktop/Back Office FiSRO Dashboard May Steering Committee (Apr 22 YTD)_061522.xlsx", sheet = "5-BSC Cost Center Detail", skip = 3)
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail - Balanced Scorecards/Back Office FiSRO Dashboard Sept. Steering Committee (Aug 22 YTD) BSC.xlsx", sheet = "5-BSC Cost Center Detail", skip = 3)
 
 budget_to_actual_path_new <- paste0(home_path, "Summary Repos/Budget to Actual New.xlsx")
 
@@ -15,9 +15,9 @@ budget_raw_file_process <- function(data){
   data <- data %>% filter(!(Function %in% c("Radiology", "Emergency Department"
                                             )
                             )
-                          ) %>%
-    filter(`Radiology?` != "Radiology") %>%
-  filter(`Emergency Department?`!= "Emergency Department")
+                          ) #%>%
+    #filter(`Radiology?` != "Radiology") #%>%
+  #filter(`Emergency Department?`!= "Emergency Department")
   
   data <- bind_rows(data,data_ed,data_rad)
   
@@ -69,7 +69,22 @@ budget_raw_file_process <- function(data){
                                                       )
                           ) %>%
             mutate(`Sum of Month Budget` = ifelse(is.na(`Sum of Month Budget`), 0 ,`Sum of Month Budget`), 
-                   `Sum of Month Actual` =  ifelse(is.na(`Sum of Month Actual`), 0 ,`Sum of Month Actual`)) %>%
+                   `Sum of Month Actual` =  ifelse(is.na(`Sum of Month Actual`), 0 ,`Sum of Month Actual`)) 
+  
+  budget_total <- budget_data %>% group_by(Function, SITE, Month) %>%
+                    summarise(Value = sum(as.numeric(`Sum of Month Budget`), na.rm = TRUE),
+                              Value_ytd = sum(as.numeric(`Sum of YTD Budget`), na.rm = TRUE)) %>%
+                    mutate(Month = paste0(Month,"01")) %>%
+                    select(Function, SITE, Month, Value, Value_ytd) %>%
+                    mutate(EXPTYPE = "Budget_Total") %>%
+                    rename(Service = Function, 
+                           Site = SITE,
+                           Metric_Name_Submitted = EXPTYPE) %>%
+                    mutate(Month = as.Date(Month, format = "%b%Y%d")) %>%
+                    distinct()
+  
+  
+  budget_data <- budget_data %>%
             group_by(Function, SITE, Month, EXPTYPE) %>%
             summarise(Value = sum(`Sum of Month Budget`, na.rm = T) - sum(`Sum of Month Actual`, na.rm = T),
                       Value_ytd = sum(`Sum of YTD Budget`, na.rm = T) - sum(`Sum of YTD Actual`, na.rm = T),
@@ -89,6 +104,7 @@ budget_raw_file_process <- function(data){
                 mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
            
         budget_data_df <- full_join(budget_data, total)
+        budget_data_df <- full_join(budget_data_df, budget_total)
 
             
 }
