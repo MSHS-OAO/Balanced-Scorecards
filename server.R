@@ -87,7 +87,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth
 
 
-      # service_input <- "Engineering"
+      # service_input <- "Food Services"
       # month_input <- "08-2022"
 
 
@@ -739,7 +739,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                     x))))
                       }
         ))
-
+      metrics_summary <- metrics_summary %>% filter(!(Metric_Name_Summary == "Total Revenue to Budget Variance"))
+      
       summary_tab_tb <- rbind(metrics_summary, targets_summary) # Don't think we need to specify which columns anymore#2[,1:18])
       # Why do we need this? There is no NYEE, there is NYEE.x and NYEE.y
       #summary_tab_tb$NYEE <- NULL
@@ -756,6 +757,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
+     
       
       if(service_input == "Imaging"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
