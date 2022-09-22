@@ -104,7 +104,7 @@ pt_exp_dept_summary <- function(data) {
   # Filter out unused data
   pt_exp_data_split <- pt_exp_data_split %>%
     # Remove irrelevant sites and service line combinations
-    filter(!(Site %in% c("MSQ", "NYEE") & Service %in% "Patient Transport") &
+    filter(!(Site %in% c("NYEE") & Service %in% "Patient Transport") &
              # Filter out any NYEE ED data
              !(Site %in% c("NYEE") & Service %in% "ED") &
              # Filter out data for questions that aren't being tracked in the scorecard
