@@ -46,7 +46,7 @@ kpibme_reports_ui <- kpibme_reports %>%
   arrange(Site)
 
 # function to append the new data to summary repo- KPIs & Disruptions and Issues -----
-process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
+process_manual_entry_to_summary_repo_format_biomed <- function(data,type,updated_user){
   
   # Code block to process KPI input data
   if(type=="KPI"){
@@ -60,7 +60,8 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
       mutate(REPORTING_MONTH = as.Date(format(parse_date_time(paste0("01-",REPORTING_MONTH),orders = "dmy"),"%Y-%m-%d")),
              SERVICE = "Biomed / Clinical Engineering",
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
-             REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
+             #REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
+             UPDATED_USER = updated_user)
       
       summary_repo_kpi_format <- as.data.frame(summary_repo_kpi_format)
       summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]    
@@ -81,7 +82,8 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
              SERVICE = "Biomed / Clinical Engineering",
              METRIC_NAME_SUBMITTED = "Total Disruptions/Issues",
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
-             REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
+             #REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
+             UPDATED_USER = updated_user)
     
     summary_repo_di_format <- as.data.frame(summary_repo_di_format)
     summary_repo_di_format <- summary_repo_di_format[complete.cases(summary_repo_di_format), ]    
