@@ -86,6 +86,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       
+      service_input <- "Engineering"
+      month_input <- "06-2022"
+      
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
 
@@ -2459,8 +2462,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if (flag == 1) {
           
           #removing the metrics that can have numbers greater than 1
-          engineering_manual_updates <- engineering_manual_updates %>% filter(!(Metric %in% c("Total Critical PMs", "Number of Work Orders Created with a Life Safety Priority", "EOC/Patient Care Work Orders Received")))          
-          user_format_error <- manual_format_check(engineering_manual_updates)
+          engineering_manual_updates_check <- engineering_manual_updates %>% filter(!(Metric %in% c("Total Critical PMs", "Number of Work Orders Created with a Life Safety Priority", "EOC/Patient Care Work Orders Received")))          
+          user_format_error <- manual_format_check(engineering_manual_updates_check)
           
           if (user_format_error) {
             
@@ -2497,7 +2500,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             })
             
             if(flag == 2) {
-              
+              engineering_summary_data_test <<- engineering_summary_data
               write_temporary_table_to_database_and_merge(engineering_summary_data,
                                                           "TEMP_ENGINEERING")
               

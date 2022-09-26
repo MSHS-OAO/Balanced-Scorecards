@@ -55,7 +55,8 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
            METRIC_NAME_SUBMITTED,
            VALUE,UPDATED_TIME,
            UPDATED_USER)
-  
+  ##substitue single ' for '' so the query can escape
+  processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
   # Convert the each record/row of tibble to INTO clause of insert statment
   inserts <- lapply(
     lapply(
@@ -110,14 +111,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
                     dsn = dsn)
 
+  dbBegin(conn)
   # ## Execute staments and if there is an error  with one of them rollback changes
   tryCatch({
-        dbBegin(conn)
         dbCreateTable(conn,
                       TABLE_NAME,
                       processed_input_data,
                       field.types  = DATA_TYPES)
-
         dbExecute(conn,all_data)
         dbExecute(conn,query)
         dbExecute(conn,drop_query)
