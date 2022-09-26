@@ -2437,19 +2437,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           footer = NULL
         ))
       }else {
-        
+        updated_user <- input$name_engineering_kpi
         tryCatch({
           # Convert rhandsontable to R object
-          engineering_manual_updates <<- hot_to_r(input$engineering_kpi)
-          engineering_manual_updates <<- engineering_manual_updates %>% filter(!(Metric %in% c("Total Critical PMs", "Number of Work Orders Created with a Life Safety Priority", "EOC/Patient Care Work Orders Received")))          
+          engineering_manual_updates <- hot_to_r(input$engineering_kpi)
           engineering_manual_updates[engineering_manual_updates == "N/A"] <- NA
-          engineering_manual_updates <<- remove_empty_manual_columns(engineering_manual_updates)  
+          # Identify columns with no data in them and remove before further processing
+          engineering_manual_updates <- remove_empty_manual_columns(engineering_manual_updates)  
           flag <- 1
         },
         error = function(err){
           showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the Engineering data entered. 1"),
+            paste0("There seems to be an issue with the Engineering data entered"),
             easyClose = TRUE,
             footer = NULL
           ))
@@ -2458,7 +2458,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if (flag == 1) {
           
-          user_format_error <<- manual_format_check(engineering_manual_updates)
+          #removing the metrics that can have numbers greater than 1
+          engineering_manual_updates <- engineering_manual_updates %>% filter(!(Metric %in% c("Total Critical PMs", "Number of Work Orders Created with a Life Safety Priority", "EOC/Patient Care Work Orders Received")))          
+          user_format_error <- manual_format_check(engineering_manual_updates)
           
           if (user_format_error) {
             
@@ -2473,15 +2475,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             # Check that data can be reformatted for department summary repo
             tryCatch({
-              
-              engineering_manual_updates_table <<- hot_to_r(input$engineering_kpi)
-              
-              empty_columns <- colSums(is.na(engineering_manual_updates_table) | engineering_manual_updates_table == "") == nrow(engineering_manual_updates_table)
-              engineering_manual_updates_table <- engineering_manual_updates_table[, !empty_columns]
-              # Reformat data from manual input table into department summary format
-              engineering_summary_data <<-
-                # lab_prof_test_dept_summary(prof_test_manual_table)
-                engineering_summary_repos(engineering_manual_updates_table)
+              engineering_summary_data <- engineering_summary_repos(engineering_manual_updates, updated_user)
+              engineering_summary_data <- return_updated_manual_data("Engineering", "cm_kpi", engineering_summary_data)
 
               flag <- 2
               
@@ -2495,7 +2490,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             error = function(err){
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with the Engineering data entered."),
+                paste0("There seems to be an issue with the Engineering data entered. 2"),
                 easyClose = TRUE,
                 footer = NULL
               ))
@@ -2503,66 +2498,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             if(flag == 2) {
               
-              engineering_summary_data$Month <- as.Date(paste0(engineering_summary_data$Month, "-01"), "%m-%Y-%d")
-              engineering_summary_data$`Number of Work Orders Created with a Life Safety Priority` <- as.double(engineering_summary_data$`Number of Work Orders Created with a Life Safety Priority`)
+              write_temporary_table_to_database_and_merge(engineering_summary_data,
+                                                          "TEMP_ENGINEERING")
               
-              
-              
-              engineering_columns <- c("Site", "Month", "% of Critical PM's Completed on Time", 
-                "Total Critical PMs","Work Order Completion Rate",
-                "Number of Work Orders Created with a Life Safety Priority",
-                "EOC/Patient Care Work Orders Received",
-                "EOC/Patient Care Work Order Completion Rate")
-              
-              save_append_join_updates(engineering_summary_repos_data, 
-                                       engineering_summary_data, 
-                                       "Engineerng Metrics Pre Updates", 
-                                       engineering_columns, 
-                                       operational_metrics_engineering_path, cm_kpi)
-              
-              # # Save prior version of Lab Proficiency Testing Dept Summary data
-              # write_xlsx(engineering_summary_repos_data,
-              #            paste0(hist_archive_path,
-              #                   "Engineerng Metrics Pre Updates ",
-              #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-              #                   ".xlsx"))
-              # 
-              # # Append Lab Proficiency Testing summary with new data
-              # # First, identify the sites, months, and metrics in the new data
-              # engineering_new_data <- unique(
-              #   engineering_summary_data[, c("Site", "Month", "% of Critical PM's Completed on Time", "Total Critical PMs","Work Order Completion Rate","Number of Work Orders Created with a Life Safety Priority","EOC/Patient Care Work Orders Received","EOC/Patient Care Work Order Completion Rate")]
-              # )
-              # 
-              # # Second, remove these sites, months, and metrics from the historical data, if they exist there
-              # # This allows us to ensure no duplicate entries for the same site, metric, and time period
-              # engineering_summary_repos_data  <<- anti_join(engineering_summary_repos_data,
-              #                                  engineering_new_data)#,
-              #                                  # by = c("Site" = "Site",
-              #                                  #        "Month" = "Month",
-              #                                  #        "% of Critical PM's Completed on Time" = "% of Critical PM's Completed on Time",
-              #                                  #        "Total Critical PMs","Work Order Completion Rate" = "Total Critical PMs","Work Order Completion Rate",
-              #                                  #        "Number of Work Orders Created with a Life Safety Priority" = "Number of Work Orders Created with a Life Safety Priority",
-              #                                  #        "EOC/Patient Care Work Orders Received" ="EOC/Patient Care Work Orders Received",
-              #                                  #        "EOC/Patient Care Work Order Completion Rate" = "EOC/Patient Care Work Order Completion Rate"))
-              # 
-              # # Third, combine the updated historical data with the new data
-              # engineering_summary_repos_data  <<- full_join(engineering_summary_repos_data,
-              #                                  engineering_summary_data)
-              # 
-              # # Lastly, save the updated summary data
-              # engineering_summary_repos_data$Month <- as.Date(as.character(engineering_summary_repos_data$Month))
-              # #write_xlsx(engineering_summary_repos_data, operational_metrics_engineering_path)
-              # 
-              # # Update metrics_final_df with latest Proficiency Testing data using custom function
-              # metrics_final_df <<- cm_kpi(engineering_summary_data)
-              # 
-              # # Save updated metrics_final_df
-              # saveRDS(metrics_final_df, metrics_final_df_path)
-              # 
-              
-              update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-              record_timestamp("Engineering")
-              
+              update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                        input$selectedService3)
               
             }
             
@@ -2577,18 +2517,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Engineering Reactive dataset -----
     data_engineering_kpi <- reactive({
       
-      #input$submit_engineering
-      #operational_metrics_engineering <- engineering_repo_pull()
-      data  <- operational_metrics_engineering
-
-      colnames(data)[grepl("-",colnames(data))] <- format(as.Date(colnames(data)[grepl("-",colnames(data))]), "%m-%Y")
+      data <- sql_manual_table_output("Engineering", "cm_kpi")
+      # Arrange by sites in alphabetical order
+      data <- data %>%
+        arrange(Site)
       
-      result <- manual_table_month_order(data)
-
       
-      result <- result %>% 
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
+      data <- manual_table_month_order(data)
       
       
       
