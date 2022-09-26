@@ -16,7 +16,7 @@ return_updated_manual_data <- function(service, table_name, df) {
     mutate(Value = as.numeric(Value),
            Month = as.Date(paste0(Month, "-01"),
                            format = "%m-%Y-%d"))
-  
+  df<- bme_kpi_summary_data
   df <- anti_join(df,
                   existing_data,
                   by = c(

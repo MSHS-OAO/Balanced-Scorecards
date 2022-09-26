@@ -29,3 +29,4 @@ sql_manual_table_output <- function(service, table_name) {
                 values_from = Value)
     
 }
+
