@@ -3106,7 +3106,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Create reactive data table for manual entry
       data_sec_inc_rpts <- reactive({
         
-        tbl <- manual_table_month_order(sec_inc_rpts_manual_table)
+        data <- sql_manual_table_output("Security", "incident_reports")
+        
+        data <- data %>%
+          arrange(Site)
+        
+        data <- manual_table_month_order(data)
         
         
       }
@@ -3183,6 +3188,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission
       observeEvent(input$submit_sec_inc_rpts, {
+        
+        flag <- 0
+        
         if(input$sec_inc_rpts_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3191,6 +3199,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             footer = NULL
           ))
         } else {
+          
+          updated_user <- input$sec_inc_rpts_username
           
           tryCatch({
             
@@ -3231,8 +3241,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             tryCatch({
               
               # Reformat data from manual input table into department summary format
-              sec_inc_rpts_summary_data <<-
-                sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates)
+              sec_inc_rpts_summary_data <-
+                # sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates)
+                sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates, updated_user)
+              
+              sec_inc_rpts_summary_data <- return_updated_manual_data("Security",
+                                                                      "incident_reports",
+                                                                      sec_inc_rpts_summary_data)
 
               flag <- 2
               
@@ -3255,53 +3270,53 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           if(flag == 2) {
             
-            # Save prior version of Security Incident Reports Dept Summary data
-            write_xlsx(security_incident_reports,
-                       paste0(hist_archive_path,
-                              "Security Incident Reports Pre Updates ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-
-
-
-            # Append Security Incident Reports summary with new data
-            # First, identify the sites, months, and metrics in the new data
-            sec_inc_rpts_new_data <- unique(
-              sec_inc_rpts_summary_data[, c("Service", "Site", "Month", "Metric")]
-            )
-
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            security_incident_reports <<- anti_join(security_incident_reports,
-                                                    sec_inc_rpts_new_data,
-                                                    by = c("Service" = "Service",
-                                                           "Site" = "Site",
-                                                           "Month" = "Month",
-                                                           "Metric" = "Metric"))
-
-            # Third, combine the updated historical data with the new data
-            security_incident_reports <<- full_join(security_incident_reports,
-                                                    sec_inc_rpts_summary_data)
-
-            # Next, arrange the incident reports summary data by month, metric, and site
-            security_incident_reports <<- security_incident_reports %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-
-            # Lastly, save the updated summary data
-            write_xlsx(security_incident_reports, security_incident_reports_path)
-
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- sec_inc_rpts_metrics_final_df(sec_inc_rpts_summary_data)
-
-            # # Code for running entire department summary into metrics_final_df
-            # metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
-
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-
+            # # Save prior version of Security Incident Reports Dept Summary data
+            # write_xlsx(security_incident_reports,
+            #            paste0(hist_archive_path,
+            #                   "Security Incident Reports Pre Updates ",
+            #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+            #                   ".xlsx"))
+            # 
+            # 
+            # 
+            # # Append Security Incident Reports summary with new data
+            # # First, identify the sites, months, and metrics in the new data
+            # sec_inc_rpts_new_data <- unique(
+            #   sec_inc_rpts_summary_data[, c("Service", "Site", "Month", "Metric")]
+            # )
+            # 
+            # # Second, remove these sites, months, and metrics from the historical data,
+            # # if they exist there. This allows us to ensure no duplicate entries for
+            # # the same site, metric, and time period.
+            # security_incident_reports <<- anti_join(security_incident_reports,
+            #                                         sec_inc_rpts_new_data,
+            #                                         by = c("Service" = "Service",
+            #                                                "Site" = "Site",
+            #                                                "Month" = "Month",
+            #                                                "Metric" = "Metric"))
+            # 
+            # # Third, combine the updated historical data with the new data
+            # security_incident_reports <<- full_join(security_incident_reports,
+            #                                         sec_inc_rpts_summary_data)
+            # 
+            # # Next, arrange the incident reports summary data by month, metric, and site
+            # security_incident_reports <<- security_incident_reports %>%
+            #   arrange(Month,
+            #           desc(Metric),
+            #           Site)
+            # 
+            # # Lastly, save the updated summary data
+            # write_xlsx(security_incident_reports, security_incident_reports_path)
+            # 
+            # # Update metrics_final_df with latest data using custom function
+            # metrics_final_df <<- sec_inc_rpts_metrics_final_df(sec_inc_rpts_summary_data)
+            # 
+            # # # Code for running entire department summary into metrics_final_df
+            # # metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
+            # 
+            # # Save updates metrics_final_df
+            # saveRDS(metrics_final_df, metrics_final_df_path)
+            # 
             # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
             # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
             # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -3312,8 +3327,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time$Service = "Security"
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+            write_temporary_table_to_database_and_merge(sec_inc_rpts_summary_data,
+                                                        "TEMP_SEC_INC_RPTS")
             update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Security")
+            # record_timestamp("Security")
             
             
           }

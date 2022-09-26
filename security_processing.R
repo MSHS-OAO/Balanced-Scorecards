@@ -1,56 +1,59 @@
 # Source code for processing Security KPIs
 
 # Security Incident Reports -------------
-# Import historical summary
-security_incident_reports <- read_excel(security_incident_reports_path)
-
-# Reformat "Month" column in Proficiency Testing data for merging
-security_incident_reports <- security_incident_reports %>%
-  mutate(Month = date(Month))
-
-
-# Determine last month and next month for Security Incident Reports
-sec_inc_rpts_last_month <- max(security_incident_reports$Month)
-
-# Identify Security Incident Report metrics to include in KPI breakout tab
-sec_inc_rpt_metrics_incl <- metric_mapping_breakout %>%
-  filter(Metric_Group %in% "Incident Reports" &
-           !is.na(Display_Order)) %>%
-  select(Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
-  distinct()
-
-# Reformat Security Incident Reports data into wider format for manual entries
-sec_inc_rpts_manual_table <- security_incident_reports %>%
-  select(-Service) %>%
-  filter(Month >= sec_inc_rpts_last_month - months(7) &
-           Metric %in% sec_inc_rpt_metrics_incl$Metric_Name_Submitted) %>%
-  arrange(Month,
-          Site,
-          Metric) %>%
-  mutate(Month = format(Month, "%m-%Y"),
-         Number = as.character(Number)) %>%
-  pivot_wider(names_from = Month,
-              values_from = Number)
+# # Import historical summary
+# security_incident_reports <- read_excel(security_incident_reports_path)
+# 
+# # Reformat "Month" column in Proficiency Testing data for merging
+# security_incident_reports <- security_incident_reports %>%
+#   mutate(Month = date(Month))
+# 
+# 
+# # Determine last month and next month for Security Incident Reports
+# sec_inc_rpts_last_month <- max(security_incident_reports$Month)
+# 
+# # Identify Security Incident Report metrics to include in KPI breakout tab
+# sec_inc_rpt_metrics_incl <- metric_mapping_breakout %>%
+#   filter(Metric_Group %in% "Incident Reports" &
+#            !is.na(Display_Order)) %>%
+#   select(Metric_Group, Metric_Name, Metric_Name_Submitted) %>%
+#   distinct()
+# 
+# # Reformat Security Incident Reports data into wider format for manual entries
+# sec_inc_rpts_manual_table <- security_incident_reports %>%
+#   select(-Service) %>%
+#   filter(Month >= sec_inc_rpts_last_month - months(7) &
+#            Metric %in% sec_inc_rpt_metrics_incl$Metric_Name_Submitted) %>%
+#   arrange(Month,
+#           Site,
+#           Metric) %>%
+#   mutate(Month = format(Month, "%m-%Y"),
+#          Number = as.character(Number)) %>%
+#   pivot_wider(names_from = Month,
+#               values_from = Number)
 
 
 # Custom function for converting data from manual table input to Security Incident Reports Dept Summary format
-sec_inc_rpts_dept_summary <- function(data) {
+sec_inc_rpts_dept_summary <- function(data, updated_user) {
   sec_inc_rpts_summary <- data %>%
+    rename(SITE = Site,
+           METRIC_NAME_SUBMITTED = Metric) %>%
     # Convert from wide to long format for consistency with department summary
-    pivot_longer(cols = c(-Metric, -Site),
-                 names_to = "Month",
-                 values_to = "Number") %>%
+    pivot_longer(cols = c(-METRIC_NAME_SUBMITTED, -SITE),
+                 names_to = "REPORTING_MONTH",
+                 values_to = "VALUE") %>%
     mutate(
-      # Change format to be consistent with department summary repo
-      Number = as.numeric(Number),
-      Month = as.Date(my(Month)),
-      Service = "Security") %>%
+      # Change format to be consistent with dept summary repo
+      VALUE = as.numeric(VALUE),
+      REPORTING_MONTH = as.Date(my(REPORTING_MONTH)),
+      SERVICE = "Security",
+      PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
+      UPDATED_USER = updated_user) %>%
     # Reorder columns
-    relocate(Service) %>%
-    relocate(Month, .before = Metric) %>%
-    arrange(Month,
-            Site,
-            Metric)
+    relocate(SERVICE) %>%
+    relocate(REPORTING_MONTH, .before = METRIC_NAME_SUBMITTED)
+  
+  return(sec_inc_rpts_summary)
       
 }
 
@@ -62,7 +65,7 @@ sec_inc_rpts_metrics_final_df <- function(sec_inc_rpts_summary) {
   # Format for metrics_final_df
   sec_inc_rpts_df <- sec_inc_rpts_summary %>%
     # Remove empty metrics
-    # filter(!is.na(Number)) %>%
+    filter(!is.na(Number)) %>%
     arrange(Month,
             desc(Metric),
             Site) %>%
@@ -116,7 +119,7 @@ sec_inc_rpts_metrics_final_df <- function(sec_inc_rpts_summary) {
   #           Metric_Group,
   #           Reporting_Month_Ref)
   # 
-  # return(metrics_final_df)
+  return(metrics_final_df)
   
 }
 
