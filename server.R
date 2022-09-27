@@ -2444,7 +2444,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         tryCatch({
           # Convert rhandsontable to R object
           engineering_manual_updates <- hot_to_r(input$engineering_kpi)
-          engineering_manual_updates[engineering_manual_updates == "N/A"] <- NA
           # Identify columns with no data in them and remove before further processing
           engineering_manual_updates <- remove_empty_manual_columns(engineering_manual_updates)  
           flag <- 1
@@ -2475,33 +2474,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ))
             
           } else {
+            updated_rows <- manual_process_and_return_updates(engineering_manual_updates, "Engineering", "cm_kpi", updated_user, engineering_summary_repos)
+            updated_rows_test <<- updated_rows
             
-            # Check that data can be reformatted for department summary repo
-            tryCatch({
-              engineering_summary_data <- engineering_summary_repos(engineering_manual_updates, updated_user)
-              engineering_summary_data <- return_updated_manual_data("Engineering", "cm_kpi", engineering_summary_data)
-
-              flag <- 2
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("The Engineering data has been submitted successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            },
-            error = function(err){
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Engineering data entered. 2"),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-            
-            if(flag == 2) {
-              engineering_summary_data_test <<- engineering_summary_data
-              write_temporary_table_to_database_and_merge(engineering_summary_data,
+            if(updated_rows$flag == 2) {
+              write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
                                                           "TEMP_ENGINEERING")
               
               update_picker_choices_sql(session, input$selectedService, input$selectedService2, 

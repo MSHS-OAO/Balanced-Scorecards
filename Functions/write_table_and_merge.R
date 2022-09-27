@@ -130,6 +130,16 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     dbRollback(conn)
     dbDisconnect(conn)
     print("error")
+    if(isRunning()) {
+      showModal(modalDialog(
+        title = "Success",
+        paste0("The data has been submitted successfully."),
+        easyClose = TRUE,
+        footer = NULL
+      ))
+    } else{
+      print(paste0("The data has been submitted successfully."))
+    }
   })
   
 }
