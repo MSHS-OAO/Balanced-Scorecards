@@ -80,7 +80,7 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type,updated
                    values_to = "VALUE") %>%
       mutate(REPORTING_MONTH = as.Date(format(parse_date_time(paste0("01-",REPORTING_MONTH),orders = "dmy"),"%Y-%m-%d")),
              SERVICE = "Biomed / Clinical Engineering",
-             METRIC_NAME_SUBMITTED = "Total Disruptions/Issues",
+             METRIC_NAME_SUBMITTED = "Total Disruptions or Equipment Issues",
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
              #REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
              UPDATED_USER = updated_user)

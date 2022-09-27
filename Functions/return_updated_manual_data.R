@@ -2,6 +2,7 @@ return_updated_manual_data <- function(service, table_name, df) {
   #Return data that is currently in Summary Repos on DB
   existing_data <- sql_manual_table_output(service,
                                            table_name)
+
   # Arrange by sites in alphabetical order
   existing_data <- existing_data %>%
     arrange(Site)
@@ -25,6 +26,7 @@ return_updated_manual_data <- function(service, table_name, df) {
                   "VALUE" = "Value")
                   )
   df <- df %>% filter(!is.na(VALUE))
+
   return(df)
   
 }
