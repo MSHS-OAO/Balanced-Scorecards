@@ -3979,7 +3979,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updated_user <- input$name_biomed_kpi
             
             # Convert rhandsontable to R object
-            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)          
+            bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
             
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
@@ -3989,9 +3989,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       function(x) 
                                         all(is.na(x))))
             
-            bme_kpi_manual_updates <<- bme_kpi_manual_updates[, non_empty_cols]
+            bme_kpi_manual_updates <- bme_kpi_manual_updates[, non_empty_cols]
             
-            bme_kpi_manual_updates <<- bme_kpi_manual_updates %>% 
+            bme_kpi_manual_updates <- bme_kpi_manual_updates %>% 
               mutate(across(!Site & !Metric,as.numeric))
             
             flag <- 1
@@ -4000,7 +4000,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Biomedical KPIs data entered1."),
+              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -4008,7 +4008,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
           
           if(flag==1){
-            user_format_error <<- manual_format_check(bme_kpi_manual_updates%>%
+            user_format_error <- manual_format_check(bme_kpi_manual_updates%>%
                                                         filter(Metric %in% c("PM Compliance - High Risk Equipment",
                                                                              "PM Compliance - All Medical Equipment",
                                                                              "Documented Status")))
@@ -4027,14 +4027,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               tryCatch({
                 
                 # Reformat data from manual input table into summary repo format
-                print(1)
+
+
                 bme_kpi_summary_data <-
                   process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI",updated_user)
-                
-                flag <- 2
+              
                 
                 bme_kpi_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering", "KPIs", bme_kpi_summary_data)
-                print(3)
                 
                 
                 showModal(modalDialog(
@@ -4048,7 +4047,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             error = function(err) {
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered2."),
+                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
                 easyClose = TRUE,
                 footer = NULL
               ))
@@ -4106,7 +4105,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # date_time <- rbind(time_df, date_time)
             # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
             
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
             # record_timestamp("Biomed / Clinical Engineering")
             
           }
@@ -4119,17 +4118,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       #D&I Biomed Output Table -------
       
       data_bimoed_di <- reactive({
-        data  <- disruptions_issues_reports_ui %>% ungroup()
-        
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
-        
-        colnames(data)[3:length(data)] <- months
-        
-        data <- data %>% 
-          mutate(across(!Site & !Metric,as.character))
-        
+        #data  <- kpibme_reports_ui %>% ungroup()
+        data <- sql_manual_table_output("Biomed / Clinical Engineering", "disruptions_and_issues")
+        data <- data %>%
+          arrange(Site)
         result <- manual_table_month_order(data)
+        
         
         # ##### Code that adds months missing months to the rhandsontable
         # months_only <- data %>% select(-Site,-Metric)
@@ -4225,7 +4219,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Convert rhandsontable to R object
             bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-            
+            updated_user <- input$name_biomed_distruptions
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
             # repo and metrics_final_df repository
@@ -4245,7 +4239,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Disruptions and Issues data entered."),
+              paste0("There seems to be an issue with the Disruptions and Issues data entered1."),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -4256,7 +4250,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             tryCatch({
             # Reformat data from manual input table into summary repo format
             bme_di_summary_data <-
-              process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+              process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI",updated_user)
+            
+            bme_di_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering","disruptions_and_issues", bme_di_summary_data)
             
             flag <- 2
             
@@ -4271,7 +4267,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             error = function(err) {
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with the Disruptions and Issues data entered."),
+                paste0("There seems to be an issue with the Disruptions and Issues data entered2."),
                 easyClose = TRUE,
                 footer = NULL
               ))
@@ -4281,57 +4277,60 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           if(flag==2){
             
-            # Save prior version of DI Reports Dept Summary data
-            write_xlsx(disruptions_issues_reports,
-                       paste0(hist_archive_path,
-                              "DI Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
+            write_temporary_table_to_database_and_merge(bme_di_summary_data,
+                                                        "TEMP_DI_BIOMED")
             
-        
-            # First, identify the sites, months, and metrics in the new data
-            bme_di_new_data <- unique(
-              bme_di_summary_data[, c("Service", "Site", "Month")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            di_bme <<- anti_join(disruptions_issues_reports,
-                                 bme_di_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month"))
-            
-            # Third, combine the updated historical data with the new data
-            disruptions_issues_reports <<- full_join(di_bme,
-                                                     bme_di_summary_data)
-            
-            # Next, arrange the DI reports summary data by month, metric, and site
-            disruptions_issues_reports <<- disruptions_issues_reports %>%
-              arrange(Month,
-                      Site)
-            # Lastly, save the updated summary data
-            write_xlsx(disruptions_issues_reports, bmedi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            # # Save prior version of DI Reports Dept Summary data
+            # write_xlsx(disruptions_issues_reports,
+            #            paste0(hist_archive_path,
+            #                   "DI Biomed and Clinical Engineering ",
+            #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
+            #                   ".xlsx"))
             # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Biomed / Clinical Engineering"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Biomed / Clinical Engineering")
+            # 
+            # # First, identify the sites, months, and metrics in the new data
+            # bme_di_new_data <- unique(
+            #   bme_di_summary_data[, c("Service", "Site", "Month")]
+            # )
+            # 
+            # # Second, remove these sites, months, and metrics from the historical data,
+            # # if they exist there. This allows us to ensure no duplicate entries for
+            # # the same site, metric, and time period.
+            # di_bme <<- anti_join(disruptions_issues_reports,
+            #                      bme_di_new_data,
+            #                       by = c("Service" = "Service",
+            #                              "Site" = "Site",
+            #                              "Month" = "Month"))
+            # 
+            # # Third, combine the updated historical data with the new data
+            # disruptions_issues_reports <<- full_join(di_bme,
+            #                                          bme_di_summary_data)
+            # 
+            # # Next, arrange the DI reports summary data by month, metric, and site
+            # disruptions_issues_reports <<- disruptions_issues_reports %>%
+            #   arrange(Month,
+            #           Site)
+            # # Lastly, save the updated summary data
+            # write_xlsx(disruptions_issues_reports, bmedi_table_path)
+            # 
+            # # Update metrics_final_df with latest data using custom function
+            # metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
+            # 
+            # # Save updates metrics_final_df
+            # saveRDS(metrics_final_df, metrics_final_df_path)
+            # 
+            # # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+            # # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            # # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            # # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+            # # 
+            # # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+            # # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+            # # date_time$Service = "Biomed / Clinical Engineering"
+            # # date_time <- rbind(time_df, date_time)
+            # # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+            #record_timestamp("Biomed / Clinical Engineering")
             
             
               } 
