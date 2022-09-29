@@ -123,6 +123,16 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
         dbExecute(conn,drop_query)
         dbCommit(conn)
         dbDisconnect(conn)
+        if(isRunning()) {
+          showModal(modalDialog(
+            title = "Success",
+            paste0("The data has been submitted successfully."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        } else{
+          print(paste0("The data has been submitted successfully."))
+        }
 
   },
   error = function(err){
@@ -132,13 +142,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     print("error")
     if(isRunning()) {
       showModal(modalDialog(
-        title = "Success",
-        paste0("The data has been submitted successfully."),
+        title = "Error",
+        paste0("There was an issue submitting the data."),
         easyClose = TRUE,
         footer = NULL
       ))
     } else{
-      print(paste0("The data has been submitted successfully."))
+      print(paste0("There was an issue submitting the data."))
     }
   })
   
