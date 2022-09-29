@@ -195,8 +195,3 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type,updated
 #   
 # }
 
-
-#transformed_data <- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-
-# New Data Format for One Summary Repo -----
-
