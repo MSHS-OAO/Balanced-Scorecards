@@ -1,7 +1,3 @@
-operational_metrics_engineering <- engineering_repo_pull()
-
-engineering_summary_repos_data <- read_excel(operational_metrics_engineering_path)
-
 engineering_summary_repos <- function(data, updated_user){
   
   engineering_data <- data %>%
