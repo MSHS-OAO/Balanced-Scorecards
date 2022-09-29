@@ -2457,7 +2457,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         })
         
-        
         if (flag == 1) {
           
           #removing the metrics that can have numbers greater than 1
