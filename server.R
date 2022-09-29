@@ -2461,7 +2461,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if (flag == 1) {
           
           #removing the metrics that can have numbers greater than 1
-          engineering_manual_updates_check <- engineering_manual_updates %>% filter(!(Metric %in% c("Total Critical PMs", "Number of Work Orders Created with a Life Safety Priority", "EOC/Patient Care Work Orders Received")))          
+          engineering_manual_updates_check <- engineering_manual_updates %>% 
+                                              filter(!(Metric %in% c("Total Critical PMs", 
+                                                                     "Number of Work Orders Created with a Life Safety Priority", 
+                                                                     "EOC/Patient Care Work Orders Received"
+                                                                     )
+                                                       )
+                                                     )          
           user_format_error <- manual_format_check(engineering_manual_updates_check)
           
           if (user_format_error) {
@@ -2471,10 +2477,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
               easyClose = TRUE,
               footer = NULL
-            ))
+              )
+            )
             
           } else {
-            updated_rows <- manual_process_and_return_updates(engineering_manual_updates, "Engineering", "cm_kpi", updated_user, engineering_summary_repos)
+            ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
+            updated_rows <- manual_process_and_return_updates(engineering_manual_updates, "Engineering", "cm_kpi", 
+                                                              updated_user, engineering_summary_repos)
 
             if(updated_rows$flag == 2) {
               write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
