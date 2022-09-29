@@ -2581,7 +2581,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file.1"),
+          paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
         ))})
@@ -2592,16 +2592,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       tryCatch({evs_data <- evs_file_process(evs_data, month, updated_user)
                   flag <- 2
         
-        showModal(modalDialog(
-          title = "Success",
-          paste0("The environmental services data has been imported succesfully"),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        },
+      },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file.2"),
+          paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
         ))})
@@ -2609,7 +2603,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       if(flag == 2){
-        ##Compar submitted results to what is in the Summary Repo in db and return only updated rows
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
         evs_data <- file_return_updated_rows(evs_data)
     
         #wirte the updated data to the Summary Repo in the server
