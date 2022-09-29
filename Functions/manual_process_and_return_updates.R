@@ -6,17 +6,6 @@ manual_process_and_return_updates <- function(df, service, manual_table_name, up
     
     flag <- 2
     
-    if(isRunning()) {
-      showModal(modalDialog(
-        title = "Success",
-        paste0("The ", service, " data has been submitted successfully."),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-    } else{
-      print(paste0("The ", service, " data has been submitted successfully."))
-    }
-    
     return_list <- list("flag" = flag, "updated_rows" = manual_data)
     return(return_list)
   },
