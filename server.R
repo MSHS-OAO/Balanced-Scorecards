@@ -86,8 +86,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       
-      service_input <- "Engineering"
-      month_input <- "06-2022"
+      # service_input <- "Engineering"
+      # month_input <- "06-2022"
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
@@ -2574,14 +2574,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_evs
         file_path <- evs_file$datapath
-        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT July 2022.xlsx"
         tryCatch({evs_data <- read_excel(file_path)
                   month <- excel_sheets(file_path)[1]
                   flag <- 1
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file"),
+          paste0("There seems to be an issue with the enviromental services file.1"),
           easyClose = TRUE,
           footer = NULL
         ))})
@@ -2601,7 +2601,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file"),
+          paste0("There seems to be an issue with the enviromental services file.2"),
           easyClose = TRUE,
           footer = NULL
         ))})
