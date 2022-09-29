@@ -4034,6 +4034,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 
                 bme_kpi_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering", "KPIs", bme_kpi_summary_data)
                 
+                flag <- 2
                 
                 showModal(modalDialog(
                   title = "Success",
