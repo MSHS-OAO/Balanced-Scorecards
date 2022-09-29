@@ -2467,7 +2467,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                                      "EOC/Patient Care Work Orders Received"
                                                                      )
                                                        )
-                                                     )          
+                                                     ) 
+          #check if metrics have not been entered as decimals 
           user_format_error <- manual_format_check(engineering_manual_updates_check)
           
           if (user_format_error) {
@@ -2486,6 +2487,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                               updated_user, engineering_summary_repos)
 
             if(updated_rows$flag == 2) {
+              ##Updated the data on the databse
               write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
                                                           "TEMP_ENGINEERING")
               
