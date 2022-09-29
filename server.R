@@ -2475,8 +2475,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } else {
             updated_rows <- manual_process_and_return_updates(engineering_manual_updates, "Engineering", "cm_kpi", updated_user, engineering_summary_repos)
-            updated_rows_test <<- updated_rows
-            
+
             if(updated_rows$flag == 2) {
               write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
                                                           "TEMP_ENGINEERING")
