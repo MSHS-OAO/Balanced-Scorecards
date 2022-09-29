@@ -1,11 +1,14 @@
 manual_process_and_return_updates <- function(df, service, manual_table_name, updated_user, FUN) {
 
   tryCatch({
+    ##Summary Repo processing where FUN is the function specific service line
     manual_data <- FUN(df, updated_user)
+    ##retunrs only updated rows by doing an anti_join of what is currently in the Summary  Repos
     manual_data <- return_updated_manual_data(service, manual_table_name, manual_data)
     
     flag <- 2
     
+    #return flag and the updated rows
     return_list <- list("flag" = flag, "updated_rows" = manual_data)
     return(return_list)
   },
