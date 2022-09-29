@@ -410,7 +410,13 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
                                         tabPanel("Turnaround Time",
-                                                 hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_evs", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
                                                  fileInput("evs_data",
                                                            label = "Please upload Environmental Services data"),
                                                  hr(),

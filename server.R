@@ -2570,41 +2570,41 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Submit Environemental Services -----
     observeEvent(input$submit_evs,{
-      
-      evs_file <- input$evs_data
       flag <- 0
+      evs_file <- input$evs_data
       
-      if (is.null(evs_file)) {
-        return(NULL)
+      if(input$name_evs == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
       }else{
+        updated_user <- input$name_evs
         file_path <- evs_file$datapath
-        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT July 2022.xlsx"
         tryCatch({evs_data <- read_excel(file_path)
                   month <- excel_sheets(file_path)[1]
                   flag <- 1
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file"),
+          paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
         ))})
       }
       
       if(flag == 1){
-      tryCatch({evs_data <- evs_file_process(evs_data,month)
+        # Process the data into standar Summary Repo format
+      tryCatch({evs_data <- evs_file_process(evs_data, month, updated_user)
                   flag <- 2
         
-        showModal(modalDialog(
-          title = "Success",
-          paste0("The environmental services data has been imported succesfully"),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        },
+      },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file"),
+          paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
         ))})
@@ -2612,50 +2612,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       if(flag == 2){
-        #Save prior version of Lab TAT Dept Summary data
-        write_xlsx(summary_repos_environmental,
-                   paste0(hist_archive_path,
-                          "EVS historical ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-
-        metrics_final_df <<- evs__metrics_final_df_process(evs_data)
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        evs_data <- file_return_updated_rows(evs_data)
+    
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(evs_data,
+                                                    "TEMP_EVS")
         
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        evs_summary_repo <- read_excel(evs_table_path)
-        updated_rows <- unique(evs_data[c("Service","Site", "Month")])
-        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
-        
-        evs_summary_repo <- anti_join(evs_summary_repo, updated_rows)
-        evs_summary_repo <- evs_summary_repo %>% filter(!is.na(Month))
-        
-        evs_data$Month <- as.Date(evs_data$Month, "%m/%d/%Y")
-        evs_data$`Non-Isolation Requests` <- as.character(evs_data$`Non-Isolation Requests`)
-        evs_data$`Non-Isolation  % > 90 mins` <- as.character(evs_data$`Non-Isolation  % > 90 mins`)
-        evs_data$`Non-IsolationAverage TAT` <- as.character(evs_data$`Non-IsolationAverage TAT`)
-        evs_data$`Isolation Requests` <- as.character(evs_data$`Isolation Requests`)
-        evs_data$`Isolation % > 90 mins` <- as.character(evs_data$`Isolation % > 90 mins`)
-        evs_data$`Isolation Average TAT` <- as.character(evs_data$`Isolation Average TAT`)
-        
-        
-        
-        evs_summary_repo <- full_join(evs_summary_repo, evs_data)
-        evs_summary_repo <- as.data.frame(evs_summary_repo)
-        write_xlsx(evs_summary_repo, evs_table_path)
-        
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Environmental Services"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-        record_timestamp("Environmental Services")
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
       }
       
     })
