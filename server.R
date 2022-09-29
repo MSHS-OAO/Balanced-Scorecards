@@ -2588,6 +2588,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       if(flag == 1){
+        # Process the data into standar Summary Repo format
       tryCatch({evs_data <- evs_file_process(evs_data, month, updated_user)
                   flag <- 2
         
@@ -2608,9 +2609,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       if(flag == 2){
-        
+        ##Compar submitted results to what is in the Summary Repo in db and return only updated rows
         evs_data <- file_return_updated_rows(evs_data)
     
+        #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(evs_data,
                                                     "TEMP_EVS")
         
