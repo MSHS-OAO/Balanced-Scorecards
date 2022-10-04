@@ -1,39 +1,19 @@
-engineering_repo_pull <- function(){
-
-  operational_metrics_engineering <- read_excel(operational_metrics_engineering_path) %>% filter(Month >= max(Month) %m-% months(6)) %>%
-    mutate_if(is.logical, as.character) %>%
-    mutate_if(is.double, as.character) %>%
-    pivot_longer(cols = c(-Month, -Site),
-                 names_to = "Metric",
-                 values_to = "Value") %>%
-    pivot_wider(names_from = "Month", values_from = Value)
-  
-  
-  
-  # operational_metrics_engineering <- sql_summary_repo_data("ENGINEERING_SUMMARY_REPO", "2021-08-01", "2022-02-01")
-  # 
-  # operational_metrics_engineering <- operational_metrics_engineering %>%
-  #                                       arrange(MONTH) %>%
-  #                                       pivot_wider(names_from = "MONTH", values_from = VALUE)
-  # 
-  # operational_metrics_engineering <- operational_metrics_engineering %>% rename(Site = SITE,
-  #                                                                               Metric = METRIC)
-    
-    return(operational_metrics_engineering)
-}
-
-
-operational_metrics_engineering <- engineering_repo_pull()
-
-engineering_summary_repos_data <- read_excel(operational_metrics_engineering_path)
-
-engineering_summary_repos <- function(data){
+engineering_summary_repos <- function(data, updated_user){
   
   engineering_data <- data %>%
     pivot_longer(c(-Metric, -Site),
                  names_to = "Month",
                  values_to = "Value") %>%
-    pivot_wider(names_from = "Metric", values_from = Value)
+                mutate(UPDATED_USER = updated_user,
+                       REPORTING_MONTH = as.Date(paste0(Month, "-01"), format = "%m-%Y-%d"),
+                       PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
+                       SERVICE = "Engineering",
+                       Value = as.numeric(Value)
+                       ) %>%
+      select(-Month) %>%
+      rename(VALUE = Value,
+             SITE = Site,
+             METRIC_NAME_SUBMITTED = Metric)
   
 }
 

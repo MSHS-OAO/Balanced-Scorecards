@@ -9,7 +9,7 @@ summary_repos_environmental <- read_excel(operational_metrics_environmental_path
   mutate_if(is.logical, as.character)
 
 
-evs_file_process <- function(data, month) {
+evs_file_process <- function(data, month, updated_user) {
   data <- na.omit(data, na.action = "omit")
   
   data <- data %>%
@@ -75,10 +75,12 @@ evs_file_process <- function(data, month) {
            SITE = Site,
            REPORTING_MONTH = Month) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(as.Date(REPORTING_MONTH,"%m/%d/%Y"),"%b %Y"),
-           REPORTING_MONTH = format(as.Date(REPORTING_MONTH,"%m/%d/%Y"),"%Y-%m-%d"))
+           REPORTING_MONTH = format(as.Date(REPORTING_MONTH,"%m/%d/%Y"),"%Y-%m-%d"),
+           UPDATED_USER = updated_user,
+           REPORTING_MONTH = as.Date(REPORTING_MONTH))
   
 
-  data
+  return(data)
 }
 
 
