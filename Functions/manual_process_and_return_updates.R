@@ -5,7 +5,6 @@ manual_process_and_return_updates <- function(df, service, manual_table_name, up
     manual_data <- FUN(df, updated_user)
     ##returns only updated rows by doing an anti_join of what is currently in the Summary  Repos
     manual_data <- return_updated_manual_data(service, manual_table_name, manual_data)
-    
     flag <- 2
     
     #return flag and the updated rows
