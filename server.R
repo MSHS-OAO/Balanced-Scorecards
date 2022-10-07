@@ -3185,6 +3185,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           arrange(Site)
         
         data <- manual_table_month_order(data)
+        
       }
       )
       
