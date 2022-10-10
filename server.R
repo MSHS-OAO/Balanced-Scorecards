@@ -2820,8 +2820,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     output$lab_prof_test <- renderRHandsontable({
       
-      
-      
+
       unique_sites <- unique(data_lab_prof_test()$Site)
       
       site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
@@ -2897,15 +2896,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           prof_test_manual_updates <- hot_to_r(input$lab_prof_test)
           
           # Identify columns with no data in them and remove before further processing
-          # This ensures months with no data do not get added to the department summary
-          # repo and metrics_final_df repository
-          non_empty_cols <- !(apply(prof_test_manual_updates,
-                                    MARGIN = 2,
-                                    function(x) 
-                                      all(is.na(x))))
-          
-          prof_test_manual_updates <- prof_test_manual_updates[, non_empty_cols]
-          #prof_test_manual_updates <- prof_test_manual_updates[, non_empty_cols]
+          prof_test_manual_updates <- remove_empty_manual_columns(
+            prof_test_manual_updates)
           
           flag <- 1
         },
@@ -2926,7 +2918,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # user_format_error <- user_format_error(prof_test_manual_updates)
           # Check Proficiency Test data to make sure user entered data in correct format
           # ie, number between 0 and 1, no spaces, percentage signs, etc.
-          user_format_error <- user_format_error(prof_test_manual_updates)
+          user_format_error <- manual_format_check(prof_test_manual_updates)
           
           if (user_format_error) {
             
@@ -2939,45 +2931,56 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } else {
             
-            # Check that data can be reformatted for department summary repo
-            tryCatch({
-       
-              # Reformat data from manual input table into department summary format
-              prof_test_summary_data <-
-                # lab_prof_test_dept_summary(prof_test_manual_table)
-                lab_prof_test_dept_summary(prof_test_manual_updates,
-                                           updated_user)
-     
+            updated_rows <- manual_process_and_return_updates(
+              prof_test_manual_updates,
+              "Lab",
+              "proficiency_testing",
+              updated_user,
+              lab_prof_test_dept_summary
+            )
 
-              prof_test_summary_data <- return_updated_manual_data("Lab", "proficiency_testing", prof_test_summary_data)
-           
-
-              
-              flag <- 2
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("This Proficiency Test data has been submitted successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            },
-            error = function(err){
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Proficiency Test data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
+            # 
+            # # Check that data can be reformatted for department summary repo
+            # tryCatch({
+            # 
+            #   # Reformat data from manual input table into department summary format
+            #   prof_test_summary_data <-
+            #     # lab_prof_test_dept_summary(prof_test_manual_table)
+            #     lab_prof_test_dept_summary(prof_test_manual_updates,
+            #                                updated_user)
+            # 
+            # 
+            #   prof_test_summary_data <- return_updated_manual_data("Lab", "proficiency_testing", prof_test_summary_data)
+            # 
+            # 
+            # 
+            #   flag <- 2
+            # 
+            #   showModal(modalDialog(
+            #     title = "Success",
+            #     paste0("This Proficiency Test data has been submitted successfully."),
+            #     easyClose = TRUE,
+            #     footer = NULL
+            #   ))
+            # },
+            # error = function(err){
+            #   showModal(modalDialog(
+            #     title = "Error",
+            #     paste0("There seems to be an issue with the Proficiency Test data entered."),
+            #     easyClose = TRUE,
+            #     footer = NULL
+            #   ))
+            # })
             
-            if(flag == 2) {
+            if(updated_rows$flag == 2) {
               
-              prof_test_summary_data_test <<- prof_test_summary_data
-              write_temporary_table_to_database_and_merge(prof_test_summary_data,
-                                                          "TEMP_PROF_TEST")
+              write_temporary_table_to_database_and_merge(
+                updated_rows$updated_rows,
+                "TEMP_PROF_TEST")
 
-              update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+              update_picker_choices_sql(session,
+                                        input$selectedService,
+                                        input$selectedService2,
                                         input$selectedService3)
             
             }
@@ -3161,10 +3164,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               updated_rows$updated_rows,
               "TEMP_SEC_INC_RPTS")
             
-            update_picker_choices(session,
-                                  input$selectedService,
-                                  input$selectedService2,
-                                  input$selectedService3)
+            update_picker_choices_sql(session,
+                                      input$selectedService,
+                                      input$selectedService2,
+                                      input$selectedService3)
 
             
             
@@ -3328,10 +3331,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "TEMP_SEC_EVENTS"
             )
             
-            update_picker_choices(session,
-                                  input$selectedService,
-                                  input$selectedService2,
-                                  input$selectedService3)
+            update_picker_choices_sql(session,
+                                      input$selectedService,
+                                      input$selectedService2,
+                                      input$selectedService3)
 
           }
           
