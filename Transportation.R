@@ -18,7 +18,7 @@ process_PT_data <- function(pt_data_raw){
                  "Reporting_Month",
                  "value_rounded")
   
-  hospitals <- c("MSB","MSBI","MSM","MSW","MSH")
+  hospitals <- c("MSB","MSBI","MSM","MSW","MSH","MSQ")
   
 
   rows <- nrow(pt_data_raw)
@@ -144,7 +144,6 @@ process_PT_data <- function(pt_data_raw){
 
 }
 
-# pt_raw_data <- read_excel(pt_raw_data)
 # summary_repos_transport <- process_PT_data(pt_raw_data)
 
 
@@ -175,14 +174,15 @@ process_NPT_raw_data <- function(data){
     rename(`No of Trips Over 45 Minutes` = COMP_JOB_OUTLIER_LAST_PND_CMP_COUNT,
            `No of Transports` = COMP_JOBS_COUNT,
            `Turnaround Time` = AVG_LAST_PND_TO_CMP,
-           `Site` = REGION_NAME)
+           `Site` = REGION_NAME)%>%
+    mutate(Site = tolower(Site))
   
-  data$Site <- ifelse(data$Site == "MSB Region", "MSB",
-                      ifelse(data$Site == "MSBI Region", "MSBI",
-                             ifelse(data$Site == " MSQ Region", "MSQ",
-                                    ifelse(data$Site == "MSM Region", "MSM",
-                                           ifelse(data$Site == "MSW Region", "MSW",
-                                                  ifelse(data$Site == "MSH Region", "MSH", NA))))))
+  data$Site <- ifelse(data$Site == "msb region", "MSB",
+                      ifelse(data$Site == "msbi region", "MSBI",
+                             ifelse(data$Site == "msq region", "MSQ",
+                                    ifelse(data$Site == "msm region", "MSM",
+                                           ifelse(data$Site == "msw region", "MSW",
+                                                  ifelse(data$Site == "msh region", "MSH", NA))))))
   
   data_metrics <- data%>%
     mutate(`% of Trips Over 45 Minutes` = `No of Trips Over 45 Minutes`/`No of Transports`,
@@ -224,37 +224,11 @@ transport__metrics_final_df_process <- function(data){
   metrics_final_df <- metrics_final_df_subset_and_merge(data)
   return(metrics_final_df)
   
-### Create Target Variance Column
-  # TAT_Transport_target_status <- left_join(data[, c("Service","Site","Metric_Group", "Metric_Name","Reporting_Month","value_rounded")],
-  #                                    target_mapping, 
-  #                                    by = c("Service","Site","Metric_Group", "Metric_Name"))
 
-  # TAT_Transport_target_status <- TAT_Transport_target_status %>%
-  #   mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-  #   filter(Variance %in% c(TRUE,NA))
-
-  # TAT_Transport_df_final <- merge(data, 
-  #                           TAT_Transport_target_status[,c("Service","Site","Metric_Group","Metric_Name","Reporting_Month","Target","Status")],
-  #                           all = TRUE)
-  # 
-  # TAT_Transport_df_merge <- TAT_Transport_df_final[,processed_df_cols]
-  
-  
-  #TAT_Transport_df_merge$Reporting_Month_Ref <- as.Date(paste('01', as.yearmon(TAT_Transport_df_merge$Reporting_Month, "%m-%Y")), format='%d %b %Y')
-  
-
-  # updated_rows <- unique(TAT_Transport_df_merge[c("Metric_Name","Reporting_Month","Service", "Site")])
-  # 
-  # 
-  # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-  # 
-  # metrics_final_df <- full_join(metrics_final_df,TAT_Transport_df_merge)
-  
 }
 
 
 # NPT_Data <- paste0(home_path,"Input Data Raw/Transport/MSHS_Transport_Metrics_Report.xlsx")
 # npt_data <- read_excel(NPT_Data)
-# 
 # npt_datasum <- process_NPT_raw_data(npt_data)
 # mdf_pt <- transport__metrics_final_df_process(npt_datasum[[1]])
