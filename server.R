@@ -4059,52 +4059,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                         "TEMP_KPIS_BIOMED")
 
             
-            # # First, identify the sites, months, and metrics in the new data
-            # bme_kpi_new_data <- unique(
-            #   bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-            # )
-            # 
-            # # Second, remove these sites, months, and metrics from the historical data,
-            # # if they exist there. This allows us to ensure no duplicate entries for
-            # # the same site, metric, and time period.
-            # kpi_bme <<- anti_join(kpibme_reports,
-            #                       bme_kpi_new_data,
-            #                       by = c("Service" = "Service",
-            #                              "Site" = "Site",
-            #                              "Month" = "Month",
-            #                              "Metric" = "Metric"))
-            # 
-            # # Third, combine the updated historical data with the new data
-            # kpibme_reports <<- full_join(kpi_bme,
-            #                              bme_kpi_summary_data)
-            # 
-            # glimpse(kpibme_reports)
-            # # Next, arrange the incident reports summary data by month, metric, and site
-            # kpibme_reports <<- kpibme_reports %>%
-            #   arrange(Month,
-            #           desc(Metric),
-            #           Site)
-            # 
-            # # Lastly, save the updated summary data
-            # write_xlsx(kpibme_reports, bmekpi_table_path)
-            # 
-            # # Update metrics_final_df with latest data using custom function
-            # metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-            # 
-            # # Save updates metrics_final_df
-            # saveRDS(metrics_final_df, metrics_final_df_path)
-            # 
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Biomed / Clinical Engineering"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
             update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
             # record_timestamp("Biomed / Clinical Engineering")
             
@@ -4280,55 +4234,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             write_temporary_table_to_database_and_merge(bme_di_summary_data,
                                                         "TEMP_DI_BIOMED")
             
-            # # Save prior version of DI Reports Dept Summary data
-            # write_xlsx(disruptions_issues_reports,
-            #            paste0(hist_archive_path,
-            #                   "DI Biomed and Clinical Engineering ",
-            #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-            #                   ".xlsx"))
-            # 
-            # 
-            # # First, identify the sites, months, and metrics in the new data
-            # bme_di_new_data <- unique(
-            #   bme_di_summary_data[, c("Service", "Site", "Month")]
-            # )
-            # 
-            # # Second, remove these sites, months, and metrics from the historical data,
-            # # if they exist there. This allows us to ensure no duplicate entries for
-            # # the same site, metric, and time period.
-            # di_bme <<- anti_join(disruptions_issues_reports,
-            #                      bme_di_new_data,
-            #                       by = c("Service" = "Service",
-            #                              "Site" = "Site",
-            #                              "Month" = "Month"))
-            # 
-            # # Third, combine the updated historical data with the new data
-            # disruptions_issues_reports <<- full_join(di_bme,
-            #                                          bme_di_summary_data)
-            # 
-            # # Next, arrange the DI reports summary data by month, metric, and site
-            # disruptions_issues_reports <<- disruptions_issues_reports %>%
-            #   arrange(Month,
-            #           Site)
-            # # Lastly, save the updated summary data
-            # write_xlsx(disruptions_issues_reports, bmedi_table_path)
-            # 
-            # # Update metrics_final_df with latest data using custom function
-            # metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-            # 
-            # # Save updates metrics_final_df
-            # saveRDS(metrics_final_df, metrics_final_df_path)
-            # 
-            # # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # # 
-            # # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # # date_time$Service = "Biomed / Clinical Engineering"
-            # # date_time <- rbind(time_df, date_time)
-            # # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        
             update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
             #record_timestamp("Biomed / Clinical Engineering")
             
