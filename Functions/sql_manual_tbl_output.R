@@ -3,7 +3,11 @@ summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
 manual_tbl_mapping <- tbl(con, "BSC_MANUAL_TABLE_MAPPING")
 
 sql_manual_table_output <- function(service, table_name) {
+<<<<<<< HEAD
   
+=======
+    
+>>>>>>> 2441a70d01080695a12925e999627429860ced24
   max_month <- as.character(Sys.Date() - months(8))
   format <- "YYYY-MM-DD"
   
@@ -29,6 +33,3 @@ sql_manual_table_output <- function(service, table_name) {
                 values_from = Value)
     
 }
-
-
-
