@@ -3853,6 +3853,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       #KPIs Biomed Observe Event----- 
       observeEvent(input$submit_biomedkpis, {
+        updated_user <- input$name_biomed_kpi
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3863,8 +3864,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         else{
           tryCatch({
-            
-            updated_user <- input$name_biomed_kpi
             
             # Convert rhandsontable to R object
             bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
@@ -3903,6 +3902,43 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
             } 
             else{
+<<<<<<< HEAD
+              tryCatch({
+
+                # Reformat data from manual input table into summary repo format
+                bme_kpi_summary_data <-
+                  process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI",updated_user)
+                bme_kpi_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering", "KPIs", bme_kpi_summary_data)
+
+                
+                flag <- 2
+
+                showModal(modalDialog(
+                  title = "Success",
+                  paste0("This Biomedical KPIs data has been submitted successfully."),
+                  easyClose = TRUE,
+                  footer = NULL
+                ))
+            },
+
+            error = function(err) {
+              print(err)
+              showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+            })
+  
+          if(flag==2){
+            write_temporary_table_to_database_and_merge(bme_kpi_summary_data,
+                                                        "TEMP_KPIS_BIOMED")
+
+          
+            
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+=======
               updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
                                                                 "Biomed / Clinical Engineering", 
                                                                 "KPIs", 
@@ -3915,6 +3951,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
             
                 update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+>>>>>>> 2441a70d01080695a12925e999627429860ced24
             # record_timestamp("Biomed / Clinical Engineering")
                 }
           }
