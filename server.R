@@ -3871,17 +3871,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(bme_kpi_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            bme_kpi_manual_updates <- bme_kpi_manual_updates[, non_empty_cols]
-            
-            bme_kpi_manual_updates <- bme_kpi_manual_updates %>% 
-              mutate(across(!Site & !Metric,as.numeric))
-            
+
+            bme_kpi_manual_updates <- remove_empty_manual_columns(bme_kpi_manual_updates)
             flag <- 1
           },
           error =function(err){
@@ -3912,46 +3903,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
             } 
             else{
-              tryCatch({
-                
-                # Reformat data from manual input table into summary repo format
-
-
-                bme_kpi_summary_data <-
-                  process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI",updated_user)
+              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
+                                                                "Biomed / Clinical Engineering", 
+                                                                "KPIs", 
+                                                                updated_user, 
+                                                                biomed_summary_repos_KPI)
               
-                
-                bme_kpi_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering", "KPIs", bme_kpi_summary_data)
-                
-                flag <- 2
-                
-                showModal(modalDialog(
-                  title = "Success",
-                  paste0("This Biomedical KPIs data has been submitted successfully."),
-                  easyClose = TRUE,
-                  footer = NULL
-                ))
-            },
-            
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-          
-          
-          if(flag==2){
-            write_temporary_table_to_database_and_merge(bme_kpi_summary_data,
+              if(updated_rows$flag == 2){
+                write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
                                                         "TEMP_KPIS_BIOMED")
 
             
-            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+                update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
             # record_timestamp("Biomed / Clinical Engineering")
-            
-          }
+                }
           }
         }
       }
@@ -3966,38 +3931,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         data <- data %>%
           arrange(Site)
         result <- manual_table_month_order(data)
-        
-        
-        # ##### Code that adds months missing months to the rhandsontable
-        # months_only <- data %>% select(-Site,-Metric)
-        # months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-        # 
-        # max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-        # 
-        # months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        # 
-        # months_to_drop <- which(months < max_month %m-% months(6))
-        # months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        # 
-        # complete_months <- seq.Date(months[1], max_month, by= 'month')
-        # 
-        # missing_months <- which(!(complete_months %in% months))
-        # missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        # 
-        # data[,missing_months] <- NA_character_
-        # 
-        # months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
-        # months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
-        # order_months <- months_df[months]
-        # 
-        # 
-        # index <- months+2
-        # index <- c(1:2,index)
-        # 
-        # data <- data[index]
-        # 
-        # data <- data %>% select(-all_of(months_to_drop))
-        
         
       })
       
@@ -4065,62 +3998,33 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updated_user <- input$name_biomed_distruptions
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(bme_di_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            bme_di_manual_updates <<- bme_di_manual_updates[, non_empty_cols]
-            
-            bme_di_manual_updates <<- bme_di_manual_updates %>% 
-              mutate(across(!Site & !Metric,as.numeric))
-            
+            bme_di_manual_updates <- remove_empty_manual_columns(bme_di_manual_updates)  
             flag <- 1
         
           },
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Disruptions and Issues data entered1."),
+              paste0("There seems to be an issue with the Disruptions and Issues data entered."),
               easyClose = TRUE,
               footer = NULL
             ))
           })
-        
+          updated_rows <- 0
           if(flag ==1){
             
-            tryCatch({
-            # Reformat data from manual input table into summary repo format
-            bme_di_summary_data <-
-              process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI",updated_user)
+            updated_rows <- manual_process_and_return_updates(bme_di_manual_updates, 
+                                                              "Biomed / Clinical Engineering",
+                                                              "disruptions_and_issues", 
+                                                              updated_user, 
+                                                              biomed_summary_repos_DI)
             
-            bme_di_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering","disruptions_and_issues", bme_di_summary_data)
-            
-            flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This Disruptions and Issues data has been submitted successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            
-            },
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Disruptions and Issues data entered2."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-              
-            })
+           
           }
           
-          if(flag==2){
+          if(updated_rows$flag == 2){
             
-            write_temporary_table_to_database_and_merge(bme_di_summary_data,
+            write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
                                                         "TEMP_DI_BIOMED")
             
         
@@ -4128,7 +4032,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             #record_timestamp("Biomed / Clinical Engineering")
             
             
-              } 
+          } 
         }
       })
       

@@ -1,9 +1,6 @@
 # function to append the new data to summary repo- KPIs & Disruptions and Issues -----
-process_manual_entry_to_summary_repo_format_biomed <- function(data,type,updated_user){
+biomed_summary_repos_KPI <- function(data,updated_user){
   
-  # Code block to process KPI input data
-  if(type=="KPI"){
-
       summary_repo_kpi_format <- data %>%
       rename(SITE = Site,
              METRIC_NAME_SUBMITTED = Metric ) %>%
@@ -17,13 +14,15 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type,updated
              UPDATED_USER = updated_user)
       
       summary_repo_kpi_format <- as.data.frame(summary_repo_kpi_format)
-      summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]    
-      
+      summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]  
+      summary_repo_kpi_format <- as_tibble(summary_repo_kpi_format)
+
+}
+
+
+biomed_summary_repos_DI <- function(data,updated_user){
   
-    return(summary_repo_kpi_format)
-  }
-  else{
-    
+  
     summary_repo_di_format <- data %>%
       rename(SITE = Site) %>%
       select(-Metric) %>%
@@ -39,14 +38,8 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type,updated
              UPDATED_USER = updated_user)
     
     summary_repo_di_format <- as.data.frame(summary_repo_di_format)
-    summary_repo_di_format <- summary_repo_di_format[complete.cases(summary_repo_di_format), ]    
+    summary_repo_di_format <- summary_repo_di_format[complete.cases(summary_repo_di_format), ] 
+    summary_repo_di_format <- as_tibble(summary_repo_di_format)
     
     
-    return(summary_repo_di_format)
-    
-    
-    
-    
-  }
-
 }
