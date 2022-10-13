@@ -4007,7 +4007,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               footer = NULL
             ))
           })
-          updated_rows <- 0
           if(flag ==1){
             
             updated_rows <- manual_process_and_return_updates(bme_di_manual_updates, 
