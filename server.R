@@ -2482,7 +2482,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           } else {
             ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
             updated_rows <- manual_process_and_return_updates(engineering_manual_updates, "Engineering", "cm_kpi", 
-                                                              updated_user, engineering_summary_repos)
+                                                              updated_user, to_summary_repos_form)
 
             if(updated_rows$flag == 2) {
               ##Updated the data on the databse
@@ -3902,62 +3902,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
             } 
             else{
-<<<<<<< HEAD
-              tryCatch({
-
-                # Reformat data from manual input table into summary repo format
-                bme_kpi_summary_data <-
-                  process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI",updated_user)
-                bme_kpi_summary_data <- return_updated_manual_data("Biomed / Clinical Engineering", "KPIs", bme_kpi_summary_data)
-
-                
-                flag <- 2
-
-                showModal(modalDialog(
-                  title = "Success",
-                  paste0("This Biomedical KPIs data has been submitted successfully."),
-                  easyClose = TRUE,
-                  footer = NULL
-                ))
-            },
-
-            error = function(err) {
-              print(err)
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-  
-          if(flag==2){
-            write_temporary_table_to_database_and_merge(bme_kpi_summary_data,
-                                                        "TEMP_KPIS_BIOMED")
-
-          
-            
-            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
-=======
-              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
-                                                                "Biomed / Clinical Engineering", 
-                                                                "KPIs", 
-                                                                updated_user, 
-                                                                biomed_summary_repos_KPI)
+              ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
+              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, "Biomed / Clinical Engineering", "KPIs", 
+                                                                updated_user, to_summary_repos_form)
               
-              if(updated_rows$flag == 2){
+              if(updated_rows$flag == 2) {
+                ##Updated the data on the databse
                 write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                        "TEMP_KPIS_BIOMED")
-
-            
-                update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
->>>>>>> 2441a70d01080695a12925e999627429860ced24
-            # record_timestamp("Biomed / Clinical Engineering")
-                }
-          }
+                                                            "TEMP_BIOMEDKPIs")
+                
+                update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                          input$selectedService3)
+              
+              }
         }
       }
-    })
+    }})
       
       
       #D&I Biomed Output Table -------
@@ -4031,7 +3991,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }else{
           tryCatch({
             # Convert rhandsontable to R object
-            bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
+            bme_di_manual_updates <- hot_to_r(input$bimoed_di)
             updated_user <- input$name_biomed_distruptions
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
@@ -4054,7 +4014,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                               "Biomed / Clinical Engineering",
                                                               "disruptions_and_issues", 
                                                               updated_user, 
-                                                              biomed_summary_repos_DI)
+                                                              to_summary_repos_form)
             
            
           }

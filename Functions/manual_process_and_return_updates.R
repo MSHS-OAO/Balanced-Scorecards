@@ -1,8 +1,13 @@
 manual_process_and_return_updates <- function(df, service, manual_table_name, updated_user, FUN) {
-
+ 
   tryCatch({
     ##Summary Repo processing where FUN is the function specific service line
-    manual_data <- FUN(df, updated_user)
+    manual_data <- 0
+    if(service %in% c("Engineering","Biomed / Clinical Engineering")){
+      manual_data <- FUN(df,service, updated_user)
+    }else{
+      manual_data <- FUN(df, updated_user)
+    }
     
     ##returns only updated rows by doing an anti_join of what is currently in the Summary  Repos
     manual_data <- return_updated_manual_data(service, manual_table_name, manual_data)
