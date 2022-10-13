@@ -1,56 +1,6 @@
-# Source code for processing Biomed/CE KPIs
-
-# Disruptions and Issues Reports -------------
-# Import historical summary
-disruptions_issues_reports <- read_excel(bmedi_table_path)
-
-# Reformat "Month" and "Date" column in Disruptions and Issues for merging
-disruptions_issues_reports <- disruptions_issues_reports %>%
-  mutate(Month = date(Month))
-
-# Determine last month and next month for Security Incident Reports
-biomedDI_last_month <- max(disruptions_issues_reports$Month)
-
-# Transform data to UI form
-disruptions_issues_reports_ui <- disruptions_issues_reports %>%
-  select(-Service) %>%
-  filter(Month >= biomedDI_last_month - months(7)) %>%
-  mutate(Month = format(Month, "%b-%Y")) %>%
-  pivot_wider(names_from = "Month",values_from = `Total Disruptions/Issues`,values_fill=NA_integer_) %>%
-  mutate(Metric = "Total Disruptions and Issues") %>%
-  relocate(Metric,.after=Site) #%>%
-  # mutate('{format(biomedDI_last_month + months(1), "%b-%Y")}' := "")
-
-
-# KPIs Biomed -------------
-# Import historical summary
-kpibme_reports <- read_excel(bmekpi_table_path)
-kpibme_reports$Number <- as.numeric(kpibme_reports$Number)
-
-# Reformat "Month" column in KPIs for merging
-kpibme_reports <- kpibme_reports %>%
-  mutate(Month = date(Month))
-
-# Determine last month and next month for KPIs
-kpibme_last_month <- max(kpibme_reports$Month)
-
-# Transform data to UI form
-kpibme_reports_ui <- kpibme_reports %>%
-  select(-Service) %>%
-  filter(Month >= kpibme_last_month - months(7)) %>%
-  mutate(Month = format(Month, "%b-%Y"),
-         Number = as.numeric(Number)) %>%
-  pivot_wider(names_from = "Month",values_from = Number,values_fill=NA_integer_) %>%
-  group_by(Site) %>%
-  # mutate('{format(kpibme_last_month + months(1), "%b-%Y")}' := NA) %>%
-  arrange(Site)
-
 # function to append the new data to summary repo- KPIs & Disruptions and Issues -----
-process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
+biomed_summary_repos_KPI <- function(data,updated_user){
   
-  # Code block to process KPI input data
-  if(type=="KPI"){
-
       summary_repo_kpi_format <- data %>%
       rename(SITE = Site,
              METRIC_NAME_SUBMITTED = Metric ) %>%
@@ -60,16 +10,20 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
       mutate(REPORTING_MONTH = as.Date(format(parse_date_time(paste0("01-",REPORTING_MONTH),orders = "dmy"),"%Y-%m-%d")),
              SERVICE = "Biomed / Clinical Engineering",
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
-             REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
+             #REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
+             UPDATED_USER = updated_user,
+             VALUE = as.numeric(VALUE))
       
       summary_repo_kpi_format <- as.data.frame(summary_repo_kpi_format)
-      summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]    
-      
+      summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]  
+      summary_repo_kpi_format <- as_tibble(summary_repo_kpi_format)
+
+}
+
+
+biomed_summary_repos_DI <- function(data,updated_user){
   
-    return(summary_repo_kpi_format)
-  }
-  else{
-    
+  
     summary_repo_di_format <- data %>%
       rename(SITE = Site) %>%
       select(-Metric) %>%
@@ -79,122 +33,15 @@ process_manual_entry_to_summary_repo_format_biomed <- function(data,type){
                    values_to = "VALUE") %>%
       mutate(REPORTING_MONTH = as.Date(format(parse_date_time(paste0("01-",REPORTING_MONTH),orders = "dmy"),"%Y-%m-%d")),
              SERVICE = "Biomed / Clinical Engineering",
-             METRIC_NAME_SUBMITTED = "Total Disruptions/Issues",
+             METRIC_NAME_SUBMITTED = "Total Disruptions or Equipment Issues",
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
-             REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"))
+             #REPORTING_MONTH = format(REPORTING_MONTH,"%Y-%m-%d"),
+             UPDATED_USER = updated_user,
+             VALUE = as.numeric(VALUE))
     
     summary_repo_di_format <- as.data.frame(summary_repo_di_format)
-    summary_repo_di_format <- summary_repo_di_format[complete.cases(summary_repo_di_format), ]    
+    summary_repo_di_format <- summary_repo_di_format[complete.cases(summary_repo_di_format), ] 
+    summary_repo_di_format <- as_tibble(summary_repo_di_format)
     
     
-    return(summary_repo_di_format)
-    
-    
-    
-    
-  }
-
 }
-
-
-# didata <- process_manual_entry_to_summary_repo_format_biomed(disruptions_issues_reports_ui,"DI")
-# kpidata <- process_manual_entry_to_summary_repo_format_biomed(kpibme_reports_ui,"KPI")
-
-# function to append data into metrics_final_df- KPIs & Disruptions and Issues -----
-biomed__metrics_final_df_process <- function(data,type){
-  if(type=="KPIs"){
-    
-    metrics_final_df_form <- data %>% 
-      rename(value_rounded= Number,
-             Metric_Name_Submitted = Metric,
-             Reporting_Month_Ref = Month) %>%
-      mutate(Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
-             Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
-             value_rounded = as.numeric(value_rounded))%>%
-      select(-Reporting_Month_Ref)
-    
-    # summary_metric_filter_subset <- summary_metric_filter %>% select(Metric_Group,Metric_Name,Metric_Name_Submitted)
-    # 
-    # metrics_final_df_form <- left_join(metrics_final_df_form,
-    #                                    summary_metric_filter_subset,
-    #                                    by = c("Metric_Name_Submitted"))
-    # metrics_final_df_form <- left_join(metrics_final_df_form,
-    #                                          target_mapping, 
-    #                                          by = c("Service","Site","Metric_Group", "Metric_Name","Metric_Name_Submitted"))
-    # 
-    # metrics_final_df_form <- metrics_final_df_form %>%
-    #   mutate(Variance = between(value_rounded, Range_1, Range_2)) %>%
-    #   filter(Variance %in% c(TRUE,NA))
-    # 
-    # metrics_final_df_form <- metrics_final_df_form[,c("Service",
-    #                                                   "Site",
-    #                                                   "Metric_Group",
-    #                                                   "Metric_Name",
-    #                                                   "Premier_Reporting_Period",
-    #                                                   "Reporting_Month",
-    #                                                   "value_rounded",
-    #                                                   "Target",
-    #                                                   "Status",
-    #                                                   "Reporting_Month_Ref")]
-    # 
-    # updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
-    # 
-    # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-    # 
-    # metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
-    
-    metrics_final_df <- metrics_final_df_subset_and_merge(metrics_final_df_form)
-    return(metrics_final_df)
-
-  }
-  else{
-    
-    metrics_final_df_form <- data %>% 
-      rename(value_rounded= `Total Disruptions/Issues`,
-             Reporting_Month_Ref = Month) %>%
-      mutate(Reporting_Month = format(Reporting_Month_Ref,"%m-%Y"),
-             Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
-             Metric_Name_Submitted = "Total Disruptions or Equipment Issues")%>%
-      select(-Reporting_Month_Ref)
-    
-    # summary_metric_filter_subset <- summary_metric_filter %>% 
-    #   select(Metric_Group,Metric_Name,Metric_Name_Submitted)
-    # 
-    # metrics_final_df_form <- left_join(metrics_final_df_form,
-    #                                    summary_metric_filter_subset,
-    #                                    by = c("Metric_Name_Submitted"))
-    # 
-    # metrics_final_df_form <- left_join(metrics_final_df_form,
-    #                                    target_mapping, 
-    #                                    by = c("Service","Site","Metric_Group", "Metric_Name","Metric_Name_Submitted"))
-    # 
-    # metrics_final_df_form <- metrics_final_df_form[,c("Service",
-    #                                                   "Site",
-    #                                                   "Metric_Group",
-    #                                                   "Metric_Name",
-    #                                                   "Premier_Reporting_Period",
-    #                                                   "Reporting_Month",
-    #                                                   "value_rounded",
-    #                                                   "Target",
-    #                                                   "Status",
-    #                                                   "Reporting_Month_Ref")]
-    # 
-    # updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
-    # 
-    # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-    # 
-    # metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
-    
-    metrics_final_df <- metrics_final_df_subset_and_merge(metrics_final_df_form)
-    return(metrics_final_df)
-    
-    
-  }
-  
-}
-
-
-#transformed_data <- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-
-# New Data Format for One Summary Repo -----
-
