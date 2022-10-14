@@ -13,7 +13,6 @@ to_summary_repos_form <- function(data,service,updated_user){
            UPDATED_USER = updated_user,
            VALUE = as.numeric(VALUE))
   
-  summary_repo_kpi_format <- as.data.frame(summary_repo_kpi_format)
   summary_repo_kpi_format <- summary_repo_kpi_format[complete.cases(summary_repo_kpi_format), ]  
   summary_repo_kpi_format <- as_tibble(summary_repo_kpi_format)
   
