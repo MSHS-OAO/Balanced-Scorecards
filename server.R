@@ -4138,13 +4138,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(nursing_summary_data,
-                                                      "TEMP_EVS")
+                                                      "TEMP_NURSING")
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
-          
-          record_timestamp("Nurisng")
-          
         }
       })
       
@@ -4154,19 +4151,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         flag <- 0
         ed_file <- input$ed
         
-        if (is.null(ed_file)) {
-          return(NULL)
+        if(input$name_ed == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
         }else{
+          updated_user <- input$name_ed
           file_path <- ed_file$datapath
-          
-          
           tryCatch({
-            
-            
             ed_data_ts <- read.xlsx(file_path,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
             ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-            
-            
             data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
             
             ed_data_ts <- data[[1]]
@@ -4181,9 +4178,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               paste0("There seems to be an issue with this data file."),
               easyClose = TRUE,
               footer = NULL
-            ))
-          }
-          )
+            ))})
           
         }
         
@@ -4192,16 +4187,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             ed_summary_data <-
-              ed_dept_summary(ed_data_ts,ed_data_percentiles)
+              ed_dept_summary(ed_data_ts,ed_data_percentiles,updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -4213,59 +4201,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
         }
         
-        
-        
         if(flag == 2){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          ed_summary_data <- file_return_updated_rows(ed_summary_data)
           
-          # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(ed_summary_repo,
-                     paste0(hist_archive_path,
-                            "ED",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(ed_summary_data,
+                                                      "TEMP_ED")
           
-          
-          
-          # First, identify the sites, months, and metrics in the new data
-          ed_new_data <- unique(
-            ed_summary_data[, c("Service", "Site", "Month", "KPI")]
-          )
-          
-          # Second, remove these sites, months, and metrics from the historical data,
-          # if they exist there. This allows us to ensure no duplicate entries for
-          # the same site, metric, and time period.
-          ed_old_data <<- anti_join(ed_summary_repo,
-                                    ed_new_data,
-                                         by = c("Service" = "Service",
-                                                "Site" = "Site",
-                                                "Month" = "Month",
-                                                "KPI" = "KPI"))
-          
-          # Third, combine the updated historical data with the new data
-          ed_reports <<- full_join(ed_old_data,
-                                        ed_summary_data)
-          
-          # Next, arrange the imaging reports summary data by month, metric, and site
-          ed_reports <<- ed_reports %>%
-            arrange(Month,
-                    Site)
-          
-          # Lastly, save the updated summary data
-          write_xlsx(ed_reports, ed_path)
-          
-          # Update metrics_final_df with latest data using custom function
-          metrics_final_df <<- ed__metrics_final_df_process(ed_summary_data)
-          
-          # Save updates metrics_final_df
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("ED")
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
           
         }
       })
