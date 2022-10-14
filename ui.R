@@ -592,8 +592,14 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
-                                        tabPanel("Nursing Indicators", 
-                                                 hr(),
+                                        tabPanel("Nursing Indicators",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_nursing", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
                                                  fileInput("nursing", label = "Please upload Nursing Indicators data"),
                                                  hr(),
                                                  actionButton("submit_nursing", "Submit", class = "btn-primary")

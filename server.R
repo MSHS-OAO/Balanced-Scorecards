@@ -2569,7 +2569,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         hot_col(1:3, readOnly = T)
     })
     
-    # Submit Environemental Services -----
+    #Submit Environemental Services -----
     observeEvent(input$submit_evs,{
       flag <- 0
       evs_file <- input$evs_data
@@ -4085,49 +4085,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Nursing observer event actions for data submission ----- 
       observeEvent(input$submit_nursing, {
-       
+        
+        flag <- 0
         nursing_file <- input$nursing
-        
-        if (is.null(nursing_file)) {
-          return(NULL)
-        }else{
-          file_path <- nursing_file$datapath
-          
-          
-          tryCatch({
+        if(input$name_nursing == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL))
+          }else{
             
-            nursing_data <- read_excel(file_path)
+            updated_user <- input$name_nursing
+            file_path <- nursing_file$datapath
             
-            flag <- 1
-            
-          },
-          error = function(err){
-            showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with this data file."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
+            tryCatch({
+              nursing_data <- read_excel(file_path)
+              flag <- 1
+            },
+              error = function(err){
+                showModal(modalDialog(
+                  title = "Error",
+                  paste0("There seems to be an issue with this data file."),
+                  easyClose = TRUE,
+                  footer = NULL))
+              })
           }
-          )
-          
-        }
-        
         # Process data if the right file format was submitted
         if(flag == 1) {
           tryCatch({
             # Reformat data from manual input table into summary repo format
             nursing_summary_data <-
-              process_nursing_data(nursing_data)
+              process_nursing_data(nursing_data,updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -4139,57 +4130,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
         }
         
-        
-        
         if(flag == 2){
           
-          # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(NursingSummaryRepo,
-                     paste0(hist_archive_path,
-                            "Nursing",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
           
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          nursing_summary_data <- file_return_updated_rows(nursing_summary_data)
           
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(nursing_summary_data,
+                                                      "TEMP_EVS")
           
-          # First, identify the sites, months, and metrics in the new data
-          nursing_new_data <- unique(
-            nursing_summary_data[, c("Service", "Site", "Month")]
-          )
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
           
-          # Second, remove these sites, months, and metrics from the historical data,
-          # if they exist there. This allows us to ensure no duplicate entries for
-          # the same site, metric, and time period.
-          nursing_old_data <<- anti_join(NursingSummaryRepo,
-                                   nursing_new_data,
-                                   by = c("Service" = "Service",
-                                          "Site" = "Site",
-                                          "Month" = "Month"))
-          
-          # Third, combine the updated historical data with the new data
-          nursing_reports <<- full_join(nursing_old_data,
-                                           nursing_summary_data)
-          
-          # Next, arrange the imaging reports summary data by month, metric, and site
-          nursing_reports <<- nursing_reports %>%
-            arrange(Month,
-                    Site)
-          
-          # Lastly, save the updated summary data
-          write_xlsx(nursing_reports, nursing_path)
-          
-          # Update metrics_final_df with latest data using custom function
-          metrics_final_df <<- nursing__metrics_final_df_process(nursing_summary_data)
-          
-          # Save updates metrics_final_df
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
           record_timestamp("Nurisng")
           
         }
