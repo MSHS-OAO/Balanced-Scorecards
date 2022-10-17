@@ -10,3 +10,9 @@ di_data <- di_data %>%
 di_data<- process_manual_entry_to_summary_repo_format_biomed(di_data,"DI","NULL")
 write_temporary_table_to_database_and_merge(di_data,
                                             "TEMP_DI_BIOMED")
+
+
+
+nursing_data <- read_excel("C:/Users/tommad01/Desktop/Nursing.xlsx")
+write_temporary_table_to_database_and_merge(nursing_data,
+                                            "TEMP_DI_BIOMED")

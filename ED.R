@@ -1,12 +1,3 @@
-# start <- "J:" #Comment when publishing to RConnect
-# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI Summary.xlsx")
-# 
-# 
-# ed_data_ts <- read.xlsx(path_raw,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-# ed_data_percentiles <- read.xlsx(path_raw,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-
-
 ed_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
   
   ed_data_ts[1,"X2"] <- "Measure Names"
@@ -39,10 +30,9 @@ ed_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
   
 }
 
-ed_summary_repo <- read_excel(ed_path) # change the variable name lower_case
 
 
-ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
+ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
   
   
   
@@ -85,8 +75,8 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
                             mapping)
   
   summary_repo <- summary_repo %>%
-    rename(`Site` = `Arrv Dept (group)`,
-           Month = `Month of Arrival Date`,
+    rename(`SITE` = `Arrv Dept (group)`,
+           REPORTING_MONTH = `Month of Arrival Date`,
            Metric = `Measure Values`) %>%
     select(-`Measure Names`) %>%
     pivot_wider(names_from = "KPI",
@@ -107,50 +97,14 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles){
          `Acuity 5 count AAAEM` = `Acuity 5`/`Acuity Total`,
          `Acuity Null count AAAEM` = `Acuity Null`/`Acuity Total`) %>%
     select(-`Acuity Total`) %>%
-    pivot_longer(cols = c(-Site,-Month),
-                 names_to = "KPI",
-                 values_to = "Metric")%>%
-   mutate(Service = "ED") %>%
-    select(Service,Site,Month,KPI,Metric)
+    pivot_longer(cols = c(-SITE,-REPORTING_MONTH),
+                 names_to = "METRIC_NAME_SUBMITTED",
+                 values_to = "VALUE")%>%
+   mutate(SERVICE = "ED",
+          UPDATED_USER = updated_user,
+          PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+          REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d"))) %>%
+    select(SERVICE,SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER)
 
   
 }
-
-
-ed__metrics_final_df_process <- function(summary_data){
-  
-  metrics_final_df_form <- summary_data %>%
-    rename(Reporting_Month_Ref = Month,
-           Metric_Name_Submitted = KPI,
-           value_rounded = Metric) %>%
-    mutate(Reporting_Month_Ref = parse_date_time(Reporting_Month_Ref,orders = "ymd"),
-           Premier_Reporting_Period = format(Reporting_Month_Ref,"%b %Y"),
-           Reporting_Month = format(Reporting_Month_Ref,"%m-%Y")) %>%
-    select(-Reporting_Month_Ref)
-  
-  metrics_final_df <- metrics_final_df_subset_and_merge(metrics_final_df_form)
-  return(metrics_final_df)
-  
-  
-  # metrics_final_df_form <- metrics_final_df_form %>% 
-  #   select("Service","Site","Metric_Group", "Metric_Name","Premier_Reporting_Period","Reporting_Month","value_rounded","Target","Status","Reporting_Month_Ref")
-  # 
-  # updated_rows <- unique(metrics_final_df_form[c("Metric_Name","Reporting_Month","Service", "Site")])
-  # 
-  # 
-  # metrics_final_df <- anti_join(metrics_final_df, updated_rows)
-  # 
-  # metrics_final_df <- full_join(metrics_final_df,metrics_final_df_form)
-  # 
-  # return(metrics_final_df)
-  
-}
-
-# data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
-# # 
-# ed_data_ts <- data[[1]]
-# ed_data_percentiles <- data[[2]]
-# # 
-# data <- ed_dept_summary(ed_data_ts,ed_data_percentiles)
-# mdf <- ed__metrics_final_df_process(data)
-# # write_xlsx(data,ed_path)
