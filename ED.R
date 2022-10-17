@@ -1,10 +1,3 @@
-# start <- "J:" #Comment when publishing to RConnect
-# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# path_raw <- paste0(home_path, "Scorecards Final Jan2022/Files Received/ED/FTI Summary.xlsx")
-# ed_data_ts <- read.xlsx(path_raw,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-# ed_data_percentiles <- read.xlsx(path_raw,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-
-
 ed_data_preprocess <- function(ed_data_ts,ed_data_percentiles){
   
   ed_data_ts[1,"X2"] <- "Measure Names"
@@ -115,9 +108,3 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
 
   
 }
-
-
-# data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
-# ed_data_ts <- data[[1]]
-# ed_data_percentiles <- data[[2]]
-# data <- ed_dept_summary(ed_data_ts,ed_data_percentiles,"TEST")

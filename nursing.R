@@ -1,9 +1,3 @@
-start <- "J:" #Comment when publishing to RConnect
-home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-path_raw <- paste0(home_path, "File Examples/Nursing/MSHS Nursing Indicators 2021 YTD.xlsx")
-data <- read_excel(path_raw)
-
-
 process_nursing_data <- function(data,updated_user){ #service_dept_summary
   
   data <- data %>%
@@ -26,9 +20,3 @@ process_nursing_data <- function(data,updated_user){ #service_dept_summary
   return(data)
   
 }
-
-data <- process_nursing_data(data,"TEST")
-
-
-
-# data <- process_nursing_data(data,"TEST")
