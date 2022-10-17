@@ -4,7 +4,7 @@ process_nursing_data <- function(data,updated_user){ #service_dept_summary
     rename( REPORTING_MONTH =`Year-Month`,
             SERVICE = Unit,
             SITE = Facility) %>%
-    mutate(REPORTING_MONTH = as.Date(parse_date_time(paste0(REPORTING_MONTH,"-01"),orders = "ymd")), #get rid of parse_date_time
+    mutate(REPORTING_MONTH = as.Date(paste0(REPORTING_MONTH,"-01"),"%Y-%m-%d"),
            SERVICE = "Nursing",
            `All Falls (per 1,000 PD)` = `All Falls`/(`Denominator (Patient Days)`/1000),
            `Falls with Injury (per 1,000 PD)` = `Falls with Injury`/(`Denominator (Patient Days)`/1000),
