@@ -2226,20 +2226,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       food_file <- input$food_cost_and_revenue
       flag <- 0
       
-      if(input$name_food == ""){
-        showModal(modalDialog(
-          title = "Error",
-          paste0("Please fill in the required fields"),
-          easyClose = TRUE,
-          footer = NULL
-        ))
+      if(is.null(food_file)){
+        return(NULL)
       }else{
        food_file_path <- food_file$datapath
-       updated_user <- input$name_food
        #food_file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"
        tryCatch({food_data <- read_excel(food_file_path, sheet = "Cost and Revenue")
        food_data_rev <- read_excel(food_file_path, sheet = "Rev Budget")
        flag <- 1
+       showModal(modalDialog(
+         title = "Success",
+         paste0("The data has been imported succesfully"),
+         easyClose = TRUE,
+         footer = NULL
+       ))
        }, error = function(err){  showModal(modalDialog(
          title = "Error",
          paste0("There seems to be an issue with one of the files"),
@@ -2248,14 +2248,24 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
        ))})
       }
 
+      #Save prior version of Food Dept Summary data
+      write_xlsx(cost_and_revenue_repo,
+                 paste0(hist_archive_path,
+                        "Food Services Updates ",
+                        format(Sys.time(), "%Y%m%d_%H%M%S"),
+                        ".xlsx"))
+      
       if (flag == 1){
       # Process Cost and Revenue data
         tryCatch({food_summary_data <- cost_and_revenue_dept_summary(food_data)
                   food_summary_budget <- rev_budget_dept_summary(food_data_rev)
-                  
-                  food_summary_data <- cost_budget_combine(food_summary_data,food_summary_budget)
-                  food_summary_data <- food_summary_repo_format(food_summary_data, updated_user)
         flag <- 2
+        showModal(modalDialog(
+          title = "Success",
+          paste0("The data has been imported succesfully"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
           paste0("There seems to be an issue with one of the files"),
@@ -2265,15 +2275,54 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       if (flag == 2){
-        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        food_summary_data <- file_return_updated_rows(food_summary_data)
+        food_summary_data <- cost_budget_combine(food_summary_data,food_summary_budget)
+        # Append Food summary with new data
+        # First, identify the sites, months, and metrics in the new data
+        food_new_data <- unique(
+          food_summary_data[  c("Service", "Site", "Month", "Metric")]
+        )
         
-        #wirte the updated data to the Summary Repo in the server
-        write_temporary_table_to_database_and_merge(food_summary_data,
-                                                    "TEMP_FOOD")
         
-        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                  input$selectedService3)
+        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+        # This allows us to ensure no duplicate entries for the same site, metric, and time period
+        cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
+                                            food_new_data,
+                                          by = c("Service" = "Service",
+                                                 "Site" = "Site",
+                                                 "Month" = "Month",
+                                                 "Metric" = "Metric")
+        )
+        
+        food_summary_data$`Revenue Budget` <- as.double(food_summary_data$`Revenue Budget`)
+        # Third, combine the updated historical data with the new data
+        cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
+                                            food_summary_data)
+        # Lastly, save the updated summary data
+        write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+        
+        cost_and_revenue_repo$Month <- as.Date(cost_and_revenue_repo$Month)
+        
+        # Update metrics_final_df with latest SCC data using custom function
+        metrics_final_df <<- census_days_metrics_final_df(food_summary_data)
+        saveRDS(metrics_final_df, metrics_final_df_path)
+        # Save updated metrics_final_df
+        #saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+  
+        # # Update "Reporting Month" drop down in each tab
+        # picker_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
+        
+        record_timestamp("Food Services")
+        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
+        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
+        # date_time$Service = "Food Services"
+        # date_time <- rbind(time_df, date_time)
+        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        
         
       }
       
