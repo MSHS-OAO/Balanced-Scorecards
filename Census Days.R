@@ -274,11 +274,12 @@ food_summary_repo_format <- function(data, updated_user) {
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(VALUE)))
   
-  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted, - Metric, -Reporting_Month) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name,
-                                                                                                                                  REPORTING_MONTH = Month,
-                                                                                                                                  SITE = Site,
-                                                                                                                                  SERVICE = Service,
-                                                                                                                                  PREMIER_REPORTING_PERIOD = Premier_Reporting_Period) %>% 
+  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted, - Metric, -Reporting_Month) 
+                        %>% rename(METRIC_NAME_SUBMITTED = Metric_Name,
+                                   REPORTING_MONTH = Month,
+                                   SITE = Site,
+                                   SERVICE = Service,
+                                   PREMIER_REPORTING_PERIOD = Premier_Reporting_Period) %>% 
     filter(!(is.na(METRIC_NAME_SUBMITTED))) %>% mutate(UPDATED_USER = updated_user) %>%
     select(SERVICE, 
            SITE, 
@@ -288,71 +289,3 @@ food_summary_repo_format <- function(data, updated_user) {
            VALUE,
            UPDATED_USER)
 }
-
-
-census_days_metrics_final_df <- function(data) {
-  raw_cost_rev_df <- data
-  min_month <- min(raw_cost_rev_df$Month)
-  max_month <- max(raw_cost_rev_df$Month)
-  
-  if(!("Census Days" %in% colnames(raw_cost_rev_df))){
-    
-    summary_repo_data <- read_excel(paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
-    summary_repo_data <- summary_repo_data %>% filter(Month >= min_month & Month <= max_month)
-    summary_repo_data <- summary_repo_data %>% select(-Metric, -Service, -`Actual Revenue`, -`Revenue Budget`)
-    summary_repo_data <- summary_repo_data %>% distinct()
-    
-    if(nrow(summary_repo_data) != 0){
-      raw_cost_rev_df <- left_join(raw_cost_rev_df,summary_repo_data)
-    }else{
-      raw_cost_rev_df$`Census Days` <- NA
-    }
-  }
-  
-  raw_cost_rev_df$`Actual Revenue` <- as.numeric(raw_cost_rev_df$`Actual Revenue`)
-  raw_cost_rev_df$`Revenue Budget` <- as.numeric(raw_cost_rev_df$`Revenue Budget`)
-  raw_cost_rev_df$`Census Days` <- as.numeric(raw_cost_rev_df$`Census Days`)
-  
-  # Cost and Revenue data pre-processing
-  cost_rev_df <- raw_cost_rev_df %>%
-    mutate(
-      `Actual Revenue` = as.numeric(`Actual Revenue`),
-      rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
-      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
-      #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
-      #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
-    pivot_longer(
-      5:9,
-      names_to = "Metric_Name_Submitted",
-      values_to = "value") %>%
-    mutate(
-      Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
-      Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
-    rename(value_rounded = value)
-  
-  
-  cost_rev_df_final <- left_join(cost_rev_df, cost_rev_mapping, 
-                             by = c("Metric", "Metric_Name_Submitted"))
-  cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
-  cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(value_rounded)))
-  
-  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name) %>% 
-    filter(!(is.na(Metric_Name_Submitted)))
-
-  # Subset processed data for merge 
-  metrics_final_df <- metrics_final_df_subset_and_merge(cost_rev_df_final)
-  return(metrics_final_df)
-
-  
-}
-
-##### Testing to read in Cost and Revenue from Summary Repos
-# start <- "J:" #Comment when publishing to RConnect
-# # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
-# home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
-# 
-# data_raw <- read_excel(paste0(home_path, "Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"))
-
-# census_days <- census_days_file_process(data_raw)
-# data_raw_cost <- read_excel(paste0(home_path, "Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"), sheet = "Cost and Revenue")
-# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Summary Repos/Food Services Cost and Revenue.xlsx")
