@@ -499,17 +499,19 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
                                         tabPanel("Imaging - IR", 
-                                                 hr(),
-                                                 textInput("imaging_ir_username",
-                                                           labelMandatory(
-                                                             "Please enter name:"
-                                                           )
+                                                 br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                     textInput("imaging_ir_username",
+                                                               labelMandatory(
+                                                                 "Please enter name:")
+                                                     )
+                                                   )
                                                  ),
-                                                 hr(),
                                                  fileInput("imaging_IR", label = "Please upload Imaging interventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
                                         ),
-                                        tabPanel("Imaging - DR ED Chest X-Ray",
+                                        tabPanel("Imaging - DR ED Chest X-Ray", br(),
                                                  fluidRow(
                                                    column(2,
                                                           textInput("imaging_xray_username",
@@ -928,6 +930,11 @@ ui <-
         }")),
  tags$style(HTML("
         #submit_biomeddi {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ tags$style(HTML("
+        #submit_imaging {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),

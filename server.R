@@ -3792,6 +3792,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       # Imaging DR X-RAY data submission ----- 
       observeEvent(input$submit_imagingxray, {
+        flag <- 0
+        xray_file <- input$imaging_DR_XRay
         if(input$imaging_xray_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3799,13 +3801,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
-        }
-        
-        xray_file <- input$imaging_DR_XRay
-        
-        if (is.null(xray_file)) {
-          return(NULL)
         }else{
+          updated_user <- input$imaging_xray_username
           file_path <- xray_file$datapath
 
           tryCatch({
@@ -3830,16 +3827,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             xray_summary_data <-
-              process_xray_data(xray_data)
+              process_xray_data(xray_data, updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -3853,68 +3843,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         if(flag == 2){
-            # Save prior version of xray Reports Dept Summary data
-            write_xlsx(ImagingSummaryRepo,
-                       paste0(hist_archive_path,
-                              "Imaging DR-Ops",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-            
-            # First, identify the sites, months, and metrics in the new data
-            xray_new_data <- unique(
-              xray_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            ImagingSummaryRepo <<- anti_join(ImagingSummaryRepo,
-                                 xray_new_data,
-                                 by = c("Service" = "Service",
-                                        "Site" = "Site",
-                                        "Month" = "Month",
-                                        "Metric_Name_Submitted" = "Metric_Name_Submitted"))
-            
-            # Third, combine the updated historical data with the new data
-            ImagingSummaryRepo <<- full_join(ImagingSummaryRepo,
-                                               xray_summary_data)
-            
-            # Next, arrange the incident reports summary data by month, metric, and site
-            ImagingSummaryRepo <<- ImagingSummaryRepo %>%
-              arrange(Month,
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(ImagingSummaryRepo, imagingDR_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Imaging"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Imaging")
+          
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          xray_summary_data <- file_return_updated_rows(xray_summary_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(xray_summary_data,
+                                                      "TEMP_IMAGING_XRAY")
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
             
         }
       })
       
       # Imaging DR Chest CT data submission ----- 
       observeEvent(input$submit_imagingct, {
+        flag <- 0
+        ct_file <- input$imaging_DR_ct
+
         if(input$imaging_ct_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3922,13 +3870,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
-        }
-        
-        ct_file <- input$imaging_DR_ct
-        
-        if (is.null(ct_file)) {
-          return(NULL)
         }else{
+          updated_user <- input$imaging_ct_username
           file_path <- ct_file$datapath
           
           
@@ -3956,16 +3899,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             ct_summary_data <-
-              process_ctdata_data(ct_data)
+              process_ctdata_data(ct_data, updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -3981,61 +3917,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if(flag == 2){
           
-            # Save prior version of Imaging Reports Dept Summary data
-            write_xlsx(ImagingSummaryRepo,
-                       paste0(hist_archive_path,
-                              "Imaging DR-Ops",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-    
-            # First, identify the sites, months, and metrics in the new data
-            ct_new_data <- unique(
-              ct_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            ImagingSummaryRepo <<- anti_join(ImagingSummaryRepo,
-                                       ct_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Month" = "Month",
-                                              "Metric_Name_Submitted" = "Metric_Name_Submitted"))
-            
-            # Third, combine the updated historical data with the new data
-            ImagingSummaryRepo <<- full_join(ImagingSummaryRepo,
-                                             ct_summary_data)
-            
-            # Next, arrange the imaging reports summary data by month, metric, and site
-            ImagingSummaryRepo <<- ImagingSummaryRepo %>%
-              arrange(Month,
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(ImagingSummaryRepo, imagingDR_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Imaging"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Imaging")
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          ct_summary_data <- file_return_updated_rows(ct_summary_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(ct_summary_data,
+                                                      "TEMP_IMAGING_CT")
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
             
         }
       })
