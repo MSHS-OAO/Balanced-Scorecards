@@ -274,18 +274,18 @@ food_summary_repo_format <- function(data, updated_user) {
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
   cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(VALUE)))
   
-  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted, - Metric, -Reporting_Month) 
-  %>% rename(METRIC_NAME_SUBMITTED = Metric_Name,
-             REPORTING_MONTH = Month,
-             SITE = Site,
-             SERVICE = Service,
-             PREMIER_REPORTING_PERIOD = Premier_Reporting_Period) %>% 
-    filter(!(is.na(METRIC_NAME_SUBMITTED))) %>% mutate(UPDATED_USER = updated_user) %>%
-    select(SERVICE, 
-           SITE, 
-           REPORTING_MONTH,
-           PREMIER_REPORTING_PERIOD, 
-           METRIC_NAME_SUBMITTED,
-           VALUE,
-           UPDATED_USER)
+  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted, - Metric, -Reporting_Month) %>%
+                         rename(METRIC_NAME_SUBMITTED = Metric_Name,
+                                     REPORTING_MONTH = Month,
+                                     SITE = Site,
+                                     SERVICE = Service,
+                                     PREMIER_REPORTING_PERIOD = Premier_Reporting_Period) %>% 
+                            filter(!(is.na(METRIC_NAME_SUBMITTED))) %>% mutate(UPDATED_USER = updated_user) %>%
+                            select(SERVICE, 
+                                   SITE, 
+                                   REPORTING_MONTH,
+                                   PREMIER_REPORTING_PERIOD, 
+                                   METRIC_NAME_SUBMITTED,
+                                   VALUE,
+                                   UPDATED_USER)
 }
