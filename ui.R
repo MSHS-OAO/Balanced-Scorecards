@@ -471,6 +471,12 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
                                         tabPanel("Cost and Revenue", br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_food", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
                                                  fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
                                                  actionButton("submit_food", label = "Submit")
                                         )
