@@ -83,17 +83,3 @@ imaging_dept_summary <- function(data, updated_user){
   
   data
 }
-
-
-imaging_metrics_final_df <- function(data){
-  imaging_df <- data %>%
-                        mutate(Premier_Reporting_Period = format(Reporting_Month_Ref, 
-                                                                 "%b-%Y")) %>%
-                        select(-Category)
-  
-  # Select relevant columns
-  metrics_final_df <- metrics_final_df_subset_and_merge(imaging_df)
-  return(metrics_final_df)
-}
-
-# data <- imaging_dept_summary(data)
