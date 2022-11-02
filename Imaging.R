@@ -2,7 +2,7 @@
 # 
 imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
 
-imaging_dept_summary <- function(data){
+imaging_dept_summary <- function(data, updated_user){
   
   data <- data %>% row_to_names(row_number = 1)
   data <- subset(data, select = -c(Measurement))
@@ -70,14 +70,16 @@ imaging_dept_summary <- function(data){
            SERVICE = Service,
            METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
            VALUE = value_rounded) %>%
-    mutate(REPORTING_MONTH = format(Reporting_Month_Ref,"%Y-%m-%d"),
-           PREMIER_REPORTING_PERIOD = format(Reporting_Month_Ref,"%b %Y")) %>%
+    mutate(REPORTING_MONTH = as.Date(format(Reporting_Month_Ref,"%Y-%m-%d"), "%Y-%m-%d"),
+           PREMIER_REPORTING_PERIOD = format(Reporting_Month_Ref,"%b %Y"),
+           UPDATED_USER = updated_user) %>%
     select(SERVICE, 
            SITE, 
            REPORTING_MONTH,
            PREMIER_REPORTING_PERIOD, 
            METRIC_NAME_SUBMITTED,
-           VALUE)
+           VALUE,
+           UPDATED_USER)
   
   data
 }

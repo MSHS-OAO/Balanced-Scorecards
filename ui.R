@@ -498,16 +498,23 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
-                                        tabPanel("Imaging - IR", br(),
+                                        tabPanel("Imaging - IR", 
+                                                 hr(),
+                                                 textInput("imaging_ir_username",
+                                                           labelMandatory(
+                                                             "Please enter name:"
+                                                           )
+                                                 ),
+                                                 hr(),
                                                  fileInput("imaging_IR", label = "Please upload Imaging interventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
                                         ),
-                                        tabPanel("Imaging - DR ED Chest X-Ray", br(),
+                                        tabPanel("Imaging - DR ED Chest X-Ray",
                                                  fluidRow(
                                                    column(2,
                                                           textInput("imaging_xray_username",
                                                                     labelMandatory(
-                                                                      "1. Please enter name:")
+                                                                      "Please enter name:")
                                                           )
                                                    )
                                                  ),
@@ -519,7 +526,7 @@ ui <-
                                                    column(2,
                                                           textInput("imaging_ct_username",
                                                                     labelMandatory(
-                                                                      "1. Please enter name:")
+                                                                      "Please enter name:")
                                                           )
                                                    )
                                                  ),
