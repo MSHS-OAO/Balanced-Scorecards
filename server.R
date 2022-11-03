@@ -3442,10 +3442,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             data <- process_NPT_raw_data(npt_data)
             
-            npt_data <- data[[1]]
-            
-            summary_repo_format <- data[[2]]
-            
             flag <- 2
             
             showModal(modalDialog(
@@ -3526,7 +3522,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
             tryCatch({
               # Read in SCC file
-              data <- process_PT_data(file_path)
+              pt_data_raw <- read_excel(file_path, sheet = "PTET")
+              
+              data <- process_PT_data(pt_data_raw)
               
               pt_data <- data[[1]]
               
