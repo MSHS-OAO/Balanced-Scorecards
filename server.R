@@ -2821,8 +2821,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     output$lab_prof_test <- renderRHandsontable({
       
-      
-      
+
       unique_sites <- unique(data_lab_prof_test()$Site)
       
       site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
@@ -2932,17 +2931,56 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } else {
             
-            updated_rows <- manual_process_and_return_updates(prof_test_manual_updates,
-                                                                "Lab", 
-                                                                "proficiency_testing", 
-                                                                updated_user)
+            updated_rows <- manual_process_and_return_updates(
+              prof_test_manual_updates,
+              "Lab",
+              "proficiency_testing",
+              updated_user,
+              lab_prof_test_dept_summary
+            )
 
+            # 
+            # # Check that data can be reformatted for department summary repo
+            # tryCatch({
+            # 
+            #   # Reformat data from manual input table into department summary format
+            #   prof_test_summary_data <-
+            #     # lab_prof_test_dept_summary(prof_test_manual_table)
+            #     lab_prof_test_dept_summary(prof_test_manual_updates,
+            #                                updated_user)
+            # 
+            # 
+            #   prof_test_summary_data <- return_updated_manual_data("Lab", "proficiency_testing", prof_test_summary_data)
+            # 
+            # 
+            # 
+            #   flag <- 2
+            # 
+            #   showModal(modalDialog(
+            #     title = "Success",
+            #     paste0("This Proficiency Test data has been submitted successfully."),
+            #     easyClose = TRUE,
+            #     footer = NULL
+            #   ))
+            # },
+            # error = function(err){
+            #   showModal(modalDialog(
+            #     title = "Error",
+            #     paste0("There seems to be an issue with the Proficiency Test data entered."),
+            #     easyClose = TRUE,
+            #     footer = NULL
+            #   ))
+            # })
+            
             if(updated_rows$flag == 2) {
               
-              write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                          "TEMP_PROF_TEST")
-
-              update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+              write_temporary_table_to_database_and_merge(
+                updated_rows$updated_rows,
+                "TEMP_PROF_TEST")
+                
+              update_picker_choices_sql(session,
+                                        input$selectedService,
+                                        input$selectedService2,
                                         input$selectedService3)
             
             }
@@ -2960,12 +2998,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Create reactive data table for manual entry
       data_sec_inc_rpts <- reactive({
         
-        tbl <- sql_manual_table_output("Security","incident_reports")
-        tbl <- tbl %>%
+        data <- sql_manual_table_output("Security", "incident_reports")
+        
+        data <- data %>%
           arrange(Site)
         
-        
-        tbl <- manual_table_month_order(tbl)
+        data <- manual_table_month_order(data)
         
       }
       )
@@ -3041,6 +3079,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission
       observeEvent(input$submit_sec_inc_rpts, {
+        
+        flag <- 0
+        
         if(input$sec_inc_rpts_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3050,14 +3091,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         } else {
           
+          updated_user <- input$sec_inc_rpts_username
+          
           tryCatch({
             
             # Convert rhandsontable to R object
             sec_inc_rpts_manual_updates <- hot_to_r(input$sec_inc_rpts)
             updated_user <- input$sec_inc_rpts_username
             
-            sec_inc_rpts_manual_updates <- remove_empty_manual_columns(sec_inc_rpts_manual_updates)  
-            
+            # Identify columns with no data in them and remove before further processing
+            sec_inc_rpts_manual_updates <- remove_empty_manual_columns(
+              sec_inc_rpts_manual_updates)
+
             flag <- 1
             
           },
@@ -3072,20 +3117,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           if(flag == 1) {
             
-            updated_rows <- manual_process_and_return_updates(sec_inc_rpts_manual_updates, 
-                                                              "Security",
-                                                              "incident_reports", 
-                                                              updated_user)
+            updated_rows <- manual_process_and_return_updates(
+              sec_inc_rpts_manual_updates,
+              "Security",
+              "incident_reports",
+              updated_user,
+              sec_inc_rpts_dept_summary
+            )
+            
           }
+          
           if(updated_rows$flag == 2) {
             
+            # Update data on database
+            write_temporary_table_to_database_and_merge(
+              updated_rows$updated_rows,
+              "TEMP_SEC_INC_RPTS")
             
-            write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                        "TEMP_SEC_IR")
-            
-            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
-            
-            record_timestamp("Security")
+            update_picker_choices_sql(session,
+                                      input$selectedService,
+                                      input$selectedService2,
+                                      input$selectedService3)
             
             
           }
@@ -3097,12 +3149,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Security Metrics - Security Events (Manual Entry) -------------------
       # Create reactive data table for manual entry
       data_sec_events <- reactive({
-        tbl <- sql_manual_table_output("Security","security_events")
-        tbl <- tbl %>%
+
+        data <- sql_manual_table_output("Security", "security_events")
+        
+        data <- data %>%
           arrange(Site)
         
+        data <- manual_table_month_order(data)
         
-        tbl <- manual_table_month_order(tbl)
+
       }
       )
       
@@ -3164,6 +3219,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observe event actions for manual data submission
       observeEvent(input$submit_sec_events, {
+        
+        flag <- 0
+        
         if(input$sec_events_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3174,13 +3232,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           )
         } else {
           
+          updated_user <- input$sec_events_username
+          
           tryCatch({
             
             # Convert rhandsontable to R object
             sec_events_manual_updates <- hot_to_r(input$sec_events)
-            updated_user <- input$sec_events_username
             
-            sec_events_manual_updates <- remove_empty_manual_columns(sec_events_manual_updates)  
+            # Identify columns with no data in them and remove before further processing
+            sec_events_manual_updates <- remove_empty_manual_columns(
+              sec_events_manual_updates
+            )
+            
             flag <- 1
             
           },
@@ -3195,23 +3258,30 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           if(flag == 1) {
             
-            updated_rows <- manual_process_and_return_updates(sec_events_manual_updates, 
-                                                              "Security",
-                                                              "security_events", 
-                                                              updated_user)
+            updated_rows <- manual_process_and_return_updates(
+              sec_events_manual_updates,
+              "Security",
+              "security_events",
+              updated_user,
+              sec_events_dept_summary
+            )
             
-            
+
           }
           
           if(updated_rows$flag == 2) {
             
-            write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                        "TEMP_SEC_SECEVENTS")
-
-            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Security")
-
+            # Update summary repo data on database
+            write_temporary_table_to_database_and_merge(
+              updated_rows$updated_rows,
+              "TEMP_SEC_EVENTS"
+            )
             
+            update_picker_choices_sql(session,
+                                      input$selectedService,
+                                      input$selectedService2,
+                                      input$selectedService3)
+
           }
           
         }
