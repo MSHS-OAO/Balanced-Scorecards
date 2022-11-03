@@ -85,7 +85,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      
       # service_input <- "Engineering"
       # month_input <- "06-2022"
       
@@ -2482,8 +2481,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } else {
             ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
-            updated_rows <- manual_process_and_return_updates(engineering_manual_updates, "Engineering", "cm_kpi", 
-                                                              updated_user, engineering_summary_repos)
+            updated_rows <- manual_process_and_return_updates(engineering_manual_updates, 
+                                                              "Engineering", 
+                                                              "cm_kpi", 
+                                                              updated_user)
 
             if(updated_rows$flag == 2) {
               ##Updated the data on the databse
@@ -2568,7 +2569,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         hot_col(1:3, readOnly = T)
     })
     
-    # Submit Environemental Services -----
+    #Submit Environemental Services -----
     observeEvent(input$submit_evs,{
       flag <- 0
       evs_file <- input$evs_data
@@ -2896,8 +2897,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           prof_test_manual_updates <- hot_to_r(input$lab_prof_test)
           
           # Identify columns with no data in them and remove before further processing
-          prof_test_manual_updates <- remove_empty_manual_columns(
-            prof_test_manual_updates)
+          prof_test_manual_updates <- remove_empty_manual_columns(prof_test_manual_updates)
           
           flag <- 1
         },
@@ -2977,7 +2977,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               write_temporary_table_to_database_and_merge(
                 updated_rows$updated_rows,
                 "TEMP_PROF_TEST")
-
+                
               update_picker_choices_sql(session,
                                         input$selectedService,
                                         input$selectedService2,
@@ -3004,7 +3004,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           arrange(Site)
         
         data <- manual_table_month_order(data)
-        
         
       }
       )
@@ -3097,12 +3096,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             
             # Convert rhandsontable to R object
-            sec_inc_rpts_manual_updates <<- hot_to_r(input$sec_inc_rpts)
+            sec_inc_rpts_manual_updates <- hot_to_r(input$sec_inc_rpts)
+            updated_user <- input$sec_inc_rpts_username
             
             # Identify columns with no data in them and remove before further processing
             sec_inc_rpts_manual_updates <- remove_empty_manual_columns(
               sec_inc_rpts_manual_updates)
-            
+
             flag <- 1
             
           },
@@ -3125,36 +3125,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               sec_inc_rpts_dept_summary
             )
             
-            # tryCatch({
-            #   
-            #   # Reformat data from manual input table into department summary format
-            #   
-            #   
-            #   sec_inc_rpts_summary_data <-
-            #     # sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates)
-            #     sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates, updated_user)
-            #   
-            #   sec_inc_rpts_summary_data <- return_updated_manual_data("Security",
-            #                                                           "incident_reports",
-            #                                                           sec_inc_rpts_summary_data)
-            # 
-            #   flag <- 2
-            #   
-            #   showModal(modalDialog(
-            #     title = "Success",
-            #     paste0("This Security Incident Reports data has been submitted successfully."),
-            #     easyClose = TRUE,
-            #     footer = NULL
-            #   ))
-            # },
-            # error = function(err) {
-            #   showModal(modalDialog(
-            #     title = "Error",
-            #     paste0("There seems to be an issue with the Security Incident Reports data entered."),
-            #     easyClose = TRUE,
-            #     footer = NULL
-            #   ))
-            # })
           }
           
           if(updated_rows$flag == 2) {
@@ -3168,7 +3138,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                       input$selectedService,
                                       input$selectedService2,
                                       input$selectedService3)
-
             
             
           }
@@ -3180,7 +3149,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Security Metrics - Security Events (Manual Entry) -------------------
       # Create reactive data table for manual entry
       data_sec_events <- reactive({
-        
 
         data <- sql_manual_table_output("Security", "security_events")
         
@@ -3189,6 +3157,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         data <- manual_table_month_order(data)
         
+
       }
       )
       
@@ -3268,7 +3237,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             
             # Convert rhandsontable to R object
-            sec_events_manual_updates <<- hot_to_r(input$sec_events)
+            sec_events_manual_updates <- hot_to_r(input$sec_events)
             
             # Identify columns with no data in them and remove before further processing
             sec_events_manual_updates <- remove_empty_manual_columns(
@@ -3297,30 +3266,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               sec_events_dept_summary
             )
             
-            # tryCatch({
-            #   
-            #   # Reformat data from manual input table into department summary format
-            #   sec_events_summary_data <-
-            #     sec_events_dept_summary(sec_events_manual_updates)
-            #   
-            #   flag <- 2
-            #   
-            #   showModal(modalDialog(
-            #     title = "Success",
-            #     paste0("This Security Events data has been submitted successfully."),
-            #     easyClose = TRUE,
-            #     footer = NULL
-            #   ))
-            #   
-            # },
-            # error = function(err) {
-            #   showModal(modalDialog(
-            #     title = "Error",
-            #     paste0("There seems to be an issue with the Security Events data entered."),
-            #     easyClose = TRUE,
-            #     footer = NULL
-            #   ))
-            # })
+
           }
           
           if(updated_rows$flag == 2) {
@@ -3718,17 +3664,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # KPI Biomed Output Table -------
       
       data_bimoed_kpi <- reactive({
-        data  <- kpibme_reports_ui %>% ungroup()
-        
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
-        
-        colnames(data)[3:length(data)] <- months
-        
-        data <- data %>% 
-          mutate(across(!Site & !Metric,as.character))
-        
-        
+        #data  <- kpibme_reports_ui %>% ungroup()
+        data <- sql_manual_table_output("Biomed / Clinical Engineering", "KPIs")
+        data <- data %>%
+          arrange(Site)
         result <- manual_table_month_order(data)
         
       })
@@ -3783,6 +3722,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       #KPIs Biomed Observe Event----- 
       observeEvent(input$submit_biomedkpis, {
+        updated_user <- input$name_biomed_kpi
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3794,23 +3734,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         else{
           tryCatch({
             
-            
             # Convert rhandsontable to R object
-            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)          
+            bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
             
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(bme_kpi_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            bme_kpi_manual_updates <<- bme_kpi_manual_updates[, non_empty_cols]
-            
-            bme_kpi_manual_updates <<- bme_kpi_manual_updates %>% 
-              mutate(across(!Site & !Metric,as.numeric))
-            
+
+            bme_kpi_manual_updates <- remove_empty_manual_columns(bme_kpi_manual_updates)
             flag <- 1
           },
           error =function(err){
@@ -3825,7 +3755,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
           
           if(flag==1){
-            user_format_error <<- manual_format_check(bme_kpi_manual_updates%>%
+            user_format_error <- manual_format_check(bme_kpi_manual_updates%>%
                                                         filter(Metric %in% c("PM Compliance - High Risk Equipment",
                                                                              "PM Compliance - All Medical Equipment",
                                                                              "Documented Status")))
@@ -3841,143 +3771,34 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
             } 
             else{
-              tryCatch({
-                # Reformat data from manual input table into summary repo format
-                bme_kpi_summary_data <<-
-                  process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+              ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
+              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
+                                                                "Biomed / Clinical Engineering", 
+                                                                "KPIs", 
+                                                                updated_user)
+              
+              if(updated_rows$flag == 2) {
+                ##Updated the data on the databse
+                write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+                                                            "TEMP_BIOMEDKPIs")
                 
-                flag <- 2
-                
-                
-                showModal(modalDialog(
-                  title = "Success",
-                  paste0("This Biomedical KPIs data has been submitted successfully."),
-                  easyClose = TRUE,
-                  footer = NULL
-                ))
-            },
-            
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-          
-          
-          if(flag==2){
-            
-            # Save prior version of KPIs Dept Summary data
-            write_xlsx(kpibme_reports,
-                       paste0(hist_archive_path,
-                              "KPIs Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-            # First, identify the sites, months, and metrics in the new data
-            bme_kpi_new_data <- unique(
-              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            kpi_bme <<- anti_join(kpibme_reports,
-                                  bme_kpi_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month",
-                                         "Metric" = "Metric"))
-            
-            # Third, combine the updated historical data with the new data
-            kpibme_reports <<- full_join(kpi_bme,
-                                         bme_kpi_summary_data)
-            
-            glimpse(kpibme_reports)
-            # Next, arrange the incident reports summary data by month, metric, and site
-            kpibme_reports <<- kpibme_reports %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(kpibme_reports, bmekpi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Biomed / Clinical Engineering"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Biomed / Clinical Engineering")
-            
-          }
-          }
+                update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                          input$selectedService3)
+              
+              }
         }
       }
-    })
+    }})
       
       
       #D&I Biomed Output Table -------
       
       data_bimoed_di <- reactive({
-        data  <- disruptions_issues_reports_ui %>% ungroup()
-        
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
-        
-        colnames(data)[3:length(data)] <- months
-        
-        data <- data %>% 
-          mutate(across(!Site & !Metric,as.character))
-        
+        #data  <- kpibme_reports_ui %>% ungroup()
+        data <- sql_manual_table_output("Biomed / Clinical Engineering", "disruptions_and_issues")
+        data <- data %>%
+          arrange(Site)
         result <- manual_table_month_order(data)
-        
-        # ##### Code that adds months missing months to the rhandsontable
-        # months_only <- data %>% select(-Site,-Metric)
-        # months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-        # 
-        # max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-        # 
-        # months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        # 
-        # months_to_drop <- which(months < max_month %m-% months(6))
-        # months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        # 
-        # complete_months <- seq.Date(months[1], max_month, by= 'month')
-        # 
-        # missing_months <- which(!(complete_months %in% months))
-        # missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        # 
-        # data[,missing_months] <- NA_character_
-        # 
-        # months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
-        # months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
-        # order_months <- months_df[months]
-        # 
-        # 
-        # index <- months+2
-        # index <- c(1:2,index)
-        # 
-        # data <- data[index]
-        # 
-        # data <- data %>% select(-all_of(months_to_drop))
-        
         
       })
       
@@ -4041,21 +3862,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }else{
           tryCatch({
             # Convert rhandsontable to R object
-            bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-            
+            bme_di_manual_updates <- hot_to_r(input$bimoed_di)
+            updated_user <- input$name_biomed_distruptions
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(bme_di_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            bme_di_manual_updates <<- bme_di_manual_updates[, non_empty_cols]
-            
-            bme_di_manual_updates <<- bme_di_manual_updates %>% 
-              mutate(across(!Site & !Metric,as.numeric))
-            
+            bme_di_manual_updates <- remove_empty_manual_columns(bme_di_manual_updates)  
             flag <- 1
         
           },
@@ -4067,91 +3878,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               footer = NULL
             ))
           })
-        
           if(flag ==1){
             
-            tryCatch({
-            # Reformat data from manual input table into summary repo format
-            bme_di_summary_data <-
-              process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+            updated_rows <- manual_process_and_return_updates(bme_di_manual_updates, 
+                                                              "Biomed / Clinical Engineering",
+                                                              "disruptions_and_issues", 
+                                                              updated_user)
             
-            flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This Disruptions and Issues data has been submitted successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            
-            },
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Disruptions and Issues data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-              
-            })
+           
           }
           
-          if(flag==2){
+          if(updated_rows$flag == 2){
             
-            # Save prior version of DI Reports Dept Summary data
-            write_xlsx(disruptions_issues_reports,
-                       paste0(hist_archive_path,
-                              "DI Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
+            write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+                                                        "TEMP_DI_BIOMED")
             
         
-            # First, identify the sites, months, and metrics in the new data
-            bme_di_new_data <- unique(
-              bme_di_summary_data[, c("Service", "Site", "Month")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            di_bme <<- anti_join(disruptions_issues_reports,
-                                 bme_di_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month"))
-            
-            # Third, combine the updated historical data with the new data
-            disruptions_issues_reports <<- full_join(di_bme,
-                                                     bme_di_summary_data)
-            
-            # Next, arrange the DI reports summary data by month, metric, and site
-            disruptions_issues_reports <<- disruptions_issues_reports %>%
-              arrange(Month,
-                      Site)
-            # Lastly, save the updated summary data
-            write_xlsx(disruptions_issues_reports, bmedi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Biomed / Clinical Engineering"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Biomed / Clinical Engineering")
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+            #record_timestamp("Biomed / Clinical Engineering")
             
             
-              } 
+          } 
         }
       })
       
@@ -4408,49 +4155,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Nursing observer event actions for data submission ----- 
       observeEvent(input$submit_nursing, {
-       
+        
+        flag <- 0
         nursing_file <- input$nursing
-        
-        if (is.null(nursing_file)) {
-          return(NULL)
-        }else{
-          file_path <- nursing_file$datapath
-          
-          
-          tryCatch({
+        if(input$name_nursing == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL))
+          }else{
             
-            nursing_data <- read_excel(file_path)
+            updated_user <- input$name_nursing
+            file_path <- nursing_file$datapath
             
-            flag <- 1
-            
-          },
-          error = function(err){
-            showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with this data file."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
+            tryCatch({
+              nursing_data <- read_excel(file_path)
+              flag <- 1
+            },
+              error = function(err){
+                showModal(modalDialog(
+                  title = "Error",
+                  paste0("There seems to be an issue with this data file."),
+                  easyClose = TRUE,
+                  footer = NULL))
+              })
           }
-          )
-          
-        }
-        
         # Process data if the right file format was submitted
         if(flag == 1) {
           tryCatch({
             # Reformat data from manual input table into summary repo format
             nursing_summary_data <-
-              process_nursing_data(nursing_data)
+              process_nursing_data(nursing_data,updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -4462,59 +4200,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
         }
         
-        
-        
         if(flag == 2){
           
-          # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(NursingSummaryRepo,
-                     paste0(hist_archive_path,
-                            "Nursing",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
           
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          nursing_summary_data <- file_return_updated_rows(nursing_summary_data)
           
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(nursing_summary_data,
+                                                      "TEMP_NURSING")
           
-          # First, identify the sites, months, and metrics in the new data
-          nursing_new_data <- unique(
-            nursing_summary_data[, c("Service", "Site", "Month")]
-          )
-          
-          # Second, remove these sites, months, and metrics from the historical data,
-          # if they exist there. This allows us to ensure no duplicate entries for
-          # the same site, metric, and time period.
-          nursing_old_data <<- anti_join(NursingSummaryRepo,
-                                   nursing_new_data,
-                                   by = c("Service" = "Service",
-                                          "Site" = "Site",
-                                          "Month" = "Month"))
-          
-          # Third, combine the updated historical data with the new data
-          nursing_reports <<- full_join(nursing_old_data,
-                                           nursing_summary_data)
-          
-          # Next, arrange the imaging reports summary data by month, metric, and site
-          nursing_reports <<- nursing_reports %>%
-            arrange(Month,
-                    Site)
-          
-          # Lastly, save the updated summary data
-          write_xlsx(nursing_reports, nursing_path)
-          
-          # Update metrics_final_df with latest data using custom function
-          metrics_final_df <<- nursing__metrics_final_df_process(nursing_summary_data)
-          
-          # Save updates metrics_final_df
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("Nurisng")
-          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
         }
       })
       
@@ -4524,19 +4221,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         flag <- 0
         ed_file <- input$ed
         
-        if (is.null(ed_file)) {
-          return(NULL)
+        if(input$name_ed == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
         }else{
+          updated_user <- input$name_ed
           file_path <- ed_file$datapath
-          
-          
           tryCatch({
-            
-            
             ed_data_ts <- read.xlsx(file_path,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
             ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-            
-            
             data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
             
             ed_data_ts <- data[[1]]
@@ -4546,15 +4243,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           },
           error = function(err){
-            print("Yo!")
             showModal(modalDialog(
               title = "Error",
               paste0("There seems to be an issue with this data file."),
               easyClose = TRUE,
               footer = NULL
-            ))
-          }
-          )
+            ))})
           
         }
         
@@ -4563,16 +4257,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             ed_summary_data <-
-              ed_dept_summary(ed_data_ts,ed_data_percentiles)
+              ed_dept_summary(ed_data_ts,ed_data_percentiles,updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -4584,59 +4271,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
         }
         
-        
-        
         if(flag == 2){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          ed_summary_data <- file_return_updated_rows(ed_summary_data)
           
-          # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(ed_summary_repo,
-                     paste0(hist_archive_path,
-                            "ED",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(ed_summary_data,
+                                                      "TEMP_ED")
           
-          
-          
-          # First, identify the sites, months, and metrics in the new data
-          ed_new_data <- unique(
-            ed_summary_data[, c("Service", "Site", "Month", "KPI")]
-          )
-          
-          # Second, remove these sites, months, and metrics from the historical data,
-          # if they exist there. This allows us to ensure no duplicate entries for
-          # the same site, metric, and time period.
-          ed_old_data <<- anti_join(ed_summary_repo,
-                                    ed_new_data,
-                                         by = c("Service" = "Service",
-                                                "Site" = "Site",
-                                                "Month" = "Month",
-                                                "KPI" = "KPI"))
-          
-          # Third, combine the updated historical data with the new data
-          ed_reports <<- full_join(ed_old_data,
-                                        ed_summary_data)
-          
-          # Next, arrange the imaging reports summary data by month, metric, and site
-          ed_reports <<- ed_reports %>%
-            arrange(Month,
-                    Site)
-          
-          # Lastly, save the updated summary data
-          write_xlsx(ed_reports, ed_path)
-          
-          # Update metrics_final_df with latest data using custom function
-          metrics_final_df <<- ed__metrics_final_df_process(ed_summary_data)
-          
-          # Save updates metrics_final_df
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("ED")
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
           
         }
       })
