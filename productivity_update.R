@@ -221,8 +221,18 @@ productivity_dept_summary <- function(raw_data){
                             mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y")) %>%
                             rename(Metric_Name_Submitted = Metric_Name,
                                    value_rounded = value) 
+  
+  
+  
                             
-                      
+  prod_df_aggregate_all <- prod_df_aggregate_all %>%
+                            rename(SERVICE = Service,
+                                   SITE = Site,
+                                   METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+                                   REPORTING_MONTH = Reporting_Month_Ref,
+                                   PREMIER_REPORTING_PERIOD = Premier_Reporting_Period,
+                                   VALUE = value_rounded) %>%
+                                   select(-Reporting_Month)
   
 
 }
