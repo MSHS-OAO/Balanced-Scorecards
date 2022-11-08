@@ -277,8 +277,20 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
-                                 fileInput("productiviy_data", label = "Please upload Productivity data"), br(),
-                                 actionButton("submit_prod", label = "Submit")
+                                 tabBox(title = NULL, id = "tabset20", width = "100%", type = 'pills',      
+                                        tabPanel("Productivity",
+                                         fluidRow(
+                                           column(2,
+                                                  textInput("name_productivity", (labelMandatory("Please enter name:"))),
+                                                  
+                                           )
+                                         ),
+                                         br(),
+                                         fileInput("productiviy_data", label = "Please upload Productivity data"), 
+                                         hr(),
+                                         actionButton("submit_prod", label = "Submit")
+                                        )
+                                 )
                         ),
                         # Biomed Data Input Tab ------
                         tabPanel("Operational Metrics - Biomed/Clinical Engineering",
