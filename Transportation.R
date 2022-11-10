@@ -7,7 +7,6 @@ process_PT_data <- function(pt_data_raw,updated_user){
 
   rows <- nrow(pt_data_raw)
 
-
   # pt_data_raw <- pt_data_raw %>%
   #   slice(3:end)
   # pt_data_raw <- read_excel(pt_data_raw, sheet = "PTET")
@@ -51,7 +50,7 @@ process_PT_data <- function(pt_data_raw,updated_user){
              Service = "Patient Transport",
              Premier_Reporting_Period = format(Day,"%b %Y"),
              value_rounded = as.numeric(value_rounded),
-             Reporting_Month = format(Day,"%Y-%m-%d")) %>%
+             Reporting_Month = as.Date(format(Day,"%Y-%m-%d"))) %>%
       filter(Day<current_month) %>%
       pivot_wider(names_from = "Metric_Group",values_from = "value_rounded",values_fill=0)  %>%
       rename(NumTransports = `# Transports`) %>%
@@ -75,12 +74,7 @@ process_PT_data <- function(pt_data_raw,updated_user){
              VALUE = value_rounded,
              METRIC_NAME_SUBMITTED = Metric_Name) %>%
       select(SERVICE,SITE,PREMIER_REPORTING_PERIOD,REPORTING_MONTH,VALUE,UPDATED_USER,METRIC_NAME_SUBMITTED)
-    
-    
 
-             
-             
-             
     processed_data[[hospital]] <- datap
     
   }
@@ -89,9 +83,8 @@ process_PT_data <- function(pt_data_raw,updated_user){
   processed_data <- as.data.frame(processed_data)
   processed_data <- processed_data[complete.cases(processed_data), ]
   
-  
-  
-
+  processed_data <- processed_data %>%
+    mutate(VALUE = replace(VALUE,which(is.infinite(processed_data$VALUE),arr.ind = TRUE),NA))
   
   return(processed_data)
 
@@ -131,7 +124,7 @@ process_NPT_raw_data <- function(data,updated_user){
            Month = format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y"),
            Service = "Patient Transport") %>%
     mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
-           Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%Y-%m-%d")) %>%
+           Reporting_Month = as.Date(format(as.Date(Month, format = "%m/%d/%Y"),"%Y-%m-%d"))) %>%
     select(Service,Site,`% of Trips Over 45 Minutes`,`Turnaround Time`,Premier_Reporting_Period,Reporting_Month) %>%
     pivot_longer(cols = c(-Service,-Site,-Premier_Reporting_Period,-Reporting_Month),
                  names_to = "Metric_Group",

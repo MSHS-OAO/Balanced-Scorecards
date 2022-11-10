@@ -3515,30 +3515,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if (is.null(pt_file)) {
           return(NULL)
         }else{
-          file_path <- pt_file$datapath
           #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
           #pt_data <- read_excel(file_path)
-          
+            if(input$name_transport_pt == ""){
+              showModal(modalDialog(
+              title = "Error",
+              paste0("Please fill in the required fields"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+           }
           
             tryCatch({
               # Read in SCC file
+              file_path <- pt_file$datapath
+              updated_user <- input$name_transport_pt
+              
+              
               pt_data_raw <- read_excel(file_path, sheet = "PTET")
               
-              data <- process_PT_data(pt_data_raw)
-              
-              pt_data <- data[[1]]
-              
-              summary_repo_format <- data[[2]]
               
               flag <- 1
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("This Patient Transport data has been imported and processed successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-              
               
             },
             error = function(err){
@@ -3555,35 +3552,37 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         if(flag==1){
-        
-          metrics_final_df <<- transport__metrics_final_df_process(pt_data)
+
+          tryCatch({
+            # Process Input Data
+            pt_summary_repo <- process_PT_data(pt_data_raw,updated_user)
+            flag <- 2
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Support Services file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          )
           
-          saveRDS(metrics_final_df, metrics_final_df_path)
+        }
+        if(flag==2){
           
-          transport_summary_repo <- read_excel(transport_table_path)
-          transport_summary_repo$Date <- as.Date(transport_summary_repo$Date)
-          transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
-          updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          pt_summary_repo <<- file_return_updated_rows(pt_summary_repo)
+          print(nrow(pt_summary_repo))
+          pt_summary_repo <- pt_summary_repo[1:1000,]
+          print(nrow(pt_summary_repo))
+          write_temporary_table_to_database_and_merge(pt_summary_repo,
+                                                      "TEMP_PT")
           
-          transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
-          transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
-          transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
-          transport_summary_repo <- as.data.frame(transport_summary_repo)
-          write_xlsx(transport_summary_repo, transport_table_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # 
-          # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-          # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-          # date_time$Service = "Patient Transport"
-          # date_time <- rbind(time_df, date_time)
-          # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("Patient Transport")
-          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+
           
         }
         
