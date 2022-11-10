@@ -2238,7 +2238,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2){
         
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        productivity_new_data <- file_return_updated_rows(prod_summary)
+        productivity_new_data <<- file_return_updated_rows(prod_summary)
         
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(productivity_new_data,
