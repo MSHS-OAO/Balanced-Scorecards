@@ -139,9 +139,9 @@ process_NPT_raw_data <- function(data,updated_user){
            METRIC_NAME_SUBMITTED = Metric_Name) %>%
     select(SERVICE,SITE,PREMIER_REPORTING_PERIOD,REPORTING_MONTH,VALUE,UPDATED_USER,METRIC_NAME_SUBMITTED)
 
+  data_metrics <- data_metrics %>%
+    mutate(VALUE = replace(VALUE,which(is.infinite(data_metrics$VALUE),arr.ind = TRUE),NA))
   
-  
-
   return(data_metrics)
 }
 
