@@ -3431,7 +3431,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             npt_data<- read_excel(file_path)
             
-            
             flag <- 1
             
           },
@@ -3452,7 +3451,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           tryCatch({
             # Process Input Data
-            npt_summary_repo <- process_NPT_raw_data(pt_data_raw,updated_user)
+            npt_summary_repo <- process_NPT_raw_data(npt_data,updated_user)
             flag <- 2
             
           },
