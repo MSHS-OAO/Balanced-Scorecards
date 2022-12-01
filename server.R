@@ -2196,27 +2196,59 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
       inFile <- input$productiviy_data
+      flag <- 0
       data <- read_excel(inFile$datapath)
-
-
-      tryCatch({prod_summary <- productivity_dept_summary(data)
-        metrics_final_df <<- productivity_metrics_final_df(prod_summary)
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        write_xlsx(prod_summary, productivity_file_path)
+      
+      
+      if(input$name_productivity == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }
+      else{
+        updated_user <- input$name_productivity
+        iproductivity_filepath <- inFile$datapath
+        #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
+        tryCatch({data <- read_excel(iproductivity_filepath)
+        flag <- 1
+        }, error = function(err){  
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the Productivity file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))})
+      }
+      
+      if(flag == 1){
+        # Process Imaging data
+        tryCatch({prod_summary <- productivity_dept_summary(data, updated_user)
+        flag <- 2
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Productivity file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))})
+      }
+      
+      if(flag == 2){
         
-      showModal(modalDialog(
-        title = "Success",
-        paste0("The data has been imported succesfully"),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-      }, error = function(err){  showModal(modalDialog(
-        title = "Error",
-        paste0("There seems to be an issue with one of the files"),
-        easyClose = TRUE,
-        footer = NULL
-      ))})
-      record_timestamp("Productivity")
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        productivity_new_data <- file_return_updated_rows(prod_summary)
+        
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(productivity_new_data,
+                                                    "TEMP_PRODUCTIVITY")
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+        
+        
+      }
       
     })
     
