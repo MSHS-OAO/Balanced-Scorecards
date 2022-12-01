@@ -642,12 +642,24 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
+                                 
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
+                                        
                                         tabPanel("Turnaround Time-Non Patient Transport", hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_transport_npt", (labelMandatory("1. Please enter Name:")), "")
+                                                   )
+                                                 ),
                                                  fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
                                                  actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
                                         ),
                                         tabPanel("Turnaround Time-Patient Transport", hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter Name:")), "")
+                                                   )
+                                                 ),
                                                  fileInput("patient_transport", label = "Please upload PTET Metrics data"),
                                                  actionButton("submit_pt_tat", "Submit", class = "btn-primary")
                                         )

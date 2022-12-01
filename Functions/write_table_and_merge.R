@@ -136,7 +136,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
 
   },
   error = function(err){
-    print(err)
+    #print(err)
     dbRollback(conn)
     dbDisconnect(conn)
     print("error")
