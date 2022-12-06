@@ -26,6 +26,7 @@ month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
 dbDisconnect(conn)
 ui <- 
   fluidPage(
+    shinyjs::useShinyjs(),
     
     tags$style(type = 'text/css', 
                '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
@@ -62,6 +63,7 @@ ui <-
              header = tagList(
                useShinydashboard()
              ),
+
              
              # First Tab - Summary - All Sites -----------------------
              tabPanel("Summary", value = "summary",
@@ -226,10 +228,10 @@ ui <-
                                                  actionButton("submit_finance", label = "Submit")
                                
                                       ),
-                                      tabPanel("Census Days", br(),
-                                               fileInput("finance_census", label = "Please upload Census Days data"),
-                                               actionButton("submit_finance", label = "Submit")
-                                               ),
+                                      # tabPanel("Census Days", br(),
+                                      #          fileInput("finance_census", label = "Please upload Census Days data"),
+                                      #          actionButton("submit_finance", label = "Submit")
+                                      #          ),
                                       tabPanel("Overtime", br(),
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
                                                actionButton("submit_finance_ot", label = "Submit")
