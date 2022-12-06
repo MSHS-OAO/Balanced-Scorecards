@@ -26,7 +26,7 @@ get_values <- function(x,table_name){
 
 # function to write the summary repo table to database: ----
 
-write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name){
+write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name, button_name){
   
   # Constants
   DATA_TYPES <- c(SERVICE = "Varchar2(100 CHAR)",
@@ -140,6 +140,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     dbRollback(conn)
     dbDisconnect(conn)
     print("error")
+    shinyjs::enable(button_name)
     if(isRunning()) {
       showModal(modalDialog(
         title = "Error",

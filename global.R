@@ -69,6 +69,7 @@ suppressMessages({
   library(stringr)
   library(glue)
   library(magrittr)
+  library(shinyjs)
   #library(reshape2)
 })
 

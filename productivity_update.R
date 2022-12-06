@@ -161,54 +161,58 @@ productivity_dept_summary <- function(raw_data, updated_user){
     ungroup() %>%
     select(-Metric_Group)
   
+  if(c("Nursing", "Imaging") %in% unique(prod_df_all$Service)){ 
+    nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
+      filter(Service %in% c("Nursing","Imaging")) %>%
+      filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
+                                "Overtime Hours", "Total Paid hours")) %>%
+      group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+      summarise(value = sum(value, na.rm = TRUE)) %>%
+      pivot_wider(names_from = Metric_Name,
+                  values_from = value
+      ) %>%
+      mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
+             `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid hours`
+      ) %>%
+      pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
+                   names_to = "Metric_Name",
+                   values_to = "value") %>%
+      filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
+      mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
+      mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
+      ungroup() %>%
+      select(-Metric_Group)
+    
+    
+    #Claulate WHPU
+    nursing_rad_whpu <-  prod_df_all %>% 
+      filter(Service %in% c("Nursing","Imaging")) %>%
+      filter(Metric_Name %in% c("Total Worked Hours", "Volume")) %>%
+      group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+      summarise(value = sum(value, na.rm = T)) %>%
+      pivot_wider(names_from = Metric_Name,
+                  values_from = value
+      ) %>%
+      mutate(`Actual Worked Hours per Unit` = `Total Worked Hours` / Volume
+      ) %>%
+      pivot_longer(-c(Service, Site, Reporting_Month_Ref, Metric_Group, Premier_Reporting_Period),
+                   names_to = "Metric_Name",
+                   values_to = "value") %>%
+      filter(Metric_Name == "Actual Worked Hours per Unit") %>%
+      mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
+      mutate_at(vars(value), ~replace(., is.infinite(.), 0)) %>%
+      mutate(Metric_Group = "Productivity") %>%
+      ungroup() %>%
+      select(-Metric_Group)
+    
+    
+    
+    
+    prod_df_aggregate_all <- bind_rows(prod_df_aggregate, nursing_rad_metric_calc,nursing_rad_whpu) # Merge newly calculated productivity index and overtime % for nursing and radiology 
+  } else{
+    prod_df_aggregate_all <- prod_df_aggregate
+  }
   
-  nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
-    filter(Service %in% c("Nursing","Imaging")) %>%
-    filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
-                              "Overtime Hours", "Total Paid hours")) %>%
-    group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
-    summarise(value = sum(value, na.rm = TRUE)) %>%
-    pivot_wider(names_from = Metric_Name,
-                values_from = value
-    ) %>%
-    mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
-           `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid hours`
-    ) %>%
-    pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
-                 names_to = "Metric_Name",
-                 values_to = "value") %>%
-    filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
-    mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
-    mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
-    ungroup() %>%
-    select(-Metric_Group)
-  
-  
-  #Claulate WHPU
-  nursing_rad_whpu <-  prod_df_all %>% 
-    filter(Service %in% c("Nursing","Imaging")) %>%
-    filter(Metric_Name %in% c("Total Worked Hours", "Volume")) %>%
-    group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
-    summarise(value = sum(value, na.rm = T)) %>%
-    pivot_wider(names_from = Metric_Name,
-                values_from = value
-    ) %>%
-    mutate(`Actual Worked Hours per Unit` = `Total Worked Hours` / Volume
-    ) %>%
-    pivot_longer(-c(Service, Site, Reporting_Month_Ref, Metric_Group, Premier_Reporting_Period),
-                 names_to = "Metric_Name",
-                 values_to = "value") %>%
-    filter(Metric_Name == "Actual Worked Hours per Unit") %>%
-    mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
-    mutate_at(vars(value), ~replace(., is.infinite(.), 0)) %>%
-    mutate(Metric_Group = "Productivity") %>%
-    ungroup() %>%
-    select(-Metric_Group)
-  
-  
-  
-  
-  prod_df_aggregate_all <- bind_rows(prod_df_aggregate, nursing_rad_metric_calc,nursing_rad_whpu) # Merge newly calculated productivity index and overtime % for nursing and radiology 
   
   prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
   

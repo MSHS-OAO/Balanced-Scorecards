@@ -1,4 +1,4 @@
-manual_process_and_return_updates <- function(df, service, manual_table_name, updated_user) {
+manual_process_and_return_updates <- function(df, service, manual_table_name, updated_user, button_name) {
  
   tryCatch({
     
@@ -16,6 +16,7 @@ manual_process_and_return_updates <- function(df, service, manual_table_name, up
   },
   error = function(err){
     flag <- 1
+    shinyjs::enable(button_name)
     if(isRunning()) {
       showModal(modalDialog(
         title = "Error",

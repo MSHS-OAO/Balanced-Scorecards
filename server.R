@@ -1389,60 +1389,128 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # 4. Data Tab Output ---------------------------------------------------------------------------------
     observeEvent(input$submit_finance,{
+      button_name <- "submit_finance"
+      shinyjs::disable(button_name)
       inFile_budget <- input$finance_budget
       flag <- 0
       
-      
-      if (is.null(inFile_budget)) {
-        return(NULL)
-      }else{
-        tryCatch({
-          data <- read_excel(inFile_budget$datapath,  sheet = "1-Pivot Summary by Site", skip = 5)
-           budget_process <- budget_raw_file_process(data)
-           showModal(modalDialog(
-             title = "Success",
-             paste0("The data has been imported succesfully"),
-             easyClose = TRUE,
-             footer = NULL
-           ))
-        }, error = function(err){  showModal(modalDialog(
+      if(input$name_finance == ""){
+        showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with one of the files"),
+          paste0("Please fill in the required fields"),
           easyClose = TRUE,
           footer = NULL
-        ))})
-      }
-      
-      
-      metrics_final_df <<- budget_to_actual_metrics_final_df(budget_process)
-      saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      
-      budget_to_actual_current_summary_repo <- read_excel(budget_to_actual_path_new)
-      updated_rows <- unique(budget_process[c("Service", "Site", "Metric_Name_Submitted", "Month")])
-      
-      budget_to_actual_current_summary_repo <- anti_join(budget_to_actual_current_summary_repo, updated_rows)
-      budget_to_actual_current_summary_repo <- full_join(budget_to_actual_current_summary_repo,budget_process)
-      
-      write_xlsx(budget_to_actual_current_summary_repo, budget_to_actual_path_new)
-
-      
-    })
-    
-    # MSH, MSM, and MSQ Submit Census Days -----
-    observeEvent(input$submit_finance,{
-      
-      inFile_census <- input$finance_census
-
-      
-      
-      if (is.null(inFile_census)) {
-        return(NULL)
+        ))
       }else{
-        data_census <- read_excel(inFile_census$datapath)
+        updated_user <- input$name_finance
+        file_path <- inFile_budget$datapath
+        tryCatch({data <- read_excel(file_path, sheet = "1-Pivot Summary by Site", skip = 5)
+        flag <- 1
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the budget file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
       }
-
+      
+      if(flag == 1){
+        # Process the data into standar Summary Repo format
+        tryCatch({budget_process <- budget_raw_file_process(data, updated_user)
+        flag <- 2
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the budget file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      
+      if(flag == 2){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        budget_data <- file_return_updated_rows(budget_process)
+        
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(budget_data,
+                                                    "TEMP_BUDGET", button_name)
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+      }
+      shinyjs::enable(button_name)
+      
     })
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      # if (is.null(inFile_budget)) {
+      #   return(NULL)
+      # }else{
+      #   tryCatch({
+      #     data <- read_excel(inFile_budget$datapath,  sheet = "1-Pivot Summary by Site", skip = 5)
+      #      budget_process <- budget_raw_file_process(data)
+      #      showModal(modalDialog(
+      #        title = "Success",
+      #        paste0("The data has been imported succesfully"),
+      #        easyClose = TRUE,
+      #        footer = NULL
+      #      ))
+      #   }, error = function(err){  showModal(modalDialog(
+      #     title = "Error",
+      #     paste0("There seems to be an issue with one of the files"),
+      #     easyClose = TRUE,
+      #     footer = NULL
+      #   ))})
+      # }
+      # 
+      # 
+      # metrics_final_df <<- budget_to_actual_metrics_final_df(budget_process)
+      # saveRDS(metrics_final_df, metrics_final_df_path)
+      # 
+      # 
+      # budget_to_actual_current_summary_repo <- read_excel(budget_to_actual_path_new)
+      # updated_rows <- unique(budget_process[c("Service", "Site", "Metric_Name_Submitted", "Month")])
+      # 
+      # budget_to_actual_current_summary_repo <- anti_join(budget_to_actual_current_summary_repo, updated_rows)
+      # budget_to_actual_current_summary_repo <- full_join(budget_to_actual_current_summary_repo,budget_process)
+      # 
+      # write_xlsx(budget_to_actual_current_summary_repo, budget_to_actual_path_new)
+
+      
+    # })
+    
+    # # MSH, MSM, and MSQ Submit Census Days -----
+    # observeEvent(input$submit_finance,{
+    #   
+    #   inFile_census <- input$finance_census
+    # 
+    #   
+    #   
+    #   if (is.null(inFile_census)) {
+    #     return(NULL)
+    #   }else{
+    #     data_census <- read_excel(inFile_census$datapath)
+    #   }
+    # 
+    # })
 
     
     
@@ -2195,11 +2263,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ## Productivity data --------------------------------
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
+      button_name <- "submit_prod"
+      shinyjs::disable(button_name)
       inFile <- input$productiviy_data
       flag <- 0
       data <- read_excel(inFile$datapath)
-      
-      
+
+
       if(input$name_productivity == ""){
         showModal(modalDialog(
           title = "Error",
@@ -2207,22 +2277,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           easyClose = TRUE,
           footer = NULL
         ))
+        shinyjs::enable(button_name)
+        
       }
       else{
         updated_user <- input$name_productivity
-        iproductivity_filepath <- inFile$datapath
+        productivity_filepath <- inFile$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({data <- read_excel(iproductivity_filepath)
+        tryCatch({data <- read_excel(productivity_filepath)
         flag <- 1
-        }, error = function(err){  
+        }, error = function(err){
           showModal(modalDialog(
             title = "Error",
             paste0("There seems to be an issue with the Productivity file."),
             easyClose = TRUE,
             footer = NULL
-          ))})
+          ))
+          shinyjs::enable(button_name)
+          
+          })
       }
-      
+
       if(flag == 1){
         # Process Imaging data
         tryCatch({prod_summary <- productivity_dept_summary(data, updated_user)
@@ -2232,22 +2307,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the Productivity file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          
+          })
       }
-      
+
       if(flag == 2){
-        
+
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
         productivity_new_data <- file_return_updated_rows(prod_summary)
-        
+
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(productivity_new_data,
-                                                    "TEMP_PRODUCTIVITY")
-        
-        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                                    "TEMP_PRODUCTIVITY", button_name)
+
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2,
                                   input$selectedService3)
         
-        
+        shinyjs::enable(button_name)
+
       }
       
     })
@@ -2255,6 +2334,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Submit Food Services -----
     observeEvent(input$submit_food,{
+      button_name <- "submit_food"
+      shinyjs::disable(button_name)
       food_file <- input$food_cost_and_revenue
       flag <- 0
       
@@ -2277,7 +2358,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with one of the files"),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
       if (flag == 1){
@@ -2293,7 +2376,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with one of the files"),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
       if (flag == 2){
@@ -2302,10 +2387,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(food_summary_data,
-                                                    "TEMP_FOOD")
+                                                    "TEMP_FOOD", button_name)
         
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                   input$selectedService3)
+        shinyjs::enable(button_name)
         
       }
       
@@ -2313,6 +2399,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Submit Interventional Radiology -----
     observeEvent(input$submit_imaging, {
+      button_name <- "submit_imaging"
+      shinyjs::disable(button_name)
       imaging_file <- input$imaging_IR
       flag <- 0
       
@@ -2336,7 +2424,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the Imaging file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
 
       if(flag == 1){
@@ -2348,7 +2438,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the Imaging file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
       if(flag == 2){
@@ -2358,10 +2450,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(imaging_new_data,
-                                                    "TEMP_IMAGING")
+                                                    "TEMP_IMAGING", button_name)
         
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                   input$selectedService3)
+        
+        shinyjs::enable(button_name)
       
         
       }
@@ -2370,6 +2464,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Submit Engineering -----
     observeEvent(input$submit_engineering,{
+      button_name <- "submit_engineering"
+      shinyjs::disable(button_name)
       flag <- 0
       if(input$name_engineering_kpi == ""){
         showModal(modalDialog(
@@ -2394,6 +2490,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
         })
         
         if (flag == 1) {
@@ -2424,12 +2521,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             updated_rows <- manual_process_and_return_updates(engineering_manual_updates, 
                                                               "Engineering", 
                                                               "cm_kpi", 
-                                                              updated_user)
+                                                              updated_user, button_name)
 
             if(updated_rows$flag == 2) {
               ##Updated the data on the databse
               write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                          "TEMP_ENGINEERING")
+                                                          "TEMP_ENGINEERING", button_name)
               
               update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                         input$selectedService3)
@@ -2441,6 +2538,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
       }
+      shinyjs::enable(button_name)
+      
 
     
     })
@@ -2511,6 +2610,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     #Submit Environemental Services -----
     observeEvent(input$submit_evs,{
+      button_name <- "submit_evs"
+      shinyjs::disable(button_name)
       flag <- 0
       evs_file <- input$evs_data
       
@@ -2534,7 +2635,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
       if(flag == 1){
@@ -2548,7 +2651,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
 
@@ -2558,11 +2663,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(evs_data,
-                                                    "TEMP_EVS")
+                                                    "TEMP_EVS", button_name)
         
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                   input$selectedService3)
       }
+      shinyjs::enable(button_name)
       
     })
     
@@ -2573,6 +2679,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Lab KPI - Turnaround Time ------------
     # SCC Data submission -----------------
     observeEvent(input$submit_lab_tat,{
+      button_name <- "submit_lab_tat"
+      shinyjs::disable(button_name)
       
       flag <- 0
 
@@ -2619,6 +2727,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+            shinyjs::enable(button_name)
           }
           )
         }
@@ -2646,22 +2755,28 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
+          
         })
       }
       
       if(flag == 2){
         
         write_temporary_table_to_database_and_merge(scc_summary_data,
-                                                    "TEMP_SCC_TAT")
+                                                    "TEMP_SCC_TAT", button_name)
         
         update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
         
       }
+      shinyjs::enable(button_name)
+      
     }
     )
     
     # Sunquest data submission -------------------
     observeEvent(input$submit_lab_tat,{
+      button_name <- "submit_lab_tat"
+      shinyjs::disable(button_name)
       
       flag <- 0
       
@@ -2705,6 +2820,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
         )
         }
@@ -2732,13 +2849,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
+          
         })
       }
       
       if(flag == 2) {
         
         write_temporary_table_to_database_and_merge(sun_summary_data,
-                                                    "TEMP_SUN_TAT")
+                                                    "TEMP_SUN_TAT", button_name)
         
         update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
 
@@ -2818,6 +2937,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Create observe event actions for manual data submission-----
     observeEvent(input$submit_lab_pt, {
+      button_name <- "submit_lab_pt"
+      shinyjs::disable(button_name)
       
       flag <- 0
       
@@ -2848,6 +2969,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
+          
         })
         
         
@@ -2876,7 +2999,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "Lab",
               "proficiency_testing",
               updated_user,
-              lab_prof_test_dept_summary
+              lab_prof_test_dept_summary,
+              button_name
             )
 
             # 
@@ -2916,7 +3040,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
               write_temporary_table_to_database_and_merge(
                 updated_rows$updated_rows,
-                "TEMP_PROF_TEST")
+                "TEMP_PROF_TEST", button_name)
                 
               update_picker_choices_sql(session,
                                         input$selectedService,
@@ -2930,6 +3054,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
       }
+      shinyjs::enable(button_name)
+      
 
     })
 
@@ -3019,6 +3145,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission
       observeEvent(input$submit_sec_inc_rpts, {
+        button_name <- "submit_sec_inc_rpts"
+        shinyjs::disable(button_name)
         
         flag <- 0
         
@@ -3053,6 +3181,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
           })
           
           if(flag == 1) {
@@ -3062,7 +3191,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "Security",
               "incident_reports",
               updated_user,
-              sec_inc_rpts_dept_summary
+              sec_inc_rpts_dept_summary,
+              button_name
             )
             
           }
@@ -3072,7 +3202,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Update data on database
             write_temporary_table_to_database_and_merge(
               updated_rows$updated_rows,
-              "TEMP_SEC_INC_RPTS")
+              "TEMP_SEC_INC_RPTS", button_name)
             
             update_picker_choices_sql(session,
                                       input$selectedService,
@@ -3083,6 +3213,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           }
           
         }
+        shinyjs::enable(button_name)
+        
         
       })
       
@@ -3159,6 +3291,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observe event actions for manual data submission
       observeEvent(input$submit_sec_events, {
+        button_name <- "submit_sec_events"
+        shinyjs::disable(button_name)
         
         flag <- 0
         
@@ -3194,6 +3328,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
           
           if(flag == 1) {
@@ -3203,7 +3339,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "Security",
               "security_events",
               updated_user,
-              sec_events_dept_summary
+              sec_events_dept_summary,
+              button_name
             )
             
 
@@ -3214,7 +3351,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Update summary repo data on database
             write_temporary_table_to_database_and_merge(
               updated_rows$updated_rows,
-              "TEMP_SEC_EVENTS"
+              "TEMP_SEC_EVENTS", button_name
             )
             
             update_picker_choices_sql(session,
@@ -3225,11 +3362,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           }
           
         }
+        shinyjs::enable(button_name)
+        
         
       })
 
     # 5. Overtime - Data Input ---------------------------------------------------------------------------------
     observeEvent(input$submit_finance, {
+      button_name <- "submit_finance"
+      shinyjs::disable(button_name)
       census_file <- input$finance_census
       flag <- 0
       
@@ -3252,7 +3393,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the census file"),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          
+          })
       }
       
 
@@ -3271,7 +3415,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         paste0("There seems to be an issue the census file"),
         easyClose = TRUE,
         footer = NULL
-      ))})
+      ))
+        shinyjs::enable(button_name)
+        })
       
       if (flag == 2){
 
@@ -3316,11 +3462,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       }
+      shinyjs::enable(button_name)
+      
       
     })
     
       
     observeEvent(input$submit_finance_ot, {
+      button_name <- "submit_finance_ot"
+      shinyjs::disable(button_name)
       
       if(input$name_finance == "") {
         showModal(modalDialog(
@@ -3406,6 +3556,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         record_timestamp("Overtime")
         
       }
+      
+      shinyjs::enable(button_name)
+      
         
     })
     
@@ -3415,6 +3568,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Transport Metrics - Non Patient Data  -----------------------
     
       observeEvent(input$submit_npt_tat,{
+        button_name <- "submit_npt_tat"
+        shinyjs::disable(button_name)
         
         npt_file <- input$non_patient_transport
         flag <- 0 
@@ -3451,6 +3606,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
           
@@ -3472,6 +3629,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
           
@@ -3481,19 +3640,23 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           npt_summary_repo <- file_return_updated_rows(npt_summary_repo)
           write_temporary_table_to_database_and_merge(npt_summary_repo,
-                                                      "TEMP_NPT")
+                                                      "TEMP_NPT", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
           
           
         }
+        shinyjs::enable(button_name)
+        
         
       })
     # Transport Metrics - Patient Data  -----------------------
     
       
       observeEvent(input$submit_pt_tat,{
+        button_name <- "submit_pt_tat"
+        shinyjs::disable(button_name)
         
         pt_file <- input$patient_transport
         flag <- 0 
@@ -3531,6 +3694,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 easyClose = TRUE,
                 footer = NULL
               ))
+              shinyjs::enable(button_name)
             }
             )
 
@@ -3552,6 +3716,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
           
@@ -3561,13 +3727,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           pt_summary_repo <- file_return_updated_rows(pt_summary_repo)
           write_temporary_table_to_database_and_merge(pt_summary_repo,
-                                                      "TEMP_PT")
+                                                      "TEMP_PT", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                   input$selectedService3)
 
           
         }
+        shinyjs::enable(button_name)
+        
         
       })
       
@@ -3632,6 +3800,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       #KPIs Biomed Observe Event----- 
       observeEvent(input$submit_biomedkpis, {
+        button_name <- "submit_biomedkpis"
+        shinyjs::disable(button_name)
         updated_user <- input$name_biomed_kpi
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
@@ -3661,6 +3831,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
             
           })
           
@@ -3685,12 +3857,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
                                                                 "Biomed / Clinical Engineering", 
                                                                 "KPIs", 
-                                                                updated_user)
+                                                                updated_user,
+                                                                button_name)
               
               if(updated_rows$flag == 2) {
                 ##Updated the data on the databse
                 write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                            "TEMP_BIOMEDKPIs")
+                                                            "TEMP_BIOMEDKPIs", button_name)
                 
                 update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                           input$selectedService3)
@@ -3762,6 +3935,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # D&I Biomed Observe Event----- 
       observeEvent(input$submit_biomeddi, {
+        button_name <- "submit_biomeddi"
+        shinyjs::disable(button_name)
         if(input$name_biomed_distruptions == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3787,13 +3962,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
           if(flag ==1){
             
             updated_rows <- manual_process_and_return_updates(bme_di_manual_updates, 
                                                               "Biomed / Clinical Engineering",
                                                               "disruptions_and_issues", 
-                                                              updated_user)
+                                                              updated_user,
+                                                              button_name)
             
            
           }
@@ -3801,7 +3979,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           if(updated_rows$flag == 2){
             
             write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                        "TEMP_DI_BIOMED")
+                                                        "TEMP_DI_BIOMED", button_name)
             
         
             update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
@@ -3810,11 +3988,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } 
         }
+        shinyjs::enable(button_name)
+        
       })
       
 
       # Imaging DR X-RAY data submission ----- 
       observeEvent(input$submit_imagingxray, {
+        button_name <- "submit_imagingxray"
+        shinyjs::disable(button_name)
         flag <- 0
         xray_file <- input$imaging_DR_XRay
         if(input$imaging_xray_username == "") {
@@ -3841,6 +4023,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
         }
@@ -3861,6 +4045,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
@@ -3873,16 +4059,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(xray_summary_data,
-                                                      "TEMP_IMAGING_XRAY")
+                                                      "TEMP_IMAGING_XRAY", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
             
         }
+        shinyjs::enable(button_name)
+        
       })
       
       # Imaging DR Chest CT data submission ----- 
       observeEvent(input$submit_imagingct, {
+        button_name <- "submit_imagingct"
+        shinyjs::disable(button_name)
         flag <- 0
         ct_file <- input$imaging_DR_ct
 
@@ -3912,6 +4102,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
           
@@ -3933,6 +4125,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
@@ -3945,16 +4139,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(ct_summary_data,
-                                                      "TEMP_IMAGING_CT")
+                                                      "TEMP_IMAGING_CT", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
             
         }
+        shinyjs::enable(button_name)
+        
       })
       
       # Nursing observer event actions for data submission ----- 
       observeEvent(input$submit_nursing, {
+        button_name <- "submit_nursing"
+        shinyjs::disable(button_name)
         
         flag <- 0
         nursing_file <- input$nursing
@@ -3980,6 +4178,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                   easyClose = TRUE,
                   footer = NULL))
               })
+            shinyjs::enable(button_name)
+            
           }
         # Process data if the right file format was submitted
         if(flag == 1) {
@@ -3997,6 +4197,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
@@ -4008,16 +4210,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(nursing_summary_data,
-                                                      "TEMP_NURSING")
+                                                      "TEMP_NURSING", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
         }
+        shinyjs::enable(button_name)
+        
       })
       
       
       # ED observer event actions for data submission ----- 
       observeEvent(input$submit_ed, {
+        button_name <- "submit_ed"
+        shinyjs::disable(button_name)
         flag <- 0
         ed_file <- input$ed
         
@@ -4048,7 +4254,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               paste0("There seems to be an issue with this data file."),
               easyClose = TRUE,
               footer = NULL
-            ))})
+            ))
+            shinyjs::enable(button_name)
+            
+            })
           
         }
         
@@ -4068,6 +4277,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
@@ -4077,12 +4288,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(ed_summary_data,
-                                                      "TEMP_ED")
+                                                      "TEMP_ED", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
           
         }
+        shinyjs::enable(button_name)
+        
       })
       
       
