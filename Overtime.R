@@ -10,7 +10,7 @@ summary_repos_overtime <- read_excel(summary_repos_overtime_path)
 
 # data <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
 
-overtime_file_processs <- function(data){
+overtime_file_processs <- function(data, updated_user){
   
   data <- full_join(data,overtime_mapping)  
   
@@ -33,6 +33,20 @@ overtime_file_processs <- function(data){
   
   data$Value[is.nan(data$Value)] <- 0
   
+  data <- data %>% rename(SERVICE = Service,
+                          SITE = Site,
+                          REPORTING_MONTH = `Associated Dashboard Month`,
+                          METRIC_NAME_SUBMITTED = Metric_Name,
+                          VALUE = Value) %>%
+                          mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH, "%b %Y"),
+                                 UPDATED_USER = updated_user) %>%
+                          select(SERVICE, 
+                                 SITE, 
+                                 REPORTING_MONTH,
+                                 PREMIER_REPORTING_PERIOD, 
+                                 METRIC_NAME_SUBMITTED,
+                                 VALUE,
+                                 UPDATED_USER)
   data
   
 }
