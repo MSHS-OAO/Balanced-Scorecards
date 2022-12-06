@@ -3480,84 +3480,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       
       # Security Metrics - Incident Reports (Manual Entry) -----------------------
-      # Create reactive data table for manual entry
-      data_sec_inc_rpts <- reactive({
-        
-        tbl <- manual_table_month_order(sec_inc_rpts_manual_table)
-        
-        
-      }
-      )
-      
-      output$sec_inc_rpts <- renderRHandsontable({
-        
-        
-        
-        unique_sites <- unique(data_sec_inc_rpts()$Site)
-        
-        site_1 <- which(data_sec_inc_rpts()$Site == unique_sites[1])
-        site_2 <- which(data_sec_inc_rpts()$Site == unique_sites[2])
-        site_3 <- which(data_sec_inc_rpts()$Site == unique_sites[3])
-        site_4 <- which(data_sec_inc_rpts()$Site == unique_sites[4])
-        site_5 <- which(data_sec_inc_rpts()$Site == unique_sites[5])
-        site_6 <- which(data_sec_inc_rpts()$Site == unique_sites[6])
-        site_7 <- which(data_sec_inc_rpts()$Site == unique_sites[7])
-        
-        col_highlight <- ncol(data_sec_inc_rpts()) - 1
-        
-        # # Code for testing manual entry table without reactive data
-        # data_sec_inc_rpts <- data
-        # 
-        # unique_sites <- unique(data_sec_inc_rpts$Site)
-        # 
-        # site_1 <- which(data_sec_inc_rpts$Site == unique_sites[1])
-        # site_2 <- which(data_sec_inc_rpts$Site == unique_sites[2])
-        # site_3 <- which(data_sec_inc_rpts$Site == unique_sites[3])
-        # site_4 <- which(data_sec_inc_rpts$Site == unique_sites[4])
-        # site_5 <- which(data_sec_inc_rpts$Site == unique_sites[5])
-        # site_6 <- which(data_sec_inc_rpts$Site == unique_sites[6])
-        # site_7 <- which(data_sec_inc_rpts$Site == unique_sites[7])
-        # 
-        # col_highlight <- ncol(data_sec_inc_rpts) - 1
-        
-        renderer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-        
-        # col_highlight <- ncol(data) - 1
-
-        
-        rhandsontable(data_sec_inc_rpts(),
-                      # # Dataframe for non-reactive testing
-                      # data_sec_inc_rpts,
-                      overflow = 'visible',
-                      col_highlight = col_highlight,
-                      rowHeaders = FALSE,
-                      readOnly = FALSE) %>%
-          hot_table(mergeCells = list(
-            list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
-            list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
-            list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
-            list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
-            list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
-            list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
-            list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-          )) %>%
-          hot_cols(renderer = renderer_string) %>%
-          hot_col(1:2, readOnly = TRUE)
-        
-      })
-      
       # Create observer event actions for manual data submission
       observeEvent(input$submit_sec_inc_rpts, {
         if(input$sec_inc_rpts_username == "") {
@@ -3698,72 +3620,105 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
       })
+    
+    # Create reactive data table for manual entry
+    data_sec_inc_rpts <- reactive({
+      input$submit_sec_inc_rpts
+      security_incident_reports <- read_excel(security_incident_reports_path)
+      
+      # Reformat "Month" column in Proficiency Testing data for merging
+      security_incident_reports <- security_incident_reports %>%
+        mutate(Month = date(Month))
+      
+      # Reformat Security Incident Reports data into wider format for manual entries
+      sec_inc_rpts_manual_table <<- security_incident_reports %>%
+        select(-Service) %>%
+        filter(Month >= sec_inc_rpts_last_month - months(7) &
+                 Metric %in% sec_inc_rpt_metrics_incl$Metric_Name_Submitted) %>%
+        arrange(Month,
+                Site,
+                Metric) %>%
+        mutate(Month = format(Month, "%m-%Y"),
+               Number = as.character(Number)) %>%
+        pivot_wider(names_from = Month,
+                    values_from = Number)
+      
+      tbl <- manual_table_month_order(sec_inc_rpts_manual_table)
+      
+      
+    }
+    )
+    
+    output$sec_inc_rpts <- renderRHandsontable({
+      
+      
+      
+      unique_sites <- unique(data_sec_inc_rpts()$Site)
+      
+      site_1 <- which(data_sec_inc_rpts()$Site == unique_sites[1])
+      site_2 <- which(data_sec_inc_rpts()$Site == unique_sites[2])
+      site_3 <- which(data_sec_inc_rpts()$Site == unique_sites[3])
+      site_4 <- which(data_sec_inc_rpts()$Site == unique_sites[4])
+      site_5 <- which(data_sec_inc_rpts()$Site == unique_sites[5])
+      site_6 <- which(data_sec_inc_rpts()$Site == unique_sites[6])
+      site_7 <- which(data_sec_inc_rpts()$Site == unique_sites[7])
+      
+      col_highlight <- ncol(data_sec_inc_rpts()) - 1
+      
+      # # Code for testing manual entry table without reactive data
+      # data_sec_inc_rpts <- data
+      # 
+      # unique_sites <- unique(data_sec_inc_rpts$Site)
+      # 
+      # site_1 <- which(data_sec_inc_rpts$Site == unique_sites[1])
+      # site_2 <- which(data_sec_inc_rpts$Site == unique_sites[2])
+      # site_3 <- which(data_sec_inc_rpts$Site == unique_sites[3])
+      # site_4 <- which(data_sec_inc_rpts$Site == unique_sites[4])
+      # site_5 <- which(data_sec_inc_rpts$Site == unique_sites[5])
+      # site_6 <- which(data_sec_inc_rpts$Site == unique_sites[6])
+      # site_7 <- which(data_sec_inc_rpts$Site == unique_sites[7])
+      # 
+      # col_highlight <- ncol(data_sec_inc_rpts) - 1
+      
+      renderer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+      
+      # col_highlight <- ncol(data) - 1
+      
+      
+      rhandsontable(data_sec_inc_rpts(),
+                    # # Dataframe for non-reactive testing
+                    # data_sec_inc_rpts,
+                    overflow = 'visible',
+                    col_highlight = col_highlight,
+                    rowHeaders = FALSE,
+                    readOnly = FALSE) %>%
+        hot_table(mergeCells = list(
+          list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
+          list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
+          list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
+          list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
+          list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
+          list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
+          list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
+        )) %>%
+        hot_cols(renderer = renderer_string) %>%
+        hot_col(1:2, readOnly = TRUE)
+      
+    })
       
       # Security Metrics - Security Events (Manual Entry) -------------------
-      # Create reactive data table for manual entry
-      data_sec_events <- reactive({
-        
-
-        tbl <- manual_table_month_order(sec_events_manual_table)
-      }
-      )
-      
-      output$sec_events <- renderRHandsontable({
-        
-        unique_sites <- unique(data_sec_events()$Site)
-        
-        site_1 <- which(data_sec_events()$Site == unique_sites[1])
-        site_2 <- which(data_sec_events()$Site == unique_sites[2])
-        site_3 <- which(data_sec_events()$Site == unique_sites[3])
-        site_4 <- which(data_sec_events()$Site == unique_sites[4])
-        site_5 <- which(data_sec_events()$Site == unique_sites[5])
-        site_6 <- which(data_sec_events()$Site == unique_sites[6])
-        site_7 <- which(data_sec_events()$Site == unique_sites[7])
-        
-        col_highlight <- ncol(data_sec_events()) - 1
-        
-        # # Code for testing manual entry table without reactive data
-        # data_sec_events <- data
-        # 
-        # unique_sites <- unique(data_sec_events$Site)
-        # 
-        # site_1 <- which(data_sec_events$Site == unique_sites[1])
-        # site_2 <- which(data_sec_events$Site == unique_sites[2])
-        # site_3 <- which(data_sec_events$Site == unique_sites[3])
-        # site_4 <- which(data_sec_events$Site == unique_sites[4])
-        # site_5 <- which(data_sec_events$Site == unique_sites[5])
-        # site_6 <- which(data_sec_events$Site == unique_sites[6])
-        # site_7 <- which(data_sec_events$Site == unique_sites[7])
-        # 
-        # col_highlight <- ncol(data_sec_events) - 1
-        
-        renderer_string <- "
-        function(instance, td, row, col, prop, value, cellProperties) {
-        Handsontable.renderers.NumericRenderer.apply(this, arguments);
-        
-        if (instance.params) {
-        hcols = instance.params.col_highlight;
-        hcols = hcols instanceof Array ? hcols : [hcols];
-        }
-        
-        if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-        }
-        }"
-        
-        rhandsontable(data_sec_events(),
-                      # # Dataframe for non-reactive testing
-                      # data_sec_events,
-                      overflow = 'visible',
-                      col_highlight = col_highlight,
-                      rowHeaders = FALSE,
-                      readOnly = FALSE) %>%
-          hot_cols(renderer = renderer_string) %>%
-          hot_col(1:2, readOnly = TRUE)
-        
-      }
-      )
-      
       # Create observe event actions for manual data submission
       observeEvent(input$submit_sec_events, {
         if(input$sec_events_username == "") {
@@ -3907,6 +3862,92 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
       })
+    
+    # Create reactive data table for manual entry
+    data_sec_events <- reactive({
+      input$submit_sec_events
+      security_events <- read_excel(security_events_path)
+      
+      # Reformat "Month" column in Proficiency Testing data for merging
+      security_events <- security_events %>%
+        mutate(Month = date(Month))
+      
+      
+      # Determine last month and next month for Security Incident Reports
+      sec_events_last_month <- max(security_events$Month)
+      
+      # Reformat Security Incident Reports data into wider format for manual entries
+      sec_events_manual_table <<- security_events %>%
+        select(-Service) %>%
+        filter(Month >= sec_events_last_month - months(7) &
+                 !(Metric %in% c("Total Security Events (12-mo Rolling)"))) %>%
+        arrange(Month,
+                Site) %>%
+        mutate(Month = format(Month, "%m-%Y"),
+               Number = as.character(Number)) %>%
+        pivot_wider(names_from = Month,
+                    values_from = Number)
+      
+      
+      tbl <- manual_table_month_order(sec_events_manual_table)
+    }
+    )
+    
+    output$sec_events <- renderRHandsontable({
+      
+      unique_sites <- unique(data_sec_events()$Site)
+      
+      site_1 <- which(data_sec_events()$Site == unique_sites[1])
+      site_2 <- which(data_sec_events()$Site == unique_sites[2])
+      site_3 <- which(data_sec_events()$Site == unique_sites[3])
+      site_4 <- which(data_sec_events()$Site == unique_sites[4])
+      site_5 <- which(data_sec_events()$Site == unique_sites[5])
+      site_6 <- which(data_sec_events()$Site == unique_sites[6])
+      site_7 <- which(data_sec_events()$Site == unique_sites[7])
+      
+      col_highlight <- ncol(data_sec_events()) - 1
+      
+      # # Code for testing manual entry table without reactive data
+      # data_sec_events <- data
+      # 
+      # unique_sites <- unique(data_sec_events$Site)
+      # 
+      # site_1 <- which(data_sec_events$Site == unique_sites[1])
+      # site_2 <- which(data_sec_events$Site == unique_sites[2])
+      # site_3 <- which(data_sec_events$Site == unique_sites[3])
+      # site_4 <- which(data_sec_events$Site == unique_sites[4])
+      # site_5 <- which(data_sec_events$Site == unique_sites[5])
+      # site_6 <- which(data_sec_events$Site == unique_sites[6])
+      # site_7 <- which(data_sec_events$Site == unique_sites[7])
+      # 
+      # col_highlight <- ncol(data_sec_events) - 1
+      
+      renderer_string <- "
+        function(instance, td, row, col, prop, value, cellProperties) {
+        Handsontable.renderers.NumericRenderer.apply(this, arguments);
+        
+        if (instance.params) {
+        hcols = instance.params.col_highlight;
+        hcols = hcols instanceof Array ? hcols : [hcols];
+        }
+        
+        if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+        }
+        }"
+      
+      rhandsontable(data_sec_events(),
+                    # # Dataframe for non-reactive testing
+                    # data_sec_events,
+                    overflow = 'visible',
+                    col_highlight = col_highlight,
+                    rowHeaders = FALSE,
+                    readOnly = FALSE) %>%
+        hot_cols(renderer = renderer_string) %>%
+        hot_col(1:2, readOnly = TRUE)
+      
+    }
+    )
 
     # 5. Overtime - Data Input ---------------------------------------------------------------------------------
     observeEvent(input$submit_finance_census, {
