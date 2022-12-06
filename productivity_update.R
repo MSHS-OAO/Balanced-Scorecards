@@ -1,7 +1,7 @@
 #raw_data <- read_excel("C:/Users/villea04/Documents/Productivity Update/System Reports.xlsx")
 
 productivity_file_path <- paste0(home_path, "Summary Repos/Prodictivity.xlsx")
-productivity_dept_summary <- function(raw_data){
+productivity_dept_summary <- function(raw_data, updated_user){
   key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
                                                                         ifelse(CORPORATE.SERVICE.LINE == "Support Services - Engineering", "Engineering",
@@ -210,6 +210,7 @@ productivity_dept_summary <- function(raw_data){
    prod_df_aggregate_all <- prod_df_aggregate
  }
   
+
   prod_df_aggregate_all$Metric_Name <- str_trim(prod_df_aggregate_all$Metric_Name)
   
   
@@ -221,8 +222,19 @@ productivity_dept_summary <- function(raw_data){
                             mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y")) %>%
                             rename(Metric_Name_Submitted = Metric_Name,
                                    value_rounded = value) 
+  
+  
+  
                             
-                      
+  prod_df_aggregate_all <- prod_df_aggregate_all %>%
+                            rename(SERVICE = Service,
+                                   SITE = Site,
+                                   METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+                                   REPORTING_MONTH = Reporting_Month_Ref,
+                                   PREMIER_REPORTING_PERIOD = Premier_Reporting_Period,
+                                   VALUE = value_rounded) %>%
+                                   select(-Reporting_Month) %>%
+                                   mutate(UPDATED_USER = updated_user)
   
 
 }

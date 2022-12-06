@@ -4,6 +4,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
   server <- function(input, output, session) {
     
+    
+  
     # 0. Observe Events for Filters ----------------------------------------------------------------
     observeEvent(input$selectedService2,{
       metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
@@ -85,10 +87,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-
-
-      # service_input <- "Food Services"
-      # month_input <- "08-2022"
+      # service_input <- "Engineering"
+      # month_input <- "06-2022"
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
+      
 
 
       # Code Starts ---------------------------------------------------------------------------------     
@@ -939,6 +942,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService2
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
 #       service_input <- "ED"
 #       month_input <- "03-2021"
@@ -1291,6 +1296,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
+      
+      metrics_final_df <- mdf_from_db(service_input, month_input)
 
       # service_input <- "Engineering"
       # month_input <- "12-2021"
@@ -1614,49 +1621,65 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # 4. Data Tab Output ---------------------------------------------------------------------------------
     observeEvent(input$submit_finance,{
+      button_name <- "submit_finance"
+      shinyjs::disable(button_name)
       inFile_budget <- input$finance_budget
       flag <- 0
       
-      
-      if (is.null(inFile_budget)) {
-        return(NULL)
-      }else{
-        tryCatch({
-          data <- read_excel(inFile_budget$datapath,  sheet = "5-BSC Cost Center Detail", skip = 3)
-          #data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail - Balanced Scorecards/Back Office FiSRO Dashboard Sept. Steering Committee (Aug 22 YTD) BSC.xlsx", sheet = "5-BSC Cost Center Detail", skip = 3)
-          budget_process <- budget_raw_file_process(data)
-           showModal(modalDialog(
-             title = "Success",
-             paste0("The data has been imported succesfully"),
-             easyClose = TRUE,
-             footer = NULL
-           ))
-        }, error = function(err){  showModal(modalDialog(
+      if(input$name_finance == ""){
+        showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with one of the files"),
+          paste0("Please fill in the required fields"),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+      }else{
+        updated_user <- input$name_finance
+        file_path <- inFile_budget$datapath
+        tryCatch({data <- read_excel(file_path, sheet = "1-Pivot Summary by Site", skip = 5)
+        flag <- 1
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the budget file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if(flag == 1){
+        # Process the data into standar Summary Repo format
+        tryCatch({budget_process <- budget_raw_file_process(data, updated_user)
+        flag <- 2
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the budget file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
       }
       
       
-      metrics_final_df <<- budget_to_actual_metrics_final_df(budget_process)
-      saveRDS(metrics_final_df, metrics_final_df_path)
-      
-      
-      budget_to_actual_current_summary_repo <- read_excel(budget_to_actual_path_new)
-      updated_rows <- unique(budget_process[c("Service", "Site", "Metric_Name_Submitted", "Month")])
-      
-      budget_to_actual_current_summary_repo <- anti_join(budget_to_actual_current_summary_repo, updated_rows)
-      budget_to_actual_current_summary_repo <- full_join(budget_to_actual_current_summary_repo,budget_process)
-      
-      write_xlsx(budget_to_actual_current_summary_repo, budget_to_actual_path_new)
-      budget_data_repo <<- read_excel(budget_to_actual_path_new)
-
+      if(flag == 2){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        budget_data <- file_return_updated_rows(budget_process)
+        
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(budget_data,
+                                                    "TEMP_BUDGET", button_name)
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+      }
+      shinyjs::enable(button_name)
       
     })
-    
-
     
     ## Read in Patient Experience data -----------------------------------
     # ED Monthly Data Observe Event -------------------
@@ -1921,7 +1944,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # support_monthly_filepath <- paste0(home_path,
         #                                    "Input Data Raw/Press Ganey/",
-        #                                    "Support Services 08-2021.csv")
+        #                                    "May 2022/",
+        #                                    "Support Services 05-2022.csv")
         
         # Try catch statement to ensure file type is correct
         tryCatch({
@@ -2292,7 +2316,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # support_ytd_filepath <- paste0(home_path,
         #                               "Input Data Raw/Press Ganey/",
-        #                               "Support Services YTD 012021 to 082021.csv")
+        #                               "May 2022/",
+        #                               "Support Services YTD 012022 to 052022.csv")
         
         # TryCatch statement to ensure file type is correct
         tryCatch({
@@ -2405,134 +2430,135 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ## Productivity data --------------------------------
     ## Read in productivity data and process
     observeEvent(input$submit_prod,{
+      button_name <- "submit_prod"
+      shinyjs::disable(button_name)
       inFile <- input$productiviy_data
+      flag <- 0
       data <- read_excel(inFile$datapath)
 
 
-      tryCatch({prod_summary <- productivity_dept_summary(data)
-        metrics_final_df <<- productivity_metrics_final_df(prod_summary)
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        write_xlsx(prod_summary, productivity_file_path)
+      if(input$name_productivity == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+        shinyjs::enable(button_name)
         
-      showModal(modalDialog(
-        title = "Success",
-        paste0("The data has been imported succesfully"),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-      }, error = function(err){  showModal(modalDialog(
-        title = "Error",
-        paste0("There seems to be an issue with one of the files"),
-        easyClose = TRUE,
-        footer = NULL
-      ))})
-      record_timestamp("Productivity")
+      }
+      else{
+        updated_user <- input$name_productivity
+        productivity_filepath <- inFile$datapath
+        #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
+        tryCatch({data <- read_excel(productivity_filepath)
+        flag <- 1
+        }, error = function(err){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the Productivity file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+          shinyjs::enable(button_name)
+          
+          })
+      }
+
+      if(flag == 1){
+        # Process Imaging data
+        tryCatch({prod_summary <- productivity_dept_summary(data, updated_user)
+        flag <- 2
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Productivity file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+          
+          })
+      }
+
+      if(flag == 2){
+
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        productivity_new_data <- file_return_updated_rows(prod_summary)
+
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(productivity_new_data,
+                                                    "TEMP_PRODUCTIVITY", button_name)
+
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+                                  input$selectedService3)
+        
+        shinyjs::enable(button_name)
+
+      }
       
     })
     
     
     # Submit Food Services -----
     observeEvent(input$submit_food,{
+      button_name <- "submit_food"
+      shinyjs::disable(button_name)
       food_file <- input$food_cost_and_revenue
       flag <- 0
       
-      if(is.null(food_file)){
-        return(NULL)
-      }else{
-       food_file_path <- food_file$datapath
-       #food_file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"
-       tryCatch({food_data <- read_excel(food_file_path, sheet = "Cost and Revenue")
-       food_data_rev <- read_excel(food_file_path, sheet = "Rev Budget")
-       flag <- 1
-       showModal(modalDialog(
-         title = "Success",
-         paste0("The data has been imported succesfully"),
-         easyClose = TRUE,
-         footer = NULL
-       ))
-       }, error = function(err){  showModal(modalDialog(
-         title = "Error",
-         paste0("There seems to be an issue with one of the files"),
-         easyClose = TRUE,
-         footer = NULL
-       ))})
-      }
-
-      #Save prior version of Food Dept Summary data
-      write_xlsx(cost_and_revenue_repo,
-                 paste0(hist_archive_path,
-                        "Food Services Updates ",
-                        format(Sys.time(), "%Y%m%d_%H%M%S"),
-                        ".xlsx"))
-      
-      if (flag == 1){
-      # Process Cost and Revenue data
-        tryCatch({food_summary_data <- cost_and_revenue_dept_summary(food_data)
-                  food_summary_budget <- rev_budget_dept_summary(food_data_rev)
-        flag <- 2
+      if(input$name_food == ""){
         showModal(modalDialog(
-          title = "Success",
-          paste0("The data has been imported succesfully"),
+          title = "Error",
+          paste0("Please fill in the required fields"),
           easyClose = TRUE,
           footer = NULL
         ))
+      }else{
+        food_file_path <- food_file$datapath
+        updated_user <- input$name_food
+        #food_file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/MSHS Workforce Data Request_Food_RecurringRequest 2021_Oct21.xlsx"
+        tryCatch({food_data <- read_excel(food_file_path, sheet = "Cost and Revenue")
+        food_data_rev <- read_excel(food_file_path, sheet = "Rev Budget")
+        flag <- 1
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
           paste0("There seems to be an issue with one of the files"),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
+      }
+      
+      if (flag == 1){
+        # Process Cost and Revenue data
+        tryCatch({food_summary_data <- cost_and_revenue_dept_summary(food_data)
+        food_summary_budget <- rev_budget_dept_summary(food_data_rev)
+        
+        food_summary_data <- cost_budget_combine(food_summary_data,food_summary_budget)
+        food_summary_data <- food_summary_repo_format(food_summary_data, updated_user)
+        flag <- 2
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
       if (flag == 2){
-        food_summary_data <- cost_budget_combine(food_summary_data,food_summary_budget)
-        # Append Food summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        food_new_data <- unique(
-          food_summary_data[  c("Service", "Site", "Month", "Metric")]
-        )
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        food_summary_data <- file_return_updated_rows(food_summary_data)
         
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(food_summary_data,
+                                                    "TEMP_FOOD", button_name)
         
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
-                                            food_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Month" = "Month",
-                                                 "Metric" = "Metric")
-        )
-        
-        food_summary_data$`Revenue Budget` <- as.double(food_summary_data$`Revenue Budget`)
-        # Third, combine the updated historical data with the new data
-        cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
-                                            food_summary_data)
-        # Lastly, save the updated summary data
-        write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
-        
-        cost_and_revenue_repo$Month <- as.Date(cost_and_revenue_repo$Month)
-        
-        # Update metrics_final_df with latest SCC data using custom function
-        metrics_final_df <<- census_days_metrics_final_df(food_summary_data)
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        # Save updated metrics_final_df
-        #saveRDS(metrics_final_df, paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
-  
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        
-        record_timestamp("Food Services")
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Food Services"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+        shinyjs::enable(button_name)
         
       }
       
@@ -2540,98 +2566,63 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Submit Interventional Radiology -----
     observeEvent(input$submit_imaging, {
+      button_name <- "submit_imaging"
+      shinyjs::disable(button_name)
       imaging_file <- input$imaging_IR
       flag <- 0
       
-      if(is.null(imaging_file)){
-        return(NULL)
-      }else{
-        imaging_filepath <- imgaing_file <- imaging_file$datapath
+      if(input$imaging_ir_username == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }
+      else{
+        updated_user <- input$imaging_ir_username
+        imaging_filepath <- imaging_file$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
         tryCatch({imaging_data <- read_excel(imaging_filepath)
             flag <- 1
-        }, error = function(err){  showModal(modalDialog(
+        }, error = function(err){  
+          showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with one of the files"),
+          paste0("There seems to be an issue with the Imaging file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
-      
-      # Save prior version of Lab TAT Dept Summary data
-      write_xlsx(imaging_repo,
-                 paste0(hist_archive_path,
-                        "Imaging-IR ",
-                        format(Sys.time(), "%Y%m%d_%H%M%S"),
-                        ".xlsx"))
-      
+
       if(flag == 1){
         # Process Imaging data
-        tryCatch({imaging_summary_data <- imaging_dept_summary(imaging_data)
+        tryCatch({imaging_summary_data <- imaging_dept_summary(imaging_data, updated_user)
                     flag <- 2
-                    showModal(modalDialog(
-                      title = "Success",
-                      paste0("The data has been imported succesfully"),
-                      easyClose = TRUE,
-                      footer = NULL
-                    ))
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with one of the files"),
+          paste0("There seems to be an issue with the Imaging file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
       if(flag == 2){
         
-        # Append Imaging with new data
-        # First, identify the sites, months, and metrics in the new data
-        imaging_new_data <- unique(
-          imaging_summary_data[  c("Service", "Site", "Reporting_Month", "Metric_Name_Submitted")]
-        )
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        imaging_new_data <- file_return_updated_rows(imaging_summary_data)
         
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        imaging_repo <<- anti_join(imaging_repo,
-                                   imaging_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Reporting_Month" = "Reporting_Month",
-                                                 "Metric_Name_Submitted" = "Metric_Name_Submitted")
-        )
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(imaging_new_data,
+                                                    "TEMP_IMAGING", button_name)
         
-        # Third, combine the updated historical data with the new data
-        imaging_repo <<- full_join(imaging_repo,
-                                   imaging_summary_data)
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
         
-  
-        
-        # Lastly, save the updated summary data
-        write_xlsx(imaging_repo, paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
-        
-        # Update metrics_final_df with latest SCC data using custom function
-        metrics_final_df <<- imaging_metrics_final_df(imaging_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # Update "Reporting Month" drop down in each tab
-        # picker_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        
-        
-        record_timestamp("Imaging")
-        
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Imaging"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        shinyjs::enable(button_name)
       
         
       }
@@ -2640,6 +2631,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Submit Engineering -----
     observeEvent(input$submit_engineering,{
+      button_name <- "submit_engineering"
+      shinyjs::disable(button_name)
       flag <- 0
       if(input$name_engineering_kpi == ""){
         showModal(modalDialog(
@@ -2649,28 +2642,36 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           footer = NULL
         ))
       }else {
-        
+        updated_user <- input$name_engineering_kpi
         tryCatch({
           # Convert rhandsontable to R object
-          engineering_manual_updates <<- hot_to_r(input$engineering_kpi)
-          engineering_manual_updates <<- engineering_manual_updates %>% filter(!(Metric %in% c("Total Critical PMs", "Number of Work Orders Created with a Life Safety Priority", "EOC/Patient Care Work Orders Received")))          
-          engineering_manual_updates[engineering_manual_updates == "N/A"] <- NA
-          engineering_manual_updates <<- remove_empty_manual_columns(engineering_manual_updates)  
+          engineering_manual_updates <- hot_to_r(input$engineering_kpi)
+          # Identify columns with no data in them and remove before further processing
+          engineering_manual_updates <- remove_empty_manual_columns(engineering_manual_updates)  
           flag <- 1
         },
         error = function(err){
           showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the Engineering data entered. 1"),
+            paste0("There seems to be an issue with the Engineering data entered"),
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
         })
-        
         
         if (flag == 1) {
           
-          user_format_error <<- manual_format_check(engineering_manual_updates)
+          #removing the metrics that can have numbers greater than 1
+          engineering_manual_updates_check <- engineering_manual_updates %>% 
+                                              filter(!(Metric %in% c("Total Critical PMs", 
+                                                                     "Number of Work Orders Created with a Life Safety Priority", 
+                                                                     "EOC/Patient Care Work Orders Received"
+                                                                     )
+                                                       )
+                                                     ) 
+          #check if metrics have not been entered as decimals 
+          user_format_error <- manual_format_check(engineering_manual_updates_check)
           
           if (user_format_error) {
             
@@ -2679,104 +2680,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
               easyClose = TRUE,
               footer = NULL
-            ))
+              )
+            )
             
           } else {
-            
-            # Check that data can be reformatted for department summary repo
-            tryCatch({
-              
-              engineering_manual_updates_table <<- hot_to_r(input$engineering_kpi)
-              
-              empty_columns <- colSums(is.na(engineering_manual_updates_table) | engineering_manual_updates_table == "") == nrow(engineering_manual_updates_table)
-              engineering_manual_updates_table <- engineering_manual_updates_table[, !empty_columns]
-              # Reformat data from manual input table into department summary format
-              engineering_summary_data <<-
-                # lab_prof_test_dept_summary(prof_test_manual_table)
-                engineering_summary_repos(engineering_manual_updates_table)
+            ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
+            updated_rows <- manual_process_and_return_updates(engineering_manual_updates, 
+                                                              "Engineering", 
+                                                              "cm_kpi", 
+                                                              updated_user, button_name)
 
-              flag <- 2
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("The Engineering data has been submitted successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            },
-            error = function(err){
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Engineering data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-            
-            if(flag == 2) {
-              
-              engineering_summary_data$Month <- as.Date(paste0(engineering_summary_data$Month, "-01"), "%m-%Y-%d")
-              engineering_summary_data$`Number of Work Orders Created with a Life Safety Priority` <- as.double(engineering_summary_data$`Number of Work Orders Created with a Life Safety Priority`)
-              
-              
-              
-              # engineering_columns <- c("Site", "Month", "% of Critical PM's Completed on Time", 
-              #   "Total Critical PMs","Work Order Completion Rate",
-              #   "Number of Work Orders Created with a Life Safety Priority",
-              #   "EOC/Patient Care Work Orders Received",
-              #   "EOC/Patient Care Work Order Completion Rate")
-              
-              engineering_columns <- c("Site", "Month")
-              
-              save_append_join_updates(engineering_summary_repos_data, 
-                                       engineering_summary_data, 
-                                       "Engineerng Metrics Pre Updates", 
-                                       engineering_columns, 
-                                       operational_metrics_engineering_path, cm_kpi)
-              
-              # # Save prior version of Lab Proficiency Testing Dept Summary data
-              # write_xlsx(engineering_summary_repos_data,
-              #            paste0(hist_archive_path,
-              #                   "Engineerng Metrics Pre Updates ",
-              #                   format(Sys.time(), "%Y%m%d_%H%M%S"),
-              #                   ".xlsx"))
-              # 
-              # # Append Lab Proficiency Testing summary with new data
-              # # First, identify the sites, months, and metrics in the new data
-              # engineering_new_data <- unique(
-              #   engineering_summary_data[, c("Site", "Month", "% of Critical PM's Completed on Time", "Total Critical PMs","Work Order Completion Rate","Number of Work Orders Created with a Life Safety Priority","EOC/Patient Care Work Orders Received","EOC/Patient Care Work Order Completion Rate")]
-              # )
-              # 
-              # # Second, remove these sites, months, and metrics from the historical data, if they exist there
-              # # This allows us to ensure no duplicate entries for the same site, metric, and time period
-              # engineering_summary_repos_data  <<- anti_join(engineering_summary_repos_data,
-              #                                  engineering_new_data)#,
-              #                                  # by = c("Site" = "Site",
-              #                                  #        "Month" = "Month",
-              #                                  #        "% of Critical PM's Completed on Time" = "% of Critical PM's Completed on Time",
-              #                                  #        "Total Critical PMs","Work Order Completion Rate" = "Total Critical PMs","Work Order Completion Rate",
-              #                                  #        "Number of Work Orders Created with a Life Safety Priority" = "Number of Work Orders Created with a Life Safety Priority",
-              #                                  #        "EOC/Patient Care Work Orders Received" ="EOC/Patient Care Work Orders Received",
-              #                                  #        "EOC/Patient Care Work Order Completion Rate" = "EOC/Patient Care Work Order Completion Rate"))
-              # 
-              # # Third, combine the updated historical data with the new data
-              # engineering_summary_repos_data  <<- full_join(engineering_summary_repos_data,
-              #                                  engineering_summary_data)
-              # 
-              # # Lastly, save the updated summary data
-              # engineering_summary_repos_data$Month <- as.Date(as.character(engineering_summary_repos_data$Month))
-              # #write_xlsx(engineering_summary_repos_data, operational_metrics_engineering_path)
-              # 
-              # # Update metrics_final_df with latest Proficiency Testing data using custom function
-              # metrics_final_df <<- cm_kpi(engineering_summary_data)
-              # 
-              # # Save updated metrics_final_df
-              # saveRDS(metrics_final_df, metrics_final_df_path)
-              # 
-              
-              update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-              record_timestamp("Engineering")
-              
+            if(updated_rows$flag == 2) {
+              ##Updated the data on the databse
+              write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+                                                          "TEMP_ENGINEERING", button_name)              
+              update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                        input$selectedService3)
               
             }
             
@@ -2785,26 +2704,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
       }
+      shinyjs::enable(button_name)
+      
 
     
     })
     # Engineering Reactive dataset -----
     data_engineering_kpi <- reactive({
       
-      input$eng
-      print("test")
-      #operational_metrics_engineering <- engineering_repo_pull()
-      input$eng
-      data <- engineering_repo_pull()
-
-      colnames(data)[grepl("-",colnames(data))] <- format(as.Date(colnames(data)[grepl("-",colnames(data))]), "%m-%Y")
+      data <- sql_manual_table_output("Engineering", "cm_kpi")
+      # Arrange by sites in alphabetical order
+      data <- data %>%
+        arrange(Site)      
       
-      result <- manual_table_month_order(data)
-
-      
-      result <- result %>% 
-        mutate_if(is.logical, as.character) %>%
-        mutate_if(is.double, as.character)
+      data <- manual_table_month_order(data)
       
       
       
@@ -2860,95 +2773,67 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         hot_col(1:3, readOnly = T)
     })
     
-    # Submit Environemental Services -----
+    #Submit Environemental Services -----
     observeEvent(input$submit_evs,{
-      
-      evs_file <- input$evs_data
+      button_name <- "submit_evs"
+      shinyjs::disable(button_name)
       flag <- 0
+      evs_file <- input$evs_data
       
-      if (is.null(evs_file)) {
-        return(NULL)
+      if(input$name_evs == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
       }else{
+        updated_user <- input$name_evs
         file_path <- evs_file$datapath
-        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT July 2022.xlsx"
         tryCatch({evs_data <- read_excel(file_path)
                   month <- excel_sheets(file_path)[1]
                   flag <- 1
         },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file"),
-          easyClose = TRUE,
-          footer = NULL
-        ))})
-      }
-      
-      if(flag == 1){
-      tryCatch({evs_data <- evs_file_process(evs_data,month)
-                  flag <- 2
-        
-        showModal(modalDialog(
-          title = "Success",
-          paste0("The environmental services data has been imported succesfully"),
+          paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
         ))
-        },
+          shinyjs::enable(button_name)
+          })
+      }
+      
+      if(flag == 1){
+        # Process the data into standar Summary Repo format
+      tryCatch({evs_data <- evs_file_process(evs_data, month, updated_user)
+                  flag <- 2
+        
+      },
         error = function(err){  showModal(modalDialog(
           title = "Error",
-          paste0("There seems to be an issue with the enviromental services file"),
+          paste0("There seems to be an issue with the enviromental services file."),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          })
       }
       
 
       if(flag == 2){
-        #Save prior version of Lab TAT Dept Summary data
-        write_xlsx(summary_repos_environmental,
-                   paste0(hist_archive_path,
-                          "EVS historical ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-
-        metrics_final_df <<- evs__metrics_final_df_process(evs_data)
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        evs_data <- file_return_updated_rows(evs_data)
+    
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(evs_data,
+                                                    "TEMP_EVS", button_name)
         
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        evs_summary_repo <- read_excel(evs_table_path)
-        updated_rows <- unique(evs_data[c("Service","Site", "Month")])
-        updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
-        
-        evs_summary_repo <- anti_join(evs_summary_repo, updated_rows)
-        evs_summary_repo <- evs_summary_repo %>% filter(!is.na(Month))
-        
-        evs_data$Month <- as.Date(evs_data$Month, "%m/%d/%Y")
-        evs_data$`Non-Isolation Requests` <- as.character(evs_data$`Non-Isolation Requests`)
-        evs_data$`Non-Isolation  % > 90 mins` <- as.character(evs_data$`Non-Isolation  % > 90 mins`)
-        evs_data$`Non-IsolationAverage TAT` <- as.character(evs_data$`Non-IsolationAverage TAT`)
-        evs_data$`Isolation Requests` <- as.character(evs_data$`Isolation Requests`)
-        evs_data$`Isolation % > 90 mins` <- as.character(evs_data$`Isolation % > 90 mins`)
-        evs_data$`Isolation Average TAT` <- as.character(evs_data$`Isolation Average TAT`)
-        
-        
-        
-        evs_summary_repo <- full_join(evs_summary_repo, evs_data)
-        evs_summary_repo <- as.data.frame(evs_summary_repo)
-        write_xlsx(evs_summary_repo, evs_table_path)
-        
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Environmental Services"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-        record_timestamp("Environmental Services")
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
       }
+      shinyjs::enable(button_name)
       
     })
     
@@ -2959,6 +2844,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     # Lab KPI - Turnaround Time ------------
     # SCC Data submission -----------------
     observeEvent(input$submit_lab_tat,{
+      button_name <- "submit_lab_tat"
+      shinyjs::disable(button_name)
+      
+      flag <- 0
 
       # Name SCC file
       scc_file <- input$lab_scc
@@ -2966,39 +2855,54 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if (is.null(scc_file)) {
         return(NULL)
       }else{
-        scc_file_path <- scc_file$datapath
-        # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
-        #                         "/Operations Analytics and Optimization",
-        #                         "/Projects/System Operations",
-        #                         "/Balanced Scorecards Automation",
-        #                         "/Data_Dashboard/Input Data Raw",
-        #                         "/Lab & Blood Bank/SCC",
-        #                         "/SCC HGB Report Mar 2022.xlsx")
-        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          # Read in SCC file
-          scc_data <- read_excel(scc_file_path)
-          
-          flag <- 1
-          
-        },
-        error = function(err){
+        
+        if(input$lab_tat_username == "") {
           showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        } else {
+          
+          updated_user <- input$lab_tat_username
+          
+          scc_file_path <- scc_file$datapath
+          # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+          #                         "/Operations Analytics and Optimization",
+          #                         "/Projects/System Operations",
+          #                         "/Balanced Scorecards Automation",
+          #                         "/Data_Dashboard/Input Data Raw",
+          #                         "/Lab & Blood Bank/SCC",
+          #                         "/SCC HGB Report Mar 2022.xlsx")
+
+          # Try catch statement to ensure file type is correct
+          tryCatch({
+            # Read in SCC file
+            scc_data <- read_excel(scc_file_path)
+            
+            flag <- 1
+            
+          },
+          
+          error = function(err){
+            showModal(modalDialog(
             title = "Error",
             paste0("There seems to be an issue with this SCC file."),
             easyClose = TRUE,
             footer = NULL
           ))
+            shinyjs::enable(button_name)
+          }
+          )
         }
-        )
       }
       
       # Process data if the right file format was submitted
       if(flag == 1) {
         tryCatch({
           # Process SCC data
-          scc_summary_data <- lab_scc_tat_dept_summary(scc_data)
+          scc_summary_data <- lab_scc_tat_dept_summary(scc_data, updated_user)
           
           flag <- 2
           
@@ -3016,110 +2920,83 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
+          
         })
       }
       
       if(flag == 2){
         
-        # Save prior version of Lab TAT Dept Summary data
-        write_xlsx(ops_metrics_lab_tat,
-                   paste0(hist_archive_path,
-                          "Lab TAT Metrics Pre-SCC Updates ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Append Lab TAT summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        scc_new_data <- unique(
-          scc_summary_data[  c("Service", "Site", "Month", "Metric")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
-                                          scc_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Month" = "Month",
-                                                 "Metric" = "Metric")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
-                                          scc_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
-          # mutate(Site = factor(Site,
-          #                      levels = lab_sites_ordered,
-          #                      ordered = TRUE)) %>%
-          arrange(Month,
-                  desc(Metric),
-                  Site) #%>%
-        # mutate(Site = as.character(Site))
-        
-        # Lastly, save the updated summary data
-        write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-        
-        # Update metrics_final_df with latest SCC data using custom function
-        metrics_final_df <<- lab_scc_tat_metrics_final_df(scc_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # 
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Lab"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
+        write_temporary_table_to_database_and_merge(scc_summary_data,
+                                                    "TEMP_SCC_TAT", button_name)
         
         update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Lab")
-        
         
       }
-      })
+      shinyjs::enable(button_name)
+      
+    }
+    )
     
     # Sunquest data submission -------------------
     observeEvent(input$submit_lab_tat,{
+      button_name <- "submit_lab_tat"
+      shinyjs::disable(button_name)
+      
+      flag <- 0
       
       # Name Sunquest file
       sun_file <- input$lab_sun
-      
+
       if (is.null(sun_file)) {
         return(NULL)
       }else{
-        sun_file_path <- sun_file$datapath
-        #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          # Read in Sunquest file
-          sun_data <- read_excel(sun_file_path)
-          
-          flag <- 1
-        },
-        error = function(err){
+        
+        if(input$lab_tat_username == "") {
           showModal(modalDialog(
+            title = "Error",
+            "Please fill in the required fields",
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        } else {
+          
+          updated_user <- input$lab_tat_username
+          
+          sun_file_path <- sun_file$datapath
+          # sun_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+          #                     "/Operations Analytics and Optimization",
+          #                     "/Projects/System Operations",
+          #                     "/Balanced Scorecards Automation/Data_Dashboard",
+          #                     "/Input Data Raw/Lab & Blood Bank/SUNQUEST",
+          #                     "/SQ Monthly TROP-HGB-June 2022withTROPHS-Kate.xlsx")
+          
+          # Try catch statement to ensure file type is correct
+          tryCatch({
+            # Read in Sunquest file
+            sun_data <- read_excel(sun_file_path)
+            
+            flag <- 1
+          },
+          error = function(err){
+            showModal(modalDialog(
             title = "Error",
             paste0("There seems to be an issue with this Sunquest file."),
             easyClose = TRUE,
             footer = NULL
-          ))
-        }
+            ))
+            shinyjs::enable(button_name)
+            
+          }
         )
+        }
       }
       
       # Process data if the right file format was submitted
       if(flag == 1) {
         tryCatch({
           # Process Sunquest data
-          sun_summary_data <- lab_sun_tat_dept_summary(sun_data)
+          sun_summary_data <- lab_sun_tat_dept_summary(sun_data, updated_user)
           
           flag <- 2
           
@@ -3137,113 +3014,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
+          
         })
       }
       
       if(flag == 2) {
-        # Save prior version of Lab TAT Dept Summary data
-        write_xlsx(ops_metrics_lab_tat,
-                   paste0(hist_archive_path,
-                          "Lab TAT Metrics Pre-Sun Updates ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
         
-        # Append Lab TAT summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        sun_new_data <- unique(
-          sun_summary_data[  c("Service", "Site", "Month", "Metric")]
-        )
+        write_temporary_table_to_database_and_merge(sun_summary_data,
+                                                    "TEMP_SUN_TAT", button_name)
         
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        ops_metrics_lab_tat <<- anti_join(ops_metrics_lab_tat,
-                                          sun_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Month" = "Month",
-                                                 "Metric" = "Metric")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        ops_metrics_lab_tat <<- full_join(ops_metrics_lab_tat,
-                                          sun_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        ops_metrics_lab_tat <<- ops_metrics_lab_tat %>%
-          # mutate(Site = factor(Site,
-          #                      levels = lab_sites_ordered,
-          #                      ordered = TRUE)) %>%
-          arrange(Month,
-                  desc(Metric),
-                  Site) #%>%
-        # mutate(Site = as.character(Site))
-        
-        # Lastly, save the updated summary data
-        write_xlsx(ops_metrics_lab_tat, ops_metrics_lab_tat_path)
-        
-        # Update metrics_final_df with latest Sunquest data using custom function
-        metrics_final_df <<- lab_sun_tat_metrics_final_df(sun_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # 
-        # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-        # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-        # date_time$Service = "Lab"
-        # date_time <- rbind(time_df, date_time)
-        # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
         update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Lab")
-        
+
       }
     })
     
     # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
     # Create reactive data table for manual entry
     data_lab_prof_test <- reactive({
-      
-      data <- prof_test_manual_table
-      
+      data <- sql_manual_table_output("Lab", "proficiency_testing")
       # Arrange by sites in alphabetical order
       data <- data %>%
         arrange(Site)
 
 
-      ##### Code that adds months missing months to the rhandsontable
-      months_only <- data %>% select(-Site,-Metric)
-      months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-
-      max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-
-      months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-
-      months_to_drop <- which(months < max_month %m-% months(6))
-      months_to_drop <- format(months[months_to_drop], "%m-%Y")
-
-      complete_months <- seq.Date(months[1], max_month, by= 'month')
-
-      missing_months <- which(!(complete_months %in% months))
-      missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-
-      data[,missing_months] <- NA_character_
-
-      data <- data %>% select(-all_of(months_to_drop))
-
-      data
+      data <- manual_table_month_order(data)
 
     }
     )
     
     output$lab_prof_test <- renderRHandsontable({
       
-      
-      
+
       unique_sites <- unique(data_lab_prof_test()$Site)
       
       site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
@@ -3300,6 +3102,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # Create observe event actions for manual data submission-----
     observeEvent(input$submit_lab_pt, {
+      button_name <- "submit_lab_pt"
+      shinyjs::disable(button_name)
+      
+      flag <- 0
+      
       if(input$lab_pt_username == "") {
         showModal(modalDialog(
           title = "Error",
@@ -3309,29 +3116,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       } else {
         
+        updated_user <- input$lab_pt_username
+        
         tryCatch({
           # Convert rhandsontable to R object
-          prof_test_manual_updates <<- hot_to_r(input$lab_prof_test)
+          prof_test_manual_updates <- hot_to_r(input$lab_prof_test)
           
           # Identify columns with no data in them and remove before further processing
-          # This ensures months with no data do not get added to the department summary
-          # repo and metrics_final_df repository
-          non_empty_cols <- !(apply(prof_test_manual_updates,
-                                    MARGIN = 2,
-                                    function(x) 
-                                      all(is.na(x))))
-          
-          prof_test_manual_updates <<- prof_test_manual_updates[, non_empty_cols]
+          prof_test_manual_updates <- remove_empty_manual_columns(prof_test_manual_updates)
           
           flag <- 1
         },
         error = function(err){
           showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the Proficiency Test data entered."),
+            paste0("There seems to be an issue with the Proficiency Test data entered"),
             easyClose = TRUE,
             footer = NULL
           ))
+          shinyjs::enable(button_name)
+          
         })
         
         
@@ -3339,35 +3143,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           # Check Proficiency Test data to make sure user entered data in correct format
           # ie, number between 0 and 1, no spaces, percentage signs, etc.
-          user_format_error <<- any(
-            apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-                  MARGIN = 2,
-                  function(x)
-                    # Determine if there are issues converting any user entries to numeric values
-                    # ie, if the user enters "%" or text, the entry will be converted to NA
-                    is.na(
-                      suppressWarnings(
-                        as.numeric(
-                          str_replace_na(x, replacement = "0")
-                        )
-                      )
-                    )
-            )
-          ) |
-            any(
-              apply(X = prof_test_manual_updates[, 3:ncol(prof_test_manual_updates)],
-                    MARGIN = 2,
-                    function(x)
-                      # Determine if numeric value is greater than 1
-                      max(
-                        suppressWarnings(
-                          as.numeric(
-                            str_replace_na(x, replacement = "0")
-                          )
-                        ), na.rm = TRUE
-                      ) > 1
-              )
-            )
+          # user_format_error <- user_format_error(prof_test_manual_updates)
+          # Check Proficiency Test data to make sure user entered data in correct format
+          # ie, number between 0 and 1, no spaces, percentage signs, etc.
+          user_format_error <- manual_format_check(prof_test_manual_updates)
           
           if (user_format_error) {
             
@@ -3380,94 +3159,59 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } else {
             
-            # Check that data can be reformatted for department summary repo
-            tryCatch({
-              # Reformat data from manual input table into department summary format
-              prof_test_summary_data <-
-                # lab_prof_test_dept_summary(prof_test_manual_table)
-                lab_prof_test_dept_summary(prof_test_manual_updates)
-              
-              flag <- 2
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("This Proficiency Test data has been submitted successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            },
-            error = function(err){
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Proficiency Test data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
+            updated_rows <- manual_process_and_return_updates(
+              prof_test_manual_updates,
+              "Lab",
+              "proficiency_testing",
+              updated_user,
+              lab_prof_test_dept_summary,
+              button_name
+            )
+
+            # 
+            # # Check that data can be reformatted for department summary repo
+            # tryCatch({
+            # 
+            #   # Reformat data from manual input table into department summary format
+            #   prof_test_summary_data <-
+            #     # lab_prof_test_dept_summary(prof_test_manual_table)
+            #     lab_prof_test_dept_summary(prof_test_manual_updates,
+            #                                updated_user)
+            # 
+            # 
+            #   prof_test_summary_data <- return_updated_manual_data("Lab", "proficiency_testing", prof_test_summary_data)
+            # 
+            # 
+            # 
+            #   flag <- 2
+            # 
+            #   showModal(modalDialog(
+            #     title = "Success",
+            #     paste0("This Proficiency Test data has been submitted successfully."),
+            #     easyClose = TRUE,
+            #     footer = NULL
+            #   ))
+            # },
+            # error = function(err){
+            #   showModal(modalDialog(
+            #     title = "Error",
+            #     paste0("There seems to be an issue with the Proficiency Test data entered."),
+            #     easyClose = TRUE,
+            #     footer = NULL
+            #   ))
+            # })
             
-            if(flag == 2) {
+            if(updated_rows$flag == 2) {
               
-              # Save prior version of Lab Proficiency Testing Dept Summary data
-              write_xlsx(ops_metrics_lab_pt,
-                         paste0(hist_archive_path,
-                                "Lab Prof Testing Metrics Pre Updates ",
-                                format(Sys.time(), "%Y%m%d_%H%M%S"),
-                                ".xlsx"))
-
-              # Append Lab Proficiency Testing summary with new data
-              # First, identify the sites, months, and metrics in the new data
-              prof_test_new_data <- unique(
-                prof_test_summary_data[, c("Service", "Site", "Month", "Metric")]
-              )
-
-              # Second, remove these sites, months, and metrics from the historical data, if they exist there
-              # This allows us to ensure no duplicate entries for the same site, metric, and time period
-              ops_metrics_lab_pt <<- anti_join(ops_metrics_lab_pt,
-                                               prof_test_new_data,
-                                               by = c("Service" = "Service",
-                                                      "Site" = "Site",
-                                                      "Month" = "Month",
-                                                      "Metric" = "Metric"))
-
-              # Third, combine the updated historical data with the new data
-              ops_metrics_lab_pt <<- full_join(ops_metrics_lab_pt,
-                                               prof_test_summary_data)
-
-              # Next, arrange the proficiency test summary data by month, metric name, and site
-              ops_metrics_lab_pt <<- ops_metrics_lab_pt %>%
-                mutate(Site = factor(Site,
-                                     levels = lab_sites_ordered,
-                                     ordered = TRUE)) %>%
-                arrange(Month,
-                        desc(Metric),
-                        Site) %>%
-                mutate(Site = as.character(Site))
-
-              # Lastly, save the updated summary data
-              write_xlsx(ops_metrics_lab_pt, ops_metrics_lab_prof_test_path)
-
-              # Update metrics_final_df with latest Proficiency Testing data using custom function
-              metrics_final_df <<- lab_prof_test_metrics_final_df(prof_test_summary_data)
-
-              # Save updated metrics_final_df
-              saveRDS(metrics_final_df, metrics_final_df_path)
-
-
-              # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-              # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-              # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-              # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-              # 
-              # 
-              # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-              # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-              # date_time$Service = "Lab"
-              # date_time <- rbind(time_df, date_time)
-              # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-              update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-              record_timestamp("Lab")
-              
-
+              write_temporary_table_to_database_and_merge(
+                updated_rows$updated_rows,
+                "TEMP_PROF_TEST", button_name)
+                
+              update_picker_choices_sql(session,
+                                        input$selectedService,
+                                        input$selectedService2,
+                                        input$selectedService3)
+            
             }
             
           }
@@ -3475,6 +3219,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
       }
+      shinyjs::enable(button_name)
+      
 
     })
 
@@ -3483,8 +3229,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Create reactive data table for manual entry
       data_sec_inc_rpts <- reactive({
         
-        tbl <- manual_table_month_order(sec_inc_rpts_manual_table)
+        data <- sql_manual_table_output("Security", "incident_reports")
         
+        data <- data %>%
+          arrange(Site)
+        
+        data <- manual_table_month_order(data)
         
       }
       )
@@ -3560,6 +3310,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observer event actions for manual data submission
       observeEvent(input$submit_sec_inc_rpts, {
+        button_name <- "submit_sec_inc_rpts"
+        shinyjs::disable(button_name)
+        
+        flag <- 0
+        
         if(input$sec_inc_rpts_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3569,28 +3324,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           ))
         } else {
           
+          updated_user <- input$sec_inc_rpts_username
+          
           tryCatch({
             
             # Convert rhandsontable to R object
-            sec_inc_rpts_manual_updates <<- hot_to_r(input$sec_inc_rpts)
+            sec_inc_rpts_manual_updates <- hot_to_r(input$sec_inc_rpts)
+            updated_user <- input$sec_inc_rpts_username
             
             # Identify columns with no data in them and remove before further processing
-            # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(sec_inc_rpts_manual_updates,
-                                  MARGIN = 2,
-                                  function(x) 
-                                    all(is.na(x))))
-            
-            # non_empty_cols <- !(apply(data_sec_inc_rpts,
-            #                           MARGIN = 2,
-            #                           function(x) 
-            #                             all(is.na(x))))
-            
-            sec_inc_rpts_manual_updates <<- sec_inc_rpts_manual_updates[, non_empty_cols]
-            
-            # sec_inc_rpts_manual_updates <<- data_sec_inc_rpts[, non_empty_cols]
-            
+            sec_inc_rpts_manual_updates <- remove_empty_manual_columns(
+              sec_inc_rpts_manual_updates)
+
             flag <- 1
             
           },
@@ -3601,110 +3346,55 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
           })
           
           if(flag == 1) {
             
-            tryCatch({
-              
-              # Reformat data from manual input table into department summary format
-              sec_inc_rpts_summary_data <<-
-                sec_inc_rpts_dept_summary(sec_inc_rpts_manual_updates)
-
-              flag <- 2
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("This Security Incident Reports data has been submitted successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            },
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Security Incident Reports data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
+            updated_rows <- manual_process_and_return_updates(
+              sec_inc_rpts_manual_updates,
+              "Security",
+              "incident_reports",
+              updated_user,
+              sec_inc_rpts_dept_summary,
+              button_name
+            )
+            
           }
           
-          if(flag == 2) {
+          if(updated_rows$flag == 2) {
             
-            # Save prior version of Security Incident Reports Dept Summary data
-            write_xlsx(security_incident_reports,
-                       paste0(hist_archive_path,
-                              "Security Incident Reports Pre Updates ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-
-
-
-            # Append Security Incident Reports summary with new data
-            # First, identify the sites, months, and metrics in the new data
-            sec_inc_rpts_new_data <- unique(
-              sec_inc_rpts_summary_data[, c("Service", "Site", "Month", "Metric")]
-            )
-
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            security_incident_reports <<- anti_join(security_incident_reports,
-                                                    sec_inc_rpts_new_data,
-                                                    by = c("Service" = "Service",
-                                                           "Site" = "Site",
-                                                           "Month" = "Month",
-                                                           "Metric" = "Metric"))
-
-            # Third, combine the updated historical data with the new data
-            security_incident_reports <<- full_join(security_incident_reports,
-                                                    sec_inc_rpts_summary_data)
-
-            # Next, arrange the incident reports summary data by month, metric, and site
-            security_incident_reports <<- security_incident_reports %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-
-            # Lastly, save the updated summary data
-            write_xlsx(security_incident_reports, security_incident_reports_path)
-
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- sec_inc_rpts_metrics_final_df(sec_inc_rpts_summary_data)
-
-            # # Code for running entire department summary into metrics_final_df
-            # metrics_final_df <<- sec_inc_rpts_metrics_final_df(security_incident_reports)
-
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Security"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Security")
+            # Update data on database
+            write_temporary_table_to_database_and_merge(
+              updated_rows$updated_rows,
+              "TEMP_SEC_INC_RPTS", button_name)
+            
+            update_picker_choices_sql(session,
+                                      input$selectedService,
+                                      input$selectedService2,
+                                      input$selectedService3)
             
             
           }
           
         }
+        shinyjs::enable(button_name)
+        
         
       })
       
       # Security Metrics - Security Events (Manual Entry) -------------------
       # Create reactive data table for manual entry
       data_sec_events <- reactive({
+
+        data <- sql_manual_table_output("Security", "security_events")
+        
+        data <- data %>%
+          arrange(Site)
+        
+        data <- manual_table_month_order(data)
         
 
-        tbl <- manual_table_month_order(sec_events_manual_table)
       }
       )
       
@@ -3766,6 +3456,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Create observe event actions for manual data submission
       observeEvent(input$submit_sec_events, {
+        button_name <- "submit_sec_events"
+        shinyjs::disable(button_name)
+        
+        flag <- 0
+        
         if(input$sec_events_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3776,27 +3471,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           )
         } else {
           
+          updated_user <- input$sec_events_username
+          
           tryCatch({
             
             # Convert rhandsontable to R object
-            sec_events_manual_updates <<- hot_to_r(input$sec_events)
+            sec_events_manual_updates <- hot_to_r(input$sec_events)
             
             # Identify columns with no data in them and remove before further processing
-            # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(sec_events_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            # non_empty_cols <- !(apply(data_sec_events,
-            #                           MARGIN = 2,
-            #                           function(x) 
-            #                             all(is.na(x))))
-            
-            sec_events_manual_updates <<- sec_events_manual_updates[, non_empty_cols]
-            
-            # sec_events_manual_updates <<- data_sec_events[, non_empty_cols]
+            sec_events_manual_updates <- remove_empty_manual_columns(
+              sec_events_manual_updates
+            )
             
             flag <- 1
             
@@ -3808,108 +3493,49 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
           
           if(flag == 1) {
             
-            tryCatch({
-              
-              # Reformat data from manual input table into department summary format
-              sec_events_summary_data <-
-                sec_events_dept_summary(sec_events_manual_updates)
-              
-              flag <- 2
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("This Security Events data has been submitted successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-              
-            },
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Security Events data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-          }
-          
-          if(flag == 2) {
-            
-            # Save prior version of Monthly Security Events Dept Summary data
-            write_xlsx(security_events,
-                       paste0(hist_archive_path,
-                              "Security Events Monthly Pre Updates ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-            
-            # Append Security Events Monthly summary with new data
-            # First, identify the sites, months, and metrics in the new data
-            sec_events_new_data <- unique(
-              sec_events_summary_data[, c("Service", "Site", "Month", "Metric")]
+            updated_rows <- manual_process_and_return_updates(
+              sec_events_manual_updates,
+              "Security",
+              "security_events",
+              updated_user,
+              sec_events_dept_summary,
+              button_name
             )
             
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, or time period.
-            security_events <<- anti_join(security_events,
-                                          sec_events_new_data,
-                                          by = c("Service" = "Service",
-                                                 "Site" = "Site",
-                                                 "Month" = "Month",
-                                                 "Metric" = "Metric"))
-            
-            # Third, combine the updated historical data with the new data
-            security_events <<- full_join(security_events,
-                                          sec_events_summary_data)
-            
-            # Next, arrance the security events summary data by month, metric, and site
-            security_events <<- security_events %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(security_events, security_events_path)
-            
-            # Update metrics_final_df with the latest data using custom function
-            metrics_final_df <<- sec_events_metrics_final_df(sec_events_summary_data)
-            
-            # # Code for running entire department summary history into metrics_final_df
-            # metrics_final_df <<- sec_events_metrics_final_df(security_events)
-            
-            # Save updated metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Security"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Security")
 
+          }
+          
+          if(updated_rows$flag == 2) {
             
+            # Update summary repo data on database
+            write_temporary_table_to_database_and_merge(
+              updated_rows$updated_rows,
+              "TEMP_SEC_EVENTS", button_name
+            )
+            
+            update_picker_choices_sql(session,
+                                      input$selectedService,
+                                      input$selectedService2,
+                                      input$selectedService3)
+
           }
           
         }
+        shinyjs::enable(button_name)
+        
         
       })
 
     # 5. Overtime - Data Input ---------------------------------------------------------------------------------
-    observeEvent(input$submit_finance_census, {
+    observeEvent(input$submit_finance, {
+      button_name <- "submit_finance"
+      shinyjs::disable(button_name)
       census_file <- input$finance_census
       flag <- 0
       
@@ -3932,7 +3558,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           paste0("There seems to be an issue with the census file"),
           easyClose = TRUE,
           footer = NULL
-        ))})
+        ))
+          shinyjs::enable(button_name)
+          
+          })
       }
       
 
@@ -3951,7 +3580,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         paste0("There seems to be an issue the census file"),
         easyClose = TRUE,
         footer = NULL
-      ))})
+      ))
+        shinyjs::enable(button_name)
+        })
       
       if (flag == 2){
 
@@ -3996,11 +3627,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
       }
+      shinyjs::enable(button_name)
+      
       
     })
     
       
     observeEvent(input$submit_finance_ot, {
+      button_name <- "submit_finance_ot"
+      shinyjs::disable(button_name)
       
       if(input$name_finance == "") {
         showModal(modalDialog(
@@ -4086,31 +3721,45 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         record_timestamp("Overtime")
         
       }
+      
+      shinyjs::enable(button_name)
+      
         
     })
     
     
-      
-      
-      
-      
     # })
     
     # Transport Metrics - Non Patient Data  -----------------------
     
       observeEvent(input$submit_npt_tat,{
+        button_name <- "submit_npt_tat"
+        shinyjs::disable(button_name)
         
         npt_file <- input$non_patient_transport
+        flag <- 0 
         
         if (is.null(npt_file)) {
           return(NULL)
         }else{
-          file_path <- npt_file$datapath
           #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
-          
+          #pt_data <- read_excel(file_path)
+          if(input$name_transport_npt == ""){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("Please fill in the required fields"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
           
           tryCatch({
-            npt_data <- read_excel(file_path)
+            # Read in SCC file
+            file_path <- npt_file$datapath
+            updated_user <- input$name_transport_npt
+            
+            
+            npt_data<- read_excel(file_path)
             
             flag <- 1
             
@@ -4118,90 +3767,61 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with this Non Patient Transport data file."),
+              paste0("There seems to be an issue with this Patient Transport Data file."),
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
+          
         }
         
         
-        # Process data if the right file format was submitted
-        if(flag == 1) {
+        if(flag==1){
+          
           tryCatch({
-            data <- process_NPT_raw_data(npt_data)
-            
-            npt_data <- data[[1]]
-            
-            summary_repo_format <- data[[2]]
-            
+            # Process Input Data
+            npt_summary_repo <- process_NPT_raw_data(npt_data,updated_user)
             flag <- 2
             
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This Non Patient Transport data has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with this Non Patient Transport data file."),
+              paste0("There seems to be an issue with the Support Services file."),
               easyClose = TRUE,
               footer = NULL
             ))
-          })
+            shinyjs::enable(button_name)
+            
+          }
+          )
+          
         }
-        
         if(flag==2){
-        
-            metrics_final_df <<- transport__metrics_final_df_process(npt_data)
-            
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            transport_summary_repo <- read_excel(transport_table_path)
-            
-            write_xlsx(transport_summary_repo,
-                       paste0(hist_archive_path,
-                              "TAT Transport",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-            transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
-            
-            updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
-            updated_rows$Month <- as.Date(updated_rows$Month, "%m/%d/%Y")
-            
-            transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
-            transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
-            transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
-            transport_summary_repo <- as.data.frame(transport_summary_repo)
-            write_xlsx(transport_summary_repo, transport_table_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Patient Transport"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Patient Transport")
-            
-            
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          npt_summary_repo <- file_return_updated_rows(npt_summary_repo)
+          write_temporary_table_to_database_and_merge(npt_summary_repo,
+                                                      "TEMP_NPT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+          
         }
+        shinyjs::enable(button_name)
+        
+        
       })
     # Transport Metrics - Patient Data  -----------------------
     
       
       observeEvent(input$submit_pt_tat,{
+        button_name <- "submit_pt_tat"
+        shinyjs::disable(button_name)
         
         pt_file <- input$patient_transport
         flag <- 0 
@@ -4209,28 +3829,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if (is.null(pt_file)) {
           return(NULL)
         }else{
-          file_path <- pt_file$datapath
           #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
           #pt_data <- read_excel(file_path)
-          
+            if(input$name_transport_pt == ""){
+              showModal(modalDialog(
+              title = "Error",
+              paste0("Please fill in the required fields"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+           }
           
             tryCatch({
               # Read in SCC file
-              data <- process_PT_data(file_path)
+              file_path <- pt_file$datapath
+              updated_user <- input$name_transport_pt
               
-              pt_data <- data[[1]]
               
-              summary_repo_format <- data[[2]]
+              pt_data_raw <- read_excel(file_path, sheet = "PTET")
+              
               
               flag <- 1
-              
-              showModal(modalDialog(
-                title = "Success",
-                paste0("This Patient Transport data has been imported and processed successfully."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-              
               
             },
             error = function(err){
@@ -4240,6 +3859,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 easyClose = TRUE,
                 footer = NULL
               ))
+              shinyjs::enable(button_name)
             }
             )
 
@@ -4247,72 +3867,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         if(flag==1){
-        
-          metrics_final_df <<- transport__metrics_final_df_process(pt_data)
-          
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          transport_summary_repo <- read_excel(transport_table_path)
-          transport_summary_repo$Date <- as.Date(transport_summary_repo$Date)
-          transport_summary_repo$Month <- as.Date(transport_summary_repo$Month)
-          updated_rows <- unique(summary_repo_format[c("Site","Date","Month","Transport Type")])
-          
-          transport_summary_repo <- anti_join(transport_summary_repo, updated_rows)
-          transport_summary_repo <- transport_summary_repo %>% filter(!is.na(Month))
-          transport_summary_repo <- full_join(transport_summary_repo, summary_repo_format)
-          transport_summary_repo <- as.data.frame(transport_summary_repo)
-          write_xlsx(transport_summary_repo, transport_table_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # 
-          # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-          # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-          # date_time$Service = "Patient Transport"
-          # date_time <- rbind(time_df, date_time)
-          # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("Patient Transport")
-          
+
+          tryCatch({
+            # Process Input Data
+            pt_summary_repo <- process_PT_data(pt_data_raw,updated_user)
+            flag <- 2
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Support Services file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          }
+          )
           
         }
+        if(flag==2){
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          pt_summary_repo <- file_return_updated_rows(pt_summary_repo)
+          write_temporary_table_to_database_and_merge(pt_summary_repo,
+                                                      "TEMP_PT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+
+          
+        }
+        shinyjs::enable(button_name)
+        
         
       })
       
       # KPI Biomed Output Table -------
       
       data_bimoed_kpi <- reactive({
-        data  <- kpibme_reports_ui %>% ungroup()
-        
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
-        
-        colnames(data)[3:length(data)] <- months
-        
-        ##### Code that adds months missing months to the rhandsontable
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-        
-        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-        
-        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        
-        months_to_drop <- which(months < max_month %m-% months(6))
-        months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        
-        complete_months <- seq.Date(months[1], max_month, by= 'month')
-        
-        missing_months <- which(!(complete_months %in% months))
-        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        
-        data[,missing_months] <- NA_real_
-        
-        data <- data %>% select(-all_of(months_to_drop))
-        
-        data
-
+        #data  <- kpibme_reports_ui %>% ungroup()
+        data <- sql_manual_table_output("Biomed / Clinical Engineering", "KPIs")
+        data <- data %>%
+          arrange(Site)
+        result <- manual_table_month_order(data)
         
       })
       
@@ -4366,6 +3965,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       #KPIs Biomed Observe Event----- 
       observeEvent(input$submit_biomedkpis, {
+        button_name <- "submit_biomedkpis"
+        shinyjs::disable(button_name)
+        updated_user <- input$name_biomed_kpi
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
@@ -4377,23 +3979,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         else{
           tryCatch({
             
-            
             # Convert rhandsontable to R object
-            bme_kpi_manual_updates <<- hot_to_r(input$biomed_kpi)          
+            bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
             
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(bme_kpi_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            bme_kpi_manual_updates <<- bme_kpi_manual_updates[, non_empty_cols]
-            
-            
-            
-            
+
+            bme_kpi_manual_updates <- remove_empty_manual_columns(bme_kpi_manual_updates)
             flag <- 1
           },
           error =function(err){
@@ -4404,11 +3996,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
             
           })
           
           if(flag==1){
-            user_format_error <<- manual_format_check(bme_kpi_manual_updates%>%
+            user_format_error <- manual_format_check(bme_kpi_manual_updates%>%
                                                         filter(Metric %in% c("PM Compliance - High Risk Equipment",
                                                                              "PM Compliance - All Medical Equipment",
                                                                              "Documented Status")))
@@ -4424,144 +4018,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
             } 
             else{
-              tryCatch({
-                # Reformat data from manual input table into summary repo format
-                bme_kpi_summary_data <<-
-                  process_manual_entry_to_summary_repo_format_biomed(bme_kpi_manual_updates,"KPI")
+              ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
+              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
+                                                                "Biomed / Clinical Engineering", 
+                                                                "KPIs", 
+                                                                updated_user,
+                                                                button_name)
+              
+              if(updated_rows$flag == 2) {
+                ##Updated the data on the databse
+                write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+                                                            "TEMP_BIOMEDKPIs", button_name)
                 
-                flag <- 2
-                
-                
-                showModal(modalDialog(
-                  title = "Success",
-                  paste0("This Biomedical KPIs data has been submitted successfully."),
-                  easyClose = TRUE,
-                  footer = NULL
-                ))
-            },
-            
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Biomedical KPIs data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-            })
-          
-          
-          if(flag==2){
-            
-            # Save prior version of KPIs Dept Summary data
-            write_xlsx(kpibme_reports,
-                       paste0(hist_archive_path,
-                              "KPIs Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-            # First, identify the sites, months, and metrics in the new data
-            bme_kpi_new_data <- unique(
-              bme_kpi_summary_data[, c("Service", "Site", "Month", "Metric")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            kpi_bme <<- anti_join(kpibme_reports,
-                                  bme_kpi_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month",
-                                         "Metric" = "Metric"))
-            
-            # Third, combine the updated historical data with the new data
-            kpibme_reports <<- full_join(kpi_bme,
-                                         bme_kpi_summary_data)
-            
-            glimpse(kpibme_reports)
-            # Next, arrange the incident reports summary data by month, metric, and site
-            kpibme_reports <<- kpibme_reports %>%
-              arrange(Month,
-                      desc(Metric),
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(kpibme_reports, bmekpi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(kpibme_reports,"KPIs")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Biomed / Clinical Engineering"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Biomed / Clinical Engineering")
-            
-          }
-          }
+                update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                          input$selectedService3)
+              
+              }
         }
       }
-    })
+    }})
       
       
       #D&I Biomed Output Table -------
       
       data_bimoed_di <- reactive({
-        data  <- disruptions_issues_reports_ui %>% ungroup()
-        
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only),"-01"), "%b-%Y-%d"), "%m-%Y")
-        
-        colnames(data)[3:length(data)] <- months
-        
-        ##### Code that adds months missing months to the rhandsontable
-        months_only <- data %>% select(-Site,-Metric)
-        months <- format(as.Date(paste0(colnames(months_only), "-01"), "%m-%Y-%d"), "%m-%Y")
-        
-        max_month <- as.Date(paste0(format(Sys.Date() %m-% months(1), "%m-%Y"), "-01"), "%m-%Y-%d")
-        
-        months <- as.Date(sprintf("%s-01", months), format = "%m-%Y-%d")
-        
-        months_to_drop <- which(months < max_month %m-% months(6))
-        months_to_drop <- format(months[months_to_drop], "%m-%Y")
-        
-        complete_months <- seq.Date(months[1], max_month, by= 'month')
-        
-        missing_months <- which(!(complete_months %in% months))
-        missing_months <- as.character(format(complete_months[missing_months], "%m-%Y"))
-        
-        data[,missing_months] <- NA_real_
-        
-        months_df <- data[,!(names(data) %in% c("Metric", "Site"))]
-        months <- order(as.yearmon(colnames(months_df), "%m-%Y"))
-        order_months <- months_df[months]
-        
-        
-        index <- months+2
-        index <- c(1:2,index)
-        
-        data <- data[index]
-        
-        data <- data %>% select(-all_of(months_to_drop))
-        
+        #data  <- kpibme_reports_ui %>% ungroup()
+        data <- sql_manual_table_output("Biomed / Clinical Engineering", "disruptions_and_issues")
+        data <- data %>%
+          arrange(Site)
+        result <- manual_table_month_order(data)
         
       })
       
       
       output$bimoed_di <- renderRHandsontable({
-        #data <- data
         data <- data_bimoed_di()
         
         
@@ -4610,6 +4100,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # D&I Biomed Observe Event----- 
       observeEvent(input$submit_biomeddi, {
+        button_name <- "submit_biomeddi"
+        shinyjs::disable(button_name)
         if(input$name_biomed_distruptions == "") {
           showModal(modalDialog(
             title = "Error",
@@ -4620,19 +4112,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }else{
           tryCatch({
             # Convert rhandsontable to R object
-            bme_di_manual_updates <<- hot_to_r(input$bimoed_di)
-            
+            bme_di_manual_updates <- hot_to_r(input$bimoed_di)
+            updated_user <- input$name_biomed_distruptions
             # Identify columns with no data in them and remove before further processing
             # This ensures months with no data do not get added to the department summary
-            # repo and metrics_final_df repository
-            non_empty_cols <- !(apply(bme_di_manual_updates,
-                                      MARGIN = 2,
-                                      function(x) 
-                                        all(is.na(x))))
-            
-            bme_di_manual_updates <<- bme_di_manual_updates[, non_empty_cols]
-            
-            
+            bme_di_manual_updates <- remove_empty_manual_columns(bme_di_manual_updates)  
             flag <- 1
         
           },
@@ -4643,98 +4127,43 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
-        
           if(flag ==1){
             
-            tryCatch({
-            # Reformat data from manual input table into summary repo format
-            bme_di_summary_data <-
-              process_manual_entry_to_summary_repo_format_biomed(bme_di_manual_updates,"DI")
+            updated_rows <- manual_process_and_return_updates(bme_di_manual_updates, 
+                                                              "Biomed / Clinical Engineering",
+                                                              "disruptions_and_issues", 
+                                                              updated_user,
+                                                              button_name)
             
-            flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This Disruptions and Issues data has been submitted successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            
-            },
-            error = function(err) {
-              showModal(modalDialog(
-                title = "Error",
-                paste0("There seems to be an issue with the Disruptions and Issues data entered."),
-                easyClose = TRUE,
-                footer = NULL
-              ))
-              
-            })
+           
           }
           
-          if(flag==2){
+          if(updated_rows$flag == 2){
             
-            # Save prior version of DI Reports Dept Summary data
-            write_xlsx(disruptions_issues_reports,
-                       paste0(hist_archive_path,
-                              "DI Biomed and Clinical Engineering ",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
+            write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+                                                        "TEMP_DI_BIOMED", button_name)
             
         
-            # First, identify the sites, months, and metrics in the new data
-            bme_di_new_data <- unique(
-              bme_di_summary_data[, c("Service", "Site", "Month")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            di_bme <<- anti_join(disruptions_issues_reports,
-                                 bme_di_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Month" = "Month"))
-            
-            # Third, combine the updated historical data with the new data
-            disruptions_issues_reports <<- full_join(di_bme,
-                                                     bme_di_summary_data)
-            
-            # Next, arrange the DI reports summary data by month, metric, and site
-            disruptions_issues_reports <<- disruptions_issues_reports %>%
-              arrange(Month,
-                      Site)
-            # Lastly, save the updated summary data
-            write_xlsx(disruptions_issues_reports, bmedi_table_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- biomed__metrics_final_df_process(disruptions_issues_reports,"DI")
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Biomed / Clinical Engineering"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Biomed / Clinical Engineering")
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+            #record_timestamp("Biomed / Clinical Engineering")
             
             
-              } 
+          } 
         }
+        shinyjs::enable(button_name)
+        
       })
       
 
       # Imaging DR X-RAY data submission ----- 
       observeEvent(input$submit_imagingxray, {
+        button_name <- "submit_imagingxray"
+        shinyjs::disable(button_name)
+        flag <- 0
+        xray_file <- input$imaging_DR_XRay
         if(input$imaging_xray_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -4742,13 +4171,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
-        }
-        
-        xray_file <- input$imaging_DR_XRay
-        
-        if (is.null(xray_file)) {
-          return(NULL)
         }else{
+          updated_user <- input$imaging_xray_username
           file_path <- xray_file$datapath
 
           tryCatch({
@@ -4764,6 +4188,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
         }
@@ -4773,16 +4199,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             xray_summary_data <-
-              process_xray_data(xray_data)
+              process_xray_data(xray_data, updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -4791,73 +4210,37 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
         
         if(flag == 2){
-            # Save prior version of xray Reports Dept Summary data
-            write_xlsx(ImagingSummaryRepo,
-                       paste0(hist_archive_path,
-                              "Imaging DR-Ops",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-            
-            # First, identify the sites, months, and metrics in the new data
-            xray_new_data <- unique(
-              xray_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            xray_imaging <<- anti_join(ImagingSummaryRepo,
-                                 xray_new_data,
-                                 by = c("Service" = "Service",
-                                        "Site" = "Site",
-                                        "Month" = "Month",
-                                        "Metric_Name_Submitted" = "Metric_Name_Submitted"))
-            
-            # Third, combine the updated historical data with the new data
-            imaging_xray_reports <<- full_join(xray_imaging,
-                                               xray_summary_data)
-            
-            # Next, arrange the incident reports summary data by month, metric, and site
-            imaging_xray_reports <<- imaging_xray_reports %>%
-              arrange(Month,
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(imaging_xray_reports, imagingDR_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- imagingdrxray__metrics_final_df_process(xray_summary_data)
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Imaging"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Imaging")
+          
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          xray_summary_data <- file_return_updated_rows(xray_summary_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(xray_summary_data,
+                                                      "TEMP_IMAGING_XRAY", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
             
         }
+        shinyjs::enable(button_name)
+        
       })
       
       # Imaging DR Chest CT data submission ----- 
       observeEvent(input$submit_imagingct, {
+        button_name <- "submit_imagingct"
+        shinyjs::disable(button_name)
+        flag <- 0
+        ct_file <- input$imaging_DR_ct
+
         if(input$imaging_ct_username == "") {
           showModal(modalDialog(
             title = "Error",
@@ -4865,13 +4248,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             easyClose = TRUE,
             footer = NULL
           ))
-        }
-        
-        ct_file <- input$imaging_DR_ct
-        
-        if (is.null(ct_file)) {
-          return(NULL)
         }else{
+          updated_user <- input$imaging_ct_username
           file_path <- ct_file$datapath
           
           
@@ -4889,6 +4267,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           }
           )
           
@@ -4899,16 +4279,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             ct_summary_data <-
-              process_ctdata_data(ct_data)
+              process_ctdata_data(ct_data, updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -4917,6 +4290,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
@@ -4924,110 +4299,61 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if(flag == 2){
           
-            # Save prior version of Imaging Reports Dept Summary data
-            write_xlsx(ImagingSummaryRepo,
-                       paste0(hist_archive_path,
-                              "Imaging DR-Ops",
-                              format(Sys.time(), "%Y%m%d_%H%M%S"),
-                              ".xlsx"))
-            
-            
-    
-            # First, identify the sites, months, and metrics in the new data
-            ct_new_data <- unique(
-              ct_summary_data[, c("Service", "Site", "Month", "Metric_Name_Submitted")]
-            )
-            
-            # Second, remove these sites, months, and metrics from the historical data,
-            # if they exist there. This allows us to ensure no duplicate entries for
-            # the same site, metric, and time period.
-            ct_imaging <<- anti_join(ImagingSummaryRepo,
-                                       ct_new_data,
-                                       by = c("Service" = "Service",
-                                              "Site" = "Site",
-                                              "Month" = "Month",
-                                              "Metric_Name_Submitted" = "Metric_Name_Submitted"))
-            
-            # Third, combine the updated historical data with the new data
-            imaging_ct_reports <<- full_join(ct_imaging,
-                                             ct_summary_data)
-            
-            # Next, arrange the imaging reports summary data by month, metric, and site
-            imaging_ct_reports <<- imaging_ct_reports %>%
-              arrange(Month,
-                      Site)
-            
-            # Lastly, save the updated summary data
-            write_xlsx(imaging_ct_reports, imagingDR_path)
-            
-            # Update metrics_final_df with latest data using custom function
-            metrics_final_df <<- imagingdrct__metrics_final_df_process(ct_summary_data)
-            
-            # Save updates metrics_final_df
-            saveRDS(metrics_final_df, metrics_final_df_path)
-            
-            # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-            # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-            # 
-            # time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-            # date_time <- data.frame(Updated = as.POSIXct(Sys.time()))
-            # date_time$Service = "Imaging"
-            # date_time <- rbind(time_df, date_time)
-            # write_xlsx(date_time, paste0(home_path, "time_updated.xlsx"))
-            
-            update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-            record_timestamp("Imaging")
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          ct_summary_data <- file_return_updated_rows(ct_summary_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(ct_summary_data,
+                                                      "TEMP_IMAGING_CT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
             
         }
+        shinyjs::enable(button_name)
+        
       })
       
       # Nursing observer event actions for data submission ----- 
       observeEvent(input$submit_nursing, {
-       
+        button_name <- "submit_nursing"
+        shinyjs::disable(button_name)
+        
+        flag <- 0
         nursing_file <- input$nursing
-        
-        if (is.null(nursing_file)) {
-          return(NULL)
-        }else{
-          file_path <- nursing_file$datapath
-          
-          
-          tryCatch({
+        if(input$name_nursing == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL))
+          }else{
             
-            nursing_data <- read_excel(file_path)
+            updated_user <- input$name_nursing
+            file_path <- nursing_file$datapath
             
-            flag <- 1
+            tryCatch({
+              nursing_data <- read_excel(file_path)
+              flag <- 1
+            },
+              error = function(err){
+                showModal(modalDialog(
+                  title = "Error",
+                  paste0("There seems to be an issue with this data file."),
+                  easyClose = TRUE,
+                  footer = NULL))
+              })
+            shinyjs::enable(button_name)
             
-          },
-          error = function(err){
-            showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with this data file."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           }
-          )
-          
-        }
-        
         # Process data if the right file format was submitted
         if(flag == 1) {
           tryCatch({
             # Reformat data from manual input table into summary repo format
             nursing_summary_data <-
-              process_nursing_data(nursing_data)
+              process_nursing_data(nursing_data,updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -5036,84 +4362,49 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
-        
-        
         if(flag == 2){
           
-          # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(NursingSummaryRepo,
-                     paste0(hist_archive_path,
-                            "Nursing",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
           
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          nursing_summary_data <- file_return_updated_rows(nursing_summary_data)
           
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(nursing_summary_data,
+                                                      "TEMP_NURSING", button_name)
           
-          # First, identify the sites, months, and metrics in the new data
-          nursing_new_data <- unique(
-            nursing_summary_data[, c("Service", "Site", "Month")]
-          )
-          
-          # Second, remove these sites, months, and metrics from the historical data,
-          # if they exist there. This allows us to ensure no duplicate entries for
-          # the same site, metric, and time period.
-          nursing_old_data <<- anti_join(NursingSummaryRepo,
-                                   nursing_new_data,
-                                   by = c("Service" = "Service",
-                                          "Site" = "Site",
-                                          "Month" = "Month"))
-          
-          # Third, combine the updated historical data with the new data
-          nursing_reports <<- full_join(nursing_old_data,
-                                           nursing_summary_data)
-          
-          # Next, arrange the imaging reports summary data by month, metric, and site
-          nursing_reports <<- nursing_reports %>%
-            arrange(Month,
-                    Site)
-          
-          # Lastly, save the updated summary data
-          write_xlsx(nursing_reports, nursing_path)
-          
-          # Update metrics_final_df with latest data using custom function
-          metrics_final_df <<- nursing__metrics_final_df_process(nursing_summary_data)
-          
-          # Save updates metrics_final_df
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("Nursing")
-          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
         }
+        shinyjs::enable(button_name)
+        
       })
       
       
       # ED observer event actions for data submission ----- 
       observeEvent(input$submit_ed, {
+        button_name <- "submit_ed"
+        shinyjs::disable(button_name)
         flag <- 0
         ed_file <- input$ed
         
-        if (is.null(ed_file)) {
-          return(NULL)
+        if(input$name_ed == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
         }else{
+          updated_user <- input$name_ed
           file_path <- ed_file$datapath
-          
-          
           tryCatch({
-            
-            
             ed_data_ts <- read.xlsx(file_path,sheet = "Sheet2",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
             ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
-            
-            
             data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
             
             ed_data_ts <- data[[1]]
@@ -5123,15 +4414,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           },
           error = function(err){
-            print("Yo!")
             showModal(modalDialog(
               title = "Error",
               paste0("There seems to be an issue with this data file."),
               easyClose = TRUE,
               footer = NULL
             ))
-          }
-          )
+            shinyjs::enable(button_name)
+            
+            })
           
         }
         
@@ -5140,16 +4431,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Reformat data from manual input table into summary repo format
             ed_summary_data <-
-              ed_dept_summary(ed_data_ts,ed_data_percentiles)
+              ed_dept_summary(ed_data_ts,ed_data_percentiles,updated_user)
             
             flag <- 2
-            
-            showModal(modalDialog(
-              title = "Success",
-              paste0("This data file has been imported successfully."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
           },
           error = function(err){
             showModal(modalDialog(
@@ -5158,64 +4442,25 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               easyClose = TRUE,
               footer = NULL
             ))
+            shinyjs::enable(button_name)
+            
           })
         }
         
-        
-        
         if(flag == 2){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          ed_summary_data <- file_return_updated_rows(ed_summary_data)
           
-          # Save prior version of Imaging Reports Dept Summary data
-          write_xlsx(ed_summary_repo,
-                     paste0(hist_archive_path,
-                            "ED",
-                            format(Sys.time(), "%Y%m%d_%H%M%S"),
-                            ".xlsx"))
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(ed_summary_data,
+                                                      "TEMP_ED", button_name)
           
-          
-          
-          # First, identify the sites, months, and metrics in the new data
-          ed_new_data <- unique(
-            ed_summary_data[, c("Service", "Site", "Month", "KPI")]
-          )
-          
-          # Second, remove these sites, months, and metrics from the historical data,
-          # if they exist there. This allows us to ensure no duplicate entries for
-          # the same site, metric, and time period.
-          ed_old_data <<- anti_join(ed_summary_repo,
-                                    ed_new_data,
-                                         by = c("Service" = "Service",
-                                                "Site" = "Site",
-                                                "Month" = "Month",
-                                                "KPI" = "KPI"))
-          
-          # Third, combine the updated historical data with the new data
-          ed_reports <<- full_join(ed_old_data,
-                                        ed_summary_data)
-          
-          # Next, arrange the imaging reports summary data by month, metric, and site
-          ed_reports <<- ed_reports %>%
-            arrange(Month,
-                    Site)
-          
-          # Lastly, save the updated summary data
-          write_xlsx(ed_reports, ed_path)
-          
-          # Update metrics_final_df with latest data using custom function
-          metrics_final_df <<- ed__metrics_final_df_process(ed_summary_data)
-          
-          # Save updates metrics_final_df
-          saveRDS(metrics_final_df, metrics_final_df_path)
-          
-          # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-          # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-          record_timestamp("ED")
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
           
         }
+        shinyjs::enable(button_name)
+        
       })
       
       
@@ -5360,34 +4605,54 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Code to update drop down selections based on selected service line -------------
       observeEvent(input$selectedService,{
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = dsn)
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        dbDisconnect(conn)
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      })
-      
+      }, ignoreInit = T)
+
       observeEvent(input$selectedService2,{
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService2)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = dsn)
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService2
+        
+        
+        
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
 
-        campus_choices <- sort(unique(data$Site))
+        campus_choices <- sort(unique(data$SITE))
+        dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
 
-      })
+      }, ignoreInit = T)
       
       
       observeEvent(input$selectedService3,{
+        conn <- dbConnect(drv = odbc::odbc(), 
+                          dsn = dsn)
+        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+        service_selected <- input$selectedService3
         
-        data <- metrics_final_df %>% filter(Service == input$selectedService3)
-        picker_choices <-  format(sort(unique(data$Reporting_Month_Ref)), "%m-%Y")
+        
+        
+        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
-        
-        campus_choices <- sort(unique(data$Site))
+        campus_choices <- sort(unique(data$SITE))
+        dbDisconnect(conn)
         updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
-      })
+      }, ignoreInit = T)
       
       observeEvent(input$selectedService4, {
         
@@ -5400,7 +4665,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                           choices = picker_choices_metric_group,
                           selected = picker_choices_metric_group)
         
-      })
+      }, ignoreInit = T)
 
 
       

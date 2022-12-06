@@ -3,32 +3,30 @@ library(shinyWidgets)
 library(shinydashboard)
 
 # Default values for global filters -------------------------------------------------------------------------
-default_campus <- sort(unique(metrics_final_df$Site))
-campus_choices <- sort(unique(metrics_final_df$Site))
-default_service <- sort(unique(metrics_final_df$Service))[1]
-service_choices <- sort(unique(metrics_final_df$Service))
-metric_group_choices <- sort(unique(metrics_final_df$Metric_Group))
+conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+                  dsn = dsn)
+mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+# Get choices of service from db
+service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect()
+service_choices <- sort(service_choices$SERVICE)
+default_service <- service_choices[1]
+#Get campus choices from db
+default_campus <- mdf_tbl %>% select(SITE) %>% summarise(SITE = unique(SITE)) %>% collect()
+default_campus <- sort(default_campus$SITE)
+campus_choices <- default_campus
+#Get metric group choices from db
+metric_group_choices <- mdf_tbl %>% select(METRIC_GROUP) %>% summarise(METRIC_GROUP = unique(METRIC_GROUP)) %>% collect()
+metric_group_choices <- sort(metric_group_choices$METRIC_GROUP)
 default_metric_group <- metric_group_choices
-# service_choices <- sort(
-#   unique(
-#     metrics_final_df$Service[
-#       which(!(
-#         metrics_final_df$Service %in% c("Emergency Department", "Nursing")
-#         )
-#         )
-#       ]
-#     )
-#   )
-
-# default_month <- unique(metrics_final_df$Reporting_Month)[length(unique(metrics_final_df$Reporting_Month))]
-# month_choices <- unique(metrics_final_df$Reporting_Month)
-default_month <- format(max(metrics_final_df$Reporting_Month_Ref, na.rm = TRUE), "%m-%Y")
-month_choices <- format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-
-
-
+#Get month choices from db
+default_month <- mdf_tbl %>% filter(SERVICE == default_service) %>% summarise(REPORTING_MONTH = max(REPORTING_MONTH)) %>% collect()
+default_month <- format(sort(default_month$REPORTING_MONTH), "%m-%Y")
+month_choices <- mdf_tbl %>% filter(SERVICE == default_service) %>% select(REPORTING_MONTH) %>% summarise(REPORTING_MONTH = unique(REPORTING_MONTH)) %>% collect()
+month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
+dbDisconnect(conn)
 ui <- 
   fluidPage(
+    shinyjs::useShinyjs(),
     
     tags$style(type = 'text/css', 
                '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
@@ -65,8 +63,9 @@ ui <-
              header = tagList(
                useShinydashboard()
              ),
+
              
-             # First Tab - Summary - All Sites
+             # First Tab - Summary - All Sites -----------------------
              tabPanel("Summary", value = "summary",
                       fluidRow(
                         column(2, 
@@ -103,7 +102,7 @@ ui <-
                       )
              ), # Close tabPanel Summary
              
-             # Second Tab - All Sites by KPI
+             # Second Tab - All Sites by KPI -----------------------
              tabPanel("Site Comparison", value = "comparison",
                       fluidRow(
                         column(2, 
@@ -152,8 +151,7 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Comparison
-             
-             # Third Tab - Breakout
+             # Third Tab - Breakout-----------------------
              tabPanel("KPI Breakout", value = "breakout",
                       fluidRow(
                         column(2, 
@@ -230,10 +228,10 @@ ui <-
                                                  actionButton("submit_finance", label = "Submit")
                                
                                       ),
-                                      tabPanel("Census Days", br(),
-                                               fileInput("finance_census", label = "Please upload Census Days data"),
-                                               actionButton("submit_finance_census", label = "Submit")
-                                               ),
+                                      # tabPanel("Census Days", br(),
+                                      #          fileInput("finance_census", label = "Please upload Census Days data"),
+                                      #          actionButton("submit_finance", label = "Submit")
+                                      #          ),
                                       tabPanel("Overtime", br(),
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
                                                actionButton("submit_finance_ot", label = "Submit")
@@ -281,8 +279,20 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
-                                 fileInput("productiviy_data", label = "Please upload Productivity data"), br(),
-                                 actionButton("submit_prod", label = "Submit")
+                                 tabBox(title = NULL, id = "tabset20", width = "100%", type = 'pills',      
+                                        tabPanel("Productivity",
+                                         fluidRow(
+                                           column(2,
+                                                  textInput("name_productivity", (labelMandatory("Please enter name:"))),
+                                                  
+                                           )
+                                         ),
+                                         br(),
+                                         fileInput("productiviy_data", label = "Please upload Productivity data"), 
+                                         hr(),
+                                         actionButton("submit_prod", label = "Submit")
+                                        )
+                                 )
                         ),
                         # Biomed Data Input Tab ------
                         tabPanel("Operational Metrics - Biomed/Clinical Engineering",
@@ -414,7 +424,13 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
                                         tabPanel("Turnaround Time",
-                                                 hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_evs", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
                                                  fileInput("evs_data",
                                                            label = "Please upload Environmental Services data"),
                                                  hr(),
@@ -436,7 +452,15 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
-                                        tabPanel("ED KPIs", hr(),
+                                        tabPanel("ED KPIs", 
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_ed", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
+                                                 hr(),
                                                  fileInput("ed", label = "Please upload ED KPIs data"),
                                                  hr(),
                                                  actionButton("submit_ed", "Submit", class = "btn-primary")
@@ -461,6 +485,12 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
                                         tabPanel("Cost and Revenue", br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_food", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
                                                  fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
                                                  actionButton("submit_food", label = "Submit")
                                         )
@@ -488,7 +518,16 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
-                                        tabPanel("Imaging - IR", br(),
+                                        tabPanel("Imaging - IR", 
+                                                 br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                     textInput("imaging_ir_username",
+                                                               labelMandatory(
+                                                                 "Please enter name:")
+                                                     )
+                                                   )
+                                                 ),
                                                  fileInput("imaging_IR", label = "Please upload Imaging interventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
                                         ),
@@ -497,7 +536,7 @@ ui <-
                                                    column(2,
                                                           textInput("imaging_xray_username",
                                                                     labelMandatory(
-                                                                      "1. Please enter name:")
+                                                                      "Please enter name:")
                                                           )
                                                    )
                                                  ),
@@ -509,7 +548,7 @@ ui <-
                                                    column(2,
                                                           textInput("imaging_ct_username",
                                                                     labelMandatory(
-                                                                      "1. Please enter name:")
+                                                                      "Please enter name:")
                                                           )
                                                    )
                                                  ),
@@ -534,6 +573,12 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
                                         tabPanel("Turnaround Time",
+                                                 hr(),
+                                                 textInput("lab_tat_username",
+                                                           labelMandatory(
+                                                             "Please enter name:"
+                                                           )
+                                                           ),
                                                  hr(),
                                                  fileInput("lab_scc", label = "Please upload SCC lab data"),
                                                  hr(),
@@ -584,8 +629,14 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
-                                        tabPanel("Nursing Indicators", 
-                                                 hr(),
+                                        tabPanel("Nursing Indicators",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_nursing", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
                                                  fileInput("nursing", label = "Please upload Nursing Indicators data"),
                                                  hr(),
                                                  actionButton("submit_nursing", "Submit", class = "btn-primary")
@@ -605,12 +656,24 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
+                                 
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
+                                        
                                         tabPanel("Turnaround Time-Non Patient Transport", hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_transport_npt", (labelMandatory("1. Please enter Name:")), "")
+                                                   )
+                                                 ),
                                                  fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
                                                  actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
                                         ),
                                         tabPanel("Turnaround Time-Patient Transport", hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter Name:")), "")
+                                                   )
+                                                 ),
                                                  fileInput("patient_transport", label = "Please upload PTET Metrics data"),
                                                  actionButton("submit_pt_tat", "Submit", class = "btn-primary")
                                         )
@@ -902,6 +965,11 @@ ui <-
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
+ tags$style(HTML("
+        #submit_imaging {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
  
   tags$style(HTML("
         #header_custom {
@@ -928,7 +996,6 @@ ui <-
   tags$style(type = 'text/css', 
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
              '.navbar-default .navbar-brand{color: black; font-size: 24px;}'
-  ) 
-             
-             
+             )
+
   ) # Close navbarPage

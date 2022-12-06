@@ -1,5 +1,6 @@
 # Install and load packages ----------------------------------------
 suppressMessages({
+  library(pool)
   # library(xlsx)
   library(assertr)
   library(readxl)
@@ -68,9 +69,9 @@ suppressMessages({
   library(stringr)
   library(glue)
   library(magrittr)
+  library(shinyjs)
   #library(reshape2)
 })
-
 
 options(shiny.maxRequestSize=500*1024^2)
 
@@ -181,11 +182,13 @@ if(file.exists("J:/")){
   start <- "J:" #Comment when publishing to RConnect
   home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
   start_shared <- "J:"
+  dsn <- "OAO Cloud DB"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
-  home_path <- paste0(start,"/Scorecards/")
+  home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
   install.packages("reshape2", repos = "http://cran.us.r-project.org")
+  dsn <- "OAO Cloud DB" 
 }
 
 metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
@@ -463,4 +466,4 @@ source("ED.R")
 source("productivity.R")
 source("budget_to_actual_new_file.R")
 source("productivity_update.R")
-
+rm(metrics_final_df)

@@ -1,6 +1,6 @@
 manual_table_month_order <- function(manual_repo){
   data <- manual_repo
-  
+
   data2_months <- as.Date(paste0(colnames(data %>%
                                             select(-Site, -Metric)),
                                  "-01"),
