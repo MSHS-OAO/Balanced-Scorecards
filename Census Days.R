@@ -119,7 +119,9 @@ census_days_dept_summary <- function(data){
                                 values_to = "Census Days") %>%
     rename(Month = Date)
   data$Service <- "Food Services"
-  
+  data <- data %>% mutate_at(vars(c("Site")), ~ifelse(Site == "MSSL", "MSM", 
+                                                      Site)
+  )
   data
   
 }
@@ -245,6 +247,14 @@ food_summary_repo_format <- function(data, updated_user) {
     }else{
       raw_cost_rev_df$`Census Days` <- NA
     }
+  } else {
+    summary_repo_data <- read_excel(paste0(home_path, "Summary Repos/Food Services Cost and Revenue.xlsx"))
+    summary_repo_data <- summary_repo_data %>% select(-`Census Days`)
+    raw_cost_rev_df <- left_join(raw_cost_rev_df, summary_repo_data, by = c("Service" = "Service",
+                                                                            "Month" = "Month",
+                                                                            "Site" = "Site"))
+    flag <- 1
+    
   }
   
   raw_cost_rev_df$`Actual Revenue` <- as.numeric(raw_cost_rev_df$`Actual Revenue`)
@@ -252,6 +262,7 @@ food_summary_repo_format <- function(data, updated_user) {
   raw_cost_rev_df$`Census Days` <- as.numeric(raw_cost_rev_df$`Census Days`)
   
   # Cost and Revenue data pre-processing
+  if (flag == 0) {
   cost_rev_df <- raw_cost_rev_df %>%
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
@@ -267,7 +278,6 @@ food_summary_repo_format <- function(data, updated_user) {
       Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
       Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
     rename(VALUE = value)
-  
   
   cost_rev_df_final <- left_join(cost_rev_df, cost_rev_mapping, 
                                  by = c("Metric", "Metric_Name_Submitted"))

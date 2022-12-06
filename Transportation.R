@@ -89,8 +89,6 @@ process_PT_data <- function(pt_data_raw,updated_user){
   return(processed_data)
 
 }
-
-
 process_NPT_raw_data <- function(data,updated_user){
   
   
@@ -141,6 +139,4 @@ process_NPT_raw_data <- function(data,updated_user){
 
   return(data_metrics)
 }
-
-
 

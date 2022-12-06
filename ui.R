@@ -369,7 +369,7 @@ ui <-
                                  
                         ),
                         # Engineering Data Submission ----
-                        tabPanel("Operational Metrics - Engineering",
+                        tabPanel("Operational Metrics - Engineering", value = "eng",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
