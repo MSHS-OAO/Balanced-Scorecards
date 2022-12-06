@@ -50,26 +50,3 @@ overtime_file_processs <- function(data, updated_user){
   data
   
 }
-
-
-overtime_metrics_final_df_process <- function(data){
-  
-  raw_finance_df <- data
-  
-  
-  ## Finance overtime data pre-processing 
-  finance_df_final <- raw_finance_df %>%
-    rename(Metric_Name_Submitted = Metric_Name) %>%
-    mutate(Reporting_Month = format(as.Date(`Associated Dashboard Month`, 
-                                            format = "%Y-%m-%d"),"%m-%Y"),
-           value_rounded = as.numeric(Value),
-           Premier_Reporting_Period = format(as.Date(`Associated Dashboard Month`,
-                                                     format = "%Y-%m-%d"),
-                                             format = "%b %Y")) %>%
-          filter(value_rounded != "NaN")
-  
-  # Subset processed data for merge 
-  
-  metrics_final_df <- metrics_final_df_subset_and_merge(finance_df_final)
-  return(metrics_final_df)
-}
