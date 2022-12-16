@@ -302,7 +302,7 @@ report_date_mapping <- tbl(conn, "BSC_REPORT_DATES_LPM") %>% collect() %>%
 
 cost_rev_mapping <- tbl(conn, "BSC_COST_REV_MAPPING") %>% collect() %>%
                       rename(Metric = METRIC,
-                             Metric_Name_Submiyyed = METRIC_NAME_SUBMITTED,
+                             Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
                              Metric_Group = METRIC_GROUP,
                              Metric_Name = METRIC_NAME)
 key_vol_mapping <- read_excel(key_volume_mapping_path,
