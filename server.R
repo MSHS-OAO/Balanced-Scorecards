@@ -918,7 +918,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Key Metric Rollup")
       }else{
-        updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
         text = paste0("MSHS ",input_service, " Key Metric Rollup - Updated ",updated)
       }
       text
@@ -1274,7 +1274,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0(input$selectedCampus3, " ",input_service, " Breakout")
       }else{
-        updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
         text = paste0(input$selectedCampus3," ",input_service, " Breakout - Updated ",updated)
       }
       text
