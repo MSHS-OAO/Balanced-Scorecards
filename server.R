@@ -52,13 +52,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_census
       
-      time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-      time_df <- time_df %>% filter(Service == input$selectedService)
+      input_service <- input$selectedService
+      
+      conn <- dbConnect(odbc(), dsn)  
+      time_df <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == input_service) %>% collect()
+      dbDisconnect(conn)
       if(nrow(time_df) == 0){
-        text = paste0("MSHS ",input$selectedService, " Summary")
+        text = paste0("MSHS ",input_service, " Summary")
       }else{
-        updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
-        text = paste0("MSHS ",input$selectedService, " Summary - Updated ",updated)
+        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        text = paste0("MSHS ",input_service, " Summary - Updated ",updated)
       }
       text
     })
@@ -200,6 +203,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       missing_sites <- setdiff(sites_inc, names(current_summary))
       current_summary[missing_sites] <- NA
       
+      conn <- dbConnect(odbc(), dsn)
+      budget_data_repo <- metrics_final_df %>% filter(Metric_Group == "Budget to Actual")
+      
       month_selected_format <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
       if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
         month_in_repo <- unique(format(budget_data_repo$Month, "%Y-%m-%d"))
@@ -297,6 +303,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # FYTD Summary Table - for Patient Experience
       # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
+      pt_exp_data <- metrics_final_df %>% filter(Metric_Group == "Patient Experience")
       if (service_input %in% unique(pt_exp_data$Service)) {
         
         pt_exp_ytd <- pt_exp_data %>%
@@ -904,13 +911,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_census
       
-      time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-      time_df <- time_df %>% filter(Service == input$selectedService2)
+      input_service <- input$selectedService2
+      conn <- dbConnect(odbc(), dsn)  
+      time_df <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == input_service) %>% collect()
+      dbDisconnect(conn)
       if(nrow(time_df) == 0){
-        text = paste0("MSHS ",input$selectedService2, " Key Metric Rollup")
+        text = paste0("MSHS ",input_service, " Key Metric Rollup")
       }else{
         updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
-        text = paste0("MSHS ",input$selectedService2, " Key Metric Rollup - Updated ",updated)
+        text = paste0("MSHS ",input_service, " Key Metric Rollup - Updated ",updated)
       }
       text
     })
@@ -1258,13 +1267,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_census
       
-      time_df <- read_excel(paste0(home_path, "time_updated.xlsx"))
-      time_df <- time_df %>% filter(Service == input$selectedService3)
+      input_service <- input$selectedService3
+      conn <- dbConnect(odbc(), dsn)  
+      time_df <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == input_service) %>% collect()
+      dbDisconnect(conn)
       if(nrow(time_df) == 0){
-        text = paste0(input$selectedCampus3, " ",input$selectedService3, " Breakout")
+        text = paste0(input$selectedCampus3, " ",input_service, " Breakout")
       }else{
         updated <- format(max(time_df$Updated), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
-        text = paste0(input$selectedCampus3," ",input$selectedService3, " Breakout - Updated ",updated)
+        text = paste0(input$selectedCampus3," ",input_service, " Breakout - Updated ",updated)
       }
       text
     })

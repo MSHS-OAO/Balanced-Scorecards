@@ -2,11 +2,11 @@
 # # start <- "/SharedDrive"  #Uncomment when publishing to RConnect
 # home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
 # 
-overtime_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
-overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
-# 
-summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
-summary_repos_overtime <- read_excel(summary_repos_overtime_path)
+# overtime_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
+# overtime_mapping <- read_excel(overtime_mapping_path, sheet = "Overtime")
+# # 
+# summary_repos_overtime_path <- paste0(home_path,"Summary Repos/Finance Overtime.xlsx")
+# summary_repos_overtime <- read_excel(summary_repos_overtime_path)
 
 # data <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
 

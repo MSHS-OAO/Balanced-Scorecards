@@ -5,8 +5,8 @@
 # month <- excel_sheets(paste0(home_path, "File Examples/EVS/MSHS Normal Clean vs Iso Clean TAT Dec.xlsx"))[1]
 
 
-summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>%
-  mutate_if(is.logical, as.character)
+# summary_repos_environmental <- read_excel(operational_metrics_environmental_path) %>%
+#   mutate_if(is.logical, as.character)
 
 
 evs_file_process <- function(data, month, updated_user) {

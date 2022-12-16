@@ -15,7 +15,7 @@ suppressMessages({
   library(shinyWidgets)
   library(htmlwidgets)
   library(lubridate)
-  library(tcltk)
+  #library(tcltk)
   library(tidyverse)
   library(plotly)
   library(knitr)
@@ -23,7 +23,7 @@ suppressMessages({
   library(leaflet)
   library(grid)
   library(gridExtra)
-  library(eeptools)
+  #library(eeptools)
   library(ggQC)
   library(utils)
   library(scales)
@@ -70,8 +70,12 @@ suppressMessages({
   library(glue)
   library(magrittr)
   library(shinyjs)
+  library(DBI)
+  library(odbc)
   #library(reshape2)
 })
+
+dsn <- "OAO Cloud DB Staging"
 
 options(shiny.maxRequestSize=500*1024^2)
 
@@ -182,74 +186,105 @@ if(file.exists("J:/")){
   start <- "J:" #Comment when publishing to RConnect
   home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
   start_shared <- "J:"
-  dsn <- "OAO Cloud DB"
+  #dsn <- "OAO Cloud DB"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
   home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
-  install.packages("reshape2", repos = "http://cran.us.r-project.org")
-  dsn <- "OAO Cloud DB" 
+  #install.packages("reshape2", repos = "http://cran.us.r-project.org")
+  #dsn <- "OAO Cloud DB" 
 }
 
-metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
-budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
-target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
-operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
-operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
-operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
-census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
-
-
-# File path for BME/CE KPI metrics
-bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
-bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssuesMonthly.xlsx")
-
-# File path for Imaging DR Ops metrics
-imagingDR_path <- paste0(home_path, "Summary Repos/Imaging-DR.xlsx")
-
-# File path for Nursing metrics
-nursing_path <- paste0(home_path, "Summary Repos/Nursing.xlsx")
-
-# File path for ED metrics
-ed_path <- paste0(home_path, "Summary Repos/EDSummary.xlsx")
-
-
-# File path for Lab KPI metrics
-ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
-ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
-
-# File path for Security KPI metrics
-security_incident_reports_path <- paste0(home_path,
-                                           "Summary Repos/",
-                                           "Security Incident Reports.xlsx")
-
-security_events_path <- paste0(home_path,
-                               "Summary Repos/",
-                               "Security Monthly Events.xlsx")
-
-
-# File path for saving the prior version of Dept Summary data
-hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
-
-#
-key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
-engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
-pt_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
-evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
-transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
+# metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
+# budget_to_actual_path <- paste0(home_path, "Summary Repos/Budget to Actual.xlsx")
+# target_mapping_path <- paste0(home_path, "MSHS Scorecards Target Mapping 2022-04-13.xlsx")
+# operational_metrics_path <- paste0(home_path, "Balanced Scorecards Data Input.xlsx")
+# operational_metrics_engineering_path <- paste0(home_path, 'Summary Repos/CM KPI.xlsx')
+# operational_metrics_environmental_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
+# census_days_path <- paste0(home_path, "Finance/Monthly Stats Summary for benchmarking 20211013.xlsx")
+# 
+# 
+# # File path for BME/CE KPI metrics
+# bmekpi_table_path <- paste0(home_path, "Summary Repos/KPIs.xlsx")
+# bmedi_table_path <- paste0(home_path, "Summary Repos/DisruptionsAndIssuesMonthly.xlsx")
+# 
+# # File path for Imaging DR Ops metrics
+# imagingDR_path <- paste0(home_path, "Summary Repos/Imaging-DR.xlsx")
+# 
+# # File path for Nursing metrics
+# nursing_path <- paste0(home_path, "Summary Repos/Nursing.xlsx")
+# 
+# # File path for ED metrics
+# ed_path <- paste0(home_path, "Summary Repos/EDSummary.xlsx")
+# 
+# 
+# # File path for Lab KPI metrics
+# ops_metrics_lab_tat_path <- paste0(home_path, "Summary Repos/Lab TAT Metrics.xlsx")
+# ops_metrics_lab_prof_test_path <- paste0(home_path, "Summary Repos/Lab Prof Testing Metrics.xlsx")
+# 
+# # File path for Security KPI metrics
+# security_incident_reports_path <- paste0(home_path,
+#                                            "Summary Repos/",
+#                                            "Security Incident Reports.xlsx")
+# 
+# security_events_path <- paste0(home_path,
+#                                "Summary Repos/",
+#                                "Security Monthly Events.xlsx")
+# 
+# 
+# # File path for saving the prior version of Dept Summary data
+# hist_archive_path <- paste0(home_path, "Summary Repos/Hist Archive/")
+# 
+# #
+# engineering_table_path <- paste0(home_path, "Summary Repos/CM KPI.xlsx")
+# pt_exp_table_path <- paste0(home_path, "Summary Repos/Patient Experience.xlsx")
+# evs_table_path <- paste0(home_path, "Summary Repos/TAT - EVS.xlsx")
+# transport_table_path <- paste0(home_path, "Summary Repos/TAT - Transport.xlsx")
 
 # Read in processed data ---------------------------------------------------------------------------
-## Set data path ===================================================================================
-data_path <- here()
-metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
+## Set data path ==================================================================================
+conn <- dbConnect(odbc(), dsn)
+# data_path <- here()
+# metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
-# target_mapping <- read_excel(target_mapping_path, sheet = "Target") # Import target mapping file
-target_mapping <- read_excel(target_mapping_path, sheet = "Targets and Status") # Import updated target mapping file
-metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
-metric_mapping_database <- read_excel(target_mapping_path, sheet = "Metric Mapping Database")
-# metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
-# summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
-budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
+key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
+
+target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
+                  rename(Service = SERVICE,
+                         Site = SITE,
+                         Metric_Group = METRIC_GROUP,
+                         Metric_Name = METRIC_NAME,
+                         Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
+                         Target = TARGET,
+                         Green_Status = GREEN_STATUS,
+                         Yellow_Status = YELLOW_STATUS,
+                         Red_Status = RED_STATUS,
+                         Green_Start = GREEN_START,
+                         Green_End = GREEN_END,
+                         Yellow_Start = YELLOW_START,
+                         Yellow_End = YELLOW_END,
+                         Red_Start = RED_START,
+                         Red_End = RED_END)
+metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
+                            rename(Service = SERVICE,
+                                   General_Group = GENERAL_GROUP,
+                                   Metric_Group = METRIC_GROUP,
+                                   Metric_Name_Summary = METRIC_NAME_SUMMARY,
+                                   Metric_Name = METRIC_NAME,
+                                   Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
+                                   Metric_Unit = METRIC_UNIT,
+                                   Reporting_Tab = REPORTING_TAB,
+                                   Display_Order = DISPLAY_ORDER
+                                   )
+
+
+
+# target_mapping <- read_excel(target_mapping_path, sheet = "Targets and Status") # Import updated target mapping file
+# # metric_mapping_raw <- read_excel(target_mapping_path, sheet = "Metric Mapping")
+# metric_mapping_database <- read_excel(target_mapping_path, sheet = "Metric Mapping Database")
+# # metric_grouping <-  read_excel(target_mapping_path, sheet = "Metric Group v2") # Import Metric Group
+# # summary_metrics <- read_excel(target_mapping_path, sheet = "Summary Metrics v2") # Import Summary Metrics
+# budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
 # Sites included -----------------------------------------------------------------------------------
 sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
@@ -258,17 +293,18 @@ dttm <- function(x) {
   as.POSIXct(x,format="%m/%d/%Y",tz=Sys.timezone(),origin = "1970-01-01")
 }
 
-# Import all reference / mapping files needed ----
-site_path <- here() # Set path to new data (raw data)
-site_mapping <- read_excel(target_mapping_path, 
-                           sheet = "Site_New",  col_names = TRUE, na = c("", "NA")) # Premier site-service mapping
 
-report_date_mapping <- read_excel(target_mapping_path, 
-                                  sheet = "Report Dates",  col_names = TRUE, na = c("", "NA")) # Premier reporting-dashboard date mapping 
+#site_mapping <- tbl(conn, "BSC_SITE_LPM") %>% collect()
+report_date_mapping <- tbl(conn, "BSC_REPORT_DATES_LPM") %>% collect() %>% 
+                        rename(`Report Data Updated until` = REPORT_DATA_UPDATED_UNTIL,
+                               `Dashboard Month` = DASHBOARD_MONTH,
+                               `Report Release Date` = REPORT_RELEASE_DATE)
 
-cost_rev_mapping <- read_excel(target_mapping_path, 
-                               sheet = "Cost and Rev Mapping",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
-
+cost_rev_mapping <- tbl(conn, "BSC_COST_REV_MAPPING") %>% collect() %>%
+                      rename(Metric = METRIC,
+                             Metric_Name_Submiyyed = METRIC_NAME_SUBMITTED,
+                             Metric_Group = METRIC_GROUP,
+                             Metric_Name = METRIC_NAME)
 key_vol_mapping <- read_excel(key_volume_mapping_path,
                               sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping  
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
@@ -302,7 +338,7 @@ labelMandatory <- function(label) {
   )
 }
 
-operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
+# operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
   # dt <- data
@@ -452,7 +488,7 @@ source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
 source("lab_processing.R")
 source("EVS.R")
-source("patient_experience.R")
+#source("patient_experience.R")
 source("security_processing.R")
 source("Transportation.R")
 source("biomed.R")
@@ -466,4 +502,4 @@ source("ED.R")
 source("productivity.R")
 source("budget_to_actual_new_file.R")
 source("productivity_update.R")
-rm(metrics_final_df)
+dbDisconnect(conn)

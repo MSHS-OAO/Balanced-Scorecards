@@ -1,14 +1,31 @@
 # Code for processing Lab KPI data
 
 # Reference data --------------------------------
-lab_sites <- read_excel(target_mapping_path,
-                        sheet = "Lab_Sites")
+# lab_sites <- read_excel(target_mapping_path,
+#                         sheet = "Lab_Sites")
 
-lab_test_codes <- read_excel(target_mapping_path,
-                             sheet = "Lab_TestCodes")
+# lab_test_codes <- read_excel(target_mapping_path,
+#                              sheet = "Lab_TestCodes")
+# 
+# lab_icu <- read_excel(target_mapping_path,
+#                       sheet = "Lab_ICU")
 
-lab_icu <- read_excel(target_mapping_path,
-                      sheet = "Lab_ICU")
+lab_sites <- tbl(conn, "BSC_LAB_SITES") %>% 
+  rename(Data_Hosp = DATA_HOSP,
+         Site = SITE)
+
+lab_test_codes <- tbl(conn, "BSC_LAB_TEST_CODES") %>%
+                    rename(TestCode = TESTCODE,
+                           Test = TEST)
+
+lab_icu <- tbl(conn, "BSC_LAB_ICU") %>%
+                    rename(`Data Type` = DATA_TYPE,
+                           Hospital = HOSPITAL,
+                           `ICU Type` = ICU_TYPE,
+                           LocCode = LOCCODE,
+                           LocName = LOCNAME,
+                           Combined = COMBINED)
+
 
 # Select relevant columns from ICU mappings
 mshs_icu <- lab_icu %>%

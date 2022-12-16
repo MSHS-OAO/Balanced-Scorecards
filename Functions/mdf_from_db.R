@@ -5,7 +5,7 @@ mdf_from_db <- function(service_input, month_input) {
   # month_input <- "05-2022"
   format <- "YYYY-MM-DD HH24:MI:SS"
   conn <- dbConnect(drv = odbc::odbc(),
-                    dsn = "OAO Cloud DB")
+                    dsn = dsn)
   mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
   metrics_final_df <- mdf_tbl %>% filter(SERVICE %in% service_input, 
                                          TO_DATE(min_month, format) <= REPORTING_MONTH) %>%
