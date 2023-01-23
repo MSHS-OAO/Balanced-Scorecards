@@ -2696,17 +2696,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
           } else {
             ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
-            df_test <<- engineering_manual_updates
-            service <<- "Engineering"
-            manual_table_name_test <<- "cm_kpi"
-            updated_user_test <<- updated_user
-            button_name_test <<- button_name
             updated_rows <- manual_process_and_return_updates(engineering_manual_updates, 
                                                               "Engineering", 
                                                               "cm_kpi", 
                                                               updated_user, button_name)
-            updated_rows_test <<- updated_rows
-            
+
 
             if(updated_rows$flag == 2) {
               ##Updated the data on the databse
