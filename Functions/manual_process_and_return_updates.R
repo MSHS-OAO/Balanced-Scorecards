@@ -4,7 +4,7 @@ manual_process_and_return_updates <- function(df, service, manual_table_name, up
     
     ##Summary Repo processing where FUN is the function specific service line
     manual_data <- to_summary_repos_form(df,service, updated_user)
-
+    
     ##returns only updated rows by doing an anti_join of what is currently in the Summary  Repos
     manual_data <- return_updated_manual_data(service, manual_table_name, manual_data)
 
