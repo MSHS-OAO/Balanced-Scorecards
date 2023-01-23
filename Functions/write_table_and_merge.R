@@ -140,6 +140,7 @@ print("after conn")
     #print(err)
     dbRollback(conn)
     dbDisconnect(conn)
+    dbExecute(conn,truncate_query)
     print("error")
     shinyjs::enable(button_name)
     if(isRunning()) {
