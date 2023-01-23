@@ -64,7 +64,7 @@ ui <-
                useShinydashboard()
              ),
 
-             
+           tabsetPanel(  
              # First Tab - Summary - All Sites -----------------------
              tabPanel("Summary", value = "summary",
                       fluidRow(
@@ -236,10 +236,10 @@ ui <-
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
                                                actionButton("submit_finance_ot", label = "Submit")
                                                )
-                                 )
+                                 ), value = "finance"
                         ),
                         # Patient Experience Data Submission ---------
-                        tabPanel("Patient Experience", value = "patient_experience",
+                        tabPanel("Patient Experience",
                                  span("Patient Experience Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
@@ -266,10 +266,10 @@ ui <-
                                                  hr(),
                                                  fileInput("pt_exp_support_ytd", label = "Please upload YTD Patient Experience Support Services data"),
                                                  actionButton("submit_ytd_pt_exp", label = "Submit"))
-                                 )
+                                 ), value = "patient_experience"
                         ),
                         # Productivity Data Submission ----
-                        tabPanel("Productivity", value = "productivity",
+                        tabPanel("Productivity",
                                  span("Productivity Data Upload", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
@@ -292,7 +292,7 @@ ui <-
                                          hr(),
                                          actionButton("submit_prod", label = "Submit")
                                         )
-                                 )
+                                 ), value = "productivity"
                         ),
                         # Biomed Data Input Tab ------
                         tabPanel("Operational Metrics - Biomed/Clinical Engineering",
@@ -364,12 +364,12 @@ ui <-
                       
                                                           )
                                                    )
-                                                 ))
-                                 )
+                                                 ), value = "biomed_kpi")
+                                 ), value = "biomed"
                                  
                         ),
                         # Engineering Data Submission ----
-                        tabPanel("Operational Metrics - Engineering", value = "eng",
+                        tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
@@ -407,11 +407,10 @@ ui <-
                                                           )
                                                    )
                                                  ))
-                                 )
+                                 ), value = "engineering"
                         ),
                         # Environmental Services Data Submission ----
                         tabPanel("Operational Metrics - Environmental Services",
-                                 value = "evs",
                                  span("Operational Metrics - Environmental Services",
                                       style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
@@ -438,7 +437,7 @@ ui <-
                                                               "Submit",
                                                               class = "btn-primary"),
                                         )
-                                 )
+                                 ), value = "evs"
                                  ),
                         # Emergency Department Data Submission  ------
                         tabPanel("Operational Metrics - Emergency Department",
@@ -793,7 +792,8 @@ ui <-
                                offset = 1,
                                DT::dataTableOutput("targetSummary_table"))
                       )
-             ) # Close tabPanel Summary
+             ), id = "tabset" # Close tabPanel Summary
+  )
              
           ), # Close NavBar
   

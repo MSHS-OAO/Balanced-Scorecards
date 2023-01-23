@@ -38,7 +38,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
                   UPDATED_TIME = "Timestamp",
                   UPDATED_USER = "Varchar2(100 CHAR)" )
   
-  TABLE_NAME <- paste0("STAGING.",table_name)
+  TABLE_NAME <- paste0("STAGING.MERGE_TABLE")
   
   
   # Add UPDATE_TIME and check for all the fields are characters
@@ -106,22 +106,22 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
                           SOURCE_TABLE."PREMIER_REPORTING_PERIOD");')
   
   # glue query for dropping the table
-  drop_query <- glue('DROP TABLE "{TABLE_NAME}";')
+  truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
   
   
-  conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
-                    dsn = dsn)
-
+  # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+  #                   dsn = dsn)
+  print("before conn")
+  conn <- dbConnect(odbc(), "OracleODBC-21_5",
+                    uid = "OAO_DEVELOPMENT",
+                    pwd = "HC*tA$4f1qMqVo")
+print("after conn")
   dbBegin(conn)
   # ## Execute staments and if there is an error  with one of them rollback changes
   tryCatch({
-        dbCreateTable(conn,
-                      TABLE_NAME,
-                      processed_input_data,
-                      field.types  = DATA_TYPES)
         dbExecute(conn,all_data)
         dbExecute(conn,query)
-        dbExecute(conn,drop_query)
+        dbExecute(conn,truncate_query)
         dbCommit(conn)
         dbDisconnect(conn)
         if(isRunning()) {
