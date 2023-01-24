@@ -8,7 +8,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
   
     # 0. Observe Events for Filters ----------------------------------------------------------------
     observeEvent(input$selectedService2,{
-      metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
+      service <- input$selectedService2
+      month <- input$selectedMonth2
+      campus <- input$selectedCampus2
+      
+      month <- format(as.Date(paste0(month, "-01"), "%m-%Y-%d"), "%Y-%m-%d")
+      format <- "YYYY-MM-DD HH24:MI:SS"
+      
+      conn <- dbConnect(drv = odbc::odbc(),
+                        dsn = dsn)
+      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == service, REPORTING_MONTH == TO_DATE(month, format),
+                                                              SITE %in% campus) %>%
+                                                    summarise(choices = unique(METRIC_NAME_SUBMITTED)) %>% collect()
+      metric_choices <- unique(mdf_tbl$choices)
+      
+      #metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
       updatePickerInput(session,
                         inputId = "selectedMetric2",
                         choices = metric_choices,
@@ -19,7 +33,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ignoreNULL = FALSE)
     
     observeEvent(input$selectedService3,{
-      metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService3, "Metric_Name"])
+      service <- input$selectedService3
+      month <- input$selectedMonth3
+      campus <- input$selectedCampus3
+      
+      month <- format(as.Date(paste0(month, "-01"), "%m-%Y-%d"), "%Y-%m-%d")
+      format <- "YYYY-MM-DD HH24:MI:SS"
+      
+      conn <- dbConnect(drv = odbc::odbc(),
+                        dsn = dsn)
+      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == service, REPORTING_MONTH == TO_DATE(month, format),
+                                                              SITE %in% campus) %>%
+        summarise(choices = unique(METRIC_NAME_SUBMITTED)) %>% collect()
+      metric_choices <- unique(mdf_tbl$choices)
+      
       updatePickerInput(session,
                         inputId = "selectedMetric3",
                         choices = metric_choices,
@@ -889,8 +916,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     # 2. Site Comparison Tab Output -------------------------------------------------------------------------------
     output$siteComp_title <- renderText({
-      
-      
+
       input$submit_prod
       input$submit_engineering
       input$submit_finance
@@ -925,7 +951,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     })
     
     output$siteComp_table <- function(){
-      
       input$submit_prod
       input$submit_engineering
       input$submit_finance
@@ -3176,7 +3201,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "Lab",
               "proficiency_testing",
               updated_user,
-              lab_prof_test_dept_summary,
               button_name
             )
 
@@ -3343,7 +3367,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             # Convert rhandsontable to R object
             sec_inc_rpts_manual_updates <- hot_to_r(input$sec_inc_rpts)
             updated_user <- input$sec_inc_rpts_username
-            
+
             # Identify columns with no data in them and remove before further processing
             sec_inc_rpts_manual_updates <- remove_empty_manual_columns(
               sec_inc_rpts_manual_updates)
@@ -3368,7 +3392,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "Security",
               "incident_reports",
               updated_user,
-              sec_inc_rpts_dept_summary,
               button_name
             )
             
@@ -3489,6 +3512,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             # Convert rhandsontable to R object
             sec_events_manual_updates <- hot_to_r(input$sec_events)
+            sec_events_manual_updates_test <<- sec_events_manual_updates
             
             # Identify columns with no data in them and remove before further processing
             sec_events_manual_updates <- remove_empty_manual_columns(
@@ -3516,7 +3540,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               "Security",
               "security_events",
               updated_user,
-              sec_events_dept_summary,
               button_name
             )
             

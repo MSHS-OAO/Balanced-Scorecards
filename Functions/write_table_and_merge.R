@@ -119,6 +119,7 @@ print("after conn")
   dbBegin(conn)
   # ## Execute staments and if there is an error  with one of them rollback changes
   tryCatch({
+        dbExecute(conn,truncate_query)
         dbExecute(conn,all_data)
         dbExecute(conn,query)
         dbExecute(conn,truncate_query)
