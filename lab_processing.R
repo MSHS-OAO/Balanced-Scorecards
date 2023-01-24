@@ -12,11 +12,11 @@
 
 lab_sites <- tbl(conn, "BSC_LAB_SITES") %>% 
   rename(Data_Hosp = DATA_HOSP,
-         Site = SITE)
+         Site = SITE) %>% collect()
 
 lab_test_codes <- tbl(conn, "BSC_LAB_TEST_CODES") %>%
                     rename(TestCode = TESTCODE,
-                           Test = TEST)
+                           Test = TEST) %>% collect()
 
 lab_icu <- tbl(conn, "BSC_LAB_ICU") %>%
                     rename(`Data Type` = DATA_TYPE,
@@ -24,7 +24,7 @@ lab_icu <- tbl(conn, "BSC_LAB_ICU") %>%
                            `ICU Type` = ICU_TYPE,
                            LocCode = LOCCODE,
                            LocName = LOCNAME,
-                           Combined = COMBINED)
+                           Combined = COMBINED) %>% collect()
 
 
 # Select relevant columns from ICU mappings

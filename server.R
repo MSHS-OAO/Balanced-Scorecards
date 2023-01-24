@@ -2943,12 +2943,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           flag <- 2
           
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This SCC data has been imported successfully."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
+          # showModal(modalDialog(
+          #   title = "Success",
+          #   paste0("This SCC data has been imported successfully."),
+          #   easyClose = TRUE,
+          #   footer = NULL
+          # ))
         },
         error = function(err){
           showModal(modalDialog(
@@ -2967,7 +2967,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_temporary_table_to_database_and_merge(scc_summary_data,
                                                     "TEMP_SCC_TAT", button_name)
         
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
         
       }
       shinyjs::enable(button_name)
@@ -3001,7 +3001,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           updated_user <- input$lab_tat_username
           
           sun_file_path <- sun_file$datapath
-          # sun_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+          # sun_file_path <- paste0("/SharedDrive//deans/Presidents/HSPI-PM",
           #                     "/Operations Analytics and Optimization",
           #                     "/Projects/System Operations",
           #                     "/Balanced Scorecards Automation/Data_Dashboard",
@@ -3037,12 +3037,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           flag <- 2
           
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Sunquest data has been imported successfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
+          # showModal(modalDialog(
+          #   title = "Success",
+          #   paste0("This Sunquest data has been imported successfully"),
+          #   easyClose = TRUE,
+          #   footer = NULL
+          # ))
         },
         error = function(err){
           showModal(modalDialog(
@@ -3061,7 +3061,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         write_temporary_table_to_database_and_merge(sun_summary_data,
                                                     "TEMP_SUN_TAT", button_name)
         
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+        
+        shinyjs::enable(button_name)
 
       }
     })
