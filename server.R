@@ -117,8 +117,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Engineering"
-      # month_input <- "06-2022"
+      # service_input <- "Food Services"
+      # month_input <- "11-2022"
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
@@ -466,9 +466,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           mutate(Section = "Metrics", Metric_Name_Summary = "Total Revenue to Budget Variance") %>%
           pivot_wider(names_from = "Site", values_from = "value_rounded")
         
-        
-        min_date <- min(fytd_summary_all$Reporting_Month_Ref)
-        max_date <- max(fytd_summary_all$Reporting_Month_Ref)
+        fytd_summary_all_budget_variance <-fytd_summary_all %>% filter(Metric_Name == "Variance to Budget") 
+        min_date <- min(fytd_summary_all_budget_variance$Reporting_Month_Ref)
+        max_date <- max(fytd_summary_all_budget_variance$Reporting_Month_Ref)
         
         fytd_data_budget <- fytd_data_budget %>% mutate(`Fiscal Year to Date` = paste0(format(min_date, "%b"), " - ", format(max_date, "%b"), " ", year(max_date), " Total"))
         fytd_summary <- bind_rows(fytd_summary, fytd_data_budget)
