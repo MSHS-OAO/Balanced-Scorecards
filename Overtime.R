@@ -10,14 +10,17 @@
 
 # data <- read_excel(paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx"))
 
-overtime_mapping <- tbl(conn, "BSC_OVERTIME_MAPPING") %>% rename(Service = SERVICE,
-                                                                 `Cost Center Group` = `COST_CENTER_GROUP`,
-                                                                 `Site Abbr` = SITE_ABBR,
-                                                                 Site = SITE,
-                                                                 Metric_Name = METRIC_NAME) %>%
-                                                            collect()
 
 overtime_file_processs <- function(data, updated_user){
+  conn <- dbConnect(drv = odbc::odbc(),
+                    dsn = dsn) 
+  overtime_mapping <- tbl(conn, "BSC_OVERTIME_MAPPING") %>% rename(Service = SERVICE,
+                                                                   `Cost Center Group` = `COST_CENTER_GROUP`,
+                                                                   `Site Abbr` = SITE_ABBR,
+                                                                   Site = SITE,
+                                                                   Metric_Name = METRIC_NAME) %>%
+    collect()
+  dbDisconnect(conn)
   
   data <- full_join(data,overtime_mapping)  
   

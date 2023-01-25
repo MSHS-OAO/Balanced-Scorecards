@@ -57,7 +57,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
            UPDATED_USER)
   ##substitue single ' for '' so the query can escape
   processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
-  processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", " ' || chr(38) || ' ", processed_input_data$METRIC_NAME_SUBMITTED)
+  processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
   # Convert the each record/row of tibble to INTO clause of insert statment
   inserts <- lapply(
     lapply(
