@@ -1,6 +1,3 @@
-#raw_data <- read_excel("C:/Users/villea04/Documents/Productivity Update/System Reports.xlsx")
-
-productivity_file_path <- paste0(home_path, "Summary Repos/Prodictivity.xlsx")
 productivity_dept_summary <- function(raw_data, updated_user){
   key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
@@ -22,15 +19,15 @@ productivity_dept_summary <- function(raw_data, updated_user){
     filter(!is.na(Service)) %>%
     filter(FTE.TREND == 1)
   
-  metric_group_mapping <- read_excel(target_mapping_path, 
-                                     sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
-  metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
-    pivot_longer(
-      6:length(metric_group_mapping),
-      names_to = "Service",
-      values_to = "Inclusion"
-    ) %>%
-    filter(!is.na(Inclusion))
+  # metric_group_mapping <- read_excel(target_mapping_path, 
+  #                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
+  # metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
+  #   pivot_longer(
+  #     6:length(metric_group_mapping),
+  #     names_to = "Service",
+  #     values_to = "Inclusion"
+  #   ) %>%
+  #   filter(!is.na(Inclusion))
   
   
   raw_data <- raw_data %>% select(!`Entity Time Period Desc`)
@@ -161,7 +158,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
     ungroup() %>%
     select(-Metric_Group)
   
- if(c("Nursing", "Imaging") %in% unique(prod_df_all$Service)){  
+ if(c("Imaging") %in% unique(prod_df_all$Service) || c("Nursing") %in% unique(prod_df_all$Service)){  
   nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
     filter(Service %in% c("Nursing","Imaging")) %>%
     filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
