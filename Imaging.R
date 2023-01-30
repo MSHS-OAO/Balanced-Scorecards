@@ -1,4 +1,4 @@
-# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File Examples/Imaging/IR/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx")
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Imaging/IR/FTI-BalancedScorecard-2023-Jan1- 2022-Dec.xlsx")
 # 
 # imaging_repo <- read_excel(paste0(home_path, "Summary Repos/Imaging-IR.xlsx"))
 
@@ -72,7 +72,10 @@ imaging_dept_summary <- function(data, updated_user){
            VALUE = value_rounded) %>%
     mutate(REPORTING_MONTH = as.Date(format(Reporting_Month_Ref,"%Y-%m-%d"), "%Y-%m-%d"),
            PREMIER_REPORTING_PERIOD = format(Reporting_Month_Ref,"%b %Y"),
-           UPDATED_USER = updated_user) %>%
+           UPDATED_USER = updated_user,
+           METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == 'Prime Time Room Utilization ESTIMATE All Rooms (%)',
+                                          'Prime Time Room Utilization ESTIMATE All Rooms (%) 8:30A-5:00P, M-F',
+                                          METRIC_NAME_SUBMITTED)) %>%
     select(SERVICE, 
            SITE, 
            REPORTING_MONTH,
