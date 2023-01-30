@@ -4229,7 +4229,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           xray_summary_data <- file_return_updated_rows(xray_summary_data)
-          print("before merge")
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(xray_summary_data,
                                                       "TEMP_IMAGING_XRAY", button_name)
