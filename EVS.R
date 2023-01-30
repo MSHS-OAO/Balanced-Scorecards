@@ -27,7 +27,7 @@ evs_file_process <- function(data, month, updated_user) {
         ),
       TATMin = Hrs*60 + Mins) %>%
     select(-Hrs, -Mins, -TAT...4) %>%
-    rename(`Non-IsolationAverage TAT` = TATMin)
+    rename(`Non-Isolation Average TAT` = TATMin)
   
   data <- data %>%
     mutate(Hrs = ifelse(
@@ -68,6 +68,11 @@ evs_file_process <- function(data, month, updated_user) {
     relocate(Site, .after = Hospital) %>%
     relocate(Month, .after = Site) %>%  
     select(-Hospital) %>%
+    mutate(`% Isolation Turns` = `Isolation Requests` / (`Isolation Requests` + 
+                                                           `Non-Isolation Requests`),
+           `% Non-Isolation Turns` = `Non-Isolation Requests` / (`Isolation Requests` + 
+                                                                   `Non-Isolation Requests`)
+    ) %>%
     pivot_longer(cols = c(-Service,-Site,-Month),
                  names_to = "METRIC_NAME_SUBMITTED",
                  values_to = "VALUE") %>%
@@ -81,33 +86,6 @@ evs_file_process <- function(data, month, updated_user) {
   
 
   return(data)
-}
-
-
-evs__metrics_final_df_process <- function(data){
-  
-  raw_TAT_EVS_df <- data
-  
-  
-  ## TAT - EVS processing 
-  col_indexes <- which(!(colnames(raw_TAT_EVS_df) %in% c("Service", "Site", "Month")))
-  raw_TAT_EVS_df[,col_indexes] <- sapply(raw_TAT_EVS_df[,col_indexes], as.numeric)
-  TAT_EVS_df <- raw_TAT_EVS_df %>%
-    mutate(`% Isolation Turns` = `Isolation Requests` / (`Isolation Requests` + 
-                                                                 `Non-Isolation Requests`),
-           `% Non-Isolation Turns` = `Non-Isolation Requests` / (`Isolation Requests` + 
-                                                                         `Non-Isolation Requests`)
-           ) %>%
-    pivot_longer(-c(Service,Site, Month),
-                 names_to = "Metric_Name_Submitted",
-                 values_to = "value_rounded") %>%
-    mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
-            Reporting_Month = format(as.Date(Month, format = "%m/%d/%Y"),"%m-%Y"))
-  
-  # Subset processed data for merge 
-  metrics_final_df <- metrics_final_df_subset_and_merge(TAT_EVS_df)
-  
-  return(metrics_final_df)
 }
 
 
