@@ -620,10 +620,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
-            select(-Service, -Month, -Value_ytd) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+            select(-Service, -Month) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
         } else {
           budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget_Total") %>%
-            select(-Service, -Month, -Value_ytd) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+            select(-Service, -Month) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
         }
         
         budget_target_current <- left_join(current_status_budget, budget_target_current) 
