@@ -117,7 +117,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      service_input <- "Food Services"
+      service_input <- "Biomed / Clinical Engineering"
       month_input <- "11-2022"
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
@@ -230,8 +230,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       missing_sites <- setdiff(sites_inc, names(current_summary))
       current_summary[missing_sites] <- NA
       
-      conn <- dbConnect(odbc(), dsn)
-      budget_data_repo <- metrics_final_df %>% filter(Metric_Group == "Budget to Actual")
+      min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(12)
+      
+      format <- "YYYY-MM-DD HH24:MI:SS"
+      conn <- dbConnect(drv = odbc::odbc(),
+                        dsn = dsn)
+      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+      budget_data_repo  <- mdf_tbl %>% filter(SERVICE %in% service_input, 
+                                             TO_DATE(min_month, format) <= REPORTING_MONTH,
+                                             METRIC_GROUP == "Budget to Actual") %>%
+        select(-UPDATED_TIME, -UPDATED_USER) %>% collect() %>%
+        rename(Service = SERVICE,
+               Site = SITE,
+               Metric_Group = METRIC_GROUP,
+               Metric_Name = METRIC_NAME,
+               Premier_Reporting_Period = PREMIER_REPORTING_PERIOD,
+               value_rounded = VALUE,
+               Month = REPORTING_MONTH,
+               Metric_Name_Submitted= METRIC_NAME_SUBMITTED
+        ) %>%
+        mutate(Reporting_Month = format(Month, "%m-%Y"))
+      dbDisconnect(conn)
       
       month_selected_format <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
       if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
@@ -251,7 +270,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #ytd_budget <- budget_data_repo %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted %in% budget_metrics)
         
         ytd_join <- left_join(ytd_budget, summary_tab_metrics)
-        ytd_join <- ytd_join %>% select(-Service, -Metric_Unit, -Value, - Metric_Name_Submitted) %>% rename(value_rounded = Value_ytd)
+        ytd_join <- ytd_join %>% select(-Service, -Metric_Unit, - Metric_Name_Submitted)
         # ytd_join <- ytd_join %>% select(-Metric_Unit, -Value, - Metric_Name_Submitted) %>% rename(value_rounded = Value_ytd)
         
         
@@ -265,7 +284,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
         ytd_join$Month <- fytd_name
-        ytd_join <- ytd_join %>% rename(`Fiscal Year to Date` = Month)
+        ytd_join <- ytd_join %>% rename(`Fiscal Year to Date` = Month) %>%
+          select(-Premier_Reporting_Period,-Reporting_Month)
         
       } else{
         ytd_join <- NULL
@@ -436,7 +456,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
       # Merge for summary 
       # fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
-      fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+      fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
       fytd_summary <- fytd_merged
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%

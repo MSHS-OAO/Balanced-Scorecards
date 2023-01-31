@@ -75,7 +75,7 @@ suppressMessages({
   #library(reshape2)
 })
 
-dsn <- "OAO Cloud DB Dev"
+dsn <- "OAO Cloud DB Staging"
 
 options(shiny.maxRequestSize=500*1024^2)
 
