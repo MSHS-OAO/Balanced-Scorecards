@@ -1,7 +1,19 @@
 # Source code for Press Ganey
-
 # Import historical summary
-pt_exp_data <- read_excel(pt_exp_table_path)
+# pt_exp_data <- read_excel(pt_exp_table_path)
+pt_exp_data <- tbl(conn, "BSC_PATIENT_EXPERIENCE_REPO") %>% 
+               rename(Service = SERVICE,
+                      Site = SITE,
+                      Question_Clean = QUESTION_CLEAN,
+                      ReportingType = REPORTINGTYPE,
+                      Reporting_Date_Start = REPORTING_DATE_START,
+                      Reporting_Date_End = REPORTING_DATE_END,
+                      Site_Mean = SITE_MEAN,
+                      Site_N = SITE_N,
+                      All_PG_Database_Mean = ALL_PG_DATABASE_MEAN,
+                      All_PG_Database_N = ALL_PG_DATABASE_N,
+                      All_PG_Database_Rank = ALL_PG_DATABASE_RANK) %>%
+                collect()
 pt_exp_data <- pt_exp_data %>%
   mutate(Reporting_Date_Start = as.Date(Reporting_Date_Start),
          Reporting_Date_End = as.Date(Reporting_Date_End)) %>%
@@ -19,7 +31,7 @@ pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>%
                          Incl_AllHosp_Rank = INCL_ALLHOSP_RANK) %>% 
                   collect()
 
-dbDisconnect(conn)
+#dbDisconnect(conn)
 
 # # Import current data for testing
 # # Import monthly data
