@@ -8,7 +8,18 @@ pt_exp_data <- pt_exp_data %>%
   filter(!(Site %in% "All"))
 
 # Import mapping file
-pt_exp_mapping <- read_excel(target_mapping_path, sheet = "Patient Experience")
+# pt_exp_mapping <- read_excel(target_mapping_path, sheet = "Patient Experience")
+conn <- dbConnect(odbc(), dsn)
+pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>% 
+                  rename(Raw_Pt_Exp_Service = RAW_PT_EXP_SERVICE,
+                         Service = SERVICE,
+                         Questions = QUESTIONS,
+                         Question_Clean = QUESTION_CLEAN,
+                         Incl_N = INCL_N,
+                         Incl_AllHosp_Rank = INCL_ALLHOSP_RANK) %>% 
+                  collect()
+
+dbDisconnect(conn)
 
 # # Import current data for testing
 # # Import monthly data
