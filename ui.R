@@ -251,6 +251,12 @@ ui <-
                                  hr(),
                                  tabBox(title = NULL, id = "tabset20", width = "100%", type = 'pills',
                                         tabPanel("Monthly Data",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_monthly_patient_experience", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
                                                  hr(),
                                                  fileInput("pt_exp_ed_monthly", label = "Please upload monthly Patient Experience ED data"),
                                                  hr(),
@@ -259,6 +265,12 @@ ui <-
                                                  fileInput("pt_exp_support_monthly", label = "Please upload monthly Patient Experience Support Services data"),
                                                  actionButton("submit_monthly_pt_exp", label = "Submit")),
                                         tabPanel("YTD Data",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_ytd_patient_experience", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
                                                  hr(),
                                                  fileInput("pt_exp_ed_ytd", label = "Please upload YTD Patient Experience ED data"),
                                                  hr(),

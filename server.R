@@ -117,7 +117,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Biomed / Clinical Engineering"
+      # service_input <- "ED"
       # month_input <- "11-2022"
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
@@ -350,7 +350,28 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # FYTD Summary Table - for Patient Experience
       # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
-      pt_exp_data <- metrics_final_df %>% filter(Metric_Group == "Patient Experience")
+      #pt_exp_data <- metrics_final_df %>% filter(Metric_Group == "Patient Experience")
+      conn <- dbConnect(odbc(), dsn)
+      pt_exp_data <- tbl(conn, "BSC_PATIENT_EXPERIENCE_REPO") %>% 
+        rename(Service = SERVICE,
+               Site = SITE,
+               Question_Clean = QUESTION_CLEAN,
+               ReportingType = REPORTINGTYPE,
+               Reporting_Date_Start = REPORTING_DATE_START,
+               Reporting_Date_End = REPORTING_DATE_END,
+               Site_Mean = SITE_MEAN,
+               Site_N = SITE_N,
+               All_PG_Database_Mean = ALL_PG_DATABASE_MEAN,
+               All_PG_Database_N = ALL_PG_DATABASE_N,
+               All_PG_Database_Rank = ALL_PG_DATABASE_RANK) %>%
+        select(-UPDATED_USER, -UPDATED_TIME) %>%
+        collect()
+      pt_exp_data <- pt_exp_data %>%
+        mutate(Reporting_Date_Start = as.Date(Reporting_Date_Start),
+               Reporting_Date_End = as.Date(Reporting_Date_End)) %>%
+        filter(!(Site %in% "All"))
+      dbDisconnect(conn)
+      
       if (service_input %in% unique(pt_exp_data$Service)) {
         
         pt_exp_ytd <- pt_exp_data %>%
@@ -1740,745 +1761,83 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     ## Read in Patient Experience data -----------------------------------
     # ED Monthly Data Observe Event -------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      flag <- 0
       # Name ED monthly data
       ed_monthly <- input$pt_exp_ed_monthly
+      button <- input$submit_monthly_pt_exp
+      name <- input$name_monthly_patient_experience
+      pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")
       
-      if (is.null(ed_monthly)) {
-        return(NULL)
-      } else {
-        ed_monthly_filepath <- ed_monthly$datapath
-        
-        # ed_monthly_filepath <- paste0(home_path,
-        #                               "Input Data Raw/Press Ganey/",
-        #                               "ED 09-2021.csv")
-        
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          data_ed_monthly <- read_csv(ed_monthly_filepath,
-                                      show_col_types = FALSE)
-          
-          flag <- 1
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience ED file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }
-        )
-      }
+      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                input$selectedService3)
       
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        
-        tryCatch({
-          # Process ED monthly data
-          pt_exp_ed_monthly_summary_data <- pt_exp_dept_summary(data_ed_monthly)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Patient Experience ED data has been imported successfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience ED file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      if(flag == 2) {
-        
-        # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(pt_exp_data,
-                   paste0(hist_archive_path,
-                          "Pt Exp Pre-ED Monthly ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Append Patient Experience summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        pt_exp_new_data <- unique(
-          pt_exp_ed_monthly_summary_data[c("Service",
-                                           "Site",
-                                           "ReportingType",
-                                           "Reporting_Date_Start",
-                                           "Reporting_Date_End",
-                                           "Question_Clean")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        pt_exp_data <<- anti_join(pt_exp_data,
-                                  pt_exp_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Question_Clean" = "Question_Clean",
-                                         "ReportingType" = "ReportingType",
-                                         "Reporting_Date_Start" = "Reporting_Date_Start",
-                                         "Reporting_Date_End" = "Reporting_Date_End")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        pt_exp_data <<- full_join(pt_exp_data,
-                                  pt_exp_ed_monthly_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        pt_exp_data <<- pt_exp_data %>%
-          arrange(Service,
-                  Site,
-                  ReportingType,
-                  Reporting_Date_End)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(pt_exp_data, pt_exp_table_path)
-        
-        # Update metrics_final_df with latest ED Patient Experience data using custom function
-        metrics_final_df <<- pt_exp_metrics_final_df(pt_exp_ed_monthly_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("ED Monthly Patient Experience")
-        
-      }
     })
     
     # Nursing Patient Experience Monthly Data Observe Event -------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      flag <- 0
       # Name Nursing monthly data
       nursing_monthly <- input$pt_exp_nursing_monthly
+      button <- input$submit_monthly_pt_exp
+      name <- input$name_monthly_patient_experience
       
-      if (is.null(nursing_monthly)) {
-        return(NULL)
-      } else {
-        nursing_monthly_filepath <- nursing_monthly$datapath
+      pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")
+      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                input$selectedService3)
         
-        # nursing_monthly_filepath <- paste0(home_path,
-        #                               "Input Data Raw/Press Ganey/",
-        #                               "Nursing 08-2021.csv")
-        
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          
-          data_nursing_monthly <- read_csv(nursing_monthly_filepath,
-                                           show_col_types = FALSE)
-          
-          flag <- 1
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Nursing file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        
-        tryCatch({
-          
-          # Process Nursing monthly data
-          pt_exp_nursing_monthly_summary_data <- pt_exp_dept_summary(data_nursing_monthly)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Patient Experience Nursing data has been imported successfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Nursing file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      if(flag == 2) {
-        
-        # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(pt_exp_data,
-                   paste0(hist_archive_path,
-                          "Pt Exp Pre-RN Monthly ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Append Patient Experience summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        pt_exp_new_data <- unique(
-          pt_exp_nursing_monthly_summary_data[c("Service",
-                                                "Site",
-                                                "ReportingType",
-                                                "Reporting_Date_Start",
-                                                "Reporting_Date_End",
-                                                "Question_Clean")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        pt_exp_data <<- anti_join(pt_exp_data,
-                                  pt_exp_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Question_Clean" = "Question_Clean",
-                                         "ReportingType" = "ReportingType",
-                                         "Reporting_Date_Start" = "Reporting_Date_Start",
-                                         "Reporting_Date_End" = "Reporting_Date_End")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        pt_exp_data <<- full_join(pt_exp_data,
-                                  pt_exp_nursing_monthly_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        pt_exp_data <<- pt_exp_data %>%
-          arrange(Service,
-                  Site,
-                  ReportingType,
-                  Reporting_Date_End)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(pt_exp_data, pt_exp_table_path)
-        
-        # Update metrics_final_df with latest Nursing Patient Experience data using custom function
-        metrics_final_df <<- pt_exp_metrics_final_df(pt_exp_nursing_monthly_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Nursing Monthly Patient Experience")
-        
-      }
-
+  
     })
     
     # Support Services Patient Experience Monthly Data Observe Event -------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      flag <- 0
       # Name Support Services monthly data
       support_monthly <- input$pt_exp_support_monthly
+      button <- input$submit_monthly_pt_exp
+      name <- input$name_monthly_patient_experience
       
-      if (is.null(support_monthly)) {
-        return(NULL)
-      } else {
-        support_monthly_filepath <- support_monthly$datapath
-        
-        # support_monthly_filepath <- paste0(home_path,
-        #                                    "Input Data Raw/Press Ganey/",
-        #                                    "May 2022/",
-        #                                    "Support Services 05-2022.csv")
-        
-        # Try catch statement to ensure file type is correct
-        tryCatch({
-          
-          data_support_monthly <- read_csv(support_monthly_filepath,
-                                           show_col_types = FALSE)
-          
-          flag <- 1
-          
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Support Services file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        
-        tryCatch({
-          
-          # Process Support Services monthly data
-          pt_exp_support_monthly_summary_data <- pt_exp_dept_summary(data_support_monthly)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Sucess",
-            paste0("This Patient Experience Support Services data has been imported successfully."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Support Services file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      if(flag == 2) {
-        
-        # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(pt_exp_data,
-                   paste0(hist_archive_path,
-                          "Pt Exp Pre-Support Monthly ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        
-        
-        # Append Patient Experience summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        pt_exp_new_data <- unique(
-          pt_exp_support_monthly_summary_data[c("Service",
-                                                "Site",
-                                                "ReportingType",
-                                                "Reporting_Date_Start",
-                                                "Reporting_Date_End",
-                                                "Question_Clean")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        pt_exp_data <<- anti_join(pt_exp_data,
-                                  pt_exp_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Question_Clean" = "Question_Clean",
-                                         "ReportingType" = "ReportingType",
-                                         "Reporting_Date_Start" = "Reporting_Date_Start",
-                                         "Reporting_Date_End" = "Reporting_Date_End")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        pt_exp_data <<- full_join(pt_exp_data,
-                                  pt_exp_support_monthly_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        pt_exp_data <<- pt_exp_data %>%
-          arrange(Service,
-                  Site,
-                  ReportingType,
-                  Reporting_Date_End)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(pt_exp_data, pt_exp_table_path)
-        
-        # Update metrics_final_df with latest Support Services Patient Experience data using custom function
-        metrics_final_df <<- pt_exp_metrics_final_df(pt_exp_support_monthly_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Support Services Monthly Patient Experience")
-        
-        
-      }
+      pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")
+      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                input$selectedService3)
     })
 
     # ED YTD Data Observe Event -------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      flag <- 0
+      button <- "submit_ytd_pt_exp"
       # Name ED YTD data
       ed_ytd <- input$pt_exp_ed_ytd
+      name <- input$name_ytd_patient_experience
       
-      if (is.null(ed_ytd)) {
-        return(NULL)
-      } else {
-        ed_ytd_filepath <- ed_ytd$datapath
-        
-        # ed_ytd_filepath <- paste0(home_path,
-        #                               "Input Data Raw/Press Ganey/",
-        #                               "ED YTD 012021 to 092021.csv")
-        
-        # TryCatch statement to ensure file type if correct
-        tryCatch({
-          
-          data_ed_ytd <- read_csv(ed_ytd_filepath,
-                                  show_col_types = FALSE)
-          
-          flag <- 1
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience ED file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        
-        tryCatch({
-          
-          # Process ED YTD data
-          pt_exp_ed_ytd_summary_data <- pt_exp_dept_summary(data_ed_ytd)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Patient Experience ED data has been imported successfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience ED file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      if(flag == 2) {
-        
-        # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(pt_exp_data,
-                   paste0(hist_archive_path,
-                          "Pt Exp Pre-ED YTD ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        
-        
-        # Append Patient Experience summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        pt_exp_new_data <- unique(
-          pt_exp_ed_ytd_summary_data[c("Service",
-                                       "Site",
-                                       "ReportingType",
-                                       "Reporting_Date_Start",
-                                       "Reporting_Date_End",
-                                       "Question_Clean")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        pt_exp_data <<- anti_join(pt_exp_data,
-                                  pt_exp_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Question_Clean" = "Question_Clean",
-                                         "ReportingType" = "ReportingType",
-                                         "Reporting_Date_Start" = "Reporting_Date_Start",
-                                         "Reporting_Date_End" = "Reporting_Date_End")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        pt_exp_data <<- full_join(pt_exp_data,
-                                       pt_exp_ed_ytd_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        pt_exp_data <<- pt_exp_data %>%
-          arrange(Service,
-                  Site,
-                  ReportingType,
-                  Reporting_Date_End)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(pt_exp_data, pt_exp_table_path)
-        
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-       
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("ED YTD Patient Experience")
-        
-        
-      }
+      pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")
+      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                input$selectedService3)
+     
       
     })
     
     # Nursing YTD Data Observe Event -------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      flag <- 0
+      button <- "submit_ytd_pt_exp"
       # Name Nursing YTD data
       nursing_ytd <- input$pt_exp_nursing_ytd
+      name <- input$name_ytd_patient_experience
       
-      if (is.null(nursing_ytd)) {
-        return(NULL)
-      } else {
-        nursing_ytd_filepath <- nursing_ytd$datapath
-        
-        # nursing_ytd_filepath <- paste0(home_path,
-        #                               "Input Data Raw/Press Ganey/",
-        #                               "Nursing YTD 012021 to 082021.csv")
-        
-        # TryCatch statement to ensure file type is correct
-        tryCatch({
-          
-          data_nursing_ytd <- read_csv(nursing_ytd_filepath,
-                                       show_col_types = FALSE)
-          
-          flag <- 1
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Nursing file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
+      pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")
+      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                input$selectedService3)
       
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        
-        tryCatch({
-          # Process Nursing YTD data
-          pt_exp_nursing_ytd_summary_data <- pt_exp_dept_summary(data_nursing_ytd)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Patient Experience Nursing data has been imported successfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Nursing file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
-      
-      if(flag == 2) {
-        
-        # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(pt_exp_data,
-                   paste0(hist_archive_path,
-                          "Pt Exp Pre-RN YTD ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        
-        
-        # Append Patient Experience summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        pt_exp_new_data <- unique(
-          pt_exp_nursing_ytd_summary_data[c("Service",
-                                            "Site",
-                                            "ReportingType",
-                                            "Reporting_Date_Start",
-                                            "Reporting_Date_End",
-                                            "Question_Clean")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        pt_exp_data <<- anti_join(pt_exp_data,
-                                  pt_exp_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Question_Clean" = "Question_Clean",
-                                         "ReportingType" = "ReportingType",
-                                         "Reporting_Date_Start" = "Reporting_Date_Start",
-                                         "Reporting_Date_End" = "Reporting_Date_End")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        pt_exp_data <<- full_join(pt_exp_data,
-                                  pt_exp_nursing_ytd_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        pt_exp_data <<- pt_exp_data %>%
-          arrange(Service,
-                  Site,
-                  ReportingType,
-                  Reporting_Date_End)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(pt_exp_data, pt_exp_table_path)
-        
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Nursing YTD Patient Experience")
-        
-        
-      }
       
     })
     
     # Support Services YTD Data Observe Event -------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      flag <- 0
+      button <- "submit_ytd_pt_exp"
       # Name Support Services YTD data
       support_ytd <- input$pt_exp_support_ytd
+      name <- input$name_ytd_patient_experience
       
-      if (is.null(support_ytd)) {
-        return(NULL)
-      } else {
-        support_ytd_filepath <- support_ytd$datapath
-        
-        # support_ytd_filepath <- paste0(home_path,
-        #                               "Input Data Raw/Press Ganey/",
-        #                               "May 2022/",
-        #                               "Support Services YTD 012022 to 052022.csv")
-        
-        # TryCatch statement to ensure file type is correct
-        tryCatch({
-          
-          data_support_ytd <- read_csv(support_ytd_filepath,
-                                       show_col_types = FALSE)
-          
-          flag <- 1
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Support Services file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
       
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        
-        tryCatch({
-          
-          # Process Support Services YTD data
-          pt_exp_support_ytd_summary_data <- pt_exp_dept_summary(data_support_ytd)
-          
-          flag <- 2
-          
-          showModal(modalDialog(
-            title = "Success",
-            paste0("This Patient Experience Support Services data has been imported successfully"),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Patient Experience Support Services file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        })
-      }
+      pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")
+      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                input$selectedService3)
       
-      if(flag == 2) {
-        
-        # Save prior version of Patient Experience Dept Summary data
-        write_xlsx(pt_exp_data,
-                   paste0(hist_archive_path,
-                          "Pt Exp Pre-Support YTD ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        
-        
-        # Append Patient Experience summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        pt_exp_new_data <- unique(
-          pt_exp_support_ytd_summary_data[c("Service",
-                                            "Site",
-                                            "ReportingType",
-                                            "Reporting_Date_Start",
-                                            "Reporting_Date_End",
-                                            "Question_Clean")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        pt_exp_data <<- anti_join(pt_exp_data,
-                                  pt_exp_new_data,
-                                  by = c("Service" = "Service",
-                                         "Site" = "Site",
-                                         "Question_Clean" = "Question_Clean",
-                                         "ReportingType" = "ReportingType",
-                                         "Reporting_Date_Start" = "Reporting_Date_Start",
-                                         "Reporting_Date_End" = "Reporting_Date_End")
-        )
-        
-        # Third, combine the updated historical data with the new data
-        pt_exp_data <<- full_join(pt_exp_data,
-                                       pt_exp_support_ytd_summary_data)
-        
-        # Next, arrange the department summary by month, metric name, and site
-        pt_exp_data <<- pt_exp_data %>%
-          arrange(Service,
-                  Site,
-                  ReportingType,
-                  Reporting_Date_End)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(pt_exp_data, pt_exp_table_path)
-        
-        # # Update "Reporting Month" drop down in each tab
-        # picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        # updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        # updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        update_picker_choices(session, input$selectedService, input$selectedService2, input$selectedService3)
-        record_timestamp("Support Services YTD Patient Transport")
-        
-        
-      }
 
     })
     

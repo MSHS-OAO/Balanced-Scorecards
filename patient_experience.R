@@ -1,23 +1,24 @@
 # Source code for Press Ganey
 # Import historical summary
 # pt_exp_data <- read_excel(pt_exp_table_path)
-pt_exp_data <- tbl(conn, "BSC_PATIENT_EXPERIENCE_REPO") %>% 
-               rename(Service = SERVICE,
-                      Site = SITE,
-                      Question_Clean = QUESTION_CLEAN,
-                      ReportingType = REPORTINGTYPE,
-                      Reporting_Date_Start = REPORTING_DATE_START,
-                      Reporting_Date_End = REPORTING_DATE_END,
-                      Site_Mean = SITE_MEAN,
-                      Site_N = SITE_N,
-                      All_PG_Database_Mean = ALL_PG_DATABASE_MEAN,
-                      All_PG_Database_N = ALL_PG_DATABASE_N,
-                      All_PG_Database_Rank = ALL_PG_DATABASE_RANK) %>%
-                collect()
-pt_exp_data <- pt_exp_data %>%
-  mutate(Reporting_Date_Start = as.Date(Reporting_Date_Start),
-         Reporting_Date_End = as.Date(Reporting_Date_End)) %>%
-  filter(!(Site %in% "All"))
+# pt_exp_data <- tbl(conn, "BSC_PATIENT_EXPERIENCE_REPO") %>% 
+#                rename(Service = SERVICE,
+#                       Site = SITE,
+#                       Question_Clean = QUESTION_CLEAN,
+#                       ReportingType = REPORTINGTYPE,
+#                       Reporting_Date_Start = REPORTING_DATE_START,
+#                       Reporting_Date_End = REPORTING_DATE_END,
+#                       Site_Mean = SITE_MEAN,
+#                       Site_N = SITE_N,
+#                       All_PG_Database_Mean = ALL_PG_DATABASE_MEAN,
+#                       All_PG_Database_N = ALL_PG_DATABASE_N,
+#                       All_PG_Database_Rank = ALL_PG_DATABASE_RANK) %>%
+#                       select(-UPDATED_USER, -UPDATED_TIME) %>%
+#                 collect()
+# pt_exp_data <- pt_exp_data %>%
+#   mutate(Reporting_Date_Start = as.Date(Reporting_Date_Start),
+#          Reporting_Date_End = as.Date(Reporting_Date_End)) %>%
+#   filter(!(Site %in% "All"))
 
 # Import mapping file
 # pt_exp_mapping <- read_excel(target_mapping_path, sheet = "Patient Experience")
@@ -29,7 +30,9 @@ pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>%
                          Question_Clean = QUESTION_CLEAN,
                          Incl_N = INCL_N,
                          Incl_AllHosp_Rank = INCL_ALLHOSP_RANK) %>% 
-                  collect()
+                  collect() %>%
+                  mutate(Incl_N = ifelse(Incl_N == "true", TRUE, FALSE),
+                         Incl_AllHosp_Rank = ifelse(Incl_AllHosp_Rank == "true", TRUE, FALSE))
 
 #dbDisconnect(conn)
 
