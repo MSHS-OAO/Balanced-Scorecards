@@ -7,54 +7,121 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
   
     # 0. Observe Events for Filters ----------------------------------------------------------------
-    observeEvent(input$selectedService2,{
-      service <- input$selectedService2
-      month <- input$selectedMonth2
-      campus <- input$selectedCampus2
-      
-      month <- format(as.Date(paste0(month, "-01"), "%m-%Y-%d"), "%Y-%m-%d")
-      format <- "YYYY-MM-DD HH24:MI:SS"
-      
-      conn <- dbConnect(drv = odbc::odbc(),
+    
+    
+    
+    # Code to update drop down selections based on selected service line -------------
+    observeEvent(input$selectedService,{
+      conn <- dbConnect(drv = odbc::odbc(), 
                         dsn = dsn)
-      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == service, REPORTING_MONTH == TO_DATE(month, format),
-                                                              SITE %in% campus) %>%
-                                                    summarise(choices = unique(METRIC_NAME_SUBMITTED)) %>% collect()
-      metric_choices <- unique(mdf_tbl$choices)
+      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+      service_selected <- input$selectedService
       
-      #metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
-      updatePickerInput(session,
-                        inputId = "selectedMetric2",
-                        choices = metric_choices,
-                        selected = metric_choices
-      )
-    },
-    ignoreInit = TRUE,
-    ignoreNULL = FALSE)
+      
+      data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+      dbDisconnect(conn)
+      picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
+      updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+    }, ignoreInit = T)
+    
+    observeEvent(input$selectedService2,{
+      
+      conn <- dbConnect(drv = odbc::odbc(), 
+                        dsn = dsn)
+      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+      service_selected <- input$selectedService2
+      
+      
+      
+      data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+      picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+      campus_choices <- sort(unique(data$SITE))
+      dbDisconnect(conn)
+      updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
+      
+    }, ignoreInit = T)
+    
     
     observeEvent(input$selectedService3,{
-      service <- input$selectedService3
-      month <- input$selectedMonth3
-      campus <- input$selectedCampus3
-      
-      month <- format(as.Date(paste0(month, "-01"), "%m-%Y-%d"), "%Y-%m-%d")
-      format <- "YYYY-MM-DD HH24:MI:SS"
-      
-      conn <- dbConnect(drv = odbc::odbc(),
+      conn <- dbConnect(drv = odbc::odbc(), 
                         dsn = dsn)
-      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == service, REPORTING_MONTH == TO_DATE(month, format),
-                                                              SITE %in% campus) %>%
-        summarise(choices = unique(METRIC_NAME_SUBMITTED)) %>% collect()
-      metric_choices <- unique(mdf_tbl$choices)
+      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+      service_selected <- input$selectedService3
       
-      updatePickerInput(session,
-                        inputId = "selectedMetric3",
-                        choices = metric_choices,
-                        selected = metric_choices
-      )
-    },
-    ignoreInit = TRUE,
-    ignoreNULL = FALSE)
+      
+      
+      data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
+      picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
+      updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+      
+      campus_choices <- sort(unique(data$SITE))
+      dbDisconnect(conn)
+      updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
+    }, ignoreInit = T)
+    
+    observeEvent(input$selectedService4, {
+      
+      target_data <- target_mapping_reference %>%
+        filter(Service %in% input$selectedService4)
+      
+      picker_choices_metric_group <- unique(target_data$Metric_Group)
+      
+      updatePickerInput(session, "selectedMetricGroup",
+                        choices = picker_choices_metric_group,
+                        selected = picker_choices_metric_group)
+      
+    }, ignoreInit = T)
+    
+    # observeEvent(input$selectedService2,{
+    #   service <- input$selectedService2
+    #   month <- input$selectedMonth2
+    #   campus <- input$selectedCampus2
+    #   
+    #   month <- format(as.Date(paste0(month, "-01"), "%m-%Y-%d"), "%Y-%m-%d")
+    #   format <- "YYYY-MM-DD HH24:MI:SS"
+    #   
+    #   conn <- dbConnect(drv = odbc::odbc(),
+    #                     dsn = dsn)
+    #   mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == service, REPORTING_MONTH == TO_DATE(month, format),
+    #                                                           SITE %in% campus) %>%
+    #                                                 summarise(choices = unique(METRIC_NAME_SUBMITTED)) %>% collect()
+    #   metric_choices <- unique(mdf_tbl$choices)
+    #   
+    #   #metric_choices <- unique(metrics_final_df[metrics_final_df$Service %in% input$selectedService2, "Metric_Name"])
+    #   updatePickerInput(session,
+    #                     inputId = "selectedMetric2",
+    #                     choices = metric_choices,
+    #                     selected = metric_choices
+    #   )
+    # },
+    # ignoreInit = TRUE,
+    # ignoreNULL = FALSE)
+    # 
+    # observeEvent(input$selectedService3,{
+    #   service <- input$selectedService3
+    #   month <- input$selectedMonth3
+    #   campus <- input$selectedCampus3
+    #   
+    #   month <- format(as.Date(paste0(month, "-01"), "%m-%Y-%d"), "%Y-%m-%d")
+    #   format <- "YYYY-MM-DD HH24:MI:SS"
+    #   
+    #   conn <- dbConnect(drv = odbc::odbc(),
+    #                     dsn = dsn)
+    #   mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == service, REPORTING_MONTH == TO_DATE(month, format),
+    #                                                           SITE %in% campus) %>%
+    #     summarise(choices = unique(METRIC_NAME_SUBMITTED)) %>% collect()
+    #   metric_choices <- unique(mdf_tbl$choices)
+    #   
+    #   updatePickerInput(session,
+    #                     inputId = "selectedMetric3",
+    #                     choices = metric_choices,
+    #                     selected = metric_choices
+    #   )
+    # },
+    # ignoreInit = TRUE,
+    # ignoreNULL = FALSE)
     
     # 1. Summary Tab Output ---------------------------------------------------------------------------------
     output$siteSummary_title <- renderText({
@@ -119,7 +186,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth
       # service_input <- "ED"
       # month_input <- "11-2022"
-      
+
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
 
@@ -3987,74 +4054,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
 
       ))
-      
-      
-      # Code to update drop down selections based on selected service line -------------
-      observeEvent(input$selectedService,{
-        conn <- dbConnect(drv = odbc::odbc(), 
-                          dsn = dsn)
-        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
-        service_selected <- input$selectedService
-        
 
-        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
-        dbDisconnect(conn)
-        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      }, ignoreInit = T)
-
-      observeEvent(input$selectedService2,{
-        
-        conn <- dbConnect(drv = odbc::odbc(), 
-                          dsn = dsn)
-        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
-        service_selected <- input$selectedService2
-        
-        
-        
-        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
-        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-
-        campus_choices <- sort(unique(data$SITE))
-        dbDisconnect(conn)
-        updatePickerInput(session, "selectedCampus2", choices = campus_choices, selected = campus_choices)
-
-      }, ignoreInit = T)
-      
-      
-      observeEvent(input$selectedService3,{
-        conn <- dbConnect(drv = odbc::odbc(), 
-                          dsn = dsn)
-        mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
-        service_selected <- input$selectedService3
-        
-        
-        
-        data <- mdf_tbl %>% filter(SERVICE %in% service_selected) %>% collect()
-        picker_choices <-  format(sort(unique(data$REPORTING_MONTH)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        campus_choices <- sort(unique(data$SITE))
-        dbDisconnect(conn)
-        updatePickerInput(session, "selectedCampus3", choices = campus_choices, selected = campus_choices)
-      }, ignoreInit = T)
-      
-      observeEvent(input$selectedService4, {
-        
-        target_data <- target_mapping_reference %>%
-          filter(Service %in% input$selectedService4)
-        
-        picker_choices_metric_group <- unique(target_data$Metric_Group)
-        
-        updatePickerInput(session, "selectedMetricGroup",
-                          choices = picker_choices_metric_group,
-                          selected = picker_choices_metric_group)
-        
-      }, ignoreInit = T)
-
-
-      
 } # Close Server
 
 
