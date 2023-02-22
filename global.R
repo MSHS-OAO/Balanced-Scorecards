@@ -423,7 +423,7 @@ metric_mapping_summary_site <- metric_mapping_database %>%
   arrange(Service, General_Group, Display_Order) %>%
   mutate(General_Group = as.character(General_Group))
 
-# Preparing the budget_data_repo for summary and site tabs in server.R
+# vector for budget_data_repo function for summary and site tabs in server.R
 
 budget_to_actual_summary_table_metrics <- c("Budget to Actual Variance - Non Labor (Monthly)",
                                             "Budget to Actual Variance - Total (Monthly)",
@@ -434,37 +434,6 @@ budget_to_actual_summary_table_metrics <- c("Budget to Actual Variance - Non Lab
                                             "Budget_Total (Monthly)",
                                             "Budget_Total (YTD)")
 
-budget_data_repo <- tbl(conn, "SUMMARY_REPO") %>%
-  filter(METRIC_NAME_SUBMITTED %in% budget_to_actual_summary_table_metrics) %>%
-  select(SERVICE,SITE,METRIC_NAME_SUBMITTED,REPORTING_MONTH,VALUE) %>%
-  collect() %>%
-  rename(Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
-         Service = SERVICE,
-         Site = SITE,
-         Month = REPORTING_MONTH,
-         Value = VALUE)
-
-budget_data_repo_ytd <- budget_data_repo %>%
-  filter(grepl('(YTD)', Metric_Name_Submitted)) %>%
-  mutate(Metric_Name_Submitted = str_sub(Metric_Name_Submitted,end = -6),
-         Metric_Name_Submitted = str_trim(Metric_Name_Submitted))%>%
-  rename(Value_ytd = Value)
-
-budget_data_repo_monthly <- budget_data_repo %>%
-  filter(grepl('(Monthly)', Metric_Name_Submitted)) %>%
-  mutate(Metric_Name_Submitted = str_sub(Metric_Name_Submitted,end = -10),
-         Metric_Name_Submitted = str_trim(Metric_Name_Submitted))
-
-budget_data_repo <- left_join(budget_data_repo_monthly,
-                              budget_data_repo_ytd,
-                              by = c("Service",
-                                     "Site",
-                                     "Month",
-                                     "Metric_Name_Submitted")) %>%
-  mutate(Month = as.Date(Month, format = "%m-%Y-%d"))
-
-rm(list = c("budget_data_repo_monthly",
-            "budget_data_repo_ytd"))
 
 
 # metric_mapping_breakout <- metric_mapping_raw %>%
