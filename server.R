@@ -306,6 +306,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       summary_tab_metrics_budget <- summary_tab_metrics %>% 
         mutate(across('Metric_Name_Submitted', str_replace, "\\(Monthly\\)", ''),
                Metric_Name_Submitted = str_trim(Metric_Name_Submitted))
+      
+      budget_data_repo <- get_budget_data()
+      
       month_selected_format <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
       if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
         month_in_repo <- unique(format(budget_data_repo$Month, "%Y-%m-%d"))
@@ -692,7 +695,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_status_budget <- current_summary_data %>%
           filter(Metric_Group == "Budget to Actual")
         
-        budget_target_current <- budget_data_repo
+        budget_target_current <- get_budget_data()
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
@@ -781,7 +784,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                               select(-value_rounded)
         
         
-        budget_actual <- budget_data_repo
+        budget_actual <- get_budget_data()
+        
         if (as.character(month_selected )%in% month_in_repo) {
           budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
             select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
@@ -792,7 +796,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         fytd_status_budget <- left_join(fytd_status_budget, budget_actual)
         
         
-        budget_target <- read_excel(paste0(home_path, "Summary Repos/Budget to Actual New.xlsx"))
+        budget_target <- get_budget_data()
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
