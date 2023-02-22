@@ -300,24 +300,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(12)
       
       format <- "YYYY-MM-DD HH24:MI:SS"
-      conn <- dbConnect(drv = odbc::odbc(),
-                        dsn = dsn)
-      mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
-      budget_data_repo  <- mdf_tbl %>% filter(SERVICE %in% service_input, 
-                                             TO_DATE(min_month, format) <= REPORTING_MONTH,
-                                             METRIC_GROUP == "Budget to Actual") %>%
-        select(-UPDATED_TIME, -UPDATED_USER) %>% collect() %>%
-        rename(Service = SERVICE,
-               Site = SITE,
-               Metric_Group = METRIC_GROUP,
-               Metric_Name = METRIC_NAME,
-               Premier_Reporting_Period = PREMIER_REPORTING_PERIOD,
-               value_rounded = VALUE,
-               Month = REPORTING_MONTH,
-               Metric_Name_Submitted= METRIC_NAME_SUBMITTED
-        ) %>%
-        mutate(Reporting_Month = format(Month, "%m-%Y"))
-      dbDisconnect(conn)
+      
       
       month_selected_format <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
       if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
