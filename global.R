@@ -460,7 +460,8 @@ budget_data_repo <- left_join(budget_data_repo_monthly,
                               by = c("Service",
                                      "Site",
                                      "Month",
-                                     "Metric_Name_Submitted"))
+                                     "Metric_Name_Submitted")) %>%
+  mutate(Month = as.Date(Month, format = "%m-%Y-%d"))
 
 rm(list = c("budget_data_repo_monthly",
             "budget_data_repo_ytd"))

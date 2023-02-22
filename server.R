@@ -185,7 +185,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       service_input <- "ED"
-      month_input <- "11-2022"
+      month_input <- "10-2022"
 
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
@@ -306,7 +306,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
         month_in_repo <- unique(format(budget_data_repo$Month, "%Y-%m-%d"))
         month_selected <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
-        budget_metrics <- summary_tab_metrics %>% filter(Metric_Group == "Budget to Actual") 
+        budget_metrics <- summary_tab_metrics %>% filter(Metric_Group == "Budget to Actual") %>%
+          mutate(Metric_Name_Submitted = str_sub(Metric_Name_Submitted,end = -10),
+                 Metric_Name_Submitted = str_trim(Metric_Name_Submitted))
         budget_metrics <- unique(budget_metrics$Metric_Name_Submitted)
         
         
