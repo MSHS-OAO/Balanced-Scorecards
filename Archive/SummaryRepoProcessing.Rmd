@@ -1,0 +1,621 @@
+---
+title: "Summary Repo Processing"
+author: "Dheeraj"
+date: "2022-12-06"
+output: html_document
+---
+
+```{r Install packages, echo = FALSE, warning = FALSE, message = FALSE, results='hide'}
+# Install and load packages ----------------------------------------
+suppressMessages({
+  library(pool)
+  # library(xlsx)
+  library(assertr)
+  library(readxl)
+  library(writexl)
+  library(plyr)
+  library(dplyr)
+  library(data.table)
+  library(zoo)
+  library(shiny)
+  library(shinydashboard)
+  library(shinydashboardPlus)
+  library(shinyWidgets)
+  library(htmlwidgets)
+  library(lubridate)
+  library(tcltk)
+  library(tidyverse)
+  library(plotly)
+  library(knitr)
+  library(kableExtra)
+  library(leaflet)
+  library(grid)
+  library(gridExtra)
+  library(eeptools)
+  library(ggQC)
+  library(utils)
+  library(scales)
+  library(chron)
+  library(bupaR)
+  library(shiny)
+  library(DT)
+  library(DiagrammeR)
+  library(shinyalert)
+  library(edeaR)
+  library(processmapR)
+  library(processmonitR)
+  library(processanimateR)
+  library(tidyr)
+  library(lubridate)
+  library(RColorBrewer)
+  library(DiagrammeR)
+  library(ggplot2)
+  library(leaflet)
+  library(readr)
+  library(highcharter)
+  library(ggforce) # for 'geom_arc_bar'
+  library(packcircles) # for packed circle graph
+  library(viridis)
+  library(ggiraph)
+  library(treemapify)
+  library(treemap)
+  library(broom)
+  library(extrafont)
+  library(tis) # for US holidays
+  library(vroom)
+  library(openxlsx)
+  library(sjmisc)
+  library(tools)
+  library(here)
+  library(shinyBS)
+  library(shinyscreenshot)
+  library(fasttime)
+  library(shinycssloaders)
+  library(fontawesome)
+  library(rhandsontable)
+  library(janitor)
+  library(stringr)
+  library(glue)
+  library(magrittr)
+  library(odbc)
+  library(DBI)
+  library(dbplyr)
+  #library(reshape2)
+
+})
+options(odbc.batch_rows = 1000000)
+
+```
+
+
+
+```{r file path and imports, echo = FALSE, warning = FALSE, message = FALSE, results='hide' }
+start <- "J:"
+home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Server Summary Repos November 2022/")
+BudgettoActual <- read_excel(paste0(home_path,"Budget to Actual New.xlsx"))
+CMKPI <- read_excel(paste0(home_path,"CM KPI.xlsx"))
+DisruptionsAndIssuesMonthly <- read_excel(paste0(home_path,"DisruptionsAndIssuesMonthly.xlsx"))
+EDSummary <- read_excel(paste0(home_path,"EDSummary.xlsx"))
+FinanceOvertime <- read_excel(paste0(home_path,"Finance Overtime.xlsx"))
+FoodServicesCostandRevenue <- read_excel(paste0(home_path,"Food Services Cost and Revenue.xlsx"))
+ImagingDR <- read_excel(paste0(home_path,"Imaging-DR.xlsx"))
+ImagingIR <- read_excel(paste0(home_path,"Imaging-IR.xlsx"))
+IncidentsMetric <- read_excel(paste0(home_path,"Incidents Metric.xlsx"))
+KPIs <- read_excel(paste0(home_path,"KPIs.xlsx"))
+LabMetrics <- read_excel(paste0(home_path,"Lab Prof Testing Metrics.xlsx"))
+LabTATMetrics <- read_excel(paste0(home_path,"Lab TAT Metrics.xlsx"))
+Nursing <- read_excel(paste0(home_path,"Nursing.xlsx"))
+SecurityEvents <- read_excel(paste0(home_path,"Security Events.xlsx"))
+SecurityIncidentReports <- read_excel(paste0(home_path,"Security Incident Reports.xlsx"))
+SecurityMonthlyEvents <- read_excel(paste0(home_path,"Security Monthly Events.xlsx"))
+TATEVS <- read_excel(paste0(home_path,"TAT - EVS.xlsx"))
+TATTransport <- read_excel(paste0(home_path,"TAT - Transport.xlsx"))
+```
+
+
+
+```{r processing, echo=FALSE, warning = FALSE, message = FALSE, results='hide'}
+#Budget to Actual
+BudgettoActual <- BudgettoActual %>%
+  rename(VALUE = Value,
+         METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))
+
+
+BudgettoActualYTD <- BudgettoActual %>%
+  select(-VALUE) %>%
+  rename(VALUE = Value_ytd)%>%
+  mutate(METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED," ","(YTD)"))
+
+BudgettoActualMonthly <- BudgettoActual %>%
+  select(-Value_ytd) %>%
+  mutate(METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED," ","(Monthly)"))
+
+
+
+BudgettoActual <- rbind(BudgettoActualMonthly,BudgettoActualYTD)
+
+# Engineering
+CMKPI <- CMKPI %>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(`% of Critical PM's Completed on Time` =  as.double(`% of Critical PM's Completed on Time`),
+         `Total Critical PMs` =  as.double(`Total Critical PMs`),
+         `Number of Work Orders Created with a Life Safety Priority` =  as.double(`Number of Work Orders Created with a Life Safety Priority`),
+         `Work Order Completion Rate` =  as.double(`Work Order Completion Rate`),
+         `EOC/Patient Care Work Order Completion Rate` =  as.double(`EOC/Patient Care Work Order Completion Rate`),
+         `EOC/Patient Care Work Orders Received` =  as.double(`EOC/Patient Care Work Orders Received`),
+          PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
+  pivot_longer(cols = c(-SITE,-REPORTING_MONTH,-PREMIER_REPORTING_PERIOD),
+               names_to = "METRIC_NAME_SUBMITTED",
+               values_to = "VALUE") %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         SERVICE = "Engineering")%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+# Biomed D&I
+DisruptionsAndIssuesMonthly <- DisruptionsAndIssuesMonthly %>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month,
+         VALUE = `Total Disruptions/Issues`,
+         SERVICE = Service) %>%
+  mutate(VALUE =  as.double(VALUE),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+         METRIC_NAME_SUBMITTED = "Total Disruptions/Issues",
+         UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"))%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+# ED 
+mapping <- tibble(KPI=c("Acuity Null",
+                        "Acuity 5",
+                        "Acuity 4",
+                        "Acuity 3",
+                        "Acuity 2",
+                        "Acuity 1",
+                        "Total Boarder Hours",
+                        "Admit to Depart (Median Boarder Hours)",
+                        "Door to Admit (Median)",
+                        "ED LOS Treat & Release (Median)",
+                        "ED LOS Admit (Median)",
+                        "LWBS",
+                        "Visit Volume (Epic)",
+                        "ED LOS Treat&Release Patients (90th Percentile Hours)",
+                        "ED LOS Admitted Patients (90th Percentile Hours)",
+                        "Admit to Depart (90th Percentile Boarder Hours)",
+                        "Acuity 1 count AAAEM",
+                        "Acuity 2 count AAAEM",
+                        "Acuity 3 count AAAEM",
+                        "Acuity 4 count AAAEM",
+                        "Acuity 5 count AAAEM",
+                        "Acuity Null count AAAEM",
+                        "LWBS %"), 
+                  KPINew=c('Acuity Null',
+                        'Acuity 5',
+                        'Acuity 4',
+                        'Acuity 3',
+                        'Acuity 2',
+                        'Acuity 1',
+                        'Total Boarder Hours',
+                        'Admit to Depart Boarder Hours (Median)',
+                        'Door to Admit (Median)',
+                        'ED LOS T&R Patients (Median)',
+                        'ED LOS Admitted Patients (Median)',
+                        'LWBS',
+                        'Visit Volume (Epic)',
+                        'ED LOS T&R Patients (90th Percentile)',
+                        'ED LOS Admitted Patients (90th Percentile)',
+                        'Admit to Depart Boarder Hours (90th Percentile)',
+                        'Acuity 1 count AAAEM',
+                        'Acuity 2 count AAAEM',
+                        'Acuity 3 count AAAEM',
+                        'Acuity 4 count AAAEM',
+                        'Acuity 5 count AAAEM',
+                        'Acuity Null count AAAEM',
+                        'LWBS %'))
+
+EDSummary <-left_join(EDSummary,
+                         mapping) %>%
+  select(-KPI) %>%
+  rename(KPI=KPINew) %>%
+  select(Service,Site,Month,KPI,Metric)
+
+
+EDSummary <- EDSummary %>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month,
+         VALUE = Metric,
+         SERVICE = Service,
+         METRIC_NAME_SUBMITTED = KPI) %>%
+  mutate(VALUE =  as.numeric(VALUE),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+         UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"))%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+FinanceOvertime <- FinanceOvertime %>%
+  rename(SITE = Site,
+         REPORTING_MONTH = `Associated Dashboard Month`,
+         VALUE = Value,
+         SERVICE = Service,
+         PREMIER_REPORTING_PERIOD = Premier_Reporting_Period,
+         METRIC_NAME_SUBMITTED = Metric_Name) %>%
+  mutate(VALUE =  as.numeric(VALUE),
+         UPDATED_USER = "NA",
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"))%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+ImagingDR <- ImagingDR %>%
+  rename(VALUE = value_rounded,
+         METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+         SERVICE = Service,
+         SITE = Site,
+         PREMIER_REPORTING_PERIOD = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         REPORTING_MONTH = format(as.Date(paste(PREMIER_REPORTING_PERIOD, "01"), "%b %Y %d"), "%Y-%m-%d"))%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+ImagingIR <- ImagingIR %>%
+  rename(VALUE = value_rounded,
+         METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Reporting_Month_Ref) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+IncidentsMetric <- IncidentsMetric %>%
+  rename(VALUE = Occurences,
+         METRIC_NAME_SUBMITTED = Metric,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+         VALUE = replace(VALUE, VALUE=="Not Tracked",NA))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+KPIs <- KPIs %>%
+  rename(VALUE = Number,
+         METRIC_NAME_SUBMITTED = Metric,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+LabMetrics <- LabMetrics %>%
+  rename(VALUE = Number,
+         METRIC_NAME_SUBMITTED = Metric,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+LabTATMetrics <- LabTATMetrics %>%
+  rename(VALUE = Number,
+         METRIC_NAME_SUBMITTED = Metric,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+
+Nursing <- Nursing %>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month,
+         SERVICE = Service) %>%
+  mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH),
+    PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
+  pivot_longer(cols = c(-SITE,-REPORTING_MONTH,-PREMIER_REPORTING_PERIOD,-SERVICE),
+               names_to = "METRIC_NAME_SUBMITTED",
+               values_to = "VALUE") %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"))%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+SecurityMonthlyEvents <- SecurityMonthlyEvents %>%
+  rename(VALUE = Number,
+         METRIC_NAME_SUBMITTED = Metric,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+
+SecurityIncidentReports <- SecurityIncidentReports %>%
+  rename(VALUE = Number,
+         METRIC_NAME_SUBMITTED = Metric,
+         SERVICE = Service,
+         SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"))%>%
+  select(SERVICE, 
+         SITE, 
+         REPORTING_MONTH,
+         PREMIER_REPORTING_PERIOD, 
+         METRIC_NAME_SUBMITTED,
+         VALUE,UPDATED_TIME,
+         UPDATED_USER)
+
+TATEVS <- TATEVS %>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month,
+         SERVICE = Service) %>%
+  mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH),
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
+  pivot_longer(cols = c(-SITE,-REPORTING_MONTH,-PREMIER_REPORTING_PERIOD,-SERVICE),
+               names_to = "METRIC_NAME_SUBMITTED",
+               values_to = "VALUE") %>%
+  mutate(UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"))%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+
+
+TATTransportPatient <- TATTransport %>%
+  filter(`Transport Type` == "Patient")%>%
+  select(-`Transport Type`,-Date,-`Total Transports`) %>%
+      group_by(Site,Month)%>%
+  summarise("Patient  (All Trips)"= mean(`Avg TAT`,na.rm=TRUE),
+            "Patient" = sum(`PT TAT > 45 min`,na.rm=TRUE))%>%
+  ungroup()%>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH),
+         SERVICE = "Patient Transport",
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+         UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M")) %>%
+  pivot_longer(cols = c(-SITE,-REPORTING_MONTH,-PREMIER_REPORTING_PERIOD,-SERVICE,-UPDATED_TIME,-UPDATED_USER),
+               names_to = "METRIC_NAME_SUBMITTED",
+               values_to = "VALUE")%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+  
+
+TATTransportNonPatient <- TATTransport %>%
+  filter(`Transport Type` == "Non-Patient")%>%
+  select(-`Transport Type`,-Date,-`Total Transports`) %>%
+      group_by(Site,Month)%>%
+  summarise("Non-Patient (All Trips)"= mean(`Avg TAT`,na.rm=TRUE),
+            "Non-Patient" = sum(`PT TAT > 45 min`,na.rm=TRUE))%>%
+  ungroup()%>%
+  rename(SITE = Site,
+         REPORTING_MONTH = Month) %>%
+  mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH),
+         SERVICE = "Patient Transport",
+         PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+         UPDATED_USER = "NA",
+         UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M")) %>%
+  pivot_longer(cols = c(-SITE,-REPORTING_MONTH,-PREMIER_REPORTING_PERIOD,-SERVICE,-UPDATED_TIME,-UPDATED_USER),
+               names_to = "METRIC_NAME_SUBMITTED",
+               values_to = "VALUE")%>%
+  select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,UPDATED_TIME,
+           UPDATED_USER)
+
+TATTransport <- rbind(TATTransportPatient,TATTransportNonPatient)
+
+
+cost_rev_mapping <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/FilesforDBUpload/CostRev.xlsx",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
+
+
+census_days_metrics_final_df <- function(data) {
+  flag <- 0
+  raw_cost_rev_df <- data
+  min_month <- min(raw_cost_rev_df$Month)
+  max_month <- max(raw_cost_rev_df$Month)
+  
+  
+  
+  raw_cost_rev_df$`Actual Revenue` <- as.numeric(raw_cost_rev_df$`Actual Revenue`)
+  raw_cost_rev_df$`Revenue Budget` <- as.numeric(raw_cost_rev_df$`Revenue Budget`)
+  raw_cost_rev_df$`Census Days` <- as.numeric(raw_cost_rev_df$`Census Days`)
+  
+  # Cost and Revenue data pre-processing
+  if (flag == 0) {
+  cost_rev_df <- raw_cost_rev_df %>%
+    mutate(
+      `Actual Revenue` = as.numeric(`Actual Revenue`),
+      rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
+      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
+      #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
+      #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
+    pivot_longer(
+      cols = c(-Site,-Service,-Month,-Metric),
+      names_to = "Metric_Name_Submitted",
+      values_to = "value") %>%
+    mutate(
+      Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
+      Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
+    rename(value_rounded = value)
+  } else {
+    cost_rev_df <- raw_cost_rev_df %>%
+      mutate(
+        `Actual Revenue` = as.numeric(`Actual Revenue`),
+        rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
+        budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
+      #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
+      #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
+      pivot_longer(
+        6:9,
+        names_to = "Metric_Name_Submitted",
+        values_to = "value") %>%
+      mutate(
+        Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"),
+        Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y")) %>%
+      rename(value_rounded = value)
+  }
+  
+  
+  cost_rev_df_final <- left_join(cost_rev_df, cost_rev_mapping, 
+                             by = c("Metric", "Metric_Name_Submitted"))
+  cost_rev_df_final <- cost_rev_df_final %>% filter(!(Service == "Food Services" & Metric_Group == "Cost per Census Day" & Site == "NYEE"))
+  cost_rev_df_final <- cost_rev_df_final %>% filter(!(is.na(value_rounded)))
+  
+  cost_rev_df_final <- cost_rev_df_final %>% select(-Metric_Group, -Metric_Name_Submitted) %>% rename(Metric_Name_Submitted = Metric_Name) %>% 
+    filter(!(is.na(Metric_Name_Submitted)))
+
+  # Subset processed data for merge 
+
+  
+}
+
+
+FoodServicesCostandRevenue <- census_days_metrics_final_df(FoodServicesCostandRevenue) %>%
+  select(Service,Site,Month, Metric_Name_Submitted,Premier_Reporting_Period,value_rounded) %>%
+  rename(SERVICE= Service,
+         SITE = Site,
+         METRIC_NAME_SUBMITTED = Metric_Name_Submitted,
+         PREMIER_REPORTING_PERIOD = Premier_Reporting_Period,
+         VALUE = value_rounded,
+         REPORTING_MONTH = Month) %>%
+  mutate(UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+          UPDATED_USER = NA)
+
+SummaryRepoProd <- rbind(TATTransport,
+                         TATEVS,
+                         BudgettoActual,
+                         CMKPI,
+                         DisruptionsAndIssuesMonthly,
+                         EDSummary,
+                         FinanceOvertime,
+                         ImagingDR,
+                         ImagingIR,
+                         IncidentsMetric,
+                         KPIs,
+                         LabMetrics,
+                         LabTATMetrics,
+                         Nursing,
+                         SecurityIncidentReports,
+                         SecurityMonthlyEvents,
+                         FoodServicesCostandRevenue) %>%
+  mutate(VALUE = as.numeric(VALUE),
+       UPDATED_USER = NA)
+
+write.xlsx(SummaryRepoProd,paste0(home_path,"PROD_DATA.xlsx"))
+
+
+
+
+```
+
+
+
+```{r}
+
+result  <- write_temporary_table_to_database_and_merge(SummaryRepoProd,"TEST11",button_name = "T")
+
+```

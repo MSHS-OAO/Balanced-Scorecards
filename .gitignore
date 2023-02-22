@@ -10,6 +10,7 @@
 
 # Example code in package build process
 *-Ex.R
+.txt
 
 # Output files from R CMD build
 /*.tar.gz
@@ -19,6 +20,7 @@
 
 # RStudio files
 .Rproj.user/
+.Rproj
 
 # produced vignettes
 vignettes/*.html
@@ -37,3 +39,11 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Excel and Csv files
+.xls
+.xlsx
+.csv
+
+##ignore Data 
+Data/
