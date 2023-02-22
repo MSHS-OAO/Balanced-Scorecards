@@ -184,8 +184,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      service_input <- "ED"
-      month_input <- "10-2022"
+      # service_input <- "ED"
+      # month_input <- "10-2022"
 
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
@@ -266,7 +266,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                "Metric_Name_Summary",
                                                "Metric_Name",
                                                "Reporting_Month_Ref",
-                                               "Premier_Reporting_Period"))  #Take all most recent data (id = 1) and merge with all data 
+                                               "Premier_Reporting_Period"))%>% 
+        mutate(across('Metric_Name_Submitted', str_replace, "\\(Monthly\\)", ''),
+               Metric_Name_Submitted = str_trim(Metric_Name_Submitted))  #Take all most recent data (id = 1) and merge with all data 
 
       current_summary <- current_summary_data %>%
         mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
@@ -779,7 +781,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                               select(-value_rounded)
         
         
-        budget_actual <- read_excel(paste0(home_path, "Summary Repos/Budget to Actual New.xlsx"))
+        budget_actual <- budget_data_repo
         if (as.character(month_selected )%in% month_in_repo) {
           budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
             select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
