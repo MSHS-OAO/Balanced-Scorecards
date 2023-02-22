@@ -186,13 +186,13 @@ if(file.exists("J:/")){
   start <- "J:" #Comment when publishing to RConnect
   home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
   start_shared <- "J:"
-  dsn <- "OAO Cloud DB Dev"
+  dsn <- "OAO Cloud DB Staging"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
   home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
   #install.packages("reshape2", repos = "http://cran.us.r-project.org")
-  dsn <- "OAO Cloud DB Dev" 
+  dsn <- "OAO Cloud DB Staging" 
 }
 
 # metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
@@ -423,7 +423,7 @@ metric_mapping_summary_site <- metric_mapping_database %>%
   arrange(Service, General_Group, Display_Order) %>%
   mutate(General_Group = as.character(General_Group))
 
-# Preparing the budget_data_repo for summary and site tabs in server.R
+# vector for budget_data_repo function for summary and site tabs in server.R
 
 budget_to_actual_summary_table_metrics <- c("Budget to Actual Variance - Non Labor (Monthly)",
                                             "Budget to Actual Variance - Total (Monthly)",
@@ -434,37 +434,6 @@ budget_to_actual_summary_table_metrics <- c("Budget to Actual Variance - Non Lab
                                             "Budget_Total (Monthly)",
                                             "Budget_Total (YTD)")
 
-budget_data_repo <- tbl(conn, "SUMMARY_REPO") %>%
-  filter(METRIC_NAME_SUBMITTED %in% budget_to_actual_summary_table_metrics) %>%
-  select(SERVICE,SITE,METRIC_NAME_SUBMITTED,REPORTING_MONTH,VALUE) %>%
-  collect() %>%
-  rename(Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
-         Service = SERVICE,
-         Site = SITE,
-         Month = REPORTING_MONTH,
-         Value = VALUE)
-
-budget_data_repo_ytd <- budget_data_repo %>%
-  filter(grepl('(YTD)', Metric_Name_Submitted)) %>%
-  mutate(Metric_Name_Submitted = str_sub(Metric_Name_Submitted,end = -6),
-         Metric_Name_Submitted = str_trim(Metric_Name_Submitted))%>%
-  rename(Value_ytd = Value)
-
-budget_data_repo_monthly <- budget_data_repo %>%
-  filter(grepl('(Monthly)', Metric_Name_Submitted)) %>%
-  mutate(Metric_Name_Submitted = str_sub(Metric_Name_Submitted,end = -10),
-         Metric_Name_Submitted = str_trim(Metric_Name_Submitted))
-
-budget_data_repo <- left_join(budget_data_repo_monthly,
-                              budget_data_repo_ytd,
-                              by = c("Service",
-                                     "Site",
-                                     "Month",
-                                     "Metric_Name_Submitted")) %>%
-  mutate(Month = as.Date(Month, format = "%m-%Y-%d"))
-
-rm(list = c("budget_data_repo_monthly",
-            "budget_data_repo_ytd"))
 
 
 # metric_mapping_breakout <- metric_mapping_raw %>%
