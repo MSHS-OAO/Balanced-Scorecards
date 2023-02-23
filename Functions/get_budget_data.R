@@ -1,11 +1,14 @@
-get_budget_data <- function(service){
+get_budget_data <- function(service,month_input){
   
+  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(4)
+  format <- "YYYY-MM-DD HH24:MI:SS"
   
   conn <- dbConnect(drv = odbc::odbc(),
                     dsn = dsn)
   budget_data_repo_prelim <- tbl(conn, "SUMMARY_REPO") %>%
     filter(METRIC_NAME_SUBMITTED %in% budget_to_actual_summary_table_metrics,
-           SERVICE == service) %>%
+           SERVICE == service, 
+           TO_DATE(min_month, format) <= REPORTING_MONTH) %>%
     select(SERVICE,SITE,METRIC_NAME_SUBMITTED,REPORTING_MONTH,VALUE) %>%
     collect() %>%
     rename(Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
