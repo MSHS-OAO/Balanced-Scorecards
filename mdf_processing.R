@@ -5,11 +5,14 @@ mdf <- readRDS("mdf_pull_2_8.rds")
 mapping_file <- read_csv("BSC_MAPPING_TABLE.csv")
 budget_metrics <- c("Budget to Actual Variance - Total", "Budget to Actual Variance - Labor", "Budget to Actual Variance - Non Labor")
 budget_file <- read_excel("budget_repo_2_22.xlsx")
+time_updated <- read_excel("time_updated_2_8.xlsx")
 
 budget_monthly <- budget_file %>% select(-Value_ytd) %>% mutate(Metric_Name_Submitted = paste0(Metric_Name_Submitted, " (Monthly)"))
 budget_ytd <- budget_file %>% select(-Value) %>% mutate(Metric_Name_Submitted = paste0(Metric_Name_Submitted, " (YTD)")) %>%
                 rename(Value = Value_ytd)
 budget_complete <- bind_rows(budget_monthly, budget_ytd)
+budget_complete <- budget_complete %>% rename(value_rounded = Value,
+                                              METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
 
 mdf <- left_join(mdf, mapping_file[c("SERVICE", "METRIC_NAME_SUBMITTED", "METRIC_NAME")], by = c("Service" = "SERVICE",
                                                                    "Metric_Name" = "METRIC_NAME"))
@@ -28,7 +31,7 @@ mdf <- mdf %>% mutate(Premier_Reporting_Period = ifelse(Metric_Group == "Premier
 
 
 
-time_updated <- read_excel("time_updated_2_8.xlsx")
+
 time_updated <- time_updated %>% group_by(Service) %>% filter(Updated == max(Updated))
 str(time_updated)
 
