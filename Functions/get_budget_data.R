@@ -1,10 +1,11 @@
-get_budget_data <- function(){
+get_budget_data <- function(service){
   
   
   conn <- dbConnect(drv = odbc::odbc(),
                     dsn = dsn)
   budget_data_repo_prelim <- tbl(conn, "SUMMARY_REPO") %>%
-    filter(METRIC_NAME_SUBMITTED %in% budget_to_actual_summary_table_metrics) %>%
+    filter(METRIC_NAME_SUBMITTED %in% budget_to_actual_summary_table_metrics,
+           SERVICE == service) %>%
     select(SERVICE,SITE,METRIC_NAME_SUBMITTED,REPORTING_MONTH,VALUE) %>%
     collect() %>%
     rename(Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
