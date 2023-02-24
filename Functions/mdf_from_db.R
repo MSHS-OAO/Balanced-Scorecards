@@ -18,7 +18,8 @@ mdf_from_db <- function(service_input, month_input) {
            value_rounded = VALUE,
            Reporting_Month_Ref = REPORTING_MONTH
     ) %>%
-    mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"))
+    mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y")) %>% 
+    distinct()
   dbDisconnect(conn)
   
   return(metrics_final_df)
