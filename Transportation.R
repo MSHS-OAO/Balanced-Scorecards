@@ -1,3 +1,6 @@
+# data <- read_excel("J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Transport/Support Services Data Collection Template v2.xlsx",
+#                    sheet = "PTET")
+
 process_PT_data <- function(pt_data_raw,updated_user){
   
   current_month <- floor_date(Sys.Date(),"month")
@@ -86,6 +89,26 @@ process_PT_data <- function(pt_data_raw,updated_user){
   processed_data <- processed_data %>%
     mutate(VALUE = replace(VALUE,which(is.infinite(processed_data$VALUE),arr.ind = TRUE),NA))
   
+  trips_data <- processed_data %>%
+    filter(METRIC_NAME_SUBMITTED == 'Patient  (All Trips)') %>%
+    select(-REPORTING_MONTH) %>%
+    group_by(SERVICE,SITE,PREMIER_REPORTING_PERIOD,UPDATED_USER,METRIC_NAME_SUBMITTED) %>%
+    summarise(VALUE = mean(VALUE)) %>%
+    ungroup() %>%
+    mutate(REPORTING_MONTH =  as.Date(paste(PREMIER_REPORTING_PERIOD,"01"), format="%b %Y %d"))%>%
+    select(SERVICE,SITE,PREMIER_REPORTING_PERIOD,REPORTING_MONTH,VALUE,UPDATED_USER,METRIC_NAME_SUBMITTED)
+  
+  tat_data <- processed_data %>%
+    filter(METRIC_NAME_SUBMITTED == 'Patient') %>%
+    select(-REPORTING_MONTH) %>%
+    group_by(SERVICE,SITE,PREMIER_REPORTING_PERIOD,UPDATED_USER,METRIC_NAME_SUBMITTED) %>%
+    summarise(VALUE = mean(VALUE)) %>%
+    ungroup() %>%
+    mutate(REPORTING_MONTH =  as.Date(paste(PREMIER_REPORTING_PERIOD,"01"), format="%b %Y %d"))%>%
+    select(SERVICE,SITE,PREMIER_REPORTING_PERIOD,REPORTING_MONTH,VALUE,UPDATED_USER,METRIC_NAME_SUBMITTED)
+  
+  processed_data <- rbind(trips_data,tat_data)
+  
   return(processed_data)
 
 }
@@ -139,4 +162,3 @@ process_NPT_raw_data <- function(data,updated_user){
 
   return(data_metrics)
 }
-
