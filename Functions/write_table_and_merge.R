@@ -120,12 +120,11 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # glue query for dropping the table
     truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
     
-    
-    # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
-    #                   dsn = dsn)
     print("before conn")
-    conn <- dbConnect(odbc(), dsn)
-  print("after conn")
+    conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
+                      dsn = dsn)
+    # conn <- dbConnect(odbc(), dsn)
+    print("after conn")
     dbBegin(conn)
     # ## Execute staments and if there is an error  with one of them rollback changes
     tryCatch({
