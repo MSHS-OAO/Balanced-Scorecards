@@ -128,10 +128,15 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     dbBegin(conn)
     # ## Execute staments and if there is an error  with one of them rollback changes
     tryCatch({
+          print("1")
           dbExecute(conn,truncate_query)
+          print("2")
           dbExecute(conn,all_data)
+          print("3")
           dbExecute(conn,query)
+          print("4")
           dbExecute(conn,truncate_query)
+          print("5")
           dbCommit(conn)
           dbDisconnect(conn)
           if(isRunning()) {
