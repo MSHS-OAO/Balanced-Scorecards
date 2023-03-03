@@ -88,9 +88,7 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
     #                   dsn = dsn)
     print("before conn")
-    conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_DEVELOPMENT",
-                      pwd = "HC*tA$4f1qMqVo")
+    conn <- dbConnect(odbc(), dsn)
     print("after conn")
     dbBegin(conn)
     # ## Execute staments and if there is an error  with one of them rollback changes

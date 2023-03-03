@@ -1,13 +1,13 @@
 library(dplyr)
 library(readxl)
 
-mdf_raw <- readRDS("Staging_Run/mdf_2_24.rds")
+mdf_raw <- readRDS("BSC Update/mdf_3_3.rds")
 mdf_raw <- mdf_raw %>% group_by(Service, Site, Metric_Name,Reporting_Month) %>% mutate(id = row_number()) %>% ungroup() %>% filter(Metric_Group != "Budget to Actual")
 mdf <- mdf_raw %>% filter(id == 1) %>% select(-id)
-mapping_file <- read_csv("Staging_Run/BSC_MAPPING_TABLE.csv")
+mapping_file <- read_csv("BSC Update/BSC_MAPPING_TABLE.csv")
 budget_metrics <- c("Budget to Actual Variance - Total", "Budget to Actual Variance - Labor", "Budget to Actual Variance - Non Labor")
-budget_file <- read_excel("Staging_Run/budget_2_24.xlsx")
-time_updated <- read_excel("Staging_Run/time_updated_2_24.xlsx")
+budget_file <- read_excel("BSC Update/budget_3_3.xlsx")
+time_updated <- read_excel("BSC Update/time_upt_3_3.xlsx")
 
 budget_monthly <- budget_file %>% select(-Value_ytd) %>% mutate(Metric_Name_Submitted = paste0(Metric_Name_Submitted, " (Monthly)"))
 budget_ytd <- budget_file %>% select(-Value) %>% mutate(Metric_Name_Submitted = paste0(Metric_Name_Submitted, " (YTD)")) %>%
@@ -47,4 +47,4 @@ mdf_upt <- mdf_upt %>% group_by(Service, Site, Reporting_Month, METRIC_NAME_SUBM
 mdf_upt <- mdf_upt %>% filter(!is.na(METRIC_NAME_SUBMITTED))
 
 
-write.csv(mdf_upt, "mdf_updated_2_24.csv")
+write.csv(mdf_upt, "mdf_updated_3_3.csv")
