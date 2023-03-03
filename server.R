@@ -154,7 +154,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Summary")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
         text = paste0("MSHS ",input_service, " Summary - Updated ",updated)
       }
       text
@@ -184,7 +184,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Food Services"
+      # service_input <- "Environmental Services"
       # month_input <- "01-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -1044,7 +1044,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Key Metric Rollup")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
         text = paste0("MSHS ",input_service, " Key Metric Rollup - Updated ",updated)
       }
       text
@@ -1399,7 +1399,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0(input$selectedCampus3, " ",input_service, " Breakout")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
         text = paste0(input$selectedCampus3," ",input_service, " Breakout - Updated ",updated)
       }
       text
