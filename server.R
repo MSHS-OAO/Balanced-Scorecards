@@ -184,7 +184,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Engineering"
+      # service_input <- "Imaging"
       # month_input <- "01-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -988,13 +988,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             column_spec(c(2, 10), italic = TRUE) %>%
             column_spec(3:9, background = "#fee7f5") %>%
             column_spec(11:17, background = "#E6F8FF") %>%
-            group_rows(group_label = "Interventional Radiology",
+            group_rows(group_label = "Interventional Radiology", indent = FALSE,
                        start_row = ir_start,
                        end_row = dr_start-1,
                        label_row_css = "background-color: #212070; color: white;") %>%
-            group_rows(group_label = "Diagnostic Radiology",
+            group_rows(group_label = "Diagnostic Radiology", indent = FALSE,
                        start_row = dr_start,
-                       end_row = (dr_start + 2),
+                       end_row = (dr_start + 1),
                        label_row_css = "background-color: #212070; color: white;")
       }else{
         kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
