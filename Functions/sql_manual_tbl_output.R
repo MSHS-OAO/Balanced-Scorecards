@@ -27,5 +27,7 @@ sql_manual_table_output <- function(service, table_name) {
            Value = VALUE) %>%
     pivot_wider(names_from = Month,
                 values_from = Value)
+  
+  df <- df[order(df$Metric, decreasing = TRUE),]
     
 }
