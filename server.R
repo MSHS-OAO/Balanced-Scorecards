@@ -3356,7 +3356,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       data_bimoed_kpi <- reactive({
         #data  <- kpibme_reports_ui %>% ungroup()
         data <- sql_manual_table_output("Biomed / Clinical Engineering", "KPIs")
-        data <- data[order(data$Metric, decreasing = TRUE),]
         data <- data %>%
           arrange(Site)
         result <- manual_table_month_order(data)
