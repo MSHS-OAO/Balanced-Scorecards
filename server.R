@@ -770,7 +770,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         distinct()
             
       # NOTE: Should we use a str_detect instead here so we can capture Labor and Non Labor as well?
-      if("Budget to Actual" %in% as.vector(budget_target_check$Metric_Name)){
+      if("Budget to Actual" %in% current_summary_data$Metric_Group){
         
         fytd_status_budget <- left_join(fytd_merged,
                                  metric_targets_status,
