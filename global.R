@@ -75,7 +75,10 @@ suppressMessages({
   #library(reshape2)
 })
 
+print("0")
 dsn <- "OAO Cloud DB Production"
+print("1")
+
 
 options(shiny.maxRequestSize=500*1024^2)
 
@@ -149,6 +152,7 @@ MountSinai_palettes <- list(
 # MountSinai_palettes
 # Return function to interpolate a Mount Sinai color palette
 # default value is the main palette, reverse = True will change the order
+print("2")
 
 MountSinai_pal <- function(palette = "all", reverse = FALSE, ...) {
   pal <- MountSinai_palettes[[palette]]
@@ -244,6 +248,7 @@ if(file.exists("J:/")){
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ==================================================================================
 conn <- dbConnect(odbc(), dsn)
+print("3")
 # data_path <- here()
 # metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
@@ -288,6 +293,7 @@ metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
 
 # Sites included -----------------------------------------------------------------------------------
 sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
+print("4")
 
 dttm <- function(x) {
   as.POSIXct(x,format="%m/%d/%Y",tz=Sys.timezone(),origin = "1970-01-01")
@@ -312,6 +318,7 @@ key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 processed_df_cols <- c("Service", "Site", "Metric_Group", "Metric_Name",
                        "Premier_Reporting_Period", "Reporting_Month",
                        "value_rounded") # All columns needed in final merged data set
+print("5")
 
 
 # Code for making name filed Mandatory ----
@@ -338,6 +345,8 @@ labelMandatory <- function(label) {
   )
 }
 
+print("6")
+
 # operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
@@ -349,6 +358,8 @@ transform_dt <- function(dt, names_to, values_to){
   pivot_longer(dt, c(Site, Metric), names_to = as.character(names_to), values_to = as.character(values_to)) %>%
     drop_na(values_to)
 }
+
+print("7")
 
 engineering_data_process <- function(data){
   engineering_data <- data %>%
@@ -369,6 +380,8 @@ target_mapping_reference <- target_mapping %>%
   select(-contains("_Start"), -contains("_End")) %>%
   # filter(Target != "Remove") %>%
   distinct()
+
+print("8")
 
 # target_mapping_reference <- left_join(target_mapping_reference,
 #                                       metric_unit_filter_new)
@@ -414,6 +427,7 @@ high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
 #     #          })
 #     )
 
+print("9")
 metric_mapping_summary_site <- metric_mapping_database %>%
   filter(Reporting_Tab %in% "Summary and Site") %>%
   select(-Reporting_Tab) %>%
@@ -485,6 +499,7 @@ budget_to_actual_summary_table_metrics <- c("Budget to Actual Variance - Non Lab
 #     #        })
 #     )
 
+print("10")
 metric_mapping_breakout <- metric_mapping_database %>%
   filter(Reporting_Tab %in% "Breakout") %>%
   select(-Reporting_Tab) %>%
@@ -493,6 +508,7 @@ metric_mapping_breakout <- metric_mapping_database %>%
                                 ordered = TRUE)) %>%
   arrange(Service, General_Group, Display_Order) %>%
   mutate(General_Group = as.character(General_Group))
+print("11")
 
 # Source files for processing service line data -------------------
 function_sources <- list.files("Functions", full.names = T)
