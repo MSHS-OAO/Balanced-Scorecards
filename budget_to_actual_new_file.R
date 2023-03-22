@@ -10,7 +10,7 @@ budget_raw_file_process <- function(data, updated_user){
   data_rad <- data %>% filter(`Radiology?` == "Radiology")
   data_rad <- data_rad %>% mutate(Function = "Radiology")
   #data_ed <- NULL
-  data_ed <- data %>% filter(`Emergency Department?` == "Emergency Department")
+  data_ed <- data %>% filter(`Emergency Department?` == "emergency department")
   data_ed <- data_ed %>% mutate(Function = "Emergency Department")
   data <- data %>% filter(!(Function %in% c("Radiology", "Emergency Department"
                                             )
