@@ -1773,7 +1773,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         file_path <- inFile_budget$datapath
-        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3)
+        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
+                                     col_types = c("guess", "text", "text", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess"))
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(
