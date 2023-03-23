@@ -1,5 +1,5 @@
 mdf_from_db <- function(service_input, month_input) {
-  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(12)
+  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(18)
   
   # service_input <- "Lab"
   # month_input <- "05-2022"
