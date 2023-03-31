@@ -393,7 +393,7 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
-                                        tabPanel("Turnaround Time",
+                                        tabPanel("Operational Metrics",
                                                  fluidRow(
                                                    column(2,
                                                           textInput("name_cn", (labelMandatory("Please enter name:"))),
@@ -1010,6 +1010,11 @@ ui <-
         }")),
  tags$style(HTML("
         #submit_imaging {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+ tags$style(HTML("
+        #submit_cn {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
