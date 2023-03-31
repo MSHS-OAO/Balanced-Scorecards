@@ -3909,6 +3909,76 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         shinyjs::enable(button_name)
         
       })
+      # Clinical Nutrition observer event actions for data submission ----- 
+      observeEvent(input$submit_cn, {
+        button_name <- "submit_cn"
+        shinyjs::disable(button_name)
+        flag <- 0
+        cn_file <- input$cn
+        
+        if(input$name_cn == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          updated_user <- input$name_cn
+          file_path <- cn_file$datapath
+          tryCatch({
+            cn_data_raw <- read_xlsx(file_path)
+            cn_summary_data <- cn_dept_summary(cn_data_raw,updated_user)
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          })
+          
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+            cn_summary_data <- file_return_updated_rows(cn_summary_data)
+            
+            #wirte the updated data to the Summary Repo in the server
+            write_temporary_table_to_database_and_merge(cn_summary_data,
+                                                        "TEMP_ED", button_name)
+            
+            flag <- 2
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          })
+        }
+        
+        if(flag == 2){
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+        }
+        shinyjs::enable(button_name)
+        
+      })
       
       
       # 5. Target and Status Definitions tab ----------------------------------

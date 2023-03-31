@@ -380,6 +380,37 @@ ui <-
                                  ), value = "biomed"
                                  
                         ),
+                        # Clinical Nutrition Data Submission ----
+                        tabPanel("Operational Metrics - Clinical Nutrition",
+                                 span("Operational Metrics - Clinical Nutrition",
+                                      style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
+                                        tabPanel("Turnaround Time",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_cn", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
+                                                 fileInput("cn_file",
+                                                           label = "Please upload Environmental Services data"),
+                                                 hr(),
+                                                 actionButton("submit_cn",
+                                                              "Submit",
+                                                              class = "btn-primary"),
+                                        )
+                                 ), value = "evs"
+                        ),
+                        
                         # Engineering Data Submission ----
                         tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
