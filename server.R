@@ -3914,7 +3914,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         button_name <- "submit_cn"
         shinyjs::disable(button_name)
         flag <- 0
-        cn_file <- input$cn
+        cn_file <- input$cn_file
         
         if(input$name_cn == ""){
           showModal(modalDialog(
@@ -3951,7 +3951,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
             cn_summary_data <- file_return_updated_rows(cn_summary_data)
-            
             #wirte the updated data to the Summary Repo in the server
             write_temporary_table_to_database_and_merge(cn_summary_data,
                                                         "TEMP_ED", button_name)
