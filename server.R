@@ -3927,7 +3927,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           updated_user <- input$name_cn
           file_path <- cn_file$datapath
           tryCatch({
-            cn_data_raw <- read_xlsx(file_path)
+            cn_data_raw <- bind_rows(lapply(excel_sheets(file_path), read_xlsx, path = file_path))
             cn_summary_data <- cn_dept_summary(cn_data_raw,updated_user)
             
             flag <- 1
