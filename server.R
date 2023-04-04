@@ -1894,7 +1894,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       support_ytd <- input$pt_exp_support_ytd
       name <- input$name_ytd_patient_experience
       
-      
+      support_ytd_test <<- support_ytd
       pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
