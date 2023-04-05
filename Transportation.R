@@ -5,7 +5,7 @@ process_PT_data <- function(pt_data_raw,updated_user){
   
   current_month <- floor_date(Sys.Date(),"month")
 
-  hospitals <- c("MSB","MSBI","MSM","MSW","MSH")
+  hospitals <- c("MSB","MSBI","MSM","MSW","MSH","MSQ")
   
 
   rows <- nrow(pt_data_raw)
