@@ -10,6 +10,9 @@
 
 
 evs_file_process <- function(data, month, updated_user) {
+  data <- df %>% 
+  mutate(across(where(is.character), str_trim))
+  
   data <- na.omit(data, na.action = "omit")
   
   data <- data %>%
