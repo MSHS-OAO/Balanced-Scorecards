@@ -59,7 +59,7 @@ imaging_dept_summary <- function(data, updated_user){
   
   data <- data %>% rename(Metric_Name_Submitted = Description)
   
-  data$value_rounded <- round(data$value_rounded, digits = 2)
+  data$value_rounded <- round(data$value_rounded, digits = 4)
   
   budget_metrics <- c("Ambulatory Budgeted Revenue","Ambulatory Budgeted Volume")
   data_filter <- data %>% filter(!(Metric_Name_Submitted %in% budget_metrics)) %>% filter(!is.na(value_rounded))
