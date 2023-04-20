@@ -32,6 +32,15 @@ productivity_dept_summary <- function(raw_data, updated_user){
   
   raw_data <- raw_data %>% select(!`Entity Time Period Desc`)
   
+  fytd_check <- raw_data[1,] %>% mutate(across(everything(), as.character)) %>% pivot_longer(everything())
+  
+  if(length(which(str_detect(fytd_check$value, 'FYTD Avg'))) > 0) {
+    ytd_flag <- 1
+  } else {
+    ytd_flag <- 0
+  }
+  
+  
   # Data Pre-processing -----------------------------------------------------
   ### Pivot data file longer
   prod_df <- raw_data %>%
@@ -159,26 +168,49 @@ productivity_dept_summary <- function(raw_data, updated_user){
     select(-Metric_Group)
   
  if(c("Imaging") %in% unique(prod_df_all$Service) || c("Nursing") %in% unique(prod_df_all$Service)){  
-  nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
-    filter(Service %in% c("Nursing","Imaging")) %>%
-    filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
-                              "Overtime Hours", "Total Paid hours")) %>%
-    group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
-    summarise(value = sum(value, na.rm = TRUE)) %>%
-    pivot_wider(names_from = Metric_Name,
-                values_from = value
-    ) %>%
-    mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
-           `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid hours`
-    ) %>%
-    pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
-                 names_to = "Metric_Name",
-                 values_to = "value") %>%
-    filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
-    mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
-    mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
-    ungroup() %>%
-    select(-Metric_Group)
+   if(ytd_flag == 0) {
+      nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
+        filter(Service %in% c("Nursing","Imaging")) %>%
+        filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
+                                  "Overtime Hours", "Total Paid hours")) %>%
+        group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+        summarise(value = sum(value, na.rm = TRUE)) %>%
+        pivot_wider(names_from = Metric_Name,
+                    values_from = value
+        ) %>%
+        mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
+               `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid hours`
+        ) %>%
+        pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
+                     names_to = "Metric_Name",
+                     values_to = "value") %>%
+        filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
+        mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
+        mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
+        ungroup() %>%
+        select(-Metric_Group)
+   } else {
+     nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
+       filter(Service %in% c("Nursing","Imaging")) %>%
+       filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
+                                 "Overtime Hours", "Total Paid Hours")) %>%
+       group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+       summarise(value = sum(value, na.rm = TRUE)) %>%
+       pivot_wider(names_from = Metric_Name,
+                   values_from = value
+       ) %>%
+       mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
+              `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid Hours`
+       ) %>%
+       pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
+                    names_to = "Metric_Name",
+                    values_to = "value") %>%
+       filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours")) %>%
+       mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
+       mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
+       ungroup() %>%
+       select(-Metric_Group)
+   }
   
   
   #Claulate WHPU
@@ -232,8 +264,10 @@ productivity_dept_summary <- function(raw_data, updated_user){
                                    VALUE = value_rounded) %>%
                                    select(-Reporting_Month) %>%
                                    mutate(UPDATED_USER = updated_user)
-  
-
+  if(ytd_flag == 1) {
+    prod_df_aggregate_all <- prod_df_aggregate_all %>% mutate(METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (FYTD)"))
+  }
+  prod_df_aggregate_all
 }
 
 productivity_metrics_final_df <- function(data){
