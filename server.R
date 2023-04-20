@@ -6,8 +6,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
   
     # 0. Observe Events for Filters ----------------------------------------------------------------
     
-    # Another useless comment by Kate
-    
+
     # Code to update drop down selections based on selected service line -------------
     observeEvent(input$selectedService,{
       conn <- dbConnect(drv = odbc::odbc(), 
