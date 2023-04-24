@@ -267,7 +267,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
   if(ytd_flag == 1) {
     prod_df_aggregate_all <- prod_df_aggregate_all %>% mutate(METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (FYTD)"))
   }
-  prod_df_aggregate_all
+  prod_df_aggregate_all <- prod_df_aggregate_all %>% filter(VALUE != "NaN")
 }
 
 productivity_metrics_final_df <- function(data){

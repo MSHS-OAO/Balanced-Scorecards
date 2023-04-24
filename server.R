@@ -1943,7 +1943,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       shinyjs::disable(button_name)
       inFile <- input$productiviy_data
       flag <- 0
-      data <- read_excel(inFile$datapath)
+      #data <- read_excel(inFile$datapath)
 
 
       if(input$name_productivity == ""){
@@ -1990,7 +1990,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
 
       if(flag == 2){
-        
         prod_summary <- prod_summary %>% filter(REPORTING_MONTH >= max(REPORTING_MONTH) %m-% months(1))
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
         productivity_new_data <- file_return_updated_rows(prod_summary)
