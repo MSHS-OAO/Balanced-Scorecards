@@ -184,7 +184,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Imaging"
+      # service_input <- "Food Services"
       # month_input <- "03-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -523,7 +523,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
-        filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance", "Productivity")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Name != "Overtime Hours - % (Premier)") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
                  Metric_Group,
@@ -532,10 +533,43 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  `Fiscal Year to Date`) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
         ungroup()
-    
-      # Merge for summary 
-      # fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
-      fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
+      
+      fytd_metrics <- paste0(unique(fytd_summary_all$Metric_Name_Submitted), " (FYTD)")
+      conn <- dbConnect(drv = odbc::odbc(),
+                        dsn = dsn)
+      
+      summary_repo_tbl <- tbl(conn, "SUMMARY_REPO")
+      fytd_prod <-  summary_repo_tbl %>% filter(service_input %in% SERVICE, METRIC_NAME_SUBMITTED %in% fytd_metrics) %>% 
+        collect()
+      dbDisconnect(conn)
+      
+      productivity_reporting_period <- current_summary[grep("Rep. Pd. Ending", current_summary$`Current Period`),]
+      
+      if(nrow(productivity_reporting_period) > 0) {
+        productivity_reporting_period <- unique(productivity_reporting_period$`Current Period`)[1]
+        premier_reporting_period <- gsub(".*Rep. Pd. Ending ", "",productivity_reporting_period)
+        
+        fytd_prod <- fytd_prod %>% filter(PREMIER_REPORTING_PERIOD == premier_reporting_period)
+        
+        fytd_prod <- fytd_prod %>% mutate(`Fiscal Year to Date` = paste0("FYTD Ending ", premier_reporting_period, 
+                                                                         " Average")) %>%
+                    select(-UPDATED_USER, -UPDATED_TIME, -REPORTING_MONTH, -PREMIER_REPORTING_PERIOD) %>%
+                    rename(Site = SITE,
+                           value_rounded = VALUE,
+                           Service = SERVICE,
+                           Metric_Name_Submitted = METRIC_NAME_SUBMITTED) %>%
+                    mutate(Metric_Name_Submitted = gsub(" [(]FYTD[)].*", "", Metric_Name_Submitted))
+        
+        fytd_prod <- inner_join(fytd_prod, summary_tab_metrics, by = c("Service" = "Service",
+                                                                       "Metric_Name_Submitted" = "Metric_Name_Submitted")) %>%
+          select(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`, value_rounded)
+        
+        fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join, fytd_prod) %>% distinct()
+      } else{
+        # Merge for summary 
+        # fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+        fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
+      }
       fytd_summary <- fytd_merged
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
