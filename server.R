@@ -145,6 +145,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
       
       input_service <- input$selectedService
       
@@ -181,6 +182,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_peri_op
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -1071,6 +1073,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1106,6 +1109,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_peri_op
       
       
       service_input <- input$selectedService2
@@ -1426,6 +1430,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1462,7 +1467,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
-      
+      input$submit_peri_op
       
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
@@ -4080,6 +4085,94 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
 
       ))
+      
+      
+      
+      # Perioperative Metrics - Operational Data  -----------------------
+      
+      
+      observeEvent(input$submit_peri_op,{
+        button_name <- "submit_peri_op"
+        shinyjs::disable(button_name)
+        
+        peri_op_file <<- input$peri_op_file
+        flag <- 0 
+        
+        if (is.null(peri_op_file)) {
+          return(NULL)
+          shinyjs::enable(button_name)
+          print("null")
+        }else{
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          #pt_data <- read_excel(file_path)
+          if(input$name_peri_op == ""){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("Please fill in the required fields"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          
+          tryCatch({
+            # Read in SCC file
+            file_path <- peri_op_file$datapath
+            updated_user <- input$name_peri_op
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Perioperative Services data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+          }
+          )
+          
+        }
+        
+        
+        if(flag==1){
+          
+          tryCatch({
+            # Process Input Data
+            peri_op_summary_repo <- peri_op_processing(file_path, updated_user)
+            flag <- 2
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Perioperative Services data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          }
+          )
+          
+        }
+        if(flag==2){
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          peri_op_summary_repo <<- file_return_updated_rows(peri_op_summary_repo)
+          # write_temporary_table_to_database_and_merge(peri_op_summary_repo,
+          #                                             "TEMP_PT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+          
+        }
+        shinyjs::enable(button_name)
+        
+        
+      })
 
 } # Close Server
 
