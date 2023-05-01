@@ -142,7 +142,7 @@ overtime_file_processs_new <- function(data, updated_user){
                VALUE,
                UPDATED_USER)
       
-      processed_data <- rbind(eni_data,non_eni_data)
+      processed_data <- rbind(eni_data,non_eni_data) %>%distinct()
       
 }
 
