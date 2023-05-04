@@ -1,6 +1,6 @@
 # file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail - Balanced Scorecards/Balanced Scorecard Update Mar 2023 YTD Financials.xlsx"
 # data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
-# col_types = c("guess", "text", "text", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess"))
+# col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "text"))
 
 # budget_to_actual_path_new <- paste0(home_path, "Summary Repos/Budget to Actual New.xlsx")
 # 
@@ -11,15 +11,12 @@ budget_raw_file_process <- function(data, updated_user){
   
   data_rad <- data %>% filter(`Radiology?` == "Radiology")
   data_rad <- data_rad %>% mutate(Function = "Radiology")
-  #data_ed <- NULL
   data_ed <- data %>% filter(`Emergency Department?` == "emergency department")
   data_ed <- data_ed %>% mutate(Function = "Emergency Department")
   data <- data %>% filter(!(Function %in% c("Radiology", "Emergency Department"
                                             )
                             )
-                          ) #%>%
-    #filter(`Radiology?` != "Radiology") #%>%
-  #filter(`Emergency Department?`!= "Emergency Department")
+                          ) 
   
   data <- bind_rows(data,data_ed,data_rad)
   
