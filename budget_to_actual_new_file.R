@@ -9,21 +9,25 @@
 
 budget_raw_file_process <- function(data, updated_user){
   
+  ## split ed, radiology and clinical nutrition data from the rest 
   data_rad <- data %>% filter(`Radiology?` == "Radiology")
   data_rad <- data_rad %>% mutate(Function = "Radiology")
   data_ed <- data %>% filter(`Emergency Department?` == "emergency department")
   data_ed <- data_ed %>% mutate(Function = "Emergency Department")
-  data <- data %>% filter(!(Function %in% c("Radiology", "Emergency Department"
+  data <- data %>% filter(!(Function %in% c("Radiology", "Emergency Department", "Clinical Nutrition"
                                             )
                             )
-                          ) 
+                          )
+  data_cn <- data %>% filter(`Clinical Nutrition?` == "Clinical Nutrition") %>%
+              mutate(Function = "Clinical Nutrition")
   
-  data <- bind_rows(data,data_ed,data_rad)
+  data <- bind_rows(data, data_ed, data_rad, data_cn)
+  data <- data %>% mutate(Function = ifelse(Function == "Case Management", "Case Management / Social Work", Function))
   
   list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", "Emergency Department",
                         "Engineering", "Environmental Services", "Food Services", 
                         "Nursing", "Patient & Equipment Transport", "Security", 
-                        "Radiology")
+                        "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management / Social Work")
   
   
   list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ")
