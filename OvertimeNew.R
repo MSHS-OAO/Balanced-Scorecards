@@ -38,12 +38,17 @@ overtime_file_processs_new <- function(data, updated_user){
                 Metric_Name = METRIC_NAME) %>% 
         filter(Service %in% c("ED","Nursing","Imaging")) %>%
         collect() %>%
-        distinct()
+        distinct() %>%
+        mutate(`Cost Center Group` =  toupper(`Cost Center Group`),
+               `Cost Center Group` = trimws(`Cost Center Group`, which = "both"))
       
       dbDisconnect(conn)
       
       
       #data <- raw_data
+      data <- data %>%
+        mutate(`Cost Center Group` = toupper(`Cost Center Group`),
+               `Cost Center Group` = trimws(`Cost Center Group`, which = "both"))
       
       data <- left_join(data,ot_mapping_db)
         
@@ -147,7 +152,7 @@ overtime_file_processs_new <- function(data, updated_user){
 }
 
 #tests
-# raw_data <- read_excel("/home/tommad01/Copy of 2022 OT data v2.xlsx",col_types = c("guess", "guess", "guess", "guess","guess", "guess", "guess", "text","guess", "text", "text", "guess","guess","guess"))
-# raw_data <- raw_data %>% filter(`Discharge Fisc Year-Period` == "2022-12")
-# updated_user <- "TEST"
-# processed_data <- overtime_file_processs_new(raw_data,updated_user)
+raw_data <- read_excel("/home/tommad01/Copy of 2022 OT data v2.xlsx",col_types = c("guess", "guess", "guess", "guess","guess", "guess", "guess", "text","guess", "text", "text", "guess","guess","guess"))
+raw_data <- raw_data %>% filter(`Discharge Fisc Year-Period` == "2022-12")
+updated_user <- "TEST"
+processed_data <- overtime_file_processs_new(raw_data,updated_user)
