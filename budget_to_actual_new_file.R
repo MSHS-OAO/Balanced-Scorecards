@@ -1,4 +1,6 @@
-# data <- read_excel("C:/Users/villea04/Desktop/Back Office FiSRO Dashboard May Steering Committee (Apr 22 YTD).xlsx", sheet = "5-BSC Cost Center Detail", skip = 3)
+# file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail - Balanced Scorecards/Balanced Scorecard Update Mar 2023 YTD Financials.xlsx"
+# data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
+# col_types = c("guess", "text", "text", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess"))
 
 # budget_to_actual_path_new <- paste0(home_path, "Summary Repos/Budget to Actual New.xlsx")
 # 
