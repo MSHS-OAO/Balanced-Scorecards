@@ -40,7 +40,7 @@ overtime_file_processs_new <- function(data, updated_user){
         collect() %>%
         distinct() %>%
         mutate(`Cost Center Group` =  toupper(`Cost Center Group`),
-               `Cost Center Group` = trimws(`Cost Center Group`, which = "both"))
+               `Cost Center Group` = str_squish(`Cost Center Group`))
       
       dbDisconnect(conn)
       
@@ -48,7 +48,7 @@ overtime_file_processs_new <- function(data, updated_user){
       #data <- raw_data
       data <- data %>%
         mutate(`Cost Center Group` = toupper(`Cost Center Group`),
-               `Cost Center Group` = trimws(`Cost Center Group`, which = "both"))
+               `Cost Center Group` = str_squish(`Cost Center Group`))
       
       data <- left_join(data,ot_mapping_db)
         
