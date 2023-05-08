@@ -1,4 +1,4 @@
-data <- read_excel("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS UM review for the score cards January-February 2023 with Admissions  draft 4-14-2023.xlsx", skip = 5)
+#data <- read_excel("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS UM review for the score cards January-February 2023 with Admissions  draft 4-14-2023.xlsx", skip = 5)
 
 case_management_function <- function(data, updated_user) {
   required_ur_review_index_end <- which(data$`Row Labels` %in% "# of Admissions with UR Review  LOS 2+")
