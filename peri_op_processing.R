@@ -1,6 +1,3 @@
-datapath <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Peri-Op/On Time Starts and Turnover Feb 2023 All Epic Sites.xlsx"
-
-
 peri_op_processing <- function(datapath, updated_user) {
   
   sheets <- excel_sheets(datapath)
@@ -48,7 +45,6 @@ peri_op_processing <- function(datapath, updated_user) {
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
              UPDATED_USER = updated_user) %>%
       select(SERVICE, SITE, REPORTING_MONTH, METRIC_NAME_SUBMITTED, VALUE, UPDATED_USER, PREMIER_REPORTING_PERIOD)
-    
     
     
     if (counter > 0) {
