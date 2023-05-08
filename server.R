@@ -1,4 +1,5 @@
 # Increase allowable file size (Sunquest monthly files are too large for default)
+# Kate comment
 if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
 
