@@ -1012,6 +1012,12 @@ ui <-
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
+ tags$style(HTML("
+        #submit_case_management {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
  
   tags$style(HTML("
         #header_custom {
@@ -1034,6 +1040,7 @@ ui <-
           color: #ff0000;
           margin-left: 50px;
         }")),
+ 
   
   tags$style(type = 'text/css', 
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
