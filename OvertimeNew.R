@@ -49,9 +49,7 @@ overtime_file_processs_new <- function(data, updated_user){
       data <- data %>%
         mutate(`Cost Center Group` = toupper(`Cost Center Group`),
                `Cost Center Group` = str_squish(`Cost Center Group`))
-      View(data)
-      View(ot_mapping_db)
-      
+
       
       data <- left_join(data,ot_mapping_db)
         
