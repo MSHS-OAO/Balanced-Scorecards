@@ -157,6 +157,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
   #metrics to calculate their metrics
   prod_df_aggregate <- prod_df_all %>%
     group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+    filter(!is.na(value)) %>%
     summarise(value = mean(value, na.rm = TRUE)) %>%
     filter(Metric_Name != "Total Target Worked FTE") %>%
     filter(!(Service %in% c("Nursing","Imaging") & 
@@ -168,6 +169,19 @@ productivity_dept_summary <- function(raw_data, updated_user){
     )%>%
     ungroup() %>%
     select(-Metric_Group)
+  
+  ot_and_agency_fte_calculation <- prod_df_all %>% filter(Metric_Name %in% c("Overtime Hours", "Agency Hours")) %>%
+    filter(!is.na(value)) %>%
+    group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+    summarise(value = sum(value, na.rm = TRUE)/75)  %>%
+    mutate(Metric_Name = ifelse(Metric_Name == "Overtime Hours", "OT FTE (Premier)", Metric_Name),
+           Metric_Name = ifelse(Metric_Name == "Agency Hours", "Agency FTE (Premier)", Metric_Name)
+           ) %>%
+    ungroup() %>%
+    select(-Metric_Group)
+  
+  prod_df_aggregate <- rbind(prod_df_aggregate, ot_and_agency_fte_calculation)
+                          
   
   peri_op_check <- prod_df_all %>% filter(Service == "Perioperative Services")
   
