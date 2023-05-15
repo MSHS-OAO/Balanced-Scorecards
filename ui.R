@@ -380,6 +380,36 @@ ui <-
                                  ), value = "biomed"
                                  
                         ),
+                        # Case Management Data Submission ----
+                        tabPanel("Operational Metrics - Case Management/Social Work",
+                                 span("Operational Metrics - Case Management/Social Work",
+                                      style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
+                                        tabPanel("Turnaround Time",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_case_management", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
+                                                 fileInput("case_management",
+                                                           label = "Please upload Case Management/Social Work data"),
+                                                 hr(),
+                                                 actionButton("submit_case_management",
+                                                              "Submit",
+                                                              class = "btn-primary"),
+                                        )
+                                 ), value = "evs"
+                        ),
                         # Engineering Data Submission ----
                         tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -982,6 +1012,12 @@ ui <-
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
+ tags$style(HTML("
+        #submit_case_management {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
  
   tags$style(HTML("
         #header_custom {
@@ -1004,6 +1040,7 @@ ui <-
           color: #ff0000;
           margin-left: 50px;
         }")),
+ 
   
   tags$style(type = 'text/css', 
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',

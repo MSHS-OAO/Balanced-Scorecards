@@ -145,6 +145,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_case_management
       
       input_service <- input$selectedService
       
@@ -181,6 +182,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_case_management
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -1071,6 +1073,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_case_management
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1106,6 +1109,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_case_management
       
       
       service_input <- input$selectedService2
@@ -1426,6 +1430,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_case_management
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1462,6 +1467,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_case_management
       
       
       service_input <- input$selectedService3
@@ -4080,6 +4086,70 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
 
       ))
+      
+      #Submit Case Management/Social Work Services -----
+      observeEvent(input$submit_case_management,{
+        button_name <- "submit_case_management"
+        shinyjs::disable(button_name)
+        flag <- 0
+        case_management_file <- input$case_management
+        
+        if(input$name_case_management == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          updated_user <- input$name_case_management
+          file_path <- case_management_file$datapath
+          #file_path <- "/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS IP admissions for Monthly Score Cards March 2023 draft 5-8-2023.xlsx"
+          tryCatch({case_management_data <- read_excel(file_path, skip = 5)
+          flag <- 1
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the enviromental services file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        }
+        
+        if(flag == 1){
+          # Process the data into standar Summary Repo format
+          tryCatch({case_management_data <- case_management_function(case_management_data, updated_user)
+          flag <- 2
+          
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the enviromental services file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        }
+        
+        
+        if(flag == 2){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          case_management_data <- file_return_updated_rows(case_management_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(case_management_data,
+                                                      "TEMP_CASE_MANAGEMENT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+        }
+        shinyjs::enable(button_name)
+        
+      })
+      
 
 } # Close Server
 
