@@ -6,7 +6,9 @@ productivity_dept_summary <- function(raw_data, updated_user){
                                                                                       ifelse(CORPORATE.SERVICE.LINE == "Support Services - Food Services", "Food Services",
                                                                                              ifelse(grepl("Nursing", CORPORATE.SERVICE.LINE), "Nursing",
                                                                                                     ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient Transport",
-                                                                                                           ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security", NA
+                                                                                                           ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security", 
+                                                                                                                  ifelse(CORPORATE.SERVICE.LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
+                                                                                                                  )
                                                                                                            )
                                                                                                     )
                                                                                              )
@@ -19,17 +21,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
     filter(!is.na(Service)) %>%
     filter(FTE.TREND == 1)
   
-  # metric_group_mapping <- read_excel(target_mapping_path, 
-  #                                    sheet = "Metric Group v2",  col_names = TRUE, na = c("", "NA")) # Metric group mapping
-  # metric_group_mapping <- metric_group_mapping %>% # Processing metric group mapping file
-  #   pivot_longer(
-  #     6:length(metric_group_mapping),
-  #     names_to = "Service",
-  #     values_to = "Inclusion"
-  #   ) %>%
-  #   filter(!is.na(Inclusion))
-  
-  
+
   raw_data <- raw_data %>% select(!`Entity Time Period Desc`)
   
   fytd_check <- raw_data[1,] %>% mutate(across(everything(), as.character)) %>% pivot_longer(everything())
