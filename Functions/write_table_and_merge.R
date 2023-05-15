@@ -143,8 +143,6 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
           print("2")
           dbExecute(conn,all_data)
           print("3")
-          dbCommit(conn)
-          dbBegin(conn)
           dbExecute(conn,query)
           print("4")
           dbExecute(conn,truncate_query)
