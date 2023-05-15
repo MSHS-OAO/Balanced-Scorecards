@@ -4201,7 +4201,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           },
           error = function(err){  showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the case management/social work file."),
+            paste0("There seems to be an issue with the case management/social work file.1"),
             easyClose = TRUE,
             footer = NULL
           ))
@@ -4211,13 +4211,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if(flag == 1){
           # Process the data into standar Summary Repo format
+          print(updated_user)
+          print(case_management_data)
           tryCatch({case_management_data <- case_management_function(case_management_data, updated_user)
           flag <- 2
           
           },
           error = function(err){  showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the case management/social work file."),
+            paste0("There seems to be an issue with the case management/social work file.2"),
             easyClose = TRUE,
             footer = NULL
           ))
