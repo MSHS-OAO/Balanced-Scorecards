@@ -182,7 +182,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
       group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
       summarise(value = mean(value, na.rm = TRUE)) %>%
       filter(Metric_Name != "Total Target Worked FTE") %>%
-      filter(!(Service %in% c("Perioperative Services") & 
+      filter(!(Service %in% c("Perioperative Services", "Imaging", "Nursing") & 
                  Metric_Name %in% c("Overtime Percent of Paid Hours",
                                     "Worked Hours Productivity Index",
                                     "Actual Worked Hours per Unit",
