@@ -55,7 +55,7 @@ peri_op_processing <- function(datapath, updated_user) {
     counter <- counter + 1 
   }
   
-  df_final
+  df_final <- df_final %>% filter(SITE %in% c("MSB", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE"))
   
   
 }
