@@ -8,7 +8,9 @@ overtime_file_processs_new <- function(data, updated_user){
                                                                                           ifelse(CORPORATE.SERVICE.LINE == "Support Services - Food Services", "Food Services",
                                                                                                  ifelse(grepl("Nursing", CORPORATE.SERVICE.LINE), "Nursing",
                                                                                                         ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient Transport",
-                                                                                                               ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security", NA
+                                                                                                               ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security",
+                                                                                                                      ifelse(CORPORATE.SERVICE.LINE == "Support Services - Clinical Nutrition","Clinical Nutrition",
+                                                                                                                             ifelse(CORPORATE.SERVICE.LINE == "Perioperative Services","Perioperative Services", NA))
                                                                                                                )
                                                                                                         )
                                                                                                  )
@@ -154,6 +156,6 @@ overtime_file_processs_new <- function(data, updated_user){
 
 #tests
 # raw_data <- read_excel("/home/tommad01/Copy of 2022 OT data v2.xlsx",col_types = c("guess", "guess", "guess", "guess","guess", "guess", "guess", "text","guess", "text", "text", "guess","guess","guess"))
-# raw_data <- raw_data %>% filter(`Discharge Fisc Year-Period` == "2022-12")
+# aw_data <- raw_data %>% filter(`Discharge Fisc Year-Period` == "2022-12")
 # updated_user <- "TEST"
 # processed_data <- overtime_file_processs_new(raw_data,updated_user)
