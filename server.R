@@ -4100,7 +4100,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         button_name <- "submit_peri_op"
         shinyjs::disable(button_name)
         
-        peri_op_file <<- input$peri_op_file
+        peri_op_file <- input$peri_op_file
         flag <- 0 
         
         if (is.null(peri_op_file)) {
@@ -4120,7 +4120,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           }
           
           tryCatch({
-            # Read in SCC file
             file_path <- peri_op_file$datapath
             updated_user <- input$name_peri_op
             
@@ -4166,8 +4165,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           peri_op_summary_repo <- file_return_updated_rows(peri_op_summary_repo)
-          # write_temporary_table_to_database_and_merge(peri_op_summary_repo,
-          #                                             "TEMP_PT", button_name)
+          write_temporary_table_to_database_and_merge(peri_op_summary_repo,
+                                                      "TEMP_PT", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)

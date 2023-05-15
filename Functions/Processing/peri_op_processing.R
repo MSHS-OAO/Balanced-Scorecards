@@ -40,7 +40,7 @@ peri_op_processing <- function(datapath, updated_user) {
     
     df <- df %>% mutate(SITE = gsub("OR", "", SITE)) %>%
       mutate(across(where(is.character), str_trim)) %>%
-      mutate(SERVICE = "Peri-Op",
+      mutate(SERVICE = "Perioperative Services",
              REPORTING_MONTH = date,
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
              UPDATED_USER = updated_user,
