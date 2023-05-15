@@ -722,6 +722,32 @@ ui <-
                     
                                  )
                         ),
+                        # Perioperative Services Data Submission ----
+                        tabPanel("Operational Metrics - Perioperative Services",
+                                 span("Operational Metrics - Perioperative Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 
+                                 tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
+                                        
+                                        tabPanel("On Time Starts and Turnover", hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_peri_op", (labelMandatory("1. Please enter name:")), "")
+                                                   )
+                                                 ),
+                                                 fileInput("peri_op_file", label = "Please upload operational metrics for perioperative services"),
+                                                 actionButton("submit_peri_op", "Submit", class = "btn-primary"),
+                                        )
+                                        
+                                 )
+                        ),
                         # Security Data Submission ----
                         tabPanel("Operational Metrics - Security",
                                  span("Operational Metrics - Security", style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -935,6 +961,12 @@ ui <-
  
  tags$style(HTML("
         #submit_pt_tat {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+ tags$style(HTML("
+        #submit_peri_op {
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
