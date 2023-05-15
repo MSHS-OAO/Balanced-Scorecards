@@ -4165,7 +4165,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if(flag==2){
           
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-          peri_op_summary_repo <<- file_return_updated_rows(peri_op_summary_repo)
+          peri_op_summary_repo <- file_return_updated_rows(peri_op_summary_repo)
           # write_temporary_table_to_database_and_merge(peri_op_summary_repo,
           #                                             "TEMP_PT", button_name)
           
@@ -4201,7 +4201,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           },
           error = function(err){  showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the case management/social work file.1"),
+            paste0("There seems to be an issue with the case management/social work file."),
             easyClose = TRUE,
             footer = NULL
           ))
@@ -4219,7 +4219,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           },
           error = function(err){  showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an issue with the case management/social work file.2"),
+            paste0("There seems to be an issue with the case management/social work file."),
             easyClose = TRUE,
             footer = NULL
           ))

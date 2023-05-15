@@ -43,7 +43,8 @@ peri_op_processing <- function(datapath, updated_user) {
       mutate(SERVICE = "Peri-Op",
              REPORTING_MONTH = date,
              PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
-             UPDATED_USER = updated_user) %>%
+             UPDATED_USER = updated_user,
+             VALUE = as.numeric(VALUE)) %>%
       select(SERVICE, SITE, REPORTING_MONTH, METRIC_NAME_SUBMITTED, VALUE, UPDATED_USER, PREMIER_REPORTING_PERIOD)
     
     
