@@ -408,7 +408,7 @@ ui <-
                                                               "Submit",
                                                               class = "btn-primary"),
                                         )
-                                 ), value = "evs"
+                                 ), value = "clinical_nutrition"
                         ),
                         
                         # Engineering Data Submission ----
