@@ -380,6 +380,23 @@ ui <-
                                  ), value = "biomed"
                                  
                         ),
+                        # Case Management Data Submission ----
+                        tabPanel("Operational Metrics - Case Management/Social Work",
+                                 span("Operational Metrics - Case Management/Social Work",
+                                      
+                                    tabPanel("Operational Metrics",
+                                       fluidRow(
+                                           column(2,
+                                               textInput("name_case_management", (labelMandatory("Please enter name:"))),
+                                                                                         fileInput("case_management",
+                                                           label = "Please upload Case Management/Social Work data"),
+                                                 hr(),
+                                                 actionButton("submit_case_management",
+                                                              "Submit",
+                                                              class = "btn-primary"),
+                                        )
+                                 ), value = "case_management"
+                        ),
                         # Clinical Nutrition Data Submission ----
                         tabPanel("Operational Metrics - Clinical Nutrition",
                                  span("Operational Metrics - Clinical Nutrition",
@@ -397,6 +414,7 @@ ui <-
                                                  fluidRow(
                                                    column(2,
                                                           textInput("name_cn", (labelMandatory("Please enter name:"))),
+
                                                           
                                                    )
                                                  ),
@@ -411,6 +429,7 @@ ui <-
                                  ), value = "clinical_nutrition"
                         ),
                         
+
                         # Engineering Data Submission ----
                         tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -723,6 +742,32 @@ ui <-
                     
                                  )
                         ),
+                        # Perioperative Services Data Submission ----
+                        tabPanel("Operational Metrics - Perioperative Services",
+                                 span("Operational Metrics - Perioperative Services", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 
+                                 tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
+                                        
+                                        tabPanel("On Time Starts and Turnover", hr(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_peri_op", (labelMandatory("1. Please enter name:")), "")
+                                                   )
+                                                 ),
+                                                 fileInput("peri_op_file", label = "Please upload operational metrics for perioperative services"),
+                                                 actionButton("submit_peri_op", "Submit", class = "btn-primary"),
+                                        )
+                                        
+                                 )
+                        ),
                         # Security Data Submission ----
                         tabPanel("Operational Metrics - Security",
                                  span("Operational Metrics - Security", style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -940,6 +985,12 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
+ tags$style(HTML("
+        #submit_peri_op {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
  
  tags$style(HTML("
         #submit_nursing {
@@ -1018,6 +1069,13 @@ ui <-
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
+             
+ tags$style(HTML("
+         #submit_case_management {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
  
   tags$style(HTML("
         #header_custom {
@@ -1040,6 +1098,7 @@ ui <-
           color: #ff0000;
           margin-left: 50px;
         }")),
+ 
   
   tags$style(type = 'text/css', 
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
