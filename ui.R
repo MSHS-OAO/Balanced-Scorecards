@@ -382,7 +382,8 @@ ui <-
                         ),
                         # Case Management Data Submission ----
                         tabPanel("Operational Metrics - Case Management/Social Work",
-                                 span("Operational Metrics - Case Management/Social Work",
+                                 span("Operational Metrics - Case Management/Social Work", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                           font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                       
                                     tabPanel("Operational Metrics",
                                        fluidRow(
@@ -396,6 +397,7 @@ ui <-
                                                               class = "btn-primary"),
                                         )
                                  ), value = "case_management"
+                        )
                         ),
                         # Clinical Nutrition Data Submission ----
                         tabPanel("Operational Metrics - Clinical Nutrition",
