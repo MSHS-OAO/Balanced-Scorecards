@@ -383,6 +383,23 @@ ui <-
                         # Case Management Data Submission ----
                         tabPanel("Operational Metrics - Case Management/Social Work",
                                  span("Operational Metrics - Case Management/Social Work",
+                                      
+                                    tabPanel("Operational Metrics",
+                                       fluidRow(
+                                           column(2,
+                                               textInput("name_case_management", (labelMandatory("Please enter name:"))),
+                                                                                         fileInput("case_management",
+                                                           label = "Please upload Case Management/Social Work data"),
+                                                 hr(),
+                                                 actionButton("submit_case_management",
+                                                              "Submit",
+                                                              class = "btn-primary"),
+                                        )
+                                 ), value = "case_management"
+                        ),
+                        # Clinical Nutrition Data Submission ----
+                        tabPanel("Operational Metrics - Clinical Nutrition",
+                                 span("Operational Metrics - Clinical Nutrition",
                                       style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
@@ -393,23 +410,26 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
-                                        tabPanel("Turnaround Time",
+                                        tabPanel("Operational Metrics",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_case_management", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_cn", (labelMandatory("Please enter name:"))),
+
                                                           
                                                    )
                                                  ),
                                                  br(),
-                                                 fileInput("case_management",
-                                                           label = "Please upload Case Management/Social Work data"),
+                                                 fileInput("cn_file",
+                                                           label = "Please upload Environmental Services data"),
                                                  hr(),
-                                                 actionButton("submit_case_management",
+                                                 actionButton("submit_cn",
                                                               "Submit",
                                                               class = "btn-primary"),
                                         )
-                                 ), value = "evs"
+                                 ), value = "clinical_nutrition"
                         ),
+                        
+
                         # Engineering Data Submission ----
                         tabPanel("Operational Metrics - Engineering",
                                  span("Operational Metrics - Engineering", style = "color: #black; font-family:Calibri; font-weight: bold; 
@@ -1045,7 +1065,13 @@ ui <-
           color: #FFFFFF;
         }")),
  tags$style(HTML("
-        #submit_case_management {
+        #submit_cn {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+             
+ tags$style(HTML("
+         #submit_case_management {
           background-color: #d80b8c;
           color: #FFFFFF;
           border-color: #d80b8c;
