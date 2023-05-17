@@ -382,14 +382,27 @@ ui <-
                         ),
                         # Case Management Data Submission ----
                         tabPanel("Operational Metrics - Case Management/Social Work",
-                                 span("Operational Metrics - Case Management/Social Work", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                 span("Operational Metrics - Case Management/Social Work",
+                                      style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
-                                      
-                                    tabPanel("Operational Metrics",
-                                       fluidRow(
-                                           column(2,
-                                               textInput("name_case_management", (labelMandatory("Please enter name:"))),
-                                                                                         fileInput("case_management",
+                                 br(), 
+                                 span("Please only submit data if you have completed training on data submission for this tool.",
+                                      style = "color:red; font-family:Calibri; font-weight: bold; 
+                                      font-size: 20px; font-style:italic;
+                                      margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
+                                 br(),
+                                 hr(),
+                                 tabBox(title = NULL, id = "tabset8", width = "100%", type = 'pills',      
+                                        tabPanel("Operational Metrics",
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_case_management", (labelMandatory("Please enter name:"))),
+                                                          
+                                                          
+                                                   )
+                                                 ),
+                                                 br(),
+                                                 fileInput("cn_file",
                                                            label = "Please upload Case Management/Social Work data"),
                                                  hr(),
                                                  actionButton("submit_case_management",
@@ -397,7 +410,6 @@ ui <-
                                                               class = "btn-primary"),
                                         )
                                  ), value = "case_management"
-                        )
                         ),
                         # Clinical Nutrition Data Submission ----
                         tabPanel("Operational Metrics - Clinical Nutrition",
