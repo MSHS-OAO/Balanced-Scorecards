@@ -402,7 +402,7 @@ ui <-
                                                    )
                                                  ),
                                                  br(),
-                                                 fileInput("cn_file",
+                                                 fileInput("case_management_file",
                                                            label = "Please upload Case Management/Social Work data"),
                                                  hr(),
                                                  actionButton("submit_case_management",
