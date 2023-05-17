@@ -3979,11 +3979,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             print("flag2")
             cn_data_raw <- lapply(excel_sheets(file_path), read_xlsx, path = file_path)
             processed_data <- list()
-            i=1
+            i <- 1
             for(yearly_data in cn_data_raw){
              cn_summary_data_yearly <- cn_dept_summary(yearly_data,updated_user)
              processed_data[[i]]<-cn_summary_data_yearly
-             i = i+1
+             i <- i+1
             }
             cn_summary_data <- bind_rows(processed_data)
             flag <- 1
