@@ -147,6 +147,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_census
       input$submit_peri_op
       input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService
       
@@ -185,6 +186,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_census
       input$submit_peri_op
       input$submit_case_management
+      input$submit_cn
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -1077,6 +1079,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_census
       input$submit_peri_op
       input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1114,6 +1117,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_census
       input$submit_peri_op
       input$submit_case_management
+      input$submit_cn
       
       
       service_input <- input$selectedService2
@@ -1122,8 +1126,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
-#       service_input <- "ED"
-#       month_input <- "03-2021"
+#       service_input <- "Case Management / Social Work"
+#       month_input <- "03-2023"
 #       site_input <- "MSH"
 
       
@@ -1436,6 +1440,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_census
       input$submit_peri_op
       input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1474,6 +1479,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_census
       input$submit_peri_op
       input$submit_case_management
+      input$submit_cn
             
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
@@ -4002,7 +4008,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             cn_summary_data <- file_return_updated_rows(cn_summary_data)
             #wirte the updated data to the Summary Repo in the server
             write_temporary_table_to_database_and_merge(cn_summary_data,
-                                                        "TEMP_ED", button_name)
+                                                        "TEMP_CN", button_name)
             
             flag <- 2
           },

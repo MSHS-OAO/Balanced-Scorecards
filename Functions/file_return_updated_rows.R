@@ -7,7 +7,7 @@ file_return_updated_rows <- function(df) {
   metrics <- unique(df$METRIC_NAME_SUBMITTED)
   site <- unique(df$SITE)
   
-  
+  summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
   
   # filter out data based on the above results
   existing_data <- summary_repo_tbl %>% filter(SERVICE  %in% service, PREMIER_REPORTING_PERIOD %in% reporting_period, METRIC_NAME_SUBMITTED %in% metrics, SITE %in% site) %>% collect()

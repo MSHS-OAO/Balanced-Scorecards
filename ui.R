@@ -422,7 +422,7 @@ ui <-
                                                  ),
                                                  br(),
                                                  fileInput("cn_file",
-                                                           label = "Please upload Environmental Services data"),
+                                                           label = "Please upload Clinical Nutrition data"),
                                                  hr(),
                                                  actionButton("submit_cn",
                                                               "Submit",

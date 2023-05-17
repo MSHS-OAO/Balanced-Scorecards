@@ -252,6 +252,7 @@ print("3")
 # data_path <- here()
 # metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
 
+
 key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 
 target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
