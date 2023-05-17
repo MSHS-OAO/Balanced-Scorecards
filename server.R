@@ -3976,6 +3976,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           updated_user <- input$name_cn
           file_path <- cn_file$datapath
           tryCatch({
+            print("flag2")
             cn_data_raw <- lapply(excel_sheets(file_path), read_xlsx, path = file_path)
             processed_data <- list()
             i=1
@@ -4004,6 +4005,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Process data if the right file format was submitted
         if(flag == 1) {
           tryCatch({
+            print("flag1")
             ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
             cn_summary_data <- file_return_updated_rows(cn_summary_data)
             #wirte the updated data to the Summary Repo in the server
