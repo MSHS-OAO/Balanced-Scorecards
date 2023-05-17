@@ -4265,7 +4265,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         button_name <- "submit_case_management"
         shinyjs::disable(button_name)
         flag <- 0
-        case_management_file <- input$case_management
+        case_management_file <- input$case_management_file
         
         if(input$name_case_management == ""){
           showModal(modalDialog(
