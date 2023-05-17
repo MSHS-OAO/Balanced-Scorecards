@@ -3991,7 +3991,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with this data file."),
+              paste0("There seems to be an issue with this data file.1"),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -4008,14 +4008,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             cn_summary_data <- file_return_updated_rows(cn_summary_data)
             #wirte the updated data to the Summary Repo in the server
             write_temporary_table_to_database_and_merge(cn_summary_data,
-                                                        "TEMP_CN", button_name)
+                                                        "TEMP_ED", button_name)
             
             flag <- 2
           },
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with this data file."),
+              paste0("There seems to be an issue with this data file.2"),
               easyClose = TRUE,
               footer = NULL
             ))
