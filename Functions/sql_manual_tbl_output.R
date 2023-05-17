@@ -1,9 +1,9 @@
+poolcon <- dbPool(drv = odbc::odbc(), dsn = dsn, timeout = 30)
+summary_repo_tbl <- tbl(poolcon, "SUMMARY_REPO")
+manual_tbl_mapping <- tbl(poolcon, "BSC_MANUAL_TABLE_MAPPING")
+
 sql_manual_table_output <- function(service, table_name) {
   
-  con <- dbConnect(odbc::odbc(), dsn, timeout = 30)
-  summary_repo_tbl <- tbl(con, "SUMMARY_REPO")
-  manual_tbl_mapping <- tbl(con, "BSC_MANUAL_TABLE_MAPPING")
-
   max_month <- as.character(Sys.Date() - months(8))
   format <- "YYYY-MM-DD"
   
