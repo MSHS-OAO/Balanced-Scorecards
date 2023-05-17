@@ -3978,13 +3978,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             print("flag2")
             cn_data_raw <- lapply(excel_sheets(file_path), read_xlsx, path = file_path)
+            print("after apply")
             processed_data <- list()
+            print("after list")
             i <- 1
+            print("for start")
             for(yearly_data in cn_data_raw){
              cn_summary_data_yearly <- cn_dept_summary(yearly_data,updated_user)
              processed_data[[i]]<-cn_summary_data_yearly
              i <- i+1
             }
+            print("for end")
             cn_summary_data <- bind_rows(processed_data)
             flag <- 1
             
