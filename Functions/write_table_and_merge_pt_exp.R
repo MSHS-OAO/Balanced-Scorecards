@@ -72,6 +72,9 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
              UPDATED_USER,
              UPDATED_TIME
              )
+    
+    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM"))
+    
     ##substitue single ' for '' so the query can escape
     # processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
     # processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
