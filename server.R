@@ -145,6 +145,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService
       
@@ -181,10 +184,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Food Services"
+      # service_input <- "Case Management / Social Work"
       # month_input <- "03-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -1071,6 +1077,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1106,6 +1115,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       
       service_input <- input$selectedService2
@@ -1114,8 +1126,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
-#       service_input <- "ED"
-#       month_input <- "03-2021"
+#       service_input <- "Case Management / Social Work"
+#       month_input <- "03-2023"
 #       site_input <- "MSH"
 
       
@@ -1426,6 +1438,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1462,8 +1477,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
-      
-      
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
+            
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
@@ -1808,7 +1825,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updated_user <- input$name_finance
         file_path <- inFile_budget$datapath
         tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
-                                     col_types = c("guess", "text", "text", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess", "guess"))
+                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "text"))
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -3941,6 +3958,87 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         shinyjs::enable(button_name)
         
       })
+      # Clinical Nutrition observer event actions for data submission ----- 
+      observeEvent(input$submit_cn, {
+        button_name <- "submit_cn"
+        shinyjs::disable(button_name)
+        flag <- 0
+        cn_file <- input$cn_file
+        
+        if(input$name_cn == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          updated_user <- input$name_cn
+          file_path <- cn_file$datapath
+          tryCatch({
+            print("flag2")
+            cn_data_raw <- lapply(excel_sheets(file_path), read_xlsx, path = file_path)
+            print("after apply")
+            processed_data <- list()
+            print("after list")
+            i <- 1
+            print("for start")
+            for(yearly_data in cn_data_raw){
+             cn_summary_data_yearly <- cn_dept_summary(yearly_data,updated_user)
+             processed_data[[i]]<-cn_summary_data_yearly
+             i <- i+1
+            }
+            print("for end")
+            cn_summary_data <- bind_rows(processed_data)
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          })
+          
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            print("flag1")
+            ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+            cn_summary_data <- file_return_updated_rows(cn_summary_data)
+            #wirte the updated data to the Summary Repo in the server
+            write_temporary_table_to_database_and_merge(cn_summary_data,
+                                                        "TEMP_CN", button_name)
+            
+            flag <- 2
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          })
+        }
+        
+        if(flag == 2){
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+        }
+        shinyjs::enable(button_name)
+        
+      })
       
       
       # 5. Target and Status Definitions tab ----------------------------------
@@ -4080,6 +4178,157 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
 
       ))
+            
+      
+      # Perioperative Metrics - Operational Data  -----------------------
+      
+      
+      observeEvent(input$submit_peri_op,{
+        button_name <- "submit_peri_op"
+        shinyjs::disable(button_name)
+        
+        peri_op_file <- input$peri_op_file
+        flag <- 0 
+        
+        if (is.null(peri_op_file)) {
+          return(NULL)
+          shinyjs::enable(button_name)
+          print("null")
+        }else{
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          #pt_data <- read_excel(file_path)
+          if(input$name_peri_op == ""){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("Please fill in the required fields"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          
+          tryCatch({
+            file_path <- peri_op_file$datapath
+            updated_user <- input$name_peri_op
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Perioperative Services data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+          }
+          )
+          
+        }
+        
+        
+        if(flag==1){
+          
+          tryCatch({
+            # Process Input Data
+            peri_op_summary_repo <- peri_op_processing(file_path, updated_user)
+            flag <- 2
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Perioperative Services data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          }
+          )
+          
+        }
+        if(flag==2){
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          peri_op_summary_repo <- file_return_updated_rows(peri_op_summary_repo)
+          write_temporary_table_to_database_and_merge(peri_op_summary_repo,
+                                                      "TEMP_PT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+          
+        }
+        shinyjs::enable(button_name)
+        
+        
+      })
+      #Submit Case Management/Social Work Services -----
+      observeEvent(input$submit_case_management,{
+        button_name <- "submit_case_management"
+        shinyjs::disable(button_name)
+        flag <- 0
+        case_management_file <- input$case_management_file
+        
+        if(input$name_case_management == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          updated_user <- input$name_case_management
+          file_path <- case_management_file$datapath
+          #file_path <- "/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS IP admissions for Monthly Score Cards March 2023 draft 5-8-2023.xlsx"
+          tryCatch({case_management_data <- read_excel(file_path, skip = 5)
+          flag <- 1
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the case management/social work file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        }
+        
+        if(flag == 1){
+          # Process the data into standar Summary Repo format
+          print(updated_user)
+          print(case_management_data)
+          tryCatch({case_management_data <- case_management_function(case_management_data, updated_user)
+          flag <- 2
+          
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the case management/social work file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        }
+        
+        
+        if(flag == 2){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          case_management_data <- file_return_updated_rows(case_management_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(case_management_data,
+                                                      "TEMP_CASE_MANAGEMENT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+        }
+        shinyjs::enable(button_name)
+        
+      })
+      
 
 } # Close Server
 

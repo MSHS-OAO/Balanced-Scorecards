@@ -14,8 +14,8 @@ process_nursing_data <- function(data,updated_user){ #service_dept_summary
            UPDATED_USER = updated_user) %>%
     select(-`Denominator (Patient Days)`) %>%
     pivot_longer(cols = c(-REPORTING_MONTH,-SERVICE,-SITE,-PREMIER_REPORTING_PERIOD,-UPDATED_USER),
-                names_to = "METRIC_NAME_SUBMITTED",
-                values_to = "VALUE")
+                 names_to = "METRIC_NAME_SUBMITTED",
+                 values_to = "VALUE")
   
   return(data)
   
