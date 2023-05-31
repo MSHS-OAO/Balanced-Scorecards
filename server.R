@@ -3193,7 +3193,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 1){
         # Process the data into standar Summary Repo format
-        tryCatch({overtime_summary_data <- overtime_file_processs(overtime_data, updated_user)
+        tryCatch({overtime_summary_data <- overtime_file_processs_new(overtime_data, updated_user)
         flag <- 2
         
         },
