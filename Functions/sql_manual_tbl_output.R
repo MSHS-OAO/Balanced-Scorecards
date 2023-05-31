@@ -4,7 +4,7 @@ manual_tbl_mapping <- tbl(poolcon, "BSC_MANUAL_TABLE_MAPPING")
 
 sql_manual_table_output <- function(service, table_name) {
   
-  max_month <- as.character(Sys.Date() %m-% months(8))
+  max_month <- as.character(Sys.Date() %m-% months(7))
   format <- "YYYY-MM-DD"
   
   manual_mapping_metrics <- manual_tbl_mapping %>% 
