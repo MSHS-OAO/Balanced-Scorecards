@@ -219,6 +219,15 @@ productivity_dept_summary <- function(raw_data, updated_user){
         mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
         ungroup() %>%
         select(-Metric_Group)
+      
+      nursing_rad_metric_calc_actual_fte <- prod_df_all %>%
+        filter(Service %in% c("Nursing","Imaging")) %>%
+        filter(Metric_Name == "Actual Worked FTE") %>%
+        group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+        summarise(value = sum(value, na.rm = TRUE))
+      
+      nursing_rad_metric_calc <- bind_rows(nursing_rad_metric_calc, nursing_rad_metric_calc_actual_fte)
+      
    } else {
      nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
        filter(Service %in% c("Nursing","Imaging")) %>%
@@ -240,6 +249,15 @@ productivity_dept_summary <- function(raw_data, updated_user){
        mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
        ungroup() %>%
        select(-Metric_Group)
+     
+     nursing_rad_metric_calc_actual_fte <- prod_df_all %>%
+       filter(Service %in% c("Nursing","Imaging")) %>%
+       filter(Metric_Name == "Actual Worked FTE") %>%
+       group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
+       summarise(value = sum(value, na.rm = TRUE))
+     
+     nursing_rad_metric_calc <- bind_rows(nursing_rad_metric_calc, nursing_rad_metric_calc_actual_fte)
+       
    }
   
   
