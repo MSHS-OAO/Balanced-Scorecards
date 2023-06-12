@@ -299,12 +299,15 @@ productivity_dept_summary <- function(raw_data, updated_user){
                     values_from = value
         ) %>%
         mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
-               `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid hours`
+               `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid hours`,
+               `OT FTE` = `Overtime Hours`/75,
+               `Agency FTE` = `Agency Hours`/75
         ) %>%
         pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
                      names_to = "Metric_Name",
                      values_to = "value") %>%
-        filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours", "Actual Worked FTE", "Overtime Hours", "Agency Hours")) %>%
+        filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours", "Actual Worked FTE", "Overtime Hours", "Agency Hours",
+                                  "OT FTE", "Agency FTE")) %>%
         mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
         mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
         ungroup() %>%
@@ -320,12 +323,15 @@ productivity_dept_summary <- function(raw_data, updated_user){
                     values_from = value
         ) %>%
         mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`,
-               `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid Hours`
+               `Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid Hours`,
+               `OT FTE` = `Overtime Hours`/75,
+               `Agency FTE` = `Agency Hours`/75
         ) %>%
         pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
                      names_to = "Metric_Name",
                      values_to = "value") %>%
-        filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours", "Actual Worked FTE", "Overtime Hours", "Agency Hours")) %>%
+        filter(Metric_Name %in% c("Worked Hours Productivity Index","Overtime Percent of Paid Hours", "Actual Worked FTE", "Overtime Hours", "Agency Hours",
+                                  "OT FTE", "Agency FTE")) %>%
         mutate_at(vars(value), ~replace(., is.nan(.), 0)) %>%
         mutate(Metric_Group = ifelse(Metric_Name == "Worked Hours Productivity Index", "Productivity", "Overtime Hours"))%>%
         ungroup() %>%
