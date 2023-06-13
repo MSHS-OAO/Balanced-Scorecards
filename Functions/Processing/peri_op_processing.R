@@ -6,7 +6,12 @@ peri_op_processing <- function(datapath, updated_user) {
   for (i in 1:length(monthly_data)) {
     print(i)
     raw_data <- read_excel(datapath, sheet = monthly_data[i])
-    ###Look for pattern and extarxt date from column title
+    
+    count_log_index <- which(raw_data[,1] == "Count of Log #")
+    if(count_log_index != 2) {
+      raw_data <- raw_data[-c(1:(count_log_index-2)),]
+    }
+    ###Look for pattern and extract date from column title
     date_extract <- colnames(raw_data)[1]
     date <- sub(".*First Case On Time Starts - ", "", date_extract)
     date <- as.Date(paste0(date, "-01"), format = "%b %Y-%d")
@@ -26,12 +31,15 @@ peri_op_processing <- function(datapath, updated_user) {
       mutate(METRIC_NAME_SUBMITTED = "Average Turnover (min)")
     
     ##Process Case Table
-    row_to_column_name <- which(case_table_raw == "Site/ Service")
+    row_to_column_name <- which(case_table_raw == "Site / Service" | case_table_raw == "Site /Service" |
+                                  case_table_raw == "Site/Service" | case_table_raw == "Site/ Service")
+
     case_table_raw <- case_table_raw %>% row_to_names(row_number = row_to_column_name)
+    site_column_name <- colnames(case_table_raw)[1]
     ##Figure out which rows contain the summarized metric
-    case_table_raw <- case_table_raw %>% filter(`Site/ Service` %in% c("OR MSH", "OR MSQ", "OR MSM", "OR MSW", "OR MSBI", "MSB OR")) %>%
-      select(`Site/ Service`, `On Time Start %`) %>%
-      rename(SITE = `Site/ Service`,
+    case_table_raw <- case_table_raw %>% filter(!!sym(site_column_name) %in% c("OR MSH", "OR MSQ", "OR MSM", "OR MSW", "OR MSBI", "MSB OR")) %>%
+      select(!!sym(site_column_name), `On Time Start %`) %>%
+      rename(SITE = !!sym(site_column_name),
              VALUE = `On Time Start %`) %>%
       mutate(METRIC_NAME_SUBMITTED = "On Time Start %")
     
