@@ -299,7 +299,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         relocate(Section) %>%
         ungroup() %>%
         select(-Metric_Group) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded)
+        pivot_wider(names_from = Site, values_from = value_rounded, names_sort = TRUE)
 
       # Identify any sites missing for the summary and add them with NA values
       missing_sites <- setdiff(sites_inc, names(current_summary))
@@ -582,7 +582,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         select(-Metric_Group, -Metric_Name) %>%
         mutate(Section = "Metrics") %>%
         relocate(Section) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded)
+        pivot_wider(names_from = Site, values_from = value_rounded, names_sort = TRUE)
 
       missing_sites <- setdiff(sites_inc, names(fytd_summary))
       fytd_summary[missing_sites] <- NA
@@ -765,7 +765,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           pivot_wider(names_from = Site,
                       values_from = Status)
         
-        current_status <- full_join(current_status, budget_target_current)
+        
+        if(nrow(current_status) == 0) {
+          current_status <- budget_target_current
+        } else {
+          current_status <- full_join(current_status, budget_target_current)
+        }
         
       }
       
@@ -931,9 +936,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # # Merge with rest of the metrics 
       # Merge FYTD metrics with budget metrics
-      fytd_status <- bind_rows(fytd_status,
-                               budget_to_actual_target,
-                               variance_to_budget_target)
+      if(nrow(fytd_status) == 0) {
+        fytd_status <- bind_rows(budget_to_actual_target,
+                                 variance_to_budget_target)
+      } else {
+        fytd_status <- bind_rows(fytd_status,
+                                 budget_to_actual_target,
+                                 variance_to_budget_target)
+      }
 
       # Pivot wider for dashboard format
       fytd_status <- fytd_status %>%
