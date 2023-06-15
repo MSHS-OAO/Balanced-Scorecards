@@ -415,6 +415,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # FYTD Summary Table - for Patient Experience
       # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
       #pt_exp_data <- metrics_final_df %>% filter(Metric_Group == "Patient Experience")
+      date_selected <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
+      max_date <- ceiling_date(date_selected, "month") - 1
       conn <- dbConnect(odbc(), dsn)
       pt_exp_data <- tbl(conn, "BSC_PATIENT_EXPERIENCE_REPO") %>% 
         rename(Service = SERVICE,
@@ -428,6 +430,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                All_PG_Database_Mean = ALL_PG_DATABASE_MEAN,
                All_PG_Database_N = ALL_PG_DATABASE_N,
                All_PG_Database_Rank = ALL_PG_DATABASE_RANK) %>%
+        filter(Service == service_input) %>%
+        filter(Reporting_Date_End <= TO_DATE(max_date, 'YYYY-MM-DD')) %>%
         select(-UPDATED_USER, -UPDATED_TIME) %>%
         collect()
       pt_exp_data <- pt_exp_data %>%
@@ -436,7 +440,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(!(Site %in% "All"))
       dbDisconnect(conn)
       
-      if (service_input %in% unique(pt_exp_data$Service)) {
+      if (service_input %in% unique(pt_exp_data$Service) & nrow(pt_exp_data) != 0) {
         
         pt_exp_ytd <- pt_exp_data %>%
           # Add logic to include Jan data in YTD data
