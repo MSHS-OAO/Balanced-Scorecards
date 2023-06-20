@@ -739,6 +739,31 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if("Budget to Actual" %in% current_summary_data$Metric_Group) {
         current_status_budget <- current_summary_data %>%
           filter(Metric_Group == "Budget to Actual")
+        # current_summary_data_comb <- current_summary_data %>% select(Site, Metric_Group, Metric_Name_Summary, Metric_Name, Reporting_Month_Ref)
+        # 
+        # current_status_budget <- left_join(current_summary_data_comb,
+        #                                 metric_targets_status,
+        #                                 by = c("Site",
+        #                                        "Metric_Group",
+        #                                        "Metric_Name"))
+        # 
+        # current_status_budget <- current_status_budget %>%
+        #   filter(Metric_Group == "Budget to Actual") %>%
+        #   mutate(Service = service_input,
+        #          Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+        #   select(-value_rounded)
+        
+        # current_status_budget <- left_join(current_summary_data,
+        #                                 metric_targets_status,
+        #                                 by = c("Site",
+        #                                        "Metric_Group",
+        #                                        "Metric_Name"))
+        # 
+        # current_status_budget <- current_status_budget %>%
+        #   filter(Metric_Group == "Budget to Actual") %>%
+        #   mutate(Service = service_input,
+        #          Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+        #   select(-value_rounded)
         
         budget_target_current <- get_budget_data(service = service_input,month_input)
         
@@ -750,7 +775,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             select(-Service, -Month) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
         }
         
+        
         budget_target_current <- left_join(current_status_budget, budget_target_current) 
+        if(service_input == "Nursing") {
+          budget_target_current <- budget_target_current %>% group_by(Site, Reporting_Month_Ref) %>% fill(Value)
+          budget_target_current <- budget_target_current %>% group_by(Site, Reporting_Month_Ref) %>% fill(Value_ytd)
+          
+        }
         
         budget_target_current <- budget_target_current %>% select(-Target) %>%
           rename(Target = Value) %>%
@@ -2028,6 +2059,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         prod_summary <- prod_summary %>% filter(REPORTING_MONTH >= max(REPORTING_MONTH) %m-% months(1))
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
         productivity_new_data <- file_return_updated_rows(prod_summary)
+        productivity_new_data <- productivity_new_data %>% distinct()
 
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(productivity_new_data,

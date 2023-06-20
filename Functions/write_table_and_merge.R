@@ -67,6 +67,8 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
              METRIC_NAME_SUBMITTED,
              VALUE,UPDATED_TIME,
              UPDATED_USER)
+    
+    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM"))
     ##substitue single ' for '' so the query can escape
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
@@ -124,13 +126,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
     #                   dsn = dsn)
     
-    # conn <- dbConnect(odbc(), "OracleODBC-21_5",
-    #                   uid = "OAO_PRODUCTION",
-    #                   pwd = "TIGu*3$K22nqLjP")
-    
     conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_DEVELOPMENT",
-                      pwd = "HC*tA$4f1qMqVo")
+                      uid = "OAO_PRODUCTION",
+                      pwd = "TIGu*3$K22nqLjP")
+    
+    # conn <- dbConnect(odbc(), "OracleODBC-21_5",
+    #                   uid = "OAO_DEVELOPMENT",
+    #                   pwd = "HC*tA$4f1qMqVo")
 
     # conn <- dbConnect(odbc(), dsn)
     print("after conn")
