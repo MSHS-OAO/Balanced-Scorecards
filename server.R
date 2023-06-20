@@ -190,7 +190,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "Nursing"
+      # service_input <- "Perioperative Services"
       # month_input <- "05-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -1039,12 +1039,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       #metrics_summary <- metrics_summary %>% filter(!(Metric_Name_Summary == "Total Revenue to Budget Variance"))
       
+      metric_order <- metric_mapping_summary_site %>% filter(Service == service_input) %>% select(Metric_Name_Summary, Display_Order)
+      metrics_summary <- left_join(metrics_summary, metric_order) %>% arrange(Display_Order)
+      
+      targets_summary <- left_join(targets_summary, metric_order) %>% arrange(Display_Order)
       summary_tab_tb <- rbind(metrics_summary, targets_summary) # Don't think we need to specify which columns anymore#2[,1:18])
       # Why do we need this? There is no NYEE, there is NYEE.x and NYEE.y
       #summary_tab_tb$NYEE <- NULL
       
       # Rename Metric_Name_Summary as Metric_Name
-      summary_tab_tb <- summary_tab_tb %>%
+      summary_tab_tb <- summary_tab_tb %>% select(-Display_Order) %>%
         rename(Metric_Name = Metric_Name_Summary)
       
       colnames(summary_tab_tb) <- gsub("\\..*", " ", colnames(summary_tab_tb))
