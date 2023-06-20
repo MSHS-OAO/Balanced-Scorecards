@@ -7,7 +7,7 @@ conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker 
                   dsn = dsn)
 mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
 # Get choices of service from db
-service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect() %>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
+service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
 service_choices <- sort(service_choices$SERVICE)
 default_service <- service_choices[1]
 #Get campus choices from db
