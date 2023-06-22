@@ -1869,16 +1869,79 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       shinyjs::enable(button_name)
       
     })
-    #Monthly Patient Exprience Submission ----------------------
+    #Monthly Patient Experience Submission ----------------------
     observeEvent(input$submit_monthly_pt_exp, {
+      
       ed_monthly <- input$pt_exp_ed_monthly
       nursing_monthly <- input$pt_exp_nursing_monthly
       support_monthly <- input$pt_exp_support_monthly
       button <- input$submit_monthly_pt_exp
       name <- input$name_monthly_patient_experience
-      pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")
-      pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")
-      pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")
+      
+      if(name == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        if(is.null(ed_monthly)){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please upload ED Data file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else if(is.null(nursing_monthly)){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please upload Nursing Data file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else if(is.null(support_monthly)){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please upload Support Services Data file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        else{
+          tryCatch( {pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing ED file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+          tryCatch( {pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+          tryCatch( {pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        
+      }
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
       
@@ -1886,17 +1949,78 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     #YTD Patient Exprience Submission ----------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      ed_monthly <- input$pt_exp_ed_ytd
-      nursing_monthly <- input$pt_exp_nursing_ytd
-      support_monthly <- input$pt_exp_support_ytd
+      ed_ytd <- input$pt_exp_ed_ytd
+      nursing_ytd <- input$pt_exp_nursing_ytd
+      support_ytd <- input$pt_exp_support_ytd
       button <- input$submit_ytd_pt_exp
       name <- input$name_ytd_patient_experience
-      pt_exp_server_function(button, ed_monthly, "ED", name, "YTD")
-      pt_exp_server_function(button, nursing_monthly, "Nursing", name, "YTD")
-      pt_exp_server_function(button, support_monthly, "Support Services", name, "YTD")
+
+      if(name == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        if(is.null(ed_ytd)){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please upload ED Data file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else if(is.null(nursing_ytd)){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please upload Nursing Data file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else if(is.null(support_ytd)){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please upload Support Services Data file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }
+        else{
+          tryCatch( {pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing ED file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+          tryCatch( {pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+          tryCatch( {pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        
+      }
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
-      
     })
     
     
