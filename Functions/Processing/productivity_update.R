@@ -153,6 +153,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
     summarise(value = sum(value, na.rm = TRUE)) %>%
     filter(Metric_Name != "Total Target Worked FTE") %>%
     filter(Metric_Name != "Worked Hours Productivity Index") %>%
+    filter(Metric_Name != "Overtime Percent of Paid Hours") %>%
     filter(!(Service %in% c("Nursing","Imaging") & 
                Metric_Name %in% c("Overtime Percent of Paid Hours",
                                   "Worked Hours Productivity Index",
@@ -173,7 +174,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
     ungroup() %>%
     select(-Metric_Group)
   
-  whpu <- prod_df_all %>% filter(Metric_Name %in% c("Worked Hours Productivity Index")) %>%
+  whpu <- prod_df_all %>% filter(Metric_Name %in% c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours")) %>%
               group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
               filter(!is.na(value)) %>%
               summarise(value = mean(value, na.rm = TRUE))  %>%
