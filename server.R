@@ -1886,62 +1886,42 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           footer = NULL
         ))
       }else{
-        if(is.null(ed_monthly)){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("Please upload ED Data file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else if(is.null(nursing_monthly)){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("Please upload Nursing Data file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else if(is.null(support_monthly)){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("Please upload Support Services Data file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }
-        else{
+        if(!is.null(ed_monthly)){
           tryCatch( {pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")},
                     error = function(err){
                       showModal(modalDialog(
                         title = "Error",
-                        paste0("There seems to be an issue processing ED file."),
-                        easyClose = TRUE,
-                        footer = NULL
-                      ))
-                      shinyjs::enable(button_name)
-                    })
-          tryCatch( {pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")},
-                    error = function(err){
-                      showModal(modalDialog(
-                        title = "Error",
-                        paste0("There seems to be an issue processing Nursing file."),
-                        easyClose = TRUE,
-                        footer = NULL
-                      ))
-                      shinyjs::enable(button_name)
-                    })
-          tryCatch( {pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")},
-                    error = function(err){
-                      showModal(modalDialog(
-                        title = "Error",
-                        paste0("There seems to be an issue processing Support Services file."),
+                        paste0("There seems to be an issue processing ED file.Please check the file."),
                         easyClose = TRUE,
                         footer = NULL
                       ))
                       shinyjs::enable(button_name)
                     })
         }
-        
-      }
+        if(!is.null(nursing_monthly)){
+          tryCatch( {pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(support_monthly)){
+          tryCatch( {pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }}
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
       
@@ -1963,29 +1943,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           footer = NULL
         ))
       }else{
-        if(is.null(ed_ytd)){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("Please upload ED Data file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else if(is.null(nursing_ytd)){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("Please upload Nursing Data file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else if(is.null(support_ytd)){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("Please upload Support Services Data file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }
-        else{
+        if(!is.null(ed_ytd)){
           tryCatch( {pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")},
                     error = function(err){
                       showModal(modalDialog(
@@ -1996,6 +1954,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       ))
                       shinyjs::enable(button_name)
                     })
+        }
+        if(!is.null(nursing_ytd)){
           tryCatch( {pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")},
                     error = function(err){
                       showModal(modalDialog(
@@ -2006,6 +1966,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       ))
                       shinyjs::enable(button_name)
                     })
+        }
+        if(!is.null(nursing_ytd)){
           tryCatch( {pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")},
                     error = function(err){
                       showModal(modalDialog(
@@ -2016,9 +1978,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       ))
                       shinyjs::enable(button_name)
                     })
+          }
         }
-        
-      }
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
     })
