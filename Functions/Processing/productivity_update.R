@@ -177,7 +177,8 @@ productivity_dept_summary <- function(raw_data, updated_user){
   whpu <- prod_df_all %>% filter(Metric_Name %in% c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours")) %>%
               group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
               filter(!is.na(value)) %>%
-              summarise(value = mean(value, na.rm = TRUE))  %>%
+              summarise(value = mean(value, na.rm = TRUE)) %>%
+              ungroup() %>%
               select(-Metric_Group)
   
   prod_df_aggregate <- rbind(prod_df_aggregate, ot_and_agency_fte_calculation, whpu)
