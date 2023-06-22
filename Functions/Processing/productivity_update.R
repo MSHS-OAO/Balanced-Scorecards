@@ -150,7 +150,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
   prod_df_aggregate <- prod_df_all %>%
     group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
     filter(!is.na(value)) %>%
-    summarise(value = mean(value, na.rm = TRUE)) %>%
+    summarise(value = sum(value, na.rm = TRUE)) %>%
     filter(Metric_Name != "Total Target Worked FTE") %>%
     filter(!(Service %in% c("Nursing","Imaging") & 
                Metric_Name %in% c("Overtime Percent of Paid Hours",
@@ -180,7 +180,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
   if(nrow(peri_op_check) > 0) {
   prod_df_aggregate <- prod_df_all %>%
       group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
-      summarise(value = mean(value, na.rm = TRUE)) %>%
+      summarise(value = sum(value, na.rm = TRUE)) %>%
       filter(Metric_Name != "Total Target Worked FTE") %>%
       filter(!(Service %in% c("Perioperative Services", "Imaging", "Nursing") & 
                  Metric_Name %in% c("Overtime Percent of Paid Hours",
