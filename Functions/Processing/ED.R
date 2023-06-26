@@ -82,7 +82,7 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
     pivot_wider(names_from = "KPI",
                 values_from = "Metric",values_fill=0) %>%
     mutate(`LWBS %` = `LWBS`/`Visit Volume (Epic)`,
-           `Admit to Depart Boarder Hours (90th Percentile))` = `Admit to Depart Boarder Hours (90th Percentile)`/60,
+           `Admit to Depart Boarder Hours (90th Percentile)` = `Admit to Depart Boarder Hours (90th Percentile)`/60,
            `ED LOS Admitted Patients (90th Percentile)` = `ED LOS Admitted Patients (90th Percentile)`/60,
            `ED LOS T&R Patients (90th Percentile)` = `ED LOS T&R Patients (90th Percentile)`/60,
            `ED LOS Admitted Patients (Median)` = `ED LOS Admitted Patients (Median)`/60,
