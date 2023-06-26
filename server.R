@@ -1918,89 +1918,204 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       shinyjs::enable(button_name)
       
     })
-    
-    ## Read in Patient Experience data -----------------------------------
-    # ED Monthly Data Observe Event -------------------
+    #Monthly Patient Experience Submission ----------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      # Name ED monthly data
+      
       ed_monthly <- input$pt_exp_ed_monthly
-      button <- input$submit_monthly_pt_exp
-      name <- input$name_monthly_patient_experience
-      pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")
-      
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-      
-    })
-    
-    # Nursing Patient Experience Monthly Data Observe Event -------------------
-    observeEvent(input$submit_monthly_pt_exp, {
-      # Name Nursing monthly data
       nursing_monthly <- input$pt_exp_nursing_monthly
-      button <- input$submit_monthly_pt_exp
-      name <- input$name_monthly_patient_experience
-      
-      pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-        
-  
-    })
-    
-    # Support Services Patient Experience Monthly Data Observe Event -------------------
-    observeEvent(input$submit_monthly_pt_exp, {
-      # Name Support Services monthly data
       support_monthly <- input$pt_exp_support_monthly
       button <- input$submit_monthly_pt_exp
       name <- input$name_monthly_patient_experience
       
-      pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")
+      if(name == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        if(!is.null(ed_monthly)){
+          tryCatch( {pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing ED file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(nursing_monthly)){
+          tryCatch( {pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(support_monthly)){
+          tryCatch( {pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }}
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
+      
     })
-
-    # ED YTD Data Observe Event -------------------
+    
+    #YTD Patient Exprience Submission ----------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      button <- "submit_ytd_pt_exp"
-      # Name ED YTD data
       ed_ytd <- input$pt_exp_ed_ytd
-      name <- input$name_ytd_patient_experience
-      
-      pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-     
-      
-    })
-    
-    # Nursing YTD Data Observe Event -------------------
-    observeEvent(input$submit_ytd_pt_exp, {
-      button <- "submit_ytd_pt_exp"
-      # Name Nursing YTD data
       nursing_ytd <- input$pt_exp_nursing_ytd
-      name <- input$name_ytd_patient_experience
-      
-      pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-      
-      
-    })
-    
-    # Support Services YTD Data Observe Event -------------------
-    observeEvent(input$submit_ytd_pt_exp, {
-      button <- "submit_ytd_pt_exp"
-      # Name Support Services YTD data
       support_ytd <- input$pt_exp_support_ytd
+      button <- input$submit_ytd_pt_exp
       name <- input$name_ytd_patient_experience
-      
-      pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")
+
+      if(name == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        if(!is.null(ed_ytd)){
+          tryCatch( {pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing ED file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(nursing_ytd)){
+          tryCatch( {pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(nursing_ytd)){
+          tryCatch( {pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+          }
+        }
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
-      
-
     })
     
+    
+    # ## Read in Patient Experience data -----------------------------------
+    # # ED Monthly Data Observe Event -------------------
+    # observeEvent(input$submit_monthly_pt_exp, {
+    #   # Name ED monthly data
+    #   ed_monthly <- input$pt_exp_ed_monthly
+    #   button <- input$submit_monthly_pt_exp
+    #   name <- input$name_monthly_patient_experience
+    #   pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")
+    # 
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+    #                             input$selectedService3)
+    # 
+    # })
+    # 
+    # # Nursing Patient Experience Monthly Data Observe Event -------------------
+    # observeEvent(input$submit_monthly_pt_exp, {
+    #   # Name Nursing monthly data
+    #   nursing_monthly <- input$pt_exp_nursing_monthly
+    #   button <- input$submit_monthly_pt_exp
+    #   name <- input$name_monthly_patient_experience
+    # 
+    #   pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+    #                             input$selectedService3)
+    # 
+    # 
+    # })
+    # 
+    # # Support Services Patient Experience Monthly Data Observe Event -------------------
+    # observeEvent(input$submit_monthly_pt_exp, {
+    #   # Name Support Services monthly data
+    #   support_monthly <- input$pt_exp_support_monthly
+    #   button <- input$submit_monthly_pt_exp
+    #   name <- input$name_monthly_patient_experience
+    # 
+    #   pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+    #                             input$selectedService3)
+    # })
+
+    # # ED YTD Data Observe Event -------------------
+    # observeEvent(input$submit_ytd_pt_exp, {
+    #   button <- "submit_ytd_pt_exp"
+    #   # Name ED YTD data
+    #   ed_ytd <- input$pt_exp_ed_ytd
+    #   name <- input$name_ytd_patient_experience
+    #   
+    #   pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+    #                             input$selectedService3)
+    #  
+    #   
+    # })
+    # 
+    # # Nursing YTD Data Observe Event -------------------
+    # observeEvent(input$submit_ytd_pt_exp, {
+    #   button <- "submit_ytd_pt_exp"
+    #   # Name Nursing YTD data
+    #   nursing_ytd <- input$pt_exp_nursing_ytd
+    #   name <- input$name_ytd_patient_experience
+    #   
+    #   pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+    #                             input$selectedService3)
+    #   
+    #   
+    # })
+    # 
+    # # Support Services YTD Data Observe Event -------------------
+    # observeEvent(input$submit_ytd_pt_exp, {
+    #   button <- "submit_ytd_pt_exp"
+    #   # Name Support Services YTD data
+    #   support_ytd <- input$pt_exp_support_ytd
+    #   name <- input$name_ytd_patient_experience
+    #   
+    #   pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+    #                             input$selectedService3)
+    #   
+    # 
+    # })
+    # 
     
     ## Productivity data --------------------------------
     ## Read in productivity data and process
