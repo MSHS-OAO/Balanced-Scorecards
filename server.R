@@ -837,6 +837,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                 by = c("Site",
                                        "Metric_Group",
                                        "Metric_Name"))
+      fytd_status <- fytd_status %>%
+        mutate(value_rounded = round(value_rounded,3))
       
       # Determine status definitions for FYTD metrics
       fytd_status <- fytd_status %>%
