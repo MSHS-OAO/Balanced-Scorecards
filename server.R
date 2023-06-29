@@ -405,9 +405,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       fytd_summary_total <- fytd_summary_all %>%
         # Metrics that need to be summarized by sum (total)
-        filter(str_detect(Metric_Name_Summary,
-                          "(Budget to Actual)|(Total Revenue to Budget Variance)") | str_detect(Metric_Name_Summary,
-                                                                                                "Malnutrition Revenue")) %>%
+        filter(Metric_Name_Summary == "Malnutrition Revenue") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
@@ -576,10 +574,27 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                                        "Metric_Name_Submitted" = "Metric_Name_Submitted")) %>%
           select(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`, value_rounded)
         
-        fytd_merged <- rbind(fytd_summary_total,fytd_summary_avg, pt_exp_ytd_reformat, ytd_join, fytd_prod) %>% distinct()
+        fytd_merged <- NA
+        
+        if(nrow(fytd_summary_total)>0){
+          
+          fytd_merged <- rbind(fytd_summary_total,fytd_summary_avg, pt_exp_ytd_reformat, ytd_join, fytd_prod) %>% distinct()
+        }else{
+          fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join, fytd_prod) %>% distinct()
+        }
+        
       } else{
-        # Merge for summary 
-        fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+        # Merge for summary
+        fytd_merged <- NA
+        
+        if(nrow(fytd_summary_total)>0){
+          
+          fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+          
+        }else{
+          fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
+        }
+        
         #fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
       }
       fytd_summary <- fytd_merged
