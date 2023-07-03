@@ -152,7 +152,7 @@ overtime_file_processs_new <- function(data, updated_user){
       
       processed_data <- rbind(eni_data,non_eni_data) %>%distinct()
       
-      
+      ## Below was added to not Include Nata for CN Sepcifcally for FInance OT for Sites MSBI, MSH, MSM, and MSQ
       processed_data_cn <- processed_data %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Dollars - % (Finance)") %>% filter(SITE %in% c("MSB", "MSW"))
       processed_data <- processed_data %>% filter(SERVICE != "Clinical Nutrition" & METRIC_NAME_SUBMITTED != "Overtime Dollars - % (Finance)")
       
