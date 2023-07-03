@@ -154,7 +154,7 @@ overtime_file_processs_new <- function(data, updated_user){
       
       
       processed_data_cn <- processed_data %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Dollars - % (Finance)") %>% filter(SITE %in% c("MSB", "MSW"))
-      processed_data <- processed_data %>% filter(SERVICE != "Clinical Nutrition" & METRIC_NAME_SUBMITTED != "Overtime Dollars - % (Finance)") %>% filter(SITE %in% c("MSB", "MSW"))
+      processed_data <- processed_data %>% filter(SERVICE != "Clinical Nutrition" & METRIC_NAME_SUBMITTED != "Overtime Dollars - % (Finance)")
       
       processed_data <- rbind(processed_data, processed_data_cn)
 }
