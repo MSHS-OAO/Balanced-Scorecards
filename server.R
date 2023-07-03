@@ -888,10 +888,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
-            select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
+            select(-Service, -Month, -Value) %>% rename(value_rounded = Value_ytd)
         } else {
           budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
-            select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
+            select(-Service, -Month, -Value) %>% rename(value_rounded = Value_ytd)
         }
         fytd_status_budget <- left_join(fytd_status_budget, budget_actual)
         
