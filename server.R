@@ -2190,9 +2190,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
 
       if(flag == 2){
-        prod_summary <- prod_summary %>% filter(REPORTING_MONTH >= max(REPORTING_MONTH) %m-% months(1))
+        max_date <- (max(prod_summary$REPORTING_MONTH) %m-% months(1))
+        prod_summary <- prod_summary %>% filter(REPORTING_MONTH == max_date)
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        productivity_new_data <- file_return_updated_rows(prod_summary)
+        # productivity_new_data <- file_return_updated_rows(prod_summary)
         productivity_new_data <- productivity_new_data %>% distinct()
 
         #wirte the updated data to the Summary Repo in the server
