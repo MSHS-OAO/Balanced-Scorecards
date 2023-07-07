@@ -2176,7 +2176,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       if(flag == 1){
         # Process Imaging data
-        tryCatch({prod_summary <- productivity_dept_summary(data, updated_user)
+        tryCatch({prod_summary <- productivity_processing(data, updated_user)
         flag <- 2
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
