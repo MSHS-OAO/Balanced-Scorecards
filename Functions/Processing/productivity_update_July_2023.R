@@ -201,8 +201,8 @@ productivity_processing <- function(raw_data, updated_user) {
   ot_agency_fte <- prod_df_all %>% filter(Metric_Name %in% c("Overtime Hours", "Agency Hours")) %>%
                   group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
                     summarise(value = sum(value, na.rm = TRUE)/75)  %>%
-                    mutate(Metric_Name = ifelse(Metric_Name == "Overtime Hours", "OT FTE (Premier)", Metric_Name),
-                           Metric_Name = ifelse(Metric_Name == "Agency Hours", "Agency FTE (Premier)", Metric_Name)
+                    mutate(Metric_Name = ifelse(Metric_Name == "Overtime Hours", "OT FTE", Metric_Name),
+                           Metric_Name = ifelse(Metric_Name == "Agency Hours", "Agency FTE", Metric_Name)
                     ) %>%
                     ungroup()
   
