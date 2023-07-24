@@ -1,4 +1,3 @@
-
 # Install and load packages ----------------------------------------
 suppressMessages({
   library(pool)
