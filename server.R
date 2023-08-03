@@ -190,8 +190,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      #service_input <- "Clinical Nutrition"
-      #month_input <- "05-2023"
+      # service_input <- 'Clinical Nutrition'
+      # month_input <- "06-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
       
@@ -598,6 +598,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
       }
       fytd_summary <- fytd_merged
+      # Adding Additional Check to replace "Overtime Hours - % (Premier)" with NA when value_rounded is zero
+      if(service_input == "Clinical Nutrition"){
+        fytd_summary <- fytd_summary %>%
+          mutate(value_rounded = case_when(value_rounded == 0 & 
+                                             Metric_Name == "Overtime Hours - % (Premier)" &
+                                             Site %in% c("MSBI","MSM","MSH") ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
         select(-Metric_Group, -Metric_Name) %>%
@@ -831,7 +840,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_status[missing_sites] <- NA
         
 
-      # FYTD Summary with status indicators using new structure     
+      # FYTD Summary with status indicators using new structure
+      # Redplacind with NA_real_ when "Overtime Hours - % (Premier)" is zero 
+      if(service_input == "Clinical Nutrition"){
+        fytd_merged <- fytd_merged %>%
+          mutate(value_rounded = case_when(value_rounded == 0 & 
+                                             Metric_Name == "Overtime Hours - % (Premier)" &
+                                             Site %in% c("MSBI","MSM","MSH") ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
+      
       fytd_status <- left_join(fytd_merged,
                                 metric_targets_status,
                                 by = c("Site",
