@@ -1,5 +1,5 @@
 mdf_from_db <- function(service_input, month_input) {
-  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(12)
+  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(18)
   
   # service_input <- "Lab"
   # month_input <- "05-2022"
@@ -18,7 +18,8 @@ mdf_from_db <- function(service_input, month_input) {
            value_rounded = VALUE,
            Reporting_Month_Ref = REPORTING_MONTH
     ) %>%
-    mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"))
+    mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y")) %>% 
+    distinct()
   dbDisconnect(conn)
   
   return(metrics_final_df)

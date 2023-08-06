@@ -67,6 +67,8 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
              METRIC_NAME_SUBMITTED,
              VALUE,UPDATED_TIME,
              UPDATED_USER)
+    
+    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM"))
     ##substitue single ' for '' so the query can escape
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
@@ -120,21 +122,32 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # glue query for dropping the table
     truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
     
-    
+    print("before conn")
     # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
     #                   dsn = dsn)
-    print("before conn")
+    
     conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_DEVELOPMENT",
-                      pwd = "HC*tA$4f1qMqVo")
-  print("after conn")
+                      uid = "OAO_PRODUCTION",
+                      pwd = "TIGu*3$K22nqLjP")
+    
+    # conn <- dbConnect(odbc(), "OracleODBC-21_5",
+    #                   uid = "OAO_DEVELOPMENT",
+    #                   pwd = "HC*tA$4f1qMqVo")
+
+    # conn <- dbConnect(odbc(), dsn)
+    print("after conn")
     dbBegin(conn)
     # ## Execute staments and if there is an error  with one of them rollback changes
     tryCatch({
+          print("1")
           dbExecute(conn,truncate_query)
+          print("2")
           dbExecute(conn,all_data)
+          print("3")
           dbExecute(conn,query)
+          print("4")
           dbExecute(conn,truncate_query)
+          print("5")
           dbCommit(conn)
           dbDisconnect(conn)
           if(isRunning()) {

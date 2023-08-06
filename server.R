@@ -142,6 +142,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService
       
@@ -151,7 +154,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Summary")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
         text = paste0("MSHS ",input_service, " Summary - Updated ",updated)
       }
       text
@@ -178,13 +181,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- "ED"
-      # month_input <- "10-2022"
+      # service_input <- 'Clinical Nutrition'
+      # month_input <- "06-2023"
 
-      metrics_final_df <- mdf_from_db(service_input, month_input)
+      metrics_final_df <- mdf_from_db(service_input, month_input) 
       
 
 
@@ -290,7 +296,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         relocate(Section) %>%
         ungroup() %>%
         select(-Metric_Group) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded)
+        pivot_wider(names_from = Site, values_from = value_rounded, names_sort = TRUE)
 
       # Identify any sites missing for the summary and add them with NA values
       missing_sites <- setdiff(sites_inc, names(current_summary))
@@ -304,7 +310,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         mutate(across('Metric_Name_Submitted', str_replace, "\\(Monthly\\)", ''),
                Metric_Name_Submitted = str_trim(Metric_Name_Submitted))
       
-      budget_data_repo <- get_budget_data()
+      budget_data_repo <- get_budget_data(service = service_input,month_input)
       
       month_selected_format <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
       if (service_input %in% unique(budget_data_repo$Service) & month_selected_format >= as.Date("2022-01-01")) {
@@ -396,8 +402,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       fytd_summary_total <- fytd_summary_all %>%
         # Metrics that need to be summarized by sum (total)
-        filter(str_detect(Metric_Name_Summary,
-                          "(Budget to Actual)|(Total Revenue to Budget Variance)")) %>%
+        filter(Metric_Name_Summary == "Malnutrition Revenue") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
@@ -406,6 +411,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # FYTD Summary Table - for Patient Experience
       # fytd_press_ganey <- reformat_pg_fytd(press_ganey_data)
       #pt_exp_data <- metrics_final_df %>% filter(Metric_Group == "Patient Experience")
+      date_selected <- as.Date(paste0(month_input, "-01"), format = "%m-%Y-%d")
+      max_date <- ceiling_date(date_selected, "month") - 1
       conn <- dbConnect(odbc(), dsn)
       pt_exp_data <- tbl(conn, "BSC_PATIENT_EXPERIENCE_REPO") %>% 
         rename(Service = SERVICE,
@@ -419,6 +426,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                All_PG_Database_Mean = ALL_PG_DATABASE_MEAN,
                All_PG_Database_N = ALL_PG_DATABASE_N,
                All_PG_Database_Rank = ALL_PG_DATABASE_RANK) %>%
+        filter(Service == service_input) %>%
+        filter(Reporting_Date_End <= TO_DATE(max_date, 'YYYY-MM-DD')) %>%
         select(-UPDATED_USER, -UPDATED_TIME) %>%
         collect()
       pt_exp_data <- pt_exp_data %>%
@@ -427,7 +436,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(!(Site %in% "All"))
       dbDisconnect(conn)
       
-      if (service_input %in% unique(pt_exp_data$Service)) {
+      if (service_input %in% unique(pt_exp_data$Service) & nrow(pt_exp_data) != 0) {
         
         pt_exp_ytd <- pt_exp_data %>%
           # Add logic to include Jan data in YTD data
@@ -520,7 +529,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
-        filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance", "Productivity")) %>% # Metrics that need to be summarized by sum (total)
+        filter(Metric_Name_Summary != "Malnutrition Revenue") %>%
+        filter(Metric_Name != "Overtime Hours - % (Premier)") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
                  Metric_Group,
@@ -529,17 +540,76 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  `Fiscal Year to Date`) %>%
         summarise(value_rounded = mean(value_rounded, na.rm = TRUE)) %>%
         ungroup()
-    
-      # Merge for summary 
-      # fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
-      fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
+      
+      fytd_metrics <- paste0(unique(fytd_summary_all$Metric_Name_Submitted), " (FYTD)")
+      conn <- dbConnect(drv = odbc::odbc(),
+                        dsn = dsn)
+      
+      summary_repo_tbl <- tbl(conn, "SUMMARY_REPO")
+      fytd_prod <-  summary_repo_tbl %>% filter(service_input %in% SERVICE, METRIC_NAME_SUBMITTED %in% fytd_metrics) %>% 
+        collect()
+      dbDisconnect(conn)
+      
+      productivity_reporting_period <- current_summary[grep("Rep. Pd. Ending", current_summary$`Current Period`),]
+      
+      if(nrow(productivity_reporting_period) > 0) {
+        productivity_reporting_period <- unique(productivity_reporting_period$`Current Period`)[1]
+        premier_reporting_period <- gsub(".*Rep. Pd. Ending ", "",productivity_reporting_period)
+        
+        fytd_prod <- fytd_prod %>% filter(PREMIER_REPORTING_PERIOD == premier_reporting_period)
+        
+        fytd_prod <- fytd_prod %>% mutate(`Fiscal Year to Date` = paste0("FYTD Ending ", premier_reporting_period, 
+                                                                         " Average")) %>%
+                    select(-UPDATED_USER, -UPDATED_TIME, -REPORTING_MONTH, -PREMIER_REPORTING_PERIOD) %>%
+                    rename(Site = SITE,
+                           value_rounded = VALUE,
+                           Service = SERVICE,
+                           Metric_Name_Submitted = METRIC_NAME_SUBMITTED) %>%
+                    mutate(Metric_Name_Submitted = gsub(" [(]FYTD[)].*", "", Metric_Name_Submitted))
+        
+        fytd_prod <- inner_join(fytd_prod, summary_tab_metrics, by = c("Service" = "Service",
+                                                                       "Metric_Name_Submitted" = "Metric_Name_Submitted")) %>%
+          select(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`, value_rounded)
+        
+        fytd_merged <- NA
+        
+        if(nrow(fytd_summary_total)>0){
+          
+          fytd_merged <- rbind(fytd_summary_total,fytd_summary_avg, pt_exp_ytd_reformat, ytd_join, fytd_prod) %>% distinct()
+        }else{
+          fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join, fytd_prod) %>% distinct()
+        }
+        
+      } else{
+        # Merge for summary
+        fytd_merged <- NA
+        
+        if(nrow(fytd_summary_total)>0){
+          
+          fytd_merged <- rbind(fytd_summary_total, fytd_summary_avg, pt_exp_ytd_reformat, ytd_join)
+          
+        }else{
+          fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
+        }
+        
+        #fytd_merged <- rbind(fytd_summary_avg, pt_exp_ytd_reformat, ytd_join) %>% distinct()
+      }
       fytd_summary <- fytd_merged
+      # Adding Additional Check to replace "Overtime Hours - % (Premier)" with NA when value_rounded is zero
+      if(service_input == "Clinical Nutrition"){
+        fytd_summary <- fytd_summary %>%
+          mutate(value_rounded = case_when(value_rounded == 0 & 
+                                             Metric_Name == "Overtime Hours - % (Premier)" &
+                                             Site %in% c("MSBI","MSM","MSH") ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
         select(-Metric_Group, -Metric_Name) %>%
         mutate(Section = "Metrics") %>%
         relocate(Section) %>%
-        pivot_wider(names_from = Site, values_from = value_rounded)
+        pivot_wider(names_from = Site, values_from = value_rounded, names_sort = TRUE)
 
       missing_sites <- setdiff(sites_inc, names(fytd_summary))
       fytd_summary[missing_sites] <- NA
@@ -569,7 +639,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         fytd_data_budget <- fytd_data_budget %>% mutate(`Fiscal Year to Date` = paste0(format(min_date, "%b"), " - ", format(max_date, "%b"), " ", year(max_date), " Total"))
         fytd_summary <- bind_rows(fytd_summary, fytd_data_budget)
       }
-      
+      current_summary_order <- c("Section", "Metric_Name_Summary", "Current Period", "Metric_Unit", "MSB", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE")
+      current_summary <- current_summary[, current_summary_order]
       
       # Merge FYTD and Current Period Metrics Summary 
       metrics_summary <- merge(fytd_summary, current_summary,
@@ -691,8 +762,33 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if("Budget to Actual" %in% current_summary_data$Metric_Group) {
         current_status_budget <- current_summary_data %>%
           filter(Metric_Group == "Budget to Actual")
+        # current_summary_data_comb <- current_summary_data %>% select(Site, Metric_Group, Metric_Name_Summary, Metric_Name, Reporting_Month_Ref)
+        # 
+        # current_status_budget <- left_join(current_summary_data_comb,
+        #                                 metric_targets_status,
+        #                                 by = c("Site",
+        #                                        "Metric_Group",
+        #                                        "Metric_Name"))
+        # 
+        # current_status_budget <- current_status_budget %>%
+        #   filter(Metric_Group == "Budget to Actual") %>%
+        #   mutate(Service = service_input,
+        #          Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+        #   select(-value_rounded)
         
-        budget_target_current <- get_budget_data()
+        # current_status_budget <- left_join(current_summary_data,
+        #                                 metric_targets_status,
+        #                                 by = c("Site",
+        #                                        "Metric_Group",
+        #                                        "Metric_Name"))
+        # 
+        # current_status_budget <- current_status_budget %>%
+        #   filter(Metric_Group == "Budget to Actual") %>%
+        #   mutate(Service = service_input,
+        #          Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+        #   select(-value_rounded)
+        
+        budget_target_current <- get_budget_data(service = service_input,month_input)
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
@@ -702,7 +798,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             select(-Service, -Month) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
         }
         
+        
         budget_target_current <- left_join(current_status_budget, budget_target_current) 
+        if(service_input == "Nursing") {
+          budget_target_current <- budget_target_current %>% group_by(Site, Reporting_Month_Ref) %>% fill(Value)
+          budget_target_current <- budget_target_current %>% group_by(Site, Reporting_Month_Ref) %>% fill(Value_ytd)
+          
+        }
         
         budget_target_current <- budget_target_current %>% select(-Target) %>%
           rename(Target = Value) %>%
@@ -721,7 +823,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           pivot_wider(names_from = Site,
                       values_from = Status)
         
-        current_status <- full_join(current_status, budget_target_current)
+        
+        if(nrow(current_status) == 0) {
+          current_status <- budget_target_current
+        } else {
+          current_status <- full_join(current_status, budget_target_current)
+        }
         
       }
       
@@ -730,12 +837,24 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_status[missing_sites] <- NA
         
 
-      # FYTD Summary with status indicators using new structure     
+      # FYTD Summary with status indicators using new structure
+      # Redplacind with NA_real_ when "Overtime Hours - % (Premier)" is zero 
+      if(service_input == "Clinical Nutrition"){
+        fytd_merged <- fytd_merged %>%
+          mutate(value_rounded = case_when(value_rounded == 0 & 
+                                             Metric_Name == "Overtime Hours - % (Premier)" &
+                                             Site %in% c("MSBI","MSM","MSH") ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
+      
       fytd_status <- left_join(fytd_merged,
                                 metric_targets_status,
                                 by = c("Site",
                                        "Metric_Group",
                                        "Metric_Name"))
+      fytd_status <- fytd_status %>%
+        mutate(value_rounded = round(value_rounded,3))
       
       # Determine status definitions for FYTD metrics
       fytd_status <- fytd_status %>%
@@ -766,7 +885,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         distinct()
             
       # NOTE: Should we use a str_detect instead here so we can capture Labor and Non Labor as well?
-      if("Budget to Actual" %in% as.vector(budget_target_check$Metric_Name)){
+      if("Budget to Actual" %in% current_summary_data$Metric_Group){
         
         fytd_status_budget <- left_join(fytd_merged,
                                  metric_targets_status,
@@ -781,19 +900,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                               select(-value_rounded)
         
         
-        budget_actual <- get_budget_data()
+        budget_actual <- get_budget_data(service = service_input,month_input)
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
-            select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
+            select(-Service, -Month, -Value) %>% rename(value_rounded = Value_ytd)
         } else {
           budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
-            select(-Service, -Month, -Value_ytd) %>% rename(value_rounded = Value)
+            select(-Service, -Month, -Value) %>% rename(value_rounded = Value_ytd)
         }
         fytd_status_budget <- left_join(fytd_status_budget, budget_actual)
         
         
-        budget_target <- get_budget_data()
+        budget_target <- get_budget_data(service = service_input,month_input)
         
         if (as.character(month_selected )%in% month_in_repo) {
           budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
@@ -887,9 +1006,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # # Merge with rest of the metrics 
       # Merge FYTD metrics with budget metrics
-      fytd_status <- bind_rows(fytd_status,
-                               budget_to_actual_target,
-                               variance_to_budget_target)
+      if(nrow(fytd_status) == 0) {
+        fytd_status <- bind_rows(budget_to_actual_target,
+                                 variance_to_budget_target)
+      } else {
+        fytd_status <- bind_rows(fytd_status,
+                                 budget_to_actual_target,
+                                 variance_to_budget_target)
+      }
 
       # Pivot wider for dashboard format
       fytd_status <- fytd_status %>%
@@ -950,12 +1074,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       #metrics_summary <- metrics_summary %>% filter(!(Metric_Name_Summary == "Total Revenue to Budget Variance"))
       
+      metric_order <- metric_mapping_summary_site %>% filter(Service == service_input) %>% select(Metric_Name_Summary, Display_Order)
+      metrics_summary <- left_join(metrics_summary, metric_order) %>% arrange(Display_Order)
+      
+      targets_summary <- left_join(targets_summary, metric_order) %>% arrange(Display_Order)
       summary_tab_tb <- rbind(metrics_summary, targets_summary) # Don't think we need to specify which columns anymore#2[,1:18])
       # Why do we need this? There is no NYEE, there is NYEE.x and NYEE.y
       #summary_tab_tb$NYEE <- NULL
       
       # Rename Metric_Name_Summary as Metric_Name
-      summary_tab_tb <- summary_tab_tb %>%
+      summary_tab_tb <- summary_tab_tb %>% select(-Display_Order) %>%
         rename(Metric_Name = Metric_Name_Summary)
       
       colnames(summary_tab_tb) <- gsub("\\..*", " ", colnames(summary_tab_tb))
@@ -984,13 +1112,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             column_spec(c(2, 10), italic = TRUE) %>%
             column_spec(3:9, background = "#fee7f5") %>%
             column_spec(11:17, background = "#E6F8FF") %>%
-            group_rows(group_label = "Interventional Radiology",
+            group_rows(group_label = "Interventional Radiology", indent = FALSE,
                        start_row = ir_start,
                        end_row = dr_start-1,
                        label_row_css = "background-color: #212070; color: white;") %>%
-            group_rows(group_label = "Diagnostic Radiology",
+            group_rows(group_label = "Diagnostic Radiology", indent = FALSE,
                        start_row = dr_start,
-                       end_row = (dr_start + 2),
+                       end_row = (dr_start + 1),
                        label_row_css = "background-color: #212070; color: white;")
       }else{
         kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
@@ -1033,6 +1161,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1041,7 +1172,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Key Metric Rollup")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
         text = paste0("MSHS ",input_service, " Key Metric Rollup - Updated ",updated)
       }
       text
@@ -1068,6 +1199,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       
       service_input <- input$selectedService2
@@ -1076,8 +1210,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
-#       service_input <- "ED"
-#       month_input <- "03-2021"
+#       service_input <- "Case Management / Social Work"
+#       month_input <- "03-2023"
 #       site_input <- "MSH"
 
       
@@ -1388,6 +1522,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_ed
       input$submit_nursing
       input$submit_finance_census
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1396,7 +1533,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0(input$selectedCampus3, " ",input_service, " Breakout")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME), "%Y-%m-%d %I:%M %p", tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
         text = paste0(input$selectedCampus3," ",input_service, " Breakout - Updated ",updated)
       }
       text
@@ -1424,8 +1561,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_nursing
       input$submit_finance_ot
       input$submit_finance_census
-      
-      
+      input$submit_peri_op
+      input$submit_case_management
+      input$submit_cn
+            
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
@@ -1769,7 +1908,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         file_path <- inFile_budget$datapath
-        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3)
+        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
+                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "text"))
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -1813,90 +1953,204 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       shinyjs::enable(button_name)
       
     })
-    
-    ## Read in Patient Experience data -----------------------------------
-    # ED Monthly Data Observe Event -------------------
+    #Monthly Patient Experience Submission ----------------------
     observeEvent(input$submit_monthly_pt_exp, {
-      # Name ED monthly data
+      
       ed_monthly <- input$pt_exp_ed_monthly
-      button <- input$submit_monthly_pt_exp
-      name <- input$name_monthly_patient_experience
-      pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")
-      
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-      
-    })
-    
-    # Nursing Patient Experience Monthly Data Observe Event -------------------
-    observeEvent(input$submit_monthly_pt_exp, {
-      # Name Nursing monthly data
       nursing_monthly <- input$pt_exp_nursing_monthly
-      button <- input$submit_monthly_pt_exp
-      name <- input$name_monthly_patient_experience
-      
-      pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-        
-  
-    })
-    
-    # Support Services Patient Experience Monthly Data Observe Event -------------------
-    observeEvent(input$submit_monthly_pt_exp, {
-      # Name Support Services monthly data
       support_monthly <- input$pt_exp_support_monthly
       button <- input$submit_monthly_pt_exp
       name <- input$name_monthly_patient_experience
       
-      pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")
+      if(name == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        if(!is.null(ed_monthly)){
+          tryCatch( {pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing ED file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(nursing_monthly)){
+          tryCatch( {pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(support_monthly)){
+          tryCatch( {pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file.Please check the file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }}
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
+      
     })
-
-    # ED YTD Data Observe Event -------------------
+    
+    #YTD Patient Exprience Submission ----------------------
     observeEvent(input$submit_ytd_pt_exp, {
-      button <- "submit_ytd_pt_exp"
-      # Name ED YTD data
       ed_ytd <- input$pt_exp_ed_ytd
-      name <- input$name_ytd_patient_experience
-      
-      pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-     
-      
-    })
-    
-    # Nursing YTD Data Observe Event -------------------
-    observeEvent(input$submit_ytd_pt_exp, {
-      button <- "submit_ytd_pt_exp"
-      # Name Nursing YTD data
       nursing_ytd <- input$pt_exp_nursing_ytd
-      name <- input$name_ytd_patient_experience
-      
-      pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")
-      update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                input$selectedService3)
-      
-      
-    })
-    
-    # Support Services YTD Data Observe Event -------------------
-    observeEvent(input$submit_ytd_pt_exp, {
-      button <- "submit_ytd_pt_exp"
-      # Name Support Services YTD data
       support_ytd <- input$pt_exp_support_ytd
+      button <- input$submit_ytd_pt_exp
       name <- input$name_ytd_patient_experience
-      
-      
-      pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")
+
+      if(name == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        if(!is.null(ed_ytd)){
+          tryCatch( {pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing ED file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(nursing_ytd)){
+          tryCatch( {pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Nursing file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+        }
+        if(!is.null(nursing_ytd)){
+          tryCatch( {pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")},
+                    error = function(err){
+                      showModal(modalDialog(
+                        title = "Error",
+                        paste0("There seems to be an issue processing Support Services file."),
+                        easyClose = TRUE,
+                        footer = NULL
+                      ))
+                      shinyjs::enable(button_name)
+                    })
+          }
+        }
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                 input$selectedService3)
-      
-
     })
     
+    
+    # ## Read in Patient Experience data -----------------------------------
+    # # ED Monthly Data Observe Event -------------------
+    # observeEvent(input$submit_monthly_pt_exp, {
+    #   # Name ED monthly data
+    #   ed_monthly <- input$pt_exp_ed_monthly
+    #   button <- input$submit_monthly_pt_exp
+    #   name <- input$name_monthly_patient_experience
+    #   pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")
+    # 
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+    #                             input$selectedService3)
+    # 
+    # })
+    # 
+    # # Nursing Patient Experience Monthly Data Observe Event -------------------
+    # observeEvent(input$submit_monthly_pt_exp, {
+    #   # Name Nursing monthly data
+    #   nursing_monthly <- input$pt_exp_nursing_monthly
+    #   button <- input$submit_monthly_pt_exp
+    #   name <- input$name_monthly_patient_experience
+    # 
+    #   pt_exp_server_function(button, nursing_monthly, "Nursing", name, "Monthly")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+    #                             input$selectedService3)
+    # 
+    # 
+    # })
+    # 
+    # # Support Services Patient Experience Monthly Data Observe Event -------------------
+    # observeEvent(input$submit_monthly_pt_exp, {
+    #   # Name Support Services monthly data
+    #   support_monthly <- input$pt_exp_support_monthly
+    #   button <- input$submit_monthly_pt_exp
+    #   name <- input$name_monthly_patient_experience
+    # 
+    #   pt_exp_server_function(button, support_monthly, "Support Services", name, "Monthly")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2,
+    #                             input$selectedService3)
+    # })
+
+    # # ED YTD Data Observe Event -------------------
+    # observeEvent(input$submit_ytd_pt_exp, {
+    #   button <- "submit_ytd_pt_exp"
+    #   # Name ED YTD data
+    #   ed_ytd <- input$pt_exp_ed_ytd
+    #   name <- input$name_ytd_patient_experience
+    #   
+    #   pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+    #                             input$selectedService3)
+    #  
+    #   
+    # })
+    # 
+    # # Nursing YTD Data Observe Event -------------------
+    # observeEvent(input$submit_ytd_pt_exp, {
+    #   button <- "submit_ytd_pt_exp"
+    #   # Name Nursing YTD data
+    #   nursing_ytd <- input$pt_exp_nursing_ytd
+    #   name <- input$name_ytd_patient_experience
+    #   
+    #   pt_exp_server_function(button, nursing_ytd, "Nursing", name, "YTD")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+    #                             input$selectedService3)
+    #   
+    #   
+    # })
+    # 
+    # # Support Services YTD Data Observe Event -------------------
+    # observeEvent(input$submit_ytd_pt_exp, {
+    #   button <- "submit_ytd_pt_exp"
+    #   # Name Support Services YTD data
+    #   support_ytd <- input$pt_exp_support_ytd
+    #   name <- input$name_ytd_patient_experience
+    #   
+    #   pt_exp_server_function(button, support_ytd, "Support Services", name, "YTD")
+    #   update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+    #                             input$selectedService3)
+    #   
+    # 
+    # })
+    # 
     
     ## Productivity data --------------------------------
     ## Read in productivity data and process
@@ -1905,7 +2159,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       shinyjs::disable(button_name)
       inFile <- input$productiviy_data
       flag <- 0
-      data <- read_excel(inFile$datapath)
+      #data <- read_excel(inFile$datapath)
 
 
       if(input$name_productivity == ""){
@@ -1938,7 +2192,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       if(flag == 1){
         # Process Imaging data
-        tryCatch({prod_summary <- productivity_dept_summary(data, updated_user)
+        tryCatch({prod_summary <- productivity_processing(data, updated_user)
         flag <- 2
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
@@ -1952,10 +2206,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
 
       if(flag == 2){
-        
-        prod_summary <- prod_summary %>% filter(REPORTING_MONTH >= max(REPORTING_MONTH) %m-% months(1))
+        max_date <- (max(prod_summary$REPORTING_MONTH))
+        prod_summary <- prod_summary %>% filter(REPORTING_MONTH == max_date)
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
         productivity_new_data <- file_return_updated_rows(prod_summary)
+        productivity_new_data <- productivity_new_data %>% distinct()
 
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(productivity_new_data,
@@ -3139,7 +3394,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 1){
         # Process the data into standar Summary Repo format
-        tryCatch({overtime_summary_data <- overtime_file_processs(overtime_data, updated_user)
+        tryCatch({overtime_summary_data <- overtime_file_processs_new(overtime_data, updated_user)
         flag <- 2
         
         },
@@ -3904,6 +4159,87 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         shinyjs::enable(button_name)
         
       })
+      # Clinical Nutrition observer event actions for data submission ----- 
+      observeEvent(input$submit_cn, {
+        button_name <- "submit_cn"
+        shinyjs::disable(button_name)
+        flag <- 0
+        cn_file <- input$cn_file
+        
+        if(input$name_cn == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          updated_user <- input$name_cn
+          file_path <- cn_file$datapath
+          tryCatch({
+            print("flag2")
+            cn_data_raw <- lapply(excel_sheets(file_path), read_xlsx, path = file_path)
+            print("after apply")
+            processed_data <- list()
+            print("after list")
+            i <- 1
+            print("for start")
+            for(yearly_data in cn_data_raw){
+             cn_summary_data_yearly <- cn_dept_summary(yearly_data,updated_user)
+             processed_data[[i]]<-cn_summary_data_yearly
+             i <- i+1
+            }
+            print("for end")
+            cn_summary_data <- bind_rows(processed_data)
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          })
+          
+        }
+        
+        # Process data if the right file format was submitted
+        if(flag == 1) {
+          tryCatch({
+            print("flag1")
+            ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+            cn_summary_data <- file_return_updated_rows(cn_summary_data)
+            #wirte the updated data to the Summary Repo in the server
+            write_temporary_table_to_database_and_merge(cn_summary_data,
+                                                        "TEMP_CN", button_name)
+            
+            flag <- 2
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with this data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          })
+        }
+        
+        if(flag == 2){
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+        }
+        shinyjs::enable(button_name)
+        
+      })
       
       
       # 5. Target and Status Definitions tab ----------------------------------
@@ -4043,6 +4379,157 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
 
       ))
+            
+      
+      # Perioperative Metrics - Operational Data  -----------------------
+      
+      
+      observeEvent(input$submit_peri_op,{
+        button_name <- "submit_peri_op"
+        shinyjs::disable(button_name)
+        
+        peri_op_file <- input$peri_op_file
+        flag <- 0 
+        
+        if (is.null(peri_op_file)) {
+          return(NULL)
+          shinyjs::enable(button_name)
+          print("null")
+        }else{
+          #file_path <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/EVS/MSHS Normal Clean vs Iso Clean TAT Sept 2021.xlsx"
+          #pt_data <- read_excel(file_path)
+          if(input$name_peri_op == ""){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("Please fill in the required fields"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+          }
+          
+          tryCatch({
+            file_path <- peri_op_file$datapath
+            updated_user <- input$name_peri_op
+            
+            flag <- 1
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Perioperative Services data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+          }
+          )
+          
+        }
+        
+        
+        if(flag==1){
+          
+          tryCatch({
+            # Process Input Data
+            peri_op_summary_repo <- peri_op_processing(file_path, updated_user)
+            flag <- 2
+            
+          },
+          error = function(err){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Perioperative Services data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            
+          }
+          )
+          
+        }
+        if(flag==2){
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          peri_op_summary_repo <- file_return_updated_rows(peri_op_summary_repo)
+          write_temporary_table_to_database_and_merge(peri_op_summary_repo,
+                                                      "TEMP_PT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
+          
+        }
+        shinyjs::enable(button_name)
+        
+        
+      })
+      #Submit Case Management/Social Work Services -----
+      observeEvent(input$submit_case_management,{
+        button_name <- "submit_case_management"
+        shinyjs::disable(button_name)
+        flag <- 0
+        case_management_file <- input$case_management_file
+        
+        if(input$name_case_management == ""){
+          showModal(modalDialog(
+            title = "Error",
+            paste0("Please fill in the required fields"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        }else{
+          updated_user <- input$name_case_management
+          file_path <- case_management_file$datapath
+          #file_path <- "/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS IP admissions for Monthly Score Cards March 2023 draft 5-8-2023.xlsx"
+          tryCatch({case_management_data <- read_excel(file_path, skip = 5)
+          flag <- 1
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the case management/social work file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        }
+        
+        if(flag == 1){
+          # Process the data into standar Summary Repo format
+          print(updated_user)
+          print(case_management_data)
+          tryCatch({case_management_data <- case_management_function(case_management_data, updated_user)
+          flag <- 2
+          
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an issue with the case management/social work file."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        }
+        
+        
+        if(flag == 2){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          case_management_data <- file_return_updated_rows(case_management_data)
+          
+          #wirte the updated data to the Summary Repo in the server
+          write_temporary_table_to_database_and_merge(case_management_data,
+                                                      "TEMP_CASE_MANAGEMENT", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+        }
+        shinyjs::enable(button_name)
+        
+      })
+      
 
 } # Close Server
 

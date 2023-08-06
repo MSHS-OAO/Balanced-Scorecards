@@ -75,7 +75,13 @@ suppressMessages({
   #library(reshape2)
 })
 
-dsn <- "OAO Cloud DB Staging"
+
+
+
+print("0")
+dsn <- "OAO Cloud DB Production"
+print("1")
+
 
 options(shiny.maxRequestSize=500*1024^2)
 
@@ -149,6 +155,7 @@ MountSinai_palettes <- list(
 # MountSinai_palettes
 # Return function to interpolate a Mount Sinai color palette
 # default value is the main palette, reverse = True will change the order
+print("2")
 
 MountSinai_pal <- function(palette = "all", reverse = FALSE, ...) {
   pal <- MountSinai_palettes[[palette]]
@@ -186,13 +193,13 @@ if(file.exists("J:/")){
   start <- "J:" #Comment when publishing to RConnect
   home_path <- paste0(start,"/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/")
   start_shared <- "J:"
-  dsn <- "OAO Cloud DB Staging"
+  #dsn <- "OAO Cloud DB Staging"
 } else{
   start <- "/data"  #Uncomment when publishing to RConnect
   home_path <- paste0(start,"/Scorecards_Staging/")
   start_shared <- "/SharedDrive"
   #install.packages("reshape2", repos = "http://cran.us.r-project.org")
-  dsn <- "OAO Cloud DB Staging" 
+  #dsn <- "OAO Cloud DB Staging" 
 }
 
 # metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
@@ -244,8 +251,10 @@ if(file.exists("J:/")){
 # Read in processed data ---------------------------------------------------------------------------
 ## Set data path ==================================================================================
 conn <- dbConnect(odbc(), dsn)
+print("3")
 # data_path <- here()
 # metrics_final_df <- readRDS(metrics_final_df_path) # Load processed Premier productivity data 
+
 
 key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 
@@ -288,6 +297,7 @@ metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
 
 # Sites included -----------------------------------------------------------------------------------
 sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
+print("4")
 
 dttm <- function(x) {
   as.POSIXct(x,format="%m/%d/%Y",tz=Sys.timezone(),origin = "1970-01-01")
@@ -305,13 +315,16 @@ cost_rev_mapping <- tbl(conn, "BSC_COST_REV_MAPPING") %>% collect() %>%
                              Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
                              Metric_Group = METRIC_GROUP,
                              Metric_Name = METRIC_NAME)
+
+
 key_vol_mapping <- read_excel(key_volume_mapping_path,
-                              sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping  
+                              sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
 
 processed_df_cols <- c("Service", "Site", "Metric_Group", "Metric_Name",
                        "Premier_Reporting_Period", "Reporting_Month",
                        "value_rounded") # All columns needed in final merged data set
+print("5")
 
 
 # Code for making name filed Mandatory ----
@@ -338,6 +351,8 @@ labelMandatory <- function(label) {
   )
 }
 
+print("6")
+
 # operational_metrics <- read_excel(operational_metrics_path, sheet = "Sheet1", na = "")
 
 transform_dt <- function(dt, names_to, values_to){
@@ -349,6 +364,8 @@ transform_dt <- function(dt, names_to, values_to){
   pivot_longer(dt, c(Site, Metric), names_to = as.character(names_to), values_to = as.character(values_to)) %>%
     drop_na(values_to)
 }
+
+print("7")
 
 engineering_data_process <- function(data){
   engineering_data <- data %>%
@@ -369,6 +386,8 @@ target_mapping_reference <- target_mapping %>%
   select(-contains("_Start"), -contains("_End")) %>%
   # filter(Target != "Remove") %>%
   distinct()
+
+print("8")
 
 # target_mapping_reference <- left_join(target_mapping_reference,
 #                                       metric_unit_filter_new)
@@ -414,6 +433,7 @@ high_level_order <- c("Premier", "Budget", "Operational", "Patient Experience")
 #     #          })
 #     )
 
+print("9")
 metric_mapping_summary_site <- metric_mapping_database %>%
   filter(Reporting_Tab %in% "Summary and Site") %>%
   select(-Reporting_Tab) %>%
@@ -485,6 +505,7 @@ budget_to_actual_summary_table_metrics <- c("Budget to Actual Variance - Non Lab
 #     #        })
 #     )
 
+print("10")
 metric_mapping_breakout <- metric_mapping_database %>%
   filter(Reporting_Tab %in% "Breakout") %>%
   select(-Reporting_Tab) %>%
@@ -493,26 +514,30 @@ metric_mapping_breakout <- metric_mapping_database %>%
                                 ordered = TRUE)) %>%
   arrange(Service, General_Group, Display_Order) %>%
   mutate(General_Group = as.character(General_Group))
+print("11")
 
 # Source files for processing service line data -------------------
-function_sources <- list.files("Functions", full.names = T)
+function_sources <- list.files("Functions", full.names = T, recursive = T)
 sapply(function_sources, source)
 source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
-source("lab_processing.R")
-source("EVS.R")
-source("patient_experience.R")
-source("security_processing.R")
-source("Transportation.R")
-source("biomed.R")
-source("ImagingDR.R")
-source("Imaging.R")
-source("Engineering.R")
-source("Overtime.R")
-source("Census Days.R")
-source("nursing.R")
-source("ED.R")
-source("productivity.R")
-source("budget_to_actual_new_file.R")
-source("productivity_update.R")
+# source("ClinicalNurtrition.R")
+# source("OvertimeNew.R")
+# source("lab_processing.R")
+# source("EVS.R")
+# source("patient_experience.R")
+# source("security_processing.R")
+# source("Transportation.R")
+# source("biomed.R")
+# source("ImagingDR.R")
+# source("Imaging.R")
+# source("Engineering.R")
+# source("Overtime.R")
+# source("Census Days.R")
+# source("nursing.R")
+# source("ED.R")
+# source("productivity.R")
+# source("budget_to_actual_new_file.R")
+# source("productivity_update.R")
+# source("peri_op_processing.R")
 dbDisconnect(conn)

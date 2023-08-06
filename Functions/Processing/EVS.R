@@ -10,6 +10,9 @@
 
 
 evs_file_process <- function(data, month, updated_user) {
+  data <- data %>% 
+  mutate(across(where(is.character), str_trim))
+  
   data <- na.omit(data, na.action = "omit")
   
   data <- data %>%
@@ -46,7 +49,8 @@ evs_file_process <- function(data, month, updated_user) {
     select(-Hrs, -Mins, -TAT...7) %>%
     rename(`Isolation Average TAT` = TATMin)
   
-  
+    data <- data %>% 
+  mutate(across(where(is.character), str_trim))
   
   data <- data %>%
     rename(`Non-Isolation Requests` = `Normal Requests`,

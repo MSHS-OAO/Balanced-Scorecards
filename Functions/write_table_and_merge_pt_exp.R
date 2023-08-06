@@ -47,7 +47,17 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     processed_input_data <- processed_input_data %>%
       mutate(REPORTING_DATE_START = as.character(REPORTING_DATE_START),
              REPORTING_DATE_END = as.character(REPORTING_DATE_END),
-             UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"))%>%
+             UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M"),
+             SITE_MEAN = as.character(SITE_MEAN),
+             SITE_N = as.character(SITE_N),
+             ALL_PG_DATABASE_MEAN = as.character(ALL_PG_DATABASE_MEAN),
+             ALL_PG_DATABASE_N = as.character(ALL_PG_DATABASE_N),
+             ALL_PG_DATABASE_RANK = as.character(ALL_PG_DATABASE_RANK),
+             SITE_MEAN = coalesce(SITE_MEAN, "NULL"),
+             SITE_N = coalesce(SITE_N, "NULL"),
+             ALL_PG_DATABASE_MEAN = coalesce(ALL_PG_DATABASE_MEAN, "NULL"),
+             ALL_PG_DATABASE_N = coalesce(ALL_PG_DATABASE_N, "NULL"),
+             ALL_PG_DATABASE_RANK = coalesce(ALL_PG_DATABASE_RANK, "NULL"))%>%
       select(SERVICE,
              SITE,
              QUESTION_CLEAN,
@@ -62,6 +72,9 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
              UPDATED_USER,
              UPDATED_TIME
              )
+    
+    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM"))
+    
     ##substitue single ' for '' so the query can escape
     # processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
     # processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
@@ -81,16 +94,20 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     all_data <- glue('INSERT ALL
                         {values}
                       SELECT 1 from DUAL;')
+    all_data <- gsub("'NULL'", "''", all_data)
     
     
     
-    
-    # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
-    #                   dsn = dsn)
-    print("before conn")
     conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_DEVELOPMENT",
-                      pwd = "HC*tA$4f1qMqVo")
+                      uid = "OAO_PRODUCTION",
+                      pwd = "TIGu*3$K22nqLjP")
+    
+    # conn <- dbConnect(odbc(), "OracleODBC-21_5",
+    #                   uid = "OAO_DEVELOPMENT",
+    #                   pwd = "HC*tA$4f1qMqVo")
+    # 
+    print("before conn")
+    # conn <- dbConnect(odbc(), dsn)
     print("after conn")
     dbBegin(conn)
     # ## Execute staments and if there is an error  with one of them rollback changes
