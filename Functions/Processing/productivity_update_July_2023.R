@@ -222,16 +222,12 @@ productivity_processing <- function(raw_data, updated_user) {
                         select(-Reporting_Month) %>%
                         mutate(UPDATED_USER = updated_user)
   
+  prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours") %>% filter(SITE %in% c("MSB", "MSW"))
+  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
+  
   if(ytd_flag == 1) {
     prod_df_aggregate <- prod_df_aggregate %>% mutate(METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (FYTD)"))
-    
-    prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours (FYTD)") %>% filter(SITE %in% c("MSB", "MSW"))
-    prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours (FYTD)")
-  } else {
-  
-     prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours") %>% filter(SITE %in% c("MSB", "MSW"))
-     prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
-  }
+  } 
   
    prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
   
