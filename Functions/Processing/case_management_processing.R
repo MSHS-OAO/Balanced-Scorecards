@@ -78,15 +78,6 @@ case_management_function <- function(data, updated_user) {
 
 # https://stackoverflow.com/questions/4806823/how-to-detect-the-right-encoding-for-read-csv
 
-#enc <- guess_encoding("Tests/CMSWRev/LOS Data for Balanced Scorecard.csv", n_max = 1000)
-
-#raw_file <- file("Tests/CMSWRev/LOS Data for Balanced Scorecard.csv", open="r", encoding=as.list(enc[1, ])$encoding)
-#raw_los_data <- read.table(raw_file, sep='\t', dec=',', header=TRUE)
-#close(raw_file)
-
-#updated_user <- "TEST Dheeraj"
-
-
 case_management_los_processing <- function(raw_los_data,updated_user){
   
   raw_los_data  <- raw_los_data %>%
