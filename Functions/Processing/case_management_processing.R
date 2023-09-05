@@ -78,13 +78,13 @@ case_management_function <- function(data, updated_user) {
 
 # https://stackoverflow.com/questions/4806823/how-to-detect-the-right-encoding-for-read-csv
 
-enc <- guess_encoding("Tests/CMSWRev/LOS Data for Balanced Scorecard.csv", n_max = 1000)
+#enc <- guess_encoding("Tests/CMSWRev/LOS Data for Balanced Scorecard.csv", n_max = 1000)
 
-raw_file <- file("Tests/CMSWRev/LOS Data for Balanced Scorecard.csv", open="r", encoding=as.list(enc[1, ])$encoding)
-raw_los_data <- read.table(raw_file, sep='\t', dec=',', header=TRUE)
-close(raw_file)
+#raw_file <- file("Tests/CMSWRev/LOS Data for Balanced Scorecard.csv", open="r", encoding=as.list(enc[1, ])$encoding)
+#raw_los_data <- read.table(raw_file, sep='\t', dec=',', header=TRUE)
+#close(raw_file)
 
-updated_user <- "TEST Dheeraj"
+#updated_user <- "TEST Dheeraj"
 
 
 case_management_los_processing <- function(raw_los_data,updated_user){
@@ -103,27 +103,27 @@ case_management_los_processing <- function(raw_los_data,updated_user){
               CUM_CASES = sum(`Total.Cases`))%>%
     mutate(SUM_WEIGHTED_LOS = cumsum(SUM_WEIGHTED_LOS),
            CUM_CASES = cumsum(CUM_CASES),
-           "LOS - YTD" = SUM_WEIGHTED_LOS/CUM_CASES)%>%
-    select(Facility,  `Month.of.Discharge.Date`, `LOS - YTD`)
+           "Average LOS (YTD)" = SUM_WEIGHTED_LOS/CUM_CASES)%>%
+    select(Facility,  `Month.of.Discharge.Date`, "Average LOS (YTD)")
   
-  los_data <- join(raw_los_data,raw_los_data_ytd,type ="left") %>%
+  los_data <- join(raw_los_data,raw_los_data_ytd,type ="left",by=c("Facility", "Month.of.Discharge.Date")) %>%
     rename(SITE = Facility,
            REPORTING_MONTH = `Month.of.Discharge.Date`,
-           "LOS - Monthly" = `Avg.LOS`) %>%
+           "Average LOS" = `Avg.LOS`) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH , "%b %Y"),
            SERVICE = "Case Management / Social Work",
            UPDATED_USER = updated_user) %>%
-    select(SERVICE, SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,"LOS - YTD" ,"LOS - Monthly",UPDATED_USER) %>%
-    pivot_longer(cols=c("LOS - YTD" ,"LOS - Monthly"),
+    select(SERVICE, SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,"Average LOS (YTD)" ,"Average LOS",UPDATED_USER) %>%
+    pivot_longer(cols=c("Average LOS (YTD)" ,"Average LOS"),
                  names_to = "METRIC_NAME_SUBMITTED",
                  values_to = "VALUE")
   
 }
 
-processed_los_data <- case_management_los_processing(raw_los_data, updated_user)
+#processed_los_data <- case_management_los_processing(raw_los_data, updated_user)
 
 # Re-admission processing
-raw_readm_data <- read_excel("Tests/CMSWRev/Readmissions data (3).xlsx")
+#raw_readm_data <- read_excel("Tests/CMSWRev/Readmissions data (3).xlsx")
 
 case_management_readmission_processing <- function(raw_readm_data, updated_user){
   raw_readm_data  <- raw_readm_data %>%
@@ -132,7 +132,7 @@ case_management_readmission_processing <- function(raw_readm_data, updated_user)
       `Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%d %B %Y"),
       Numerator = as.numeric(Numerator),
       `Total Cases` = as.numeric(sub(",", "", `Total Cases`, fixed = TRUE)),
-      "Readmission Rate - Monthly" = Numerator/`Total Cases`)
+      "Readmission Rate" = Numerator/`Total Cases`)
   
   
   raw_readm_data_ytd  <- raw_readm_data %>%
@@ -142,8 +142,8 @@ case_management_readmission_processing <- function(raw_readm_data, updated_user)
               `Total Cases` = sum(`Total Cases`))%>%
     mutate(Numerator = cumsum(Numerator),
            `Total Cases` = cumsum(`Total Cases`),
-           "Readmission Rate - YTD" = Numerator/`Total Cases`)%>%
-    select(Facility1,  `Month of DSCH_DT_SRC`, "Readmission Rate - YTD")
+           "Readmission Rate (YTD)" = Numerator/`Total Cases`)%>%
+    select(Facility1,  `Month of DSCH_DT_SRC`, "Readmission Rate (YTD)")
   
   
   readm_data <- join(raw_readm_data,raw_readm_data_ytd,type ="left") %>%
@@ -152,8 +152,8 @@ case_management_readmission_processing <- function(raw_readm_data, updated_user)
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH , "%b %Y"),
            SERVICE = "Case Management / Social Work",
            UPDATED_USER = updated_user) %>%
-    select(SERVICE, SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,"Readmission Rate - Monthly" ,"Readmission Rate - YTD",UPDATED_USER) %>%
-    pivot_longer(cols=c("Readmission Rate - Monthly" ,"Readmission Rate - YTD"),
+    select(SERVICE, SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,"Readmission Rate" ,"Readmission Rate (YTD)",UPDATED_USER) %>%
+    pivot_longer(cols=c("Readmission Rate" ,"Readmission Rate (YTD)"),
                  names_to = "METRIC_NAME_SUBMITTED",
                  values_to = "VALUE")
   
@@ -170,4 +170,4 @@ case_management_readmission_processing <- function(raw_readm_data, updated_user)
   
 }
 
-processed_readm_data <- case_management_readmission_processing(raw_readm_data,updated_user)
+#processed_readm_data <- case_management_readmission_processing(raw_readm_data,updated_user)
