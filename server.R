@@ -4490,86 +4490,153 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           file_path_los <- case_management_file_los$datapath
           file_path_readm <- case_management_file_readm$datapath
           #file_path <- "/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS IP admissions for Monthly Score Cards March 2023 draft 5-8-2023.xlsx"
-          tryCatch({case_management_data <- read_excel(file_path, skip = 5)
-          flag <- 1
-          },
-          error = function(err){  showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with the case management/social work file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-            shinyjs::enable(button_name)
-          })
           
-          
-          tryCatch({
-            enc <- guess_encoding(file_path_los, n_max = 1000)
-            raw_file_los <- file(file_path_los, open="r", encoding=as.list(enc[1, ])$encoding)
-            raw_los_data <- read.table(raw_file_los, sep='\t', dec=',', header=TRUE)
-            close(raw_file_los)
-            flag <- 2},
+          if(!is.null(file_path)){
+            tryCatch({case_management_data <- read_excel(file_path, skip = 5)
+            flag <- 1
+            },
             error = function(err){  showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the LOS file."),
+              paste0("There seems to be an issue with the case management/social work file."),
               easyClose = TRUE,
               footer = NULL
             ))
               shinyjs::enable(button_name)
             })
-          
-          tryCatch({
-            raw_readm_data <- read_excel(file_path_readm)
-            flag <- 3},
-            error = function(err){  showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with the Re Admission data file."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-              shinyjs::enable(button_name)
-            })
-          
-        }
-        
-        if(flag == 3){
-          # Process the data into standar Summary Repo format
-          tryCatch({
-          case_management_data <- case_management_function(case_management_data, updated_user)
-          processed_los_data <- case_management_los_processing(raw_los_data, updated_user)
-          processed_readm_data <- case_management_readmission_processing(raw_readm_data,updated_user)
-          flag <- 4
-          
-          },
-          error = function(err){  showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with the case management/social work file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-            shinyjs::enable(button_name)
-          })
-        }
-        
-        
-        if(flag == 4){
-          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-          case_management_data <- file_return_updated_rows(case_management_data)
-          processed_los_data <- file_return_updated_rows(processed_los_data)
-          processed_readm_data <- file_return_updated_rows(processed_readm_data)
-          
-          
-          #wirte the updated data to the Summary Repo in the server
-          write_temporary_table_to_database_and_merge(case_management_data,
-                                                      "TEMP_CASE_MANAGEMENT", button_name)
-          write_temporary_table_to_database_and_merge(processed_los_data,
-                                                      "TEMP_CASE_MANAGEMENT", button_name)
-          write_temporary_table_to_database_and_merge(processed_readm_data,
-                                                      "TEMP_CASE_MANAGEMENT", button_name)
+            
+            if(flag == 1){
+              # Process the data into standar Summary Repo format
+              tryCatch({
+                case_management_data <- case_management_function(case_management_data, updated_user)
+                flag <- 2
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the case management/social work file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              case_management_data <- file_return_updated_rows(case_management_data)
 
-          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                    input$selectedService3)
+              #wirte the updated data to the Summary Repo in the server
+              write_temporary_table_to_database_and_merge(case_management_data,
+                                                          "TEMP_CASE_MANAGEMENT", button_name)
+
+            }
+          }
+          
+          
+          if(!is.null(file_path_los)){
+            
+            tryCatch({
+              enc <- guess_encoding(file_path_los, n_max = 1000)
+              raw_file_los <- file(file_path_los, open="r", encoding=as.list(enc[1, ])$encoding)
+              raw_los_data <- read.table(raw_file_los, sep='\t', dec=',', header=TRUE)
+              close(raw_file_los)
+              flag <- 1},
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the LOS file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            
+            if(flag == 1){
+              # Process the data into standar Summary Repo format
+              tryCatch({
+                processed_los_data <- case_management_los_processing(raw_los_data, updated_user)
+                flag <- 2
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the case management/social work file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              processed_los_data <- file_return_updated_rows(processed_los_data)
+
+              
+              #wirte the updated data to the Summary Repo in the server
+              write_temporary_table_to_database_and_merge(processed_los_data,
+                                                          "TEMP_CASE_MANAGEMENT", button_name)
+              }
+            
+            
+            
+          }
+          
+          if(!is.null(file_path_readm)){
+            
+            tryCatch({
+              raw_readm_data <- read_excel(file_path_readm)
+              flag <- 1},
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Re Admission data file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            
+            if(flag == 1){
+              # Process the data into standar Summary Repo format
+              tryCatch({
+                processed_readm_data <- case_management_readmission_processing(raw_readm_data,updated_user)
+                flag <- 2
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the case management/social work file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              processed_readm_data <- file_return_updated_rows(processed_readm_data)
+              
+              
+              #wirte the updated data to the Summary Repo in the server
+              write_temporary_table_to_database_and_merge(processed_readm_data,
+                                                          "TEMP_CASE_MANAGEMENT", button_name)
+              
+            }
+            
+            
+            
+          }
+          
+          
+          
         }
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+        
         shinyjs::enable(button_name)
         
       })
