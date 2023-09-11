@@ -190,8 +190,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Clinical Nutrition'
-      # month_input <- "06-2023"
+      # service_input <- 'Case Management / Social Work'
+      # month_input <- "04-2023"
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
       
@@ -264,6 +264,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 Metric_Name, desc(Reporting_Month_Ref)) %>%
         group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
         mutate(id = row_number())
+      
+      
 
       # Current Period Table -----------------
       current_summary_data <- left_join((period_filter %>% filter(id == 1)),
@@ -356,6 +358,52 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       
+      # Case management / Social Work Remmove Avg LOS and Readmission Rates from period filter data
+      if(service_input == "Case Management / Social Work"){
+        
+        period_filter <- period_filter %>%
+          filter(!Metric_Name %in% c("Average LOS", "Readmission Rate"))
+        
+        data <- data %>%
+          filter(!Metric_Name %in% c("Average LOS", "Readmission Rate"))
+
+        cmsw_operational_ytd <- get_cmsw_ytd(month_input)
+        
+        
+        cmsw_operational_ytd_data <- cmsw_operational_ytd %>%
+          mutate(Metric_Name_Submitted = Metric_Name,
+                 Metric_Unit = case_when(Metric_Name_Submitted == "Readmission Rate" ~ "Percent"),
+                 Metric_Name_Summary = case_when(Metric_Name == "Average LOS" ~ "Average Length of Stay",
+                                                 Metric_Name == "Readmission Rate" ~ "Readmission Rate"),
+                 Target = NA,
+                 Green_Start = NA,             
+                 Green_End = NA,
+                 Yellow_Start =  NA,
+                 Yellow_End = NA,
+                 Red_Start = NA,
+                 Red_End = NA,
+                 Status = NA) %>%
+          select(names(data))
+        
+        data <- rbind(data,cmsw_operational_ytd_data)
+        
+        period_filter <- data %>% 
+          group_by(Metric_Group,
+                   Metric_Name_Summary,
+                   Metric_Name,
+                   Reporting_Month_Ref,
+                   Premier_Reporting_Period) %>% 
+          #distinct() %>%
+          summarise(total = n()) %>%                                                            #
+          arrange(Metric_Group, Metric_Name_Summary,
+                  Metric_Name, desc(Reporting_Month_Ref)) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(id = row_number())
+        
+        
+        }
+
+      
       if(!is.null(ytd_join)){
         # FYTD Period Filter 
         fytd_period <- period_filter %>%        #Get all data from YTD
@@ -370,8 +418,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                 paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
                                                 ifelse(which.max(id) == 1,
                                                        Premier_Reporting_Period[which.min(id)],
-                                                       paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
-                                                              Premier_Reporting_Period[which.min(id)]))))
+                                                              paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
+                                                                     Premier_Reporting_Period[which.min(id)]))))
+        fytd_period <- fytd_period %>%
+          mutate(`Fiscal Year to Date` = ifelse(Metric_Name %in% c("Average LOS", "Readmission Rate"),
+                                                paste0("Jan - ",Premier_Reporting_Period[which.min(id)]),
+                                                `Fiscal Year to Date`))
+        
       } else{
         # FYTD Period Filter 
         fytd_period <- period_filter %>%        #Get all data from YTD
@@ -386,12 +439,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                 paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
                                                 ifelse(which.max(id) == 1,
                                                        Premier_Reporting_Period[which.min(id)],
-                                                       paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
+                                                              paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
                                                               Premier_Reporting_Period[which.min(id)]))))
         
+        fytd_period <- fytd_period %>%
+          mutate(`Fiscal Year to Date` = ifelse(Metric_Name %in% c("Average LOS", "Readmission Rate"),
+                                                paste0("Jan - ",Premier_Reporting_Period[which.min(id)]),
+                                                `Fiscal Year to Date`))
+
       }
       
-      
+
       
       # FYTD Summary Table - for total
       fytd_summary_all <- left_join(fytd_period,
@@ -533,7 +591,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
         filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance", "Productivity")) %>% # Metrics that need to be summarized by sum (total)
-        filter(Metric_Name_Summary != "Malnutrition Revenue") %>%
+        filter(Metric_Name_Summary %!in% c("Malnutrition Revenue")) %>%
         filter(Metric_Name != "Overtime Hours - % (Premier)") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
@@ -4474,6 +4532,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         shinyjs::disable(button_name)
         flag <- 0
         case_management_file <- input$case_management_file
+        case_management_file_los <- input$case_management_los
+        case_management_file_readm <- input$case_management_readm
         
         if(input$name_case_management == ""){
           showModal(modalDialog(
@@ -4485,50 +4545,156 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }else{
           updated_user <- input$name_case_management
           file_path <- case_management_file$datapath
+          file_path_los <- case_management_file_los$datapath
+          file_path_readm <- case_management_file_readm$datapath
           #file_path <- "/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Group 1/Case Management/MSHS IP admissions for Monthly Score Cards March 2023 draft 5-8-2023.xlsx"
-          tryCatch({case_management_data <- read_excel(file_path, skip = 5)
-          flag <- 1
-          },
-          error = function(err){  showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with the case management/social work file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-            shinyjs::enable(button_name)
-          })
+          
+          if(!is.null(file_path)){
+            tryCatch({case_management_data <- read_excel(file_path, skip = 5)
+            flag <- 1
+            },
+            error = function(err){  showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the case management/social work file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+              shinyjs::enable(button_name)
+            })
+            
+            if(flag == 1){
+              # Process the data into standar Summary Repo format
+              tryCatch({
+                case_management_data <- case_management_function(case_management_data, updated_user)
+                flag <- 2
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the case management/social work file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              case_management_data <- file_return_updated_rows(case_management_data)
+
+              #wirte the updated data to the Summary Repo in the server
+              write_temporary_table_to_database_and_merge(case_management_data,
+                                                          "TEMP_CASE_MANAGEMENT", button_name)
+
+            }
+          }
+          
+          
+          if(!is.null(file_path_los)){
+            
+            tryCatch({
+              enc <- guess_encoding(file_path_los, n_max = 1000)
+              raw_file_los <- file(file_path_los, open="r", encoding=as.list(enc[1, ])$encoding)
+              raw_los_data <- read.table(raw_file_los, sep='\t', dec=',', header=TRUE,colClasses = "character")
+              close(raw_file_los)
+              flag <- 1},
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the LOS file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            
+            if(flag == 1){
+              # Process the data into standar Summary Repo format
+              tryCatch({
+                processed_los_data <- case_management_los_processing(raw_los_data, updated_user)
+                flag <- 2
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the LOS file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              processed_los_data <- file_return_updated_rows(processed_los_data)
+
+              
+              #wirte the updated data to the Summary Repo in the server
+              write_temporary_table_to_database_and_merge(processed_los_data,
+                                                          "TEMP_CASE_MANAGEMENT", button_name)
+              }
+            
+            
+            
+          }
+          
+          if(!is.null(file_path_readm)){
+            
+            tryCatch({
+              raw_readm_data <- read_excel(file_path_readm)
+              flag <- 1},
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Re Admission data file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            
+            if(flag == 1){
+              # Process the data into standar Summary Repo format
+              tryCatch({
+                processed_readm_data <- case_management_readmission_processing(raw_readm_data,updated_user)
+                flag <- 2
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue with the Re Admission data file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              processed_readm_data <- file_return_updated_rows(processed_readm_data)
+              
+              
+              #wirte the updated data to the Summary Repo in the server
+              write_temporary_table_to_database_and_merge(processed_readm_data,
+                                                          "TEMP_CASE_MANAGEMENT", button_name)
+              
+            }
+            
+            
+            
+          }
+          
+          
+          
         }
         
-        if(flag == 1){
-          # Process the data into standar Summary Repo format
-          print(updated_user)
-          print(case_management_data)
-          tryCatch({case_management_data <- case_management_function(case_management_data, updated_user)
-          flag <- 2
-          
-          },
-          error = function(err){  showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with the case management/social work file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-            shinyjs::enable(button_name)
-          })
-        }
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
         
-        
-        if(flag == 2){
-          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-          case_management_data <- file_return_updated_rows(case_management_data)
-          
-          #wirte the updated data to the Summary Repo in the server
-          write_temporary_table_to_database_and_merge(case_management_data,
-                                                      "TEMP_CASE_MANAGEMENT", button_name)
-          
-          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                    input$selectedService3)
-        }
         shinyjs::enable(button_name)
         
       })
