@@ -1,6 +1,6 @@
-#datapath <- "tests/Dept Report Builder (100).xlsx"
-#raw_data <- read_excel(datapath)
-#updated_user <- "Test_DNU"
+# datapath <- "Tests/Dept Report Builder.xlsx"
+# raw_data <- read_excel(datapath)
+# updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
   key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
@@ -222,14 +222,24 @@ productivity_processing <- function(raw_data, updated_user) {
                         select(-Reporting_Month) %>%
                         mutate(UPDATED_USER = updated_user)
   
+  prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours") %>% filter(SITE %in% c("MSB", "MSW"))
+  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
+  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
+  
+  prod_df_aggregate_peri <- prod_df_aggregate %>% filter(SERVICE == "Perioperative Services" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM"))
+  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Perioperative Services" | METRIC_NAME_SUBMITTED != "Agency FTE")
+  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_peri)
+  
+  prod_df_aggregate_security <- prod_df_aggregate %>% filter(SERVICE == "Security" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM", "MSW"))
+  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Security" | METRIC_NAME_SUBMITTED != "Agency FTE")
+  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_security)
+  
+  
   if(ytd_flag == 1) {
     prod_df_aggregate <- prod_df_aggregate %>% mutate(METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (FYTD)"))
-  }
+  } 
   
-   prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours") %>% filter(SITE %in% c("MSB", "MSW"))
-   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
-  
-   prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
+   
   
   prod_df_aggregate <- prod_df_aggregate %>% filter(VALUE != "NaN")
   
