@@ -29,6 +29,7 @@ get_cmsw_ytd <- function(month_input) {
       Site,
       Metric_Name
     ) %>%
+    filter(Reporting_Month_Ref <= as.Date(paste0(month_input, "-01"), "%m-%Y-%d")) %>%
     filter(Reporting_Month_Ref == max(Reporting_Month_Ref))
   dbDisconnect(conn)
   
