@@ -1,6 +1,6 @@
 file_return_updated_rows <- function(df) {
   #max_date_df <- max(df$REPORTING_MONTH)
-  df <- df %>% filter(REPORTING_MONTH >= max(REPORTING_MONTH) %m-% months(6))
+  #df <- df %>% filter(REPORTING_MONTH >= max(REPORTING_MONTH) %m-% months(6))
   #Get the identifiers for the data in Summary Repo
   service <- unique(df$SERVICE)
   reporting_period <- unique(df$PREMIER_REPORTING_PERIOD)
