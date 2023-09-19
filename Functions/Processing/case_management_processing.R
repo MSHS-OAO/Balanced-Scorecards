@@ -129,28 +129,27 @@ case_management_los_processing <- function(raw_los_data,updated_user){
 case_management_readmission_processing <- function(raw_readm_data, updated_user){
   raw_readm_data  <- raw_readm_data %>%
     mutate(
-      `Month of DSCH_DT_SRC` = paste("01", sep =  " ", `Month of DSCH_DT_SRC`),
-      `Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%d %B %Y"),
-      Numerator = as.numeric(Numerator),
+      `Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%Y-%m-%d"),
+      Readmissions = as.numeric(Readmissions),
       `Total Cases` = as.numeric(sub(",", "", `Total Cases`, fixed = TRUE)),
-      "Readmission Rate" = Numerator/`Total Cases`,
+      "Readmission Rate" = Readmissions/`Total Cases`,
       YEAR_REP = year(`Month of DSCH_DT_SRC`))
   
   
   raw_readm_data_ytd  <- raw_readm_data %>%
-    group_by(YEAR_REP,Facility1,`Month of DSCH_DT_SRC`) %>%
-    arrange(Facility1, `Month of DSCH_DT_SRC`) %>%
-    summarise(Numerator = sum(Numerator),
+    group_by(YEAR_REP,Facility,`Month of DSCH_DT_SRC`) %>%
+    arrange(Facility, `Month of DSCH_DT_SRC`) %>%
+    summarise(Readmissions = sum(Readmissions),
               `Total Cases` = sum(`Total Cases`))%>%
-    mutate(Numerator = cumsum(Numerator),
+    mutate(Readmissions = cumsum(Readmissions),
            `Total Cases` = cumsum(`Total Cases`),
-           "Readmission Rate (YTD)" = Numerator/`Total Cases`)%>%
-    select(Facility1,  `Month of DSCH_DT_SRC`, "Readmission Rate (YTD)")
+           "Readmission Rate (YTD)" = Readmissions/`Total Cases`)%>%
+    select(Facility,  `Month of DSCH_DT_SRC`, "Readmission Rate (YTD)")
   
   
   readm_data <- join(raw_readm_data,raw_readm_data_ytd,type ="left") %>%
     select(-YEAR_REP) %>%
-    rename(SITE = Facility1,
+    rename(SITE = Facility,
            REPORTING_MONTH = `Month of DSCH_DT_SRC`) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH , "%b %Y"),
            SERVICE = "Case Management / Social Work",
