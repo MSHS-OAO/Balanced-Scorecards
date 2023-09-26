@@ -278,7 +278,7 @@ food_summary_repo_format <- function(data, updated_user) {
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
       #rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
-      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
+      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Actual Revenue`) - as.numeric(`Revenue Budget`), 2)))) %>%
     #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
     #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
     pivot_longer(

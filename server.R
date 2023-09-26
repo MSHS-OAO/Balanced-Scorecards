@@ -800,7 +800,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           pivot_wider(names_from = "Metric_Name",
                       values_from = "value_rounded") %>%
           mutate(Target = round(`Variance to Budget`/ Budget,2),
-                 Status = ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow"))) %>%
+                 Status = ifelse(Target <= 0, "Red", ifelse(Target > 0.02, "Green", "Yellow"))) %>%
           pivot_longer(4:5,
                        names_to = "Summary_Metric_Name",
                        values_to = "value_rounded") %>%
@@ -1033,7 +1033,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           pivot_wider(names_from = "Metric_Name",
                       values_from = "value_rounded") %>%
           mutate(Target = round(`Variance to Budget`/ Budget,2),
-                 Status = ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow"))) %>%
+                 Status = ifelse(Target <= 0, "Red", ifelse(Target > 0.02, "Green", "Yellow"))) %>%
           pivot_longer(4:5,
                        names_to = "Summary_Metric_Name",
                        values_to = "value_rounded") %>%
