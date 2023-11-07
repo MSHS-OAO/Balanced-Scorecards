@@ -82,7 +82,9 @@ pt_exp_server_function <- function(button_name, file, service, updated_user, typ
                                      "Question_Clean" = "Question_Clean",
                                      "ReportingType" = "ReportingType",
                                      "Reporting_Date_Start" = "Reporting_Date_Start",
-                                     "Reporting_Date_End" = "Reporting_Date_End")
+                                     "Reporting_Date_End" = "Reporting_Date_End",
+                                     "Site_Mean" = "Site_Mean",
+                                     "Site_N" = "Site_N")
     )
     
     # # Third, combine the updated historical data with the new data
@@ -111,7 +113,9 @@ pt_exp_server_function <- function(button_name, file, service, updated_user, typ
                                             "Question_Clean" = "Question_Clean",
                                             "ReportingType" = "ReportingType",
                                             "Reporting_Date_Start" = "Reporting_Date_Start",
-                                            "Reporting_Date_End" = "Reporting_Date_End")
+                                            "Reporting_Date_End" = "Reporting_Date_End",
+                                            "Site_Mean" = "Site_Mean",
+                                            "Site_N" = "Site_N")
     )
     
     
