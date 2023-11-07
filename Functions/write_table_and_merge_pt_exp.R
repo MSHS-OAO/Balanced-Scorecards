@@ -41,7 +41,7 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     }
   } else{
     
-  TABLE_NAME <- "BSC_PATIENT_EXPERIENCE_REPO"
+  TABLE_NAME <- "BSC_PATIENT_EXPERIENCE_REPO_MERGE"
     
     # Add UPDATE_TIME and check for all the fields are characters
     processed_input_data <- processed_input_data %>%
@@ -97,6 +97,51 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     all_data <- gsub("'NULL'", "''", all_data)
     
     
+    # glue() query to merge data from temporary table to summary_repo table
+    query = glue('MERGE INTO BSC_PATIENT_EXPERIENCE_REPO_MERGE SR
+                    USING "{TABLE_NAME}" SOURCE_TABLE
+                    ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
+                          SR."QUESTION_CLEAN" = SOURCE_TABLE."QUESTION_CLEAN" AND
+                          SR."REPORTINGTYPE" = SOURCE_TABLE."REPORTINGTYPE" AND
+                          SR."REPORTING_DATE_START" = SOURCE_TABLE."REPORTING_DATE_START" AND
+                          SR."REPORTING_DATE_END" = SOURCE_TABLE."REPORTING_DATE_END" AND
+                          SR."SERVICE" = SOURCE_TABLE."SERVICE")
+                    WHEN MATCHED THEN 
+                    UPDATE  SET SR."VALUE" = SOURCE_TABLE."VALUE",
+                                SR."UPDATED_TIME" = SOURCE_TABLE."UPDATED_TIME",
+                                SR."UPDATED_USER" = SOURCE_TABLE."UPDATED_USER",
+                                SR."PREMIER_REPORTING_PERIOD" = SOURCE_TABLE."PREMIER_REPORTING_PERIOD"
+                    WHEN NOT MATCHED THEN
+                    INSERT( SR."SERVICE",
+                            SR."SITE",
+                            SR."QUESTION_CLEAN",
+                            SR."REPORTINGTYPE",
+                            SR."REPORTING_DATE_START", 
+                            SR."REPORTING_DATE_END", 
+                            SR."SITE_MEAN",
+                            SR."SITE_N",
+                            SR."ALL_PG_DATABASE_MEAN",
+                            SR."ALL_PG_DATABASE_N",
+                            SR."ALL_PG_DATABASE_RANK",
+                            SR."UPDATED_USER",
+                            SR."UPDATED_TIME")  
+                    VALUES( SOURCE_TABLE"SERVICE",
+                            SOURCE_TABLE"SITE",
+                            SOURCE_TABLE"QUESTION_CLEAN",
+                            SOURCE_TABLE"REPORTINGTYPE",
+                            SOURCE_TABLE"REPORTING_DATE_START", 
+                            SOURCE_TABLE"REPORTING_DATE_END", 
+                            SOURCE_TABLE"SITE_MEAN",
+                            SOURCE_TABLE"SITE_N",
+                            SOURCE_TABLE"ALL_PG_DATABASE_MEAN",
+                            SOURCE_TABLE"ALL_PG_DATABASE_N",
+                            SOURCE_TABLE"ALL_PG_DATABASE_RANK",
+                            SOURCE_TABLE"UPDATED_USER",
+                            SOURCE_TABLE"UPDATED_TIME";')
+    
+    # glue query for dropping the table
+    truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
+    
     
     conn <- dbConnect(odbc(), "OracleODBC-21_5",
                       uid = "OAO_PRODUCTION",
@@ -112,7 +157,10 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     dbBegin(conn)
     # ## Execute staments and if there is an error  with one of them rollback changes
     tryCatch({
+      dbExecute(conn,truncate_query)
       dbExecute(conn,all_data)
+      dbExecute(conn,query)
+      dbExecute(conn,truncate_query)
       dbCommit(conn)
       dbDisconnect(conn)
       if(isRunning()) {
