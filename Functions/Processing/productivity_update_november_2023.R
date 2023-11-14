@@ -36,6 +36,8 @@ productivity_processing <- function(raw_data, updated_user) {
            `Department Reporting Definition Name` = `Department DESC`) %>%
     mutate(`Corporation Name` = "Mount Sinai Health System")
   
+  #raw_data <- raw_data %>% slice(-1)
+  
 
   fytd_check <- raw_data[1,] %>% mutate(across(everything(), as.character)) %>% pivot_longer(everything())
   
@@ -161,6 +163,35 @@ productivity_processing <- function(raw_data, updated_user) {
   #   select(-Report_Start, -Premier_Reporting_Period) %>%
   #   rename(Premier_Reporting_Period = Report_End)
   
+  # Create a dataframe to map old metrics to new names
+  metrics_mapper = list(Old_Metrics = c("Actual Worked FTE",
+                              "Agency Hours",
+                              "Overtime Hours",
+                              "Total Paid hours",
+                              "Total Worked Hours",
+                              "Overtime Percent of Paid Hours",
+                              "Worked Hours Productivity Index",
+                              "Actual Worked Hours per Unit",
+                              "Total Target Worked FTE",
+                              "Volume"),
+                        New_Metrics= c("Actual Worked FTE",
+                              "Agency Hours",
+                              "Actual Overtime Hrs",
+                              "Actual Paid Hrs",
+                              "Actual Measure Amount",
+                              "Actual Overtime % of Paid Hrs",
+                              "Worked Hours Productivity Index",
+                              "Actual Worked Hrs per Unit",
+                              "Total Target Wrked FTE",
+                              NA))
+  metrics_mapper_df <- as.data.frame(metrics_mapper)
+  
+  #Map the metrics to data
+  prod_df_all <- left_join(prod_df_all, 
+                           metrics_mapper_df,
+  by = c("Metric_Name" = "New_Metrics")) %>%
+    select(-Metric_Name) %>%
+    rename("Metric_Name" = "Old_Metrics")
   
   ###group and sum all metrics except Overtime Percent of PAid Hours, WHPU, OT FTE, Agency FTE, Actual Worked Hours per Unit
   prod_df_all <- prod_df_all %>% filter(!(Metric_Name %in% c("Worked Hours Productivity Index", "Overtime Percent of Paid Hours", "Actual Worked Hours per Unit")
@@ -169,12 +200,12 @@ productivity_processing <- function(raw_data, updated_user) {
     summarise(value = sum(value, na.rm = T)) %>%
     mutate(Metric_Name = ifelse(Metric_Name == "Total Paid hours", "Total Paid Hours", Metric_Name))
   
-  whpi <- prod_df_all %>% filter(Metric_Name %in% c("Total Target Wrked FTE", "Actual Worked FTE")) %>% 
+  whpi <- prod_df_all %>% filter(Metric_Name %in% c("Total Target Worked FTE", "Actual Worked FTE")) %>% 
     pivot_wider(names_from = Metric_Name,
                 values_from = value
     ) %>% 
-    mutate(`Worked Hours Productivity Index` = `Total Target Wrked FTE`/`Actual Worked FTE`) %>%
-    select(-`Actual Worked FTE`, -`Total Target Wrked FTE`) %>%
+    mutate(`Worked Hours Productivity Index` = `Total Target Worked FTE`/`Actual Worked FTE`) %>%
+    select(-`Actual Worked FTE`, -`Total Target Worked FTE`) %>%
     pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
                  names_to = "Metric_Name",
                  values_to = "value") %>%
@@ -193,6 +224,7 @@ productivity_processing <- function(raw_data, updated_user) {
     filter(Metric_Name %in% c("Overtime Percent of Paid Hours")) %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0))
   
+  # check for why volume mapper
   actual_worked_hours_per_unit <- prod_df_all %>% filter(Metric_Name %in% c("Total Worked Hours", "Volume")) %>% 
     pivot_wider(names_from = Metric_Name,
                 values_from = value
