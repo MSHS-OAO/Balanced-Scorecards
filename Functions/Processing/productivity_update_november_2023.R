@@ -1,4 +1,4 @@
-datapath <- "Tests/Scorecards Reporting Period Average.xlsx"
+datapath <- "Tests/Scorecards Reporting Period Average NEW.xlsx"
 datapath_old <- "Tests/Dept Report Builder.xlsx"
 raw_data <- read_excel(datapath,skip = 2)
 raw_data_old <- read_excel(datapath_old)
@@ -163,27 +163,27 @@ productivity_processing <- function(raw_data, updated_user) {
   #   select(-Report_Start, -Premier_Reporting_Period) %>%
   #   rename(Premier_Reporting_Period = Report_End)
   
-  # Create a dataframe to map old metrics to new names
+  # Create a dataframe to map old metrics to new names - Migration to 2.0
   metrics_mapper = list(Old_Metrics = c("Actual Worked FTE",
-                              "Agency Hours",
-                              "Overtime Hours",
-                              "Total Paid hours",
-                              "Total Worked Hours",
-                              "Overtime Percent of Paid Hours",
-                              "Worked Hours Productivity Index",
-                              "Actual Worked Hours per Unit",
-                              "Total Target Worked FTE",
-                              "Volume"),
+                                        "Agency Hours",
+                                        "Overtime Hours",
+                                        "Total Paid hours",
+                                        "Total Worked Hours",
+                                        "Volume",
+                                        "Overtime Percent of Paid Hours",
+                                        "Worked Hours Productivity Index",
+                                        "Actual Worked Hours per Unit",
+                                        "Total Target Worked FTE"),
                         New_Metrics= c("Actual Worked FTE",
-                              "Agency Hours",
-                              "Actual Overtime Hrs",
-                              "Actual Paid Hrs",
-                              "Actual Measure Amount",
-                              "Actual Overtime % of Paid Hrs",
-                              "Worked Hours Productivity Index",
-                              "Actual Worked Hrs per Unit",
-                              "Total Target Wrked FTE",
-                              NA))
+                                       "Agency Hours",
+                                       "Actual Overtime Hrs",
+                                       "Actual Paid Hrs",
+                                       "Actual Worked Hrs",
+                                       "Actual Measure Amount",
+                                       "Actual Overtime % of Paid Hrs",
+                                       "Worked Hours Productivity Index",
+                                       "Actual Worked Hrs per Unit",
+                                       "Total Target Wrked FTE"))
   metrics_mapper_df <- as.data.frame(metrics_mapper)
   
   #Map the metrics to data
