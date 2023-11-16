@@ -1,8 +1,8 @@
-datapath <- "Tests/Scorecards Reporting Period Average NEW.xlsx"
-datapath_old <- "Tests/Dept Report Builder.xlsx"
-raw_data <- read_excel(datapath,skip = 2)
-raw_data_old <- read_excel(datapath_old)
-updated_user <- "Test_DNU"
+# datapath <- "Tests/Scorecards Reporting Period Average NEW.xlsx"
+# datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
+# raw_data <- read_excel(datapath,skip = 2)
+# raw_data_old <- read_excel(datapath_old)
+# updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
   key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
@@ -212,16 +212,16 @@ productivity_processing <- function(raw_data, updated_user) {
     filter(Metric_Name %in% c("Worked Hours Productivity Index")) %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0))
   
-  overtime_percent_paid_hours <- prod_df_all %>% filter(Metric_Name %in% c("Overtime Hours", "Total Paid Hours")) %>% 
+  overtime_percent_worked_hours <- prod_df_all %>% filter(Metric_Name %in% c("Overtime Hours", "Total Worked Hours")) %>% 
     pivot_wider(names_from = Metric_Name,
                 values_from = value
     ) %>%
-    mutate(`Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid Hours`) %>%
-    select(-`Overtime Hours`, -`Total Paid Hours`) %>%
+    mutate(`Overtime Percent of Worked Hours` = `Overtime Hours`/`Total Worked Hours`) %>%
+    select(-`Overtime Hours`, -`Total Worked Hours`) %>%
     pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
                  names_to = "Metric_Name",
                  values_to = "value") %>%
-    filter(Metric_Name %in% c("Overtime Percent of Paid Hours")) %>%
+    filter(Metric_Name %in% c("Overtime Percent of Worked Hours")) %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0))
   
   # check for why volume mapper
@@ -247,7 +247,7 @@ productivity_processing <- function(raw_data, updated_user) {
     ungroup()
   
   
-  prod_df_aggregate <- rbind(prod_df_all, whpi, overtime_percent_paid_hours, actual_worked_hours_per_unit, ot_agency_fte)
+  prod_df_aggregate <- rbind(prod_df_all, whpi, overtime_percent_worked_hours, actual_worked_hours_per_unit, ot_agency_fte)
   prod_df_aggregate$Metric_Name <- str_trim(prod_df_aggregate$Metric_Name)
   
   
@@ -287,3 +287,8 @@ productivity_processing <- function(raw_data, updated_user) {
   
   
 }
+
+
+#Test ----
+
+# processed_new_data <- productivity_processing(raw_data, updated_user)
