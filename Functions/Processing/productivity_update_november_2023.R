@@ -1,8 +1,8 @@
-# datapath <- "Tests/Scorecards Reporting Period Average NEW.xlsx"
-# datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
-# raw_data <- read_excel(datapath,skip = 2)
-# raw_data_old <- read_excel(datapath_old)
-# updated_user <- "Test_DNU"
+datapath <- "Tests/Scorecards Reporting Period Average NEW.xlsx"
+datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
+raw_data <- read_excel(datapath,skip = 2)
+raw_data_old <- read_excel(datapath_old)
+updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
   key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
@@ -281,7 +281,9 @@ productivity_processing <- function(raw_data, updated_user) {
   
   
   
-  prod_df_aggregate <- prod_df_aggregate %>% filter(VALUE != "NaN")
+  prod_df_aggregate <- prod_df_aggregate %>% 
+    filter(VALUE != "NaN") %>%
+    mutate(VALUE = round(VALUE,2))
   
   
   
