@@ -140,7 +140,8 @@ process_dte_data <- function(raw_data,updated_user){
     pivot_longer(cols=c("MSB","MSBI","MSH","MSM","MSQ","MSW" ),
                  names_to='SITE',
                  values_to='VALUE') %>%
-    filter(SITE !="MSQ") %>% #Update in the future
+    mutate(VALUE = ifelse(SITE == "MSQ", 
+                          NA, VALUE)) %>% #Update in the future
   select(SERVICE,SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER)
 
 }
