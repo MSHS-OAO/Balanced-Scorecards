@@ -156,8 +156,8 @@ process_dth_data <- function(raw_data,updated_user){
            PREMIER_REPORTING_PERIOD = `Month of Date of Encounter`) %>%
     filter(PREMIER_REPORTING_PERIOD != "Grand Total") %>%
     mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Median Door/Discovery to CT", 
-                                          "Door to Head CT for Stroke Patients (Median)",
-                                          "Door to Head CT for Stroke Patients (95th Percentile)"),
+                                          "Door to Door CT for Stroke Patients (Median)",
+                                          "Door to Door CT for Stroke Patients (95th Percentile)"),
            SERVICE = "ED",
            REPORTING_MONTH = as.Date(paste(PREMIER_REPORTING_PERIOD,"01"),format="%b %Y %d"),
            REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d")),
