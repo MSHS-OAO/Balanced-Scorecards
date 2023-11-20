@@ -4197,6 +4197,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             dte_summary_data <- process_dte_data(dte_data,updated_user)
             dth_summary_data <- process_dth_data(dth_data,updated_user)
             
+            ed_summary_data <- rbind(ed_summary_data,
+                                     dte_summary_data,
+                                     dth_summary_data)
+            
             flag <- 2
           },
           error = function(err){
@@ -4214,17 +4218,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if(flag == 2){
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           ed_summary_data <- file_return_updated_rows(ed_summary_data)
-          dte_summary_data <- file_return_updated_rows(dte_summary_data)
-          dth_summary_data <- file_return_updated_rows(dth_summary_data)
+          # dte_summary_data <- file_return_updated_rows(dte_summary_data)
+          # dth_summary_data <- file_return_updated_rows(dth_summary_data)
           
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(ed_summary_data,
                                                       "TEMP_ED", button_name)
-          write_temporary_table_to_database_and_merge(dte_summary_data,
-                                                      "TEMP_ED_DTE", button_name)
-          write_temporary_table_to_database_and_merge(dth_summary_data,
-                                                      "TEMP_ED_DTH", button_name)
+          # write_temporary_table_to_database_and_merge(dte_summary_data,
+          #                                             "TEMP_ED_DTE", button_name)
+          # write_temporary_table_to_database_and_merge(dth_summary_data,
+          #                                             "TEMP_ED_DTH", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
