@@ -317,66 +317,31 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
-                                 # Biomed D&I Data Submission  -----
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
-                                        tabPanel("Disruptions and Issues", hr(),
+                                        tabPanel("Biomed/Clinical Engineering Operational Data", hr(),
                                                  fluidRow(
                                                    column(12,
                                                           div(
-                                                            id = "form_biomed_disruptions",
+                                                            id = "form_biomed",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_biomed_distruptions", (labelMandatory("1. Please enter Name:")), "")
+                                                                     textInput("name_biomed", (labelMandatory("1. Please enter Name:")), "")
                                                               )
                                                             )
                                                             ,
-                                                            h2("2. Please enter data in the tables below"),
+                                                            h2("2. Please upload the data"),
                                                             br(),
-                                                            div(id = "header_custom_biomed",
-                                                                h3("Please leave cell blank if data has not been received")
-                                                            ),
                                                             h2("3. Once finished please click on the button below"),
                                                             #####Enter datatables here
-                                                            h2("Biomed/Clinical Engineering - Disruptions and Issues"),
-                                                            
-                                                            rHandsontableOutput("bimoed_di"),
+                                                            br(),
+                                                            fileInput("biomed_operational_data",
+                                                                      label = "Please upload Operational Data"),
                                                             hr(),
-                                                            actionButton("submit_biomeddi", "Submit", class = "btn-primary")
+                                                            actionButton("submit_biomed", "Submit", class = "btn-primary")
                                                           )
                                                    )
                                                  )
                                         ),
-                                        # Biomed KPI Data Submission ----
-                                        tabPanel("KPIs", hr(),
-                                                 fluidRow(
-                                                   column(12,
-                                                          div(
-                                                            id = "form_biomed_kpi",
-                                                            fluidRow(
-                                                              column(2,
-                                                                     textInput("name_biomed_kpi", (labelMandatory("1. Please enter Name:")), "")
-                                                              )
-                                                            ),
-                                                            h2("2. Please enter data in the tables below"),
-                                                            br(),
-                                                            div(id = "header_custom_biomed",
-                                                                h4("Please leave cell blank if data has not been received"),
-                                                                br(),
-                                                                h4("Please enter percentages (Documented Status, PM Compliance - High Risk Equipment, 
-                                                                   and PM Compliance - All Medical Equipment)as 2 digit decimal between 0 and 1.")
-                                                            ),
-                                                            
-                                                            h2("3. Once finished please click on the button below"),
-                                                            #####Enter datatables here
-                                                            h2("Biomed/Clinical Engineering - KPIs"),
-                                                            
-                                                            rHandsontableOutput("biomed_kpi"),
-                                                            hr(),
-                                                            actionButton("submit_biomedkpis", "Submit", class = "btn-primary")
-                      
-                                                          )
-                                                   )
-                                                 ), value = "biomed_kpi")
                                  ), value = "biomed"
                                  
                         ),
@@ -1062,11 +1027,6 @@ ui <-
           color: #FFFFFF;
         }")),
  tags$style(HTML("
-        #submit_biomedkpis {
-          background-color: #d80b8c;
-          color: #FFFFFF;
-        }")),
- tags$style(HTML("
         #submit_imagingct {
           background-color: #d80b8c;
           color: #FFFFFF;
@@ -1077,7 +1037,7 @@ ui <-
           color: #FFFFFF;
         }")),
  tags$style(HTML("
-        #submit_biomeddi {
+        #submit_biomed {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),

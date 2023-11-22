@@ -3663,70 +3663,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       })
       
-      # KPI Biomed Output Table -------
-      
-      data_bimoed_kpi <- reactive({
-        #data  <- kpibme_reports_ui %>% ungroup()
-        data <- sql_manual_table_output("Biomed / Clinical Engineering", "KPIs")
-        data <- data %>%
-          arrange(Site)
-        result <- manual_table_month_order(data)
-        
-      })
-      
-      
-      output$biomed_kpi <- renderRHandsontable({
-        #data <- data
-        data <- data_bimoed_kpi()
-        
-        
-        
-        unique_sites <- unique(data$Site)
-        site_1 <- which(data$Site == unique_sites[1])
-        site_2 <- which(data$Site == unique_sites[2])
-        site_3 <- which(data$Site == unique_sites[3])
-        site_4 <- which(data$Site == unique_sites[4])
-        site_5 <- which(data$Site == unique_sites[5])
-        site_6 <- which(data$Site == unique_sites[6])
-        site_7 <- which(data$Site == unique_sites[7])
-        
-        
-        rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
-          }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-        
-        
-        col_highlight <- ncol(data) - 1
-        
-        
-        rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-          hot_table(mergeCells = list(
-            list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
-            list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
-            list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
-            list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
-            list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
-            list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
-            list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-          )) %>%
-          hot_cols(renderer = rendederer_string)  %>%
-          hot_col(1:2, readOnly = T)
-      })
-      #KPIs Biomed Observe Event----- 
-      observeEvent(input$submit_biomedkpis, {
-        button_name <- "submit_biomedkpis"
+      # Biomed Observe Event----- 
+      observeEvent(input$submit_biomed, {
+        button_name <- "submit_biomed"
         shinyjs::disable(button_name)
-        updated_user <- input$name_biomed_kpi
+        updated_user <- input$name_biomed
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
@@ -3738,20 +3679,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         else{
           tryCatch({
             
-            # Convert rhandsontable to R object
-            bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
+            # read read the data
+            raw_data <- read.xlsx(datapath)
             
-            # Identify columns with no data in them and remove before further processing
-            # This ensures months with no data do not get added to the department summary
-
-            bme_kpi_manual_updates <- remove_empty_manual_columns(bme_kpi_manual_updates)
             flag <- 1
           },
           error =function(err){
             
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Biomedical KPIs data entered."),
+              paste0("There seems to be an issue with the Biomedical KPIs data file."),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -3759,164 +3696,49 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             
           })
+        }
           
           if(flag==1){
-            user_format_error <- manual_format_check(bme_kpi_manual_updates%>%
-                                                        filter(Metric %in% c("PM Compliance - High Risk Equipment",
-                                                                             "PM Compliance - All Medical Equipment",
-                                                                             "Documented Status")))
             
-            if (user_format_error) {
+            
+            tryCatch({
+              # Reformat data from manual input table into summary repo format
+              biomed_summary_data <-
+                process_biomed_data(raw_data, updated_user)
               
+              flag <- 2
+            },
+            error = function(err){
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
+                paste0("There seems to be an issue with this data file."),
                 easyClose = TRUE,
                 footer = NULL
               ))
+              shinyjs::enable(button_name)
               
-            } 
-            else{
-              ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
-              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
-                                                                "Biomed / Clinical Engineering", 
-                                                                "KPIs", 
-                                                                updated_user,
-                                                                button_name)
-              
-              if(updated_rows$flag == 2) {
-                ##Updated the data on the databse
-                write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                            "TEMP_BIOMEDKPIs", button_name)
-                
-                update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                          input$selectedService3)
-              
-              }
-        }
-      }
-    }})
-      
-      
-      #D&I Biomed Output Table -------
-      
-      data_bimoed_di <- reactive({
-        #data  <- kpibme_reports_ui %>% ungroup()
-        data <- sql_manual_table_output("Biomed / Clinical Engineering", "disruptions_and_issues")
-        data <- data %>%
-          arrange(Site)
-        result <- manual_table_month_order(data)
-        
-      })
-      
-      
-      output$bimoed_di <- renderRHandsontable({
-        data <- data_bimoed_di()
-        
-        
-        
-        unique_sites <- unique(data$Site)
-        site_1 <- which(data$Site == unique_sites[1])
-        site_2 <- which(data$Site == unique_sites[2])
-        site_3 <- which(data$Site == unique_sites[3])
-        site_4 <- which(data$Site == unique_sites[4])
-        site_5 <- which(data$Site == unique_sites[5])
-        site_6 <- which(data$Site == unique_sites[6])
-        site_7 <- which(data$Site == unique_sites[7])
-        
-        
-        rendederer_string <- "
-    function(instance, td, row, col, prop, value, cellProperties) {
-      Handsontable.renderers.NumericRenderer.apply(this, arguments);
-
-      if (instance.params) {
-            hcols = instance.params.col_highlight;
-            hcols = hcols instanceof Array ? hcols : [hcols];
+            })
           }
-
-      if (instance.params && hcols.includes(col)) {
-        td.style.background = '#EEEDE7';
-      }
-  }"
-        
-        
-        col_highlight <- ncol(data) - 1
-        
-        
-        rhandsontable(data, overflow= 'visible', col_highlight = col_highlight, rowHeaders = FALSE, readOnly = FALSE) %>%
-          hot_table(mergeCells = list(
-            list(row = min(site_1)-1, col = 0, rowspan = length(site_1), colspan = 1),
-            list(row = min(site_2)-1, col = 0, rowspan = length(site_2), colspan = 1),
-            list(row = min(site_3)-1, col = 0, rowspan = length(site_3), colspan = 1),
-            list(row = min(site_4)-1, col = 0, rowspan = length(site_4), colspan = 1),
-            list(row = min(site_5)-1, col = 0, rowspan = length(site_5), colspan = 1),
-            list(row = min(site_6)-1, col = 0, rowspan = length(site_6), colspan = 1),
-            list(row = min(site_7)-1, col = 0, rowspan = length(site_7), colspan = 1)
-          )) %>%
-          hot_cols(renderer = rendederer_string)  %>%
-          hot_col(1:2, readOnly = T)
-      })
-      
-      # D&I Biomed Observe Event----- 
-      observeEvent(input$submit_biomeddi, {
-        button_name <- "submit_biomeddi"
-        shinyjs::disable(button_name)
-        if(input$name_biomed_distruptions == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields.",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        }else{
-          tryCatch({
-            # Convert rhandsontable to R object
-            bme_di_manual_updates <- hot_to_r(input$bimoed_di)
-            updated_user <- input$name_biomed_distruptions
-            # Identify columns with no data in them and remove before further processing
-            # This ensures months with no data do not get added to the department summary
-            bme_di_manual_updates <- remove_empty_manual_columns(bme_di_manual_updates)  
-            flag <- 1
-        
-          },
-          error = function(err){
-            showModal(modalDialog(
-              title = "Error",
-              paste0("There seems to be an issue with the Disruptions and Issues data entered."),
-              easyClose = TRUE,
-              footer = NULL
-            ))
-            shinyjs::enable(button_name)
             
-          })
-          if(flag ==1){
-            
-            updated_rows <- manual_process_and_return_updates(bme_di_manual_updates, 
-                                                              "Biomed / Clinical Engineering",
-                                                              "disruptions_and_issues", 
-                                                              updated_user,
-                                                              button_name)
-            
-           
-          }
+        if(flag == 2){
           
-          if(updated_rows$flag == 2){
-            
-            write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                        "TEMP_DI_BIOMED", button_name)
-            
-        
-            update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
-            #record_timestamp("Biomed / Clinical Engineering")
-            
-            
-          } 
+          
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          xray_summary_data <- file_return_updated_rows(xray_summary_data)
+          #wirte the updated data to the Summary Repo in the server
+          ##Updated the data on the databse
+          write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+                                                      "TEMP_BIOMEDKPIs", button_name)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
+          
         }
         shinyjs::enable(button_name)
-        
-      })
-      
 
+    })
+      
+      
       # Imaging DR X-RAY data submission ----- 
       observeEvent(input$submit_imagingxray, {
         button_name <- "submit_imagingxray"
