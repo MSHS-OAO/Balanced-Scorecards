@@ -3668,7 +3668,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         button_name <- "submit_biomed"
         shinyjs::disable(button_name)
         updated_user <- input$name_biomed
-        if(input$name_biomed_kpi == "") {
+        biomed_file <- input$biomed_operational_data
+        
+        if(input$name_biomed == "") {
           showModal(modalDialog(
             title = "Error",
             "Please fill in the required fields.",
@@ -3680,7 +3682,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             
             # read read the data
-            raw_data <- read.xlsx(datapath)
+            file_path <- biomed_file$datapath
+            raw_data <- read.xlsx(file_path)
             
             flag <- 1
           },
@@ -3703,6 +3706,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             tryCatch({
               # Reformat data from manual input table into summary repo format
+              
+              # Tests
+              # datapath <- "Tests/MSHS Scorecard Data - Biomed.xlsx"
+              # raw_data <- read.xlsx(datapath)
+              # updated_user <- "TEST"
+
               biomed_summary_data <-
                 process_biomed_data(raw_data, updated_user)
               
@@ -3724,10 +3733,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-          xray_summary_data <- file_return_updated_rows(xray_summary_data)
+          biomed_summary_data <- file_return_updated_rows(biomed_summary_data)
           #wirte the updated data to the Summary Repo in the server
           ##Updated the data on the databse
-          write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
+          write_temporary_table_to_database_and_merge(biomed_summary_data,
                                                       "TEMP_BIOMEDKPIs", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
