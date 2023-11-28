@@ -2351,6 +2351,67 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
     })
+    # Submit Food Services Net Expenses and Patient Data -----
+    observeEvent(input$submit_food_nccpd,{
+      button_name <- "submit_food_nccpd"
+      shinyjs::disable(button_name)
+      nccpd_file <- input$food_nccpd
+      flag <- 0
+      
+      if(input$name_food_nccpd == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        nccpd_file_path <- nccpd_file$datapath
+        updated_user <- input$name_food_nccpd
+        tryCatch({
+        raw_data <- read.xlsx(nccpd_file_path,startRow  = 3,sheet = "Cost per Patient Day",cols = 1:15)
+        flag <- 1
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if (flag == 1){
+        # Process Cost and Revenue data
+        tryCatch({
+          
+        summary_data <- process_net_cost_per_pd(raw_data,updated_user)
+        flag <- 2
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if (flag == 2){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        summary_data <- file_return_updated_rows(summary_data)
+        
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(summary_data,
+                                                    "TEMP_FOOD_NC", button_name)
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+        shinyjs::enable(button_name)
+        
+      }
+      
+    })
     
     # Submit Interventional Radiology -----
     observeEvent(input$submit_imaging, {
