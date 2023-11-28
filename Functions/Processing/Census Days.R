@@ -329,3 +329,85 @@ food_summary_repo_format <- function(data, updated_user) {
 
 }
   
+# Cost net of case per patient day Processing ----
+
+# Test Files
+
+# datapath <- "Tests/New Productivity_8.2023.xlsx"
+# raw_data <- read.xlsx(datapath,startRow  = 3,sheet = "Cost per Patient Day",cols = 1:15)
+# updated_user <- "TEST"
+
+
+process_net_cost_per_pd <- function(raw_data,updated_user){
+  
+  year <- tail(names(raw_data), n=1)
+
+  
+  site_list <- c("MS MORNINGSIDE",
+                 "MS WEST",
+                 "MS BETH ISRAEL",
+                 "MS BROOKLYN",
+                 "MS QUEENS",
+                 "MS NYEE")
+  
+  site_map = list(SITE = site_list,
+                  SITE_ACT = c("MSM",
+                               "MSW",
+                               "MSBI",
+                               "MSB",
+                               "MSQ",
+                               "NYEE"))
+  
+  site_map <- as.data.frame(site_map)
+  
+  data <- raw_data %>%
+    mutate(SITE = ifelse(MOUNT.SINAI %in% site_list, MOUNT.SINAI, NA)) %>%
+    fill(SITE)  %>%
+    rename(METRIC_NAME_SUBMITTED = MOUNT.SINAI)
+  
+  
+  data <- left_join(data,
+                    site_map) %>%
+    select(-SITE) %>%
+    rename(SITE = SITE_ACT) %>%
+    mutate(SITE = ifelse(is.na(SITE), "MSH",SITE)) %>%
+    filter(!METRIC_NAME_SUBMITTED %in% site_list) %>%
+    filter(METRIC_NAME_SUBMITTED %in% c("Net Expense","Patient Days")) %>%
+    select(-which(names(data) == year)) %>% # Remove column with YEAR
+    pivot_longer(cols = !c(METRIC_NAME_SUBMITTED,SITE),
+                 names_to = "PREMIER_REPORTING_PERIOD",
+                 values_to = "VALUE") %>%
+    filter(VALUE != 0) %>%
+    pivot_wider(names_from = "METRIC_NAME_SUBMITTED", values_from = "VALUE") %>%
+    mutate(PREMIER_REPORTING_PERIOD = paste0(PREMIER_REPORTING_PERIOD," ",year),
+           REPORTING_MONTH = as.Date(paste0("01"," ",PREMIER_REPORTING_PERIOD), format ="%d %b %Y"),
+           `Net Expense` = as.numeric(`Net Expense`),
+           `Patient Days` = as.numeric(`Patient Days`),
+           `Net Cost of Case per Patient Day` = (`Net Expense`)/(`Patient Days`))
+  
+  
+  ytd_net_cost_pp <- data %>%
+    select(SITE,REPORTING_MONTH, `Net Expense`,`Patient Days`) %>%
+    group_by(SITE) %>%
+    arrange(REPORTING_MONTH) %>%
+    mutate(sum_ne = cumsum(`Net Expense`),
+           sum_pd = cumsum(`Patient Days`),
+           `Net Cost of Case per Patient Day (YTD)` = sum_ne/sum_pd) %>%
+    select(-sum_ne,-sum_pd,-`Net Expense`,-`Patient Days`)
+  
+  summary_data <- left_join(data, ytd_net_cost_pp) %>%
+    select(-`Net Expense`,-`Patient Days`) %>%
+    mutate(SERVICE = "Food Services",
+           UPDATED_USER= updated_user)%>%
+    pivot_longer(cols = c("Net Cost of Case per Patient Day","Net Cost of Case per Patient Day (YTD)"),
+                 names_to = "METRIC_NAME_SUBMITTED",
+                 values_to = "VALUE") %>%
+    select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,
+           UPDATED_USER)
+  
+}
