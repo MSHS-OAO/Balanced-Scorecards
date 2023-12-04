@@ -12,7 +12,7 @@
   "packages": {
     "BH": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "BH",
         "Type": "Package",
@@ -34,7 +34,7 @@
     },
     "DBI": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "DBI",
         "Title": "R Database Interface",
@@ -66,7 +66,7 @@
     },
     "DT": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "DT",
         "Type": "Package",
@@ -93,7 +93,7 @@
     },
     "DiagrammeR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "DiagrammeR",
@@ -121,7 +121,7 @@
     },
     "MASS": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "MASS",
         "Priority": "recommended",
@@ -150,7 +150,7 @@
     },
     "Matrix": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "Matrix",
         "Version": "1.5-1",
@@ -183,7 +183,7 @@
     },
     "R6": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "R6",
         "Title": "Encapsulated Classes with Reference Semantics",
@@ -207,7 +207,7 @@
     },
     "RColorBrewer": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "RColorBrewer",
         "Version": "1.1-3",
@@ -228,7 +228,7 @@
     },
     "Rcpp": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "Rcpp",
         "Title": "Seamless R and C++ Integration",
@@ -253,7 +253,7 @@
     },
     "RcppEigen": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "RcppEigen",
         "Type": "Package",
@@ -280,7 +280,7 @@
     },
     "Rttf2pt1": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "Rttf2pt1",
         "Title": "'ttf2pt1' Program",
@@ -303,7 +303,7 @@
     },
     "TTR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "TTR",
         "Type": "Package",
@@ -328,7 +328,7 @@
     },
     "XML": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "XML",
         "Version": "3.99-0.11",
@@ -352,7 +352,7 @@
     },
     "abind": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "abind",
         "Version": "1.4-5",
@@ -373,7 +373,7 @@
     },
     "anytime": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "anytime",
         "Type": "Package",
@@ -400,8 +400,8 @@
       }
     },
     "arm": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "arm",
         "Version": "1.13-1",
@@ -426,7 +426,7 @@
     },
     "askpass": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "askpass",
         "Type": "Package",
@@ -454,7 +454,7 @@
     },
     "assertr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "assertr",
         "Type": "Package",
@@ -483,7 +483,7 @@
     },
     "assertthat": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "assertthat",
         "Title": "Easy Pre and Post Assertions",
@@ -506,7 +506,7 @@
     },
     "backports": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "backports",
         "Type": "Package",
@@ -532,7 +532,7 @@
     },
     "base64enc": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "base64enc",
         "Version": "0.1-3",
@@ -553,7 +553,7 @@
     },
     "bit": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "bit",
         "Type": "Package",
@@ -581,7 +581,7 @@
     },
     "bit64": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "bit64",
         "Type": "Package",
@@ -609,7 +609,7 @@
     },
     "blob": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "blob",
         "Title": "A Simple S3 Class for Representing Vectors of Binary Data\n('BLOBS')",
@@ -637,7 +637,7 @@
     },
     "boot": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "boot",
         "Priority": "recommended",
@@ -663,7 +663,7 @@
     },
     "brio": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "brio",
         "Title": "Basic R Input Output",
@@ -687,7 +687,7 @@
     },
     "broom": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "broom",
@@ -718,7 +718,7 @@
     },
     "bslib": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "bslib",
         "Title": "Custom 'Bootstrap' 'Sass' Themes for 'shiny' and 'rmarkdown'",
@@ -749,7 +749,7 @@
     },
     "bupaR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "bupaR",
         "Type": "Package",
@@ -777,7 +777,7 @@
     },
     "cachem": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "cachem",
         "Version": "1.0.6",
@@ -802,7 +802,7 @@
     },
     "callr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "callr",
         "Title": "Call R from R",
@@ -831,7 +831,7 @@
     },
     "cellranger": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "cellranger",
         "Title": "Translate Spreadsheet Cell Ranges to Rows and Columns",
@@ -858,7 +858,7 @@
     },
     "chron": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "chron",
         "Version": "2.3-57",
@@ -881,7 +881,7 @@
     },
     "cli": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "cli",
         "Title": "Helpers for Developing Command Line Interfaces",
@@ -908,8 +908,8 @@
       }
     },
     "clipr": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "clipr",
@@ -938,7 +938,7 @@
     },
     "coda": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "coda",
         "Version": "0.19-4",
@@ -960,7 +960,7 @@
     },
     "colorspace": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "colorspace",
         "Version": "2.0-3",
@@ -988,7 +988,7 @@
     },
     "commonmark": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "commonmark",
         "Type": "Package",
@@ -1014,7 +1014,7 @@
     },
     "conflicted": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "conflicted",
         "Title": "An Alternative Conflict Resolution Strategy",
@@ -1042,7 +1042,7 @@
     },
     "cpp11": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "cpp11",
         "Title": "A C++11 Interface for R's C Interface",
@@ -1070,7 +1070,7 @@
     },
     "crayon": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "crayon",
         "Title": "Colored Terminal Output",
@@ -1096,7 +1096,7 @@
     },
     "crosstalk": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "crosstalk",
         "Type": "Package",
@@ -1122,7 +1122,7 @@
     },
     "curl": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "curl",
         "Type": "Package",
@@ -1151,7 +1151,7 @@
     },
     "data.table": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "data.table",
         "Version": "1.14.2",
@@ -1178,7 +1178,7 @@
     },
     "datawizard": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "datawizard",
@@ -1209,7 +1209,7 @@
     },
     "dbplyr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "dbplyr",
@@ -1240,8 +1240,8 @@
       }
     },
     "debugme": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "debugme",
         "Title": "Debug R Packages",
@@ -1266,7 +1266,7 @@
     },
     "desc": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "desc",
         "Title": "Manipulate DESCRIPTION Files",
@@ -1296,7 +1296,7 @@
     },
     "diffobj": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "diffobj",
         "Type": "Package",
@@ -1325,7 +1325,7 @@
     },
     "digest": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "digest",
         "Author": "Dirk Eddelbuettel <edd@debian.org> with contributions \n by Antoine Lucas, Jarek Tuszynski, Henrik Bengtsson, Simon Urbanek,\n Mario Frasca, Bryan Lewis, Murray Stokely, Hannes Muehleisen,\n Duncan Murdoch, Jim Hester, Wush Wu, Qiang Kou, Thierry Onkelinx, \n Michel Lang, Viliam Simko, Kurt Hornik, Radford Neal, Kendon Bell,\n Matthew de Queljoe, Ion Suruceanu, Bill Denney, Dirk Schumacher,\n and Winston Chang.",
@@ -1350,7 +1350,7 @@
     },
     "downloader": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "downloader",
         "Maintainer": "Winston Chang <winston@stdout.org>",
@@ -1372,7 +1372,7 @@
     },
     "dplyr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "dplyr",
@@ -1403,7 +1403,7 @@
     },
     "dtplyr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "dtplyr",
         "Title": "Data Table Back-End for 'dplyr'",
@@ -1432,7 +1432,7 @@
     },
     "edeaR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "edeaR",
         "Type": "Package",
@@ -1461,8 +1461,8 @@
       }
     },
     "eeptools": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "eeptools",
         "Type": "Package",
@@ -1491,7 +1491,7 @@
     },
     "ellipsis": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ellipsis",
         "Version": "0.3.2",
@@ -1517,7 +1517,7 @@
     },
     "evaluate": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "evaluate",
         "Type": "Package",
@@ -1544,7 +1544,7 @@
     },
     "eventdataR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "eventdataR",
         "Type": "Package",
@@ -1573,7 +1573,7 @@
     },
     "extrafont": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "extrafont",
         "Title": "Tools for Using Fonts",
@@ -1596,7 +1596,7 @@
     },
     "extrafontdb": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "extrafontdb",
         "Title": "Package for holding the database for the extrafont package",
@@ -1616,7 +1616,7 @@
     },
     "fansi": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "fansi",
         "Title": "ANSI Control Sequence Aware String Functions",
@@ -1644,7 +1644,7 @@
     },
     "farver": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "farver",
@@ -1671,7 +1671,7 @@
     },
     "fastmap": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "fastmap",
         "Title": "Fast Data Structures",
@@ -1696,7 +1696,7 @@
     },
     "fasttime": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "fasttime",
         "Version": "1.1-0",
@@ -1715,7 +1715,7 @@
     },
     "fontawesome": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "fontawesome",
@@ -1744,7 +1744,7 @@
     },
     "forcats": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "forcats",
         "Title": "Tools for Working with Categorical Variables (Factors)",
@@ -1774,7 +1774,7 @@
     },
     "foreign": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "foreign",
         "Priority": "recommended",
@@ -1804,7 +1804,7 @@
     },
     "fresh": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "fresh",
         "Title": "Create Custom 'Bootstrap' Themes to Use in 'Shiny'",
@@ -1831,7 +1831,7 @@
     },
     "fs": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "fs",
         "Title": "Cross-Platform File System Operations Based on 'libuv'",
@@ -1862,7 +1862,7 @@
     },
     "gargle": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "gargle",
         "Title": "Utilities for Working with Google APIs",
@@ -1892,7 +1892,7 @@
     },
     "generics": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "generics",
         "Title": "Common S3 Generics not Provided by Base R Methods Related to\nModel Fitting",
@@ -1920,7 +1920,7 @@
     },
     "ggQC": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ggQC",
         "Type": "Package",
@@ -1946,7 +1946,7 @@
     },
     "ggfittext": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ggfittext",
         "Title": "Fit Text Inside a Box in 'ggplot2'",
@@ -1975,7 +1975,7 @@
     },
     "ggforce": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ggforce",
         "Type": "Package",
@@ -2004,7 +2004,7 @@
     },
     "ggiraph": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ggiraph",
         "Type": "Package",
@@ -2035,7 +2035,7 @@
     },
     "ggplot2": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ggplot2",
         "Version": "3.3.6",
@@ -2066,7 +2066,7 @@
     },
     "ggthemes": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ggthemes",
         "Version": "4.2.4",
@@ -2094,7 +2094,7 @@
     },
     "glue": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "glue",
         "Title": "Interpreted String Literals",
@@ -2124,7 +2124,7 @@
     },
     "googledrive": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "googledrive",
         "Title": "An Interface to Google Drive",
@@ -2154,7 +2154,7 @@
     },
     "googlesheets4": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "googlesheets4",
         "Title": "Access Google Sheets using the Sheets API V4",
@@ -2184,7 +2184,7 @@
     },
     "gridBase": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "gridBase",
         "Title": "Integration of base and grid graphics",
@@ -2205,7 +2205,7 @@
     },
     "gridExtra": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "gridExtra",
         "Authors@R": "c(person(\"Baptiste\", \"Auguie\",\n    email = \"baptiste.auguie@gmail.com\",\n    role = c(\"aut\", \"cre\")), person(\"Anton\", \"Antonov\",\n    email = \"tonytonov@gmail.com\",\n    role = c(\"ctb\")))",
@@ -2229,7 +2229,7 @@
     },
     "gtable": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "gtable",
         "Title": "Arrange 'Grobs' in Tables",
@@ -2257,7 +2257,7 @@
     },
     "haven": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "haven",
         "Title": "Import and Export 'SPSS', 'Stata' and 'SAS' Files",
@@ -2288,7 +2288,7 @@
     },
     "here": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "here",
         "Title": "A Simpler Way to Find Your Files",
@@ -2317,7 +2317,7 @@
     },
     "highcharter": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "highcharter",
         "Type": "Package",
@@ -2346,7 +2346,7 @@
     },
     "highr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "highr",
         "Type": "Package",
@@ -2373,7 +2373,7 @@
     },
     "hms": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "hms",
         "Title": "Pretty Time of Day",
@@ -2403,7 +2403,7 @@
     },
     "htmltools": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "htmltools",
         "Type": "Package",
@@ -2433,7 +2433,7 @@
     },
     "htmlwidgets": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "htmlwidgets",
         "Type": "Package",
@@ -2460,7 +2460,7 @@
     },
     "httpuv": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "httpuv",
         "Type": "Package",
@@ -2490,7 +2490,7 @@
     },
     "httr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "httr",
         "Title": "Tools for Working with URLs and HTTP",
@@ -2518,7 +2518,7 @@
     },
     "ids": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ids",
         "Title": "Generate Random Identifiers",
@@ -2543,7 +2543,7 @@
     },
     "igraph": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "igraph",
         "Version": "1.3.5",
@@ -2570,7 +2570,7 @@
     },
     "influenceR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "influenceR",
         "Title": "Software Tools to Quantify Structural Importance of Nodes in a\nNetwork",
@@ -2593,7 +2593,7 @@
     },
     "insight": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "insight",
@@ -2624,7 +2624,7 @@
     },
     "isoband": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "isoband",
         "Title": "Generate Isolines and Isobands from Regularly Spaced Elevation\nGrids",
@@ -2652,7 +2652,7 @@
     },
     "janitor": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "janitor",
         "Title": "Simple Tools for Examining and Cleaning Dirty Data",
@@ -2680,7 +2680,7 @@
     },
     "jquerylib": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "jquerylib",
         "Title": "Obtain 'jQuery' as an HTML Dependency Object",
@@ -2704,7 +2704,7 @@
     },
     "jsonlite": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "jsonlite",
         "Version": "1.8.2",
@@ -2730,7 +2730,7 @@
     },
     "kableExtra": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "kableExtra",
         "Type": "Package",
@@ -2759,7 +2759,7 @@
     },
     "knitr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "knitr",
         "Type": "Package",
@@ -2789,7 +2789,7 @@
     },
     "labeling": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "labeling",
         "Type": "Package",
@@ -2811,7 +2811,7 @@
     },
     "later": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "later",
         "Type": "Package",
@@ -2840,7 +2840,7 @@
     },
     "lattice": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "lattice",
         "Version": "0.20-45",
@@ -2869,7 +2869,7 @@
     },
     "lazyeval": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "lazyeval",
         "Version": "0.2.2",
@@ -2893,7 +2893,7 @@
     },
     "leaflet": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "leaflet",
         "Type": "Package",
@@ -2921,7 +2921,7 @@
     },
     "leaflet.providers": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "leaflet.providers",
         "Type": "Package",
@@ -2950,7 +2950,7 @@
     },
     "lifecycle": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "lifecycle",
         "Title": "Manage the Life Cycle of your Package Functions",
@@ -2978,8 +2978,8 @@
       }
     },
     "lme4": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "lme4",
         "Version": "1.1-30",
@@ -3007,7 +3007,7 @@
     },
     "lmtest": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "lmtest",
         "Title": "Testing Linear Regression Models",
@@ -3031,7 +3031,7 @@
     },
     "lubridate": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "lubridate",
@@ -3064,7 +3064,7 @@
     },
     "magrittr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "magrittr",
@@ -3120,7 +3120,7 @@
     },
     "markdown": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "markdown",
         "Type": "Package",
@@ -3148,7 +3148,7 @@
     },
     "memoise": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "memoise",
         "Title": "'Memoisation' of Functions",
@@ -3173,7 +3173,7 @@
     },
     "mgcv": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "mgcv",
         "Version": "1.8-40",
@@ -3197,7 +3197,7 @@
     },
     "mime": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "mime",
         "Type": "Package",
@@ -3222,7 +3222,7 @@
     },
     "miniUI": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "miniUI",
         "Type": "Package",
@@ -3245,7 +3245,7 @@
     },
     "minqa": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "minqa",
         "Type": "Package",
@@ -3268,7 +3268,7 @@
     },
     "modelr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "modelr",
         "Title": "Modelling Functions that Work with the Pipe",
@@ -3296,7 +3296,7 @@
     },
     "munsell": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "munsell",
         "Type": "Package",
@@ -3319,7 +3319,7 @@
     },
     "nlme": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "nlme",
         "Version": "3.1-157",
@@ -3348,8 +3348,8 @@
       }
     },
     "nloptr": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "nloptr",
         "Type": "Package",
@@ -3379,7 +3379,7 @@
     },
     "odbc": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "odbc",
         "Title": "Connect to ODBC Compatible Databases (using the DBI Interface)",
@@ -3409,7 +3409,7 @@
     },
     "openssl": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "openssl",
         "Type": "Package",
@@ -3437,7 +3437,7 @@
     },
     "openxlsx": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "openxlsx",
@@ -3469,7 +3469,7 @@
     },
     "packcircles": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "packcircles",
         "Type": "Package",
@@ -3499,8 +3499,8 @@
       }
     },
     "parsedate": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "parsedate",
         "Title": "Recognize and Parse Dates in Various Formats, Including All ISO\n8601 Formats",
@@ -3523,7 +3523,7 @@
     },
     "pillar": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "pillar",
         "Title": "Coloured Formatting for Columns",
@@ -3554,8 +3554,8 @@
       }
     },
     "pingr": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "pingr",
         "Title": "Check if a Remote Computer is Up",
@@ -3581,7 +3581,7 @@
     },
     "pkgconfig": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "pkgconfig",
         "Title": "Private Configuration for 'R' Packages",
@@ -3605,7 +3605,7 @@
     },
     "pkgload": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "pkgload",
         "Title": "Simulate Package Installation and Attach",
@@ -3633,7 +3633,7 @@
     },
     "plotly": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "plotly",
         "Title": "Create Interactive Web Graphics via 'plotly.js'",
@@ -3660,7 +3660,7 @@
     },
     "plyr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "plyr",
         "Title": "Tools for Splitting, Applying and Combining Data",
@@ -3688,7 +3688,7 @@
     },
     "png": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "png",
         "Version": "0.1-7",
@@ -3709,7 +3709,7 @@
     },
     "polyclip": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "polyclip",
         "Version": "1.10-0",
@@ -3736,7 +3736,7 @@
     },
     "pool": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "pool",
@@ -3765,7 +3765,7 @@
     },
     "praise": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "praise",
         "Title": "Praise Users",
@@ -3788,7 +3788,7 @@
     },
     "prettyunits": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "prettyunits",
         "Title": "Pretty, Human Readable Formatting of Quantities",
@@ -3812,7 +3812,7 @@
     },
     "processanimateR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "processanimateR",
         "Type": "Package",
@@ -3842,7 +3842,7 @@
     },
     "processmapR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "processmapR",
         "Type": "Package",
@@ -3875,7 +3875,7 @@
     },
     "processmonitR": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "processmonitR",
         "Type": "Package",
@@ -3902,7 +3902,7 @@
     },
     "processx": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "processx",
         "Title": "Execute and Control System Processes",
@@ -3930,7 +3930,7 @@
     },
     "progress": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "progress",
         "Title": "Terminal Progress Bars",
@@ -3955,7 +3955,7 @@
     },
     "promises": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "promises",
         "Type": "Package",
@@ -3985,7 +3985,7 @@
     },
     "ps": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "ps",
         "Title": "List, Query, Manipulate System Processes",
@@ -4014,7 +4014,7 @@
     },
     "purrr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "purrr",
         "Title": "Functional Programming Tools",
@@ -4042,7 +4042,7 @@
     },
     "quantmod": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "quantmod",
         "Type": "Package",
@@ -4067,8 +4067,8 @@
       }
     },
     "ragg": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "ragg",
@@ -4097,7 +4097,7 @@
     },
     "rappdirs": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "rappdirs",
@@ -4125,7 +4125,7 @@
     },
     "raster": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "raster",
         "Type": "Package",
@@ -4153,7 +4153,7 @@
     },
     "readr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "readr",
         "Title": "Read Rectangular Text Data",
@@ -4186,7 +4186,7 @@
     },
     "readxl": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "readxl",
         "Title": "Read Excel Files",
@@ -4218,7 +4218,7 @@
     },
     "rematch": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rematch",
         "Title": "Match Regular Expressions with a Nicer 'API'",
@@ -4242,7 +4242,7 @@
     },
     "rematch2": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rematch2",
         "Title": "Tidy Output from Regular Expression Matching",
@@ -4268,7 +4268,7 @@
     },
     "reprex": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "reprex",
         "Title": "Prepare Reproducible Example Code via the Clipboard",
@@ -4299,7 +4299,7 @@
     },
     "reshape2": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "reshape2",
         "Title": "Flexibly Reshape Data: A Reboot of the Reshape Package",
@@ -4326,7 +4326,7 @@
     },
     "rhandsontable": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rhandsontable",
         "Type": "Package",
@@ -4353,7 +4353,7 @@
     },
     "rjson": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rjson",
         "Version": "0.2.21",
@@ -4374,7 +4374,7 @@
     },
     "rlang": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rlang",
         "Version": "1.1.1",
@@ -4405,7 +4405,7 @@
     },
     "rlist": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rlist",
         "Type": "Package",
@@ -4434,7 +4434,7 @@
     },
     "rmarkdown": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "rmarkdown",
@@ -4464,7 +4464,7 @@
     },
     "rprojroot": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rprojroot",
         "Title": "Finding Files in Project Subdirectories",
@@ -4491,7 +4491,7 @@
     },
     "rstudioapi": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rstudioapi",
         "Title": "Safely Access the RStudio API",
@@ -4516,7 +4516,7 @@
     },
     "rvest": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "rvest",
         "Title": "Easily Harvest (Scrape) Web Pages",
@@ -4546,7 +4546,7 @@
     },
     "sass": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Type": "Package",
         "Package": "sass",
@@ -4575,7 +4575,7 @@
     },
     "scales": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "scales",
         "Title": "Scale Functions for Visualization",
@@ -4604,7 +4604,7 @@
     },
     "selectr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "selectr",
         "Type": "Package",
@@ -4630,7 +4630,7 @@
     },
     "shades": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shades",
         "Version": "1.4.0",
@@ -4654,8 +4654,8 @@
       }
     },
     "shiny": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shiny",
         "Type": "Package",
@@ -4686,7 +4686,7 @@
     },
     "shinyBS": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinyBS",
         "Type": "Package",
@@ -4709,7 +4709,7 @@
     },
     "shinyTime": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinyTime",
         "Type": "Package",
@@ -4736,7 +4736,7 @@
     },
     "shinyWidgets": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinyWidgets",
         "Title": "Custom Inputs Widgets for Shiny",
@@ -4763,7 +4763,7 @@
     },
     "shinyalert": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinyalert",
         "Title": "Easily Create Pretty Popup Messages (Modals) in 'Shiny'",
@@ -4789,7 +4789,7 @@
     },
     "shinycssloaders": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinycssloaders",
         "Type": "Package",
@@ -4816,7 +4816,7 @@
     },
     "shinydashboard": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinydashboard",
         "Title": "Create Dashboards with 'Shiny'",
@@ -4840,7 +4840,7 @@
     },
     "shinydashboardPlus": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinydashboardPlus",
         "Type": "Package",
@@ -4868,7 +4868,7 @@
     },
     "shinyjs": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinyjs",
         "Title": "Easily Improve the User Experience of Your Shiny Apps in Seconds",
@@ -4895,7 +4895,7 @@
     },
     "shinyscreenshot": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinyscreenshot",
         "Title": "Capture Screenshots of Entire Pages or Parts of Pages in 'Shiny'",
@@ -4920,8 +4920,8 @@
       }
     },
     "shinytest": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "shinytest",
         "Title": "Test Shiny Apps",
@@ -4946,8 +4946,8 @@
       }
     },
     "showimage": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "showimage",
         "Title": "Show an Image on an 'R' Graphics Device",
@@ -4972,7 +4972,7 @@
     },
     "sjlabelled": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "sjlabelled",
         "Type": "Package",
@@ -5000,7 +5000,7 @@
     },
     "sjmisc": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "sjmisc",
         "Type": "Package",
@@ -5028,7 +5028,7 @@
     },
     "snakecase": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "snakecase",
         "Version": "0.11.0",
@@ -5056,7 +5056,7 @@
     },
     "sourcetools": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "sourcetools",
         "Type": "Package",
@@ -5081,7 +5081,7 @@
     },
     "sp": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "sp",
         "Version": "1.5-0",
@@ -5107,7 +5107,7 @@
     },
     "stringi": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "stringi",
         "Version": "1.7.8",
@@ -5135,7 +5135,7 @@
     },
     "stringr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "stringr",
         "Title": "Simple, Consistent Wrappers for Common String Operations",
@@ -5163,7 +5163,7 @@
     },
     "svglite": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "svglite",
         "Version": "2.1.0",
@@ -5192,7 +5192,7 @@
     },
     "sys": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "sys",
         "Type": "Package",
@@ -5219,7 +5219,7 @@
     },
     "systemfonts": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "systemfonts",
         "Type": "Package",
@@ -5248,7 +5248,7 @@
     },
     "terra": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "terra",
         "Type": "Package",
@@ -5278,7 +5278,7 @@
     },
     "testthat": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "testthat",
         "Title": "Unit Testing for R",
@@ -5307,8 +5307,8 @@
       }
     },
     "textshaping": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "textshaping",
         "Title": "Bindings to the 'HarfBuzz' and 'Fribidi' Libraries for Text\nShaping",
@@ -5337,7 +5337,7 @@
     },
     "tibble": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tibble",
         "Title": "Simple Data Frames",
@@ -5370,7 +5370,7 @@
     },
     "tidyr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tidyr",
         "Title": "Tidy Messy Data",
@@ -5402,7 +5402,7 @@
     },
     "tidyselect": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tidyselect",
         "Title": "Select from a Set of Strings",
@@ -5430,8 +5430,8 @@
       }
     },
     "tidyverse": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tidyverse",
         "Title": "Easily Install and Load the 'Tidyverse'",
@@ -5460,7 +5460,7 @@
     },
     "tinytex": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tinytex",
         "Type": "Package",
@@ -5486,7 +5486,7 @@
     },
     "tis": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tis",
         "Title": "Time Indexes and Time Indexed Series",
@@ -5508,7 +5508,7 @@
     },
     "treemap": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "treemap",
         "Type": "Package",
@@ -5535,7 +5535,7 @@
     },
     "treemapify": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "treemapify",
         "Title": "Draw Treemaps in 'ggplot2'",
@@ -5564,7 +5564,7 @@
     },
     "tweenr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tweenr",
         "Type": "Package",
@@ -5593,7 +5593,7 @@
     },
     "tzdb": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "tzdb",
         "Title": "Time Zone Database Information",
@@ -5623,7 +5623,7 @@
     },
     "utf8": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "utf8",
         "Title": "Unicode Text Processing",
@@ -5649,7 +5649,7 @@
     },
     "uuid": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "uuid",
         "Version": "1.1-0",
@@ -5670,7 +5670,7 @@
     },
     "vcd": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "vcd",
         "Version": "1.4-10",
@@ -5694,7 +5694,7 @@
     },
     "vctrs": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "vctrs",
         "Title": "Vector Helpers",
@@ -5725,7 +5725,7 @@
     },
     "viridis": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "viridis",
         "Type": "Package",
@@ -5754,7 +5754,7 @@
     },
     "viridisLite": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "viridisLite",
         "Type": "Package",
@@ -5780,7 +5780,7 @@
     },
     "visNetwork": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "visNetwork",
         "Title": "Network Visualization using 'vis.js' Library",
@@ -5806,7 +5806,7 @@
     },
     "vroom": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "vroom",
         "Title": "Read and Write Rectangular Text Data Quickly",
@@ -5840,7 +5840,7 @@
     },
     "waiter": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "waiter",
         "Title": "Loading Screen for 'Shiny'",
@@ -5867,7 +5867,7 @@
     },
     "waldo": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "waldo",
         "Title": "Find Differences Between R Objects",
@@ -5893,8 +5893,8 @@
       }
     },
     "webdriver": {
-      "Source": "RSPM",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "webdriver",
         "Title": "'WebDriver' Client for 'PhantomJS'",
@@ -5920,7 +5920,7 @@
     },
     "webshot": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "webshot",
         "Title": "Take Screenshots of Web Pages",
@@ -5948,7 +5948,7 @@
     },
     "withr": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "withr",
         "Title": "Run Code 'With' Temporarily Modified Global State",
@@ -5978,7 +5978,7 @@
     },
     "writexl": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "writexl",
         "Type": "Package",
@@ -6004,7 +6004,7 @@
     },
     "xfun": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "xfun",
         "Type": "Package",
@@ -6031,7 +6031,7 @@
     },
     "xml2": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "xml2",
         "Title": "Parse XML",
@@ -6060,7 +6060,7 @@
     },
     "xtable": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "xtable",
         "Version": "1.8-4",
@@ -6085,7 +6085,7 @@
     },
     "xts": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "xts",
         "Type": "Package",
@@ -6112,7 +6112,7 @@
     },
     "yaml": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "yaml",
         "Type": "Package",
@@ -6135,7 +6135,7 @@
     },
     "zip": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "zip",
         "Title": "Cross-Platform 'zip' Compression",
@@ -6159,7 +6159,7 @@
     },
     "zoo": {
       "Source": "CRAN",
-      "Repository": "https://hso-packagemanager.mssm.edu/prod-cran/__linux__/focal/2022-10-04",
+      "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "zoo",
         "Version": "1.8-11",
