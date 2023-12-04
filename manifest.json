@@ -331,7 +331,7 @@
       "Repository": "https://cran.rstudio.com/",
       "description": {
         "Package": "XML",
-        "Version": "3.99-0.11",
+        "Version": "3.99-0.16",
         "Authors@R": "c(person(\"CRAN Team\", role = c('ctb', 'cre'),\n                    email = \"CRAN@r-project.org\",\n                    comment = \"de facto maintainer since 2013\"),\n             person(\"Duncan\", \"Temple Lang\", role = c(\"aut\"),\n                    email = \"duncan@r-project.org\",\n                    comment = c(ORCID = \"0000-0003-0159-1546\")),\n\t    person(\"Tomas\", \"Kalibera\", role = \"ctb\"))",
         "Title": "Tools for Parsing and Generating XML Within R and S-Plus",
         "Depends": "R (>= 4.0.0), methods, utils",
