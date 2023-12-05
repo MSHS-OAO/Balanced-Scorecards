@@ -2040,7 +2040,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         easyClose = TRUE,
                         footer = NULL
                       ))
-                      shinyjs::enable(button_name)
+                      shinyjs::enable(button)
                     })
         }
         if(!is.null(nursing_monthly)){
@@ -2052,7 +2052,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         easyClose = TRUE,
                         footer = NULL
                       ))
-                      shinyjs::enable(button_name)
+                      shinyjs::enable(button)
                     })
         }
         if(!is.null(support_monthly)){
@@ -2064,7 +2064,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         easyClose = TRUE,
                         footer = NULL
                       ))
-                      shinyjs::enable(button_name)
+                      shinyjs::enable(button)
                     })
         }}
       update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
@@ -2097,7 +2097,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         easyClose = TRUE,
                         footer = NULL
                       ))
-                      shinyjs::enable(button_name)
+                      shinyjs::enable(button)
                     })
         }
         if(!is.null(nursing_ytd)){
@@ -2109,7 +2109,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         easyClose = TRUE,
                         footer = NULL
                       ))
-                      shinyjs::enable(button_name)
+                      shinyjs::enable(button)
                     })
         }
         if(!is.null(nursing_ytd)){
@@ -2121,7 +2121,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         easyClose = TRUE,
                         footer = NULL
                       ))
-                      shinyjs::enable(button_name)
+                      shinyjs::enable(button)
                     })
           }
         }
