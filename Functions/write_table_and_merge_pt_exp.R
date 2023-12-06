@@ -98,7 +98,7 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     
     
     # glue() query to merge data from temporary table to summary_repo table
-    query = glue('MERGE INTO BSC_PATIENT_EXPERIENCE_REPO_MERGE SR
+    query = glue('MERGE INTO BSC_PATIENT_EXPERIENCE_REPO SR
                     USING "{TABLE_NAME}" SOURCE_TABLE
                     ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
                           SR."QUESTION_CLEAN" = SOURCE_TABLE."QUESTION_CLEAN" AND
