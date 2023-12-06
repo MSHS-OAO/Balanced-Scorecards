@@ -125,19 +125,19 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
                             SR."ALL_PG_DATABASE_RANK",
                             SR."UPDATED_USER",
                             SR."UPDATED_TIME")  
-                    VALUES( SOURCE_TABLE"SERVICE",
-                            SOURCE_TABLE"SITE",
-                            SOURCE_TABLE"QUESTION_CLEAN",
-                            SOURCE_TABLE"REPORTINGTYPE",
-                            SOURCE_TABLE"REPORTING_DATE_START", 
-                            SOURCE_TABLE"REPORTING_DATE_END", 
-                            SOURCE_TABLE"SITE_MEAN",
-                            SOURCE_TABLE"SITE_N",
-                            SOURCE_TABLE"ALL_PG_DATABASE_MEAN",
-                            SOURCE_TABLE"ALL_PG_DATABASE_N",
-                            SOURCE_TABLE"ALL_PG_DATABASE_RANK",
-                            SOURCE_TABLE"UPDATED_USER",
-                            SOURCE_TABLE"UPDATED_TIME";')
+                    VALUES( SOURCE_TABLE."SERVICE",
+                            SOURCE_TABLE."SITE",
+                            SOURCE_TABLE."QUESTION_CLEAN",
+                            SOURCE_TABLE."REPORTINGTYPE",
+                            SOURCE_TABLE."REPORTING_DATE_START", 
+                            SOURCE_TABLE."REPORTING_DATE_END", 
+                            SOURCE_TABLE."SITE_MEAN",
+                            SOURCE_TABLE."SITE_N",
+                            SOURCE_TABLE."ALL_PG_DATABASE_MEAN",
+                            SOURCE_TABLE."ALL_PG_DATABASE_N",
+                            SOURCE_TABLE."ALL_PG_DATABASE_RANK",
+                            SOURCE_TABLE."UPDATED_USER",
+                            SOURCE_TABLE."UPDATED_TIME";')
     
     # glue query for dropping the table
     truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
