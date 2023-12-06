@@ -137,7 +137,7 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
                             SOURCE_TABLE."ALL_PG_DATABASE_N",
                             SOURCE_TABLE."ALL_PG_DATABASE_RANK",
                             SOURCE_TABLE."UPDATED_USER",
-                            SOURCE_TABLE."UPDATED_TIME";')
+                            SOURCE_TABLE."UPDATED_TIME");')
     
     # glue query for dropping the table
     truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
