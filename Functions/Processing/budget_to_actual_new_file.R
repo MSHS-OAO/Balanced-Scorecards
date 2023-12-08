@@ -23,6 +23,9 @@ budget_raw_file_process <- function(data, updated_user){
   
   data <- bind_rows(data, data_ed, data_rad, data_cn)
   data <- data %>% mutate(Function = ifelse(Function == "Case Management", "Case Management / Social Work", Function))
+  data <- data %>% mutate(Function = ifelse(Function == "Lab", "Lab and Blood Bank", Function))
+  data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab and Blood Bank", Function))
+  
   
   list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", "Emergency Department",
                         "Engineering", "Environmental Services", "Food Services", 
