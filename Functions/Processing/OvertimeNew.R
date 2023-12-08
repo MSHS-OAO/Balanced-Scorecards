@@ -38,7 +38,7 @@ overtime_file_processs_new <- function(data, updated_user){
                 `Site Abbr` = SITE_ABBR,
                 Site = SITE,
                 Metric_Name = METRIC_NAME) %>% 
-        filter(Service %in% c("ED","Nursing","Imaging")) %>%
+        filter(Service %in% c("ED","Nursing","Imaging", "Lab")) %>%
         collect() %>%
         distinct() %>%
         mutate(`Cost Center Group` =  toupper(`Cost Center Group`),
@@ -56,7 +56,7 @@ overtime_file_processs_new <- function(data, updated_user){
       data <- left_join(data,ot_mapping_db)
         
       eni_data <- data%>%
-        filter(Service %in% c("ED","Nursing","Imaging"))
+        filter(Service %in% c("ED","Nursing","Imaging", "Lab"))
       
       #Procesing All Other Service Lines other than ED,Nursing, and Imaging
       
