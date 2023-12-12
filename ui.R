@@ -905,7 +905,7 @@ ui <-
              ), id = "tabset", # Close tabPanel Summary
              tags$script(
                HTML("var header = $('.navbar > .container-fluid');
-                              header.append('<div style=\"float:right; padding-top: 8px\"><button id=\"help_button\" type=\"button\" class=\"btn btn-primary action-button\" >Help</button></div>')")
+                              header.append('<div style=\"float:right; padding-top: 8px\"><button id=\"help_button\" type=\"button\" class=\"btn btn-primary action-button\" >Support Request</button></div>')")
              )
   )
              
