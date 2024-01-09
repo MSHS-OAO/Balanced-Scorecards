@@ -190,8 +190,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Case Management / Social Work'
-      # month_input <- "04-2023"
+      # service_input <- 'Imaging'
+      # month_input <- "11-2023"
+      
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
       
@@ -277,7 +278,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                "Premier_Reporting_Period"))%>% 
         mutate(across('Metric_Name_Submitted', str_replace, "\\(Monthly\\)", ''),
                Metric_Name_Submitted = str_trim(Metric_Name_Submitted))  #Take all most recent data (id = 1) and merge with all data 
-
+      # Adding Additional Check to replace MSW IR Metrics with NA based on service request
+      if(service_input == "Imaging"){
+        current_summary_data <- current_summary_data %>%
+          mutate(value_rounded = case_when(Site == "MSW" & 
+                                           Metric_Group == "IR- Ops" & 
+                                           Reporting_Month_Ref >= as.POSIXct("2023-08-01", tz="UTC") &
+                                           Reporting_Month_Ref <= as.POSIXct("2023-12-01", tz="UTC")~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
+      
       current_summary <- current_summary_data %>%
         mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
                                          paste0("Rep. Pd. Ending ",
@@ -461,6 +472,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            "Premier_Reporting_Period"),
                                     all = TRUE)
       
+      
       fytd_summary_total <- fytd_summary_all %>%
         # Metrics that need to be summarized by sum (total)
         filter(Metric_Name_Summary == "Malnutrition Revenue") %>%
@@ -585,7 +597,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         pt_exp_ytd_reformat <- NULL
       }
       
-                    
       # FYTD Summary Table - for average 
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
@@ -665,6 +676,20 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            TRUE ~ value_rounded))
         
       }
+      
+      # Adding Check to replace MSW IR Metrics with NA based on service request
+      # MSWIRMask <- (as.POSIXct("2023-08-01")  %--% as.POSIXct("2023-12-01"))
+
+      
+      if(service_input == "Imaging" & (as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
+        fytd_summary <- fytd_summary %>%
+          mutate(value_rounded = case_when(Site == "MSW" & 
+                                           Metric_Group == "IR- Ops" ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
+      
+      
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
         select(-Metric_Group, -Metric_Name) %>%
@@ -1271,9 +1296,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
-#       service_input <- "Case Management / Social Work"
-#       month_input <- "03-2023"
-#       site_input <- "MSH"
+      # service_input <- 'Imaging'
+      # month_input <- "09-2023"
+      #       site_input <- "MSH"
 
       
       validate(
@@ -1630,12 +1655,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
       
+
+      # service_input <- 'Imaging'
+      # month_input <- "08-2023"
+      # site_input <- "MSW"
+      
       metrics_final_df <- mdf_from_db(service_input, month_input)
-
-      # service_input <- "Engineering"
-      # month_input <- "12-2021"
-      # site_input <- "MSB"
-
+      
 
       # Code Starts ---------------------------------------------------------------------------------     
       breakout_tab_metrics <- metric_mapping_breakout %>%
@@ -1675,6 +1701,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         arrange(Site, Metric_Group, Metric_Name,
                 desc(Reporting_Month_Ref)) %>%
         distinct()
+      
+      # Adding Additional Check to replace MSW IR Metrics with NA based on service request
+      if(service_input == "Imaging" & (as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
+        data <- data %>%
+          mutate(value_rounded = case_when(Site == "MSW" & 
+                                             Metric_Group == "IR- Ops" ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
+      
       
       # Do we need this?
       # This will be needed until duplicate monthly entries are corrected in metrics_final_df
