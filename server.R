@@ -1705,7 +1705,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Adding Additional Check to replace MSW IR Metrics with NA based on service request
 
       if(service_input == "Imaging" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
-        fytd_summary <- fytd_summary %>%
+        data <- data %>%
           mutate(value_rounded = case_when(Site == "MSW" & 
                                              Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
                                                                 "Outpatient Volume Variance to Budget") ~ NA_real_,
