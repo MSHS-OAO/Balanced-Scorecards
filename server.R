@@ -191,7 +191,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       # service_input <- 'Imaging'
-      # month_input <- "08-2023"
+      # month_input <- "09-2023"
       
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -368,7 +368,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       
-      # Case management / Social Work Remmove Avg LOS and Readmission Rates from period filter data
+      # Case management / Social Work Remove Avg LOS and Readmission Rates from period filter data
       if(service_input == "Case Management / Social Work"){
         
         period_filter <- period_filter %>%
@@ -474,7 +474,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       fytd_summary_total <- fytd_summary_all %>%
         # Metrics that need to be summarized by sum (total)
-        filter(Metric_Name_Summary == "Malnutrition Revenue") %>%
+        filter(Metric_Name_Summary %in% c("Malnutrition Revenue",
+                                          "Ambulatory Revenue Variance to Budget- in thousands",
+                                          "Outpatient Volume Variance to Budget")) %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
@@ -601,7 +603,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
         filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance", "Productivity")) %>% # Metrics that need to be summarized by sum (total)
-        filter(Metric_Name_Summary %!in% c("Malnutrition Revenue")) %>%
+        filter(Metric_Name_Summary %!in% c("Malnutrition Revenue",
+                                           "Ambulatory Revenue Variance to Budget- in thousands",
+                                           "Outpatient Volume Variance to Budget")) %>%
         filter(Metric_Name != "Overtime Hours - % (Premier)") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
@@ -677,17 +681,32 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       # Adding Check to replace MSW IR Metrics with NA based on service request
-      # MSWIRMask <- (as.POSIXct("2023-08-01")  %--% as.POSIXct("2023-12-01"))
-
       
-      if(service_input == "Imaging" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
-        fytd_summary <- fytd_summary %>%
-          mutate(value_rounded = case_when(Site == "MSW" & 
-                                           Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
-                                                              "Outpatient Volume Variance to Budget") ~ NA_real_,
-                                           TRUE ~ value_rounded))
+      if(service_input == "Imaging"){
+        if(month_input  %in% c("08-2023","09-2023")){
+          fytd_summary <- fytd_summary %>%
+            mutate(value_rounded = case_when(Site == "MSW" & 
+                                               Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
+                                                                  "Outpatient Volume Variance to Budget") ~ NA_real_,
+                                             TRUE ~ value_rounded))
+          
+        }
+        
+        MSWIRMask <- (as.POSIXct("2023-08-01")  %--% as.POSIXct("2023-12-01"))
+        
+        if(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") %within% MSWIRMask){
+          
+          fytd_summary <- fytd_summary %>%
+            mutate(value_rounded = case_when(Site == "MSW" & 
+                                               Metric_Name %in% c("Outpatient Volume Variance to Budget") ~ NA_real_,
+                                             TRUE ~ value_rounded))
+          
+          
+        }
         
       }
+      
+  
       
       
       # fytd_summary$Metric_Name <- NULL
