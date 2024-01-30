@@ -1199,6 +1199,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
+      
+      summary_tab_tb[1,5] <- cell_spec(summary_tab_tb[1,5], background = 'yellow', color = 'yellow' )
      
       
       if(service_input == "Imaging"){
