@@ -958,6 +958,27 @@
         "Built": "R 4.2.1; ; 2022-10-03 16:31:10 UTC; unix"
       }
     },
+    "codetools": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
+      "description": {
+        "Package": "codetools",
+        "Version": "0.2-18",
+        "Priority": "recommended",
+        "Author": "Luke Tierney <luke-tierney@uiowa.edu>",
+        "Description": "Code analysis tools for R.",
+        "Title": "Code Analysis Tools for R",
+        "Depends": "R (>= 2.1)",
+        "Maintainer": "Luke Tierney <luke-tierney@uiowa.edu>",
+        "URL": "https://gitlab.com/luke-tierney/codetools",
+        "License": "GPL",
+        "NeedsCompilation": "no",
+        "Packaged": "2020-11-02 14:45:50 UTC; luke",
+        "Repository": "CRAN",
+        "Date/Publication": "2020-11-04 17:12:32 UTC",
+        "Built": "R 4.2.1; ; 2022-09-09 18:08:33 UTC; unix"
+      }
+    },
     "colorspace": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com/",
@@ -1346,6 +1367,32 @@
         "Repository": "CRAN",
         "Date/Publication": "2021-12-01 07:40:02 UTC",
         "Built": "R 4.2.1; x86_64-pc-linux-gnu; 2022-10-03 16:06:15 UTC; unix"
+      }
+    },
+    "doParallel": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
+      "description": {
+        "Package": "doParallel",
+        "Type": "Package",
+        "Title": "Foreach Parallel Adaptor for the 'parallel' Package",
+        "Version": "1.0.17",
+        "Authors@R": "c(person(\"Folashade\", \"Daniel\", role=\"cre\", email=\"fdaniel@microsoft.com\"),\n             person(\"Microsoft\", \"Corporation\", role=c(\"aut\", \"cph\")),\n             person(\"Steve\", \"Weston\", role=\"aut\"),\n             person(\"Dan\", \"Tenenbaum\", role=\"ctb\"))",
+        "Description": "Provides a parallel backend for the %dopar% function using\n        the parallel package.",
+        "Depends": "R (>= 2.14.0), foreach (>= 1.2.0), iterators (>= 1.0.0),\nparallel, utils",
+        "Suggests": "caret, mlbench, rpart, RUnit",
+        "Enhances": "compiler",
+        "License": "GPL-2",
+        "URL": "https://github.com/RevolutionAnalytics/doparallel",
+        "BugReports": "https://github.com/RevolutionAnalytics/doparallel/issues",
+        "NeedsCompilation": "no",
+        "Packaged": "2022-01-16 17:54:13 UTC; folashade",
+        "Author": "Folashade Daniel [cre],\n  Microsoft Corporation [aut, cph],\n  Steve Weston [aut],\n  Dan Tenenbaum [ctb]",
+        "Maintainer": "Folashade Daniel <fdaniel@microsoft.com>",
+        "Repository": "RSPM",
+        "Date/Publication": "2022-02-07 12:50:02 UTC",
+        "Encoding": "UTF-8",
+        "Built": "R 4.2.0; ; 2022-04-22 21:16:34 UTC; unix"
       }
     },
     "downloader": {
@@ -1770,6 +1817,35 @@
         "Repository": "CRAN",
         "Date/Publication": "2022-08-19 22:00:03 UTC",
         "Built": "R 4.2.1; ; 2022-10-03 16:16:17 UTC; unix"
+      }
+    },
+    "foreach": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
+      "description": {
+        "Package": "foreach",
+        "Type": "Package",
+        "Title": "Provides Foreach Looping Construct",
+        "Version": "1.5.2",
+        "Authors@R": "c(person(\"Folashade\", \"Daniel\", role=\"cre\", email=\"fdaniel@microsoft.com\"),\n             person(\"Hong\", \"Ooi\", role=\"ctb\"),\n             person(\"Rich\", \"Calaway\", role=\"ctb\"),\n             person(\"Microsoft\", role=c(\"aut\", \"cph\")),\n             person(\"Steve\", \"Weston\", role=\"aut\"))",
+        "Description": "Support for the foreach looping construct.  Foreach is an\n        idiom that allows for iterating over elements in a collection,\n        without the use of an explicit loop counter.  This package in\n        particular is intended to be used for its return value, rather\n        than for its side effects.  In that sense, it is similar to the\n        standard lapply function, but doesn't require the evaluation\n        of a function.  Using foreach without side effects also\n        facilitates executing the loop in parallel.",
+        "License": "Apache License (== 2.0)",
+        "URL": "https://github.com/RevolutionAnalytics/foreach",
+        "BugReports": "https://github.com/RevolutionAnalytics/foreach/issues",
+        "Depends": "R (>= 2.5.0)",
+        "Imports": "codetools, utils, iterators",
+        "Suggests": "randomForest, doMC, doParallel, testthat, knitr, rmarkdown",
+        "VignetteBuilder": "knitr",
+        "RoxygenNote": "7.1.1",
+        "Collate": "'callCombine.R' 'foreach.R' 'do.R' 'foreach-ext.R'\n'foreach-pkg.R' 'getDoPar.R' 'getDoSeq.R' 'getsyms.R' 'iter.R'\n'nextElem.R' 'onLoad.R' 'setDoPar.R' 'setDoSeq.R' 'times.R'\n'utils.R'",
+        "NeedsCompilation": "no",
+        "Packaged": "2022-01-11 04:21:12 UTC; fdaniel",
+        "Author": "Folashade Daniel [cre],\n  Hong Ooi [ctb],\n  Rich Calaway [ctb],\n  Microsoft [aut, cph],\n  Steve Weston [aut]",
+        "Maintainer": "Folashade Daniel <fdaniel@microsoft.com>",
+        "Repository": "RSPM",
+        "Date/Publication": "2022-02-02 09:20:02 UTC",
+        "Encoding": "UTF-8",
+        "Built": "R 4.2.0; ; 2022-04-22 21:15:49 UTC; unix"
       }
     },
     "foreign": {
@@ -2648,6 +2724,30 @@
         "Repository": "CRAN",
         "Date/Publication": "2021-07-13 04:50:13 UTC",
         "Built": "R 4.2.1; x86_64-pc-linux-gnu; 2022-10-03 16:06:22 UTC; unix"
+      }
+    },
+    "iterators": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com/",
+      "description": {
+        "Package": "iterators",
+        "Type": "Package",
+        "Title": "Provides Iterator Construct",
+        "Version": "1.0.14",
+        "Authors@R": "c(person(\"Folashade\", \"Daniel\", role=\"cre\", email=\"fdaniel@microsoft.com\"),\n             person(\"Revolution\", \"Analytics\", role=c(\"aut\", \"cph\")),\n             person(\"Steve\", \"Weston\", role=\"aut\"))",
+        "Description": "Support for iterators, which allow a programmer to traverse\n    through all the elements of a vector, list, or other collection of data.",
+        "URL": "https://github.com/RevolutionAnalytics/iterators",
+        "Depends": "R (>= 2.5.0), utils",
+        "Suggests": "RUnit, foreach",
+        "License": "Apache License (== 2.0)",
+        "NeedsCompilation": "no",
+        "Packaged": "2022-01-16 18:19:31 UTC; folashade",
+        "Author": "Folashade Daniel [cre],\n  Revolution Analytics [aut, cph],\n  Steve Weston [aut]",
+        "Maintainer": "Folashade Daniel <fdaniel@microsoft.com>",
+        "Repository": "RSPM",
+        "Date/Publication": "2022-02-05 00:50:08 UTC",
+        "Encoding": "UTF-8",
+        "Built": "R 4.2.0; ; 2022-04-22 21:15:43 UTC; unix"
       }
     },
     "janitor": {
@@ -6225,6 +6325,9 @@
     "Archive/PatientExperienceforCheckList.R": {
       "checksum": "0a3755a5c0f92a5a916cf53200e5f14e"
     },
+    "Archive/productivity_update_July_2023.R": {
+      "checksum": "236acfb4d6334b15dd529bbf974bda14"
+    },
     "Archive/Reformat_Metric_Mapping_Database.R": {
       "checksum": "794457732d502ebd6f70419423f2279c"
     },
@@ -6298,10 +6401,10 @@
       "checksum": "748f2e90087bea8afba9f600df9c8071"
     },
     "Functions/Processing/budget_to_actual_new_file.R": {
-      "checksum": "a57b20850f9bd91951ab012ddd177842"
+      "checksum": "d29ebab437f38e147d52ca6c27252b6b"
     },
     "Functions/Processing/case_management_processing.R": {
-      "checksum": "b13de9bc0829fa091efd0c97feb43109"
+      "checksum": "6f73fe56940527bd96ab4ddc983ba400"
     },
     "Functions/Processing/Census Days.R": {
       "checksum": "c6a0b6dd8937970f3dcfde2ebd271a05"
@@ -6331,7 +6434,7 @@
       "checksum": "3ac38492e7a28230d5366dab74fb9c0b"
     },
     "Functions/Processing/OvertimeNew.R": {
-      "checksum": "baf8e2a38aabf733c3434a45e32b2686"
+      "checksum": "112a8f8b4d8a5dd1edbc90e6f79329bc"
     },
     "Functions/Processing/patient_experience.R": {
       "checksum": "9810595e258f1ae8275cd381598e5ba5"
@@ -6339,14 +6442,17 @@
     "Functions/Processing/peri_op_processing.R": {
       "checksum": "f3d3d1eb5625651255b51ed0d3af8913"
     },
-    "Functions/Processing/productivity_update_July_2023.R": {
-      "checksum": "3bca5e0a73430a951e36c182d9665e61"
+    "Functions/Processing/productivity_update_november_2023.R": {
+      "checksum": "14e932070a1e6c65158029fcdd979a53"
     },
     "Functions/Processing/productivity_update.R": {
       "checksum": "9c123b7a997a7bb610cb09cdc2ff0195"
     },
     "Functions/Processing/security_processing.R": {
       "checksum": "34125db6fd2daed1efc31b9549ae930e"
+    },
+    "Functions/Processing/system_wide_productivity_processing.R": {
+      "checksum": "bada4fb80c087df709df65e621eaae3d"
     },
     "Functions/Processing/Transportation.R": {
       "checksum": "efb855b04f9be0c305a1d3e4744bcb9e"
@@ -6382,16 +6488,28 @@
       "checksum": "8e2db5c4be515eb7a89cc49ecdcde051"
     },
     "Functions/write_table_and_merge_pt_exp.R": {
-      "checksum": "43b8abe68fd49cc37d4e6e85c836879e"
+      "checksum": "763800fcf9ba5445e793ba8d9a3105ac"
+    },
+    "Functions/write_table_and_merge_system_wide.R": {
+      "checksum": "e6550c075c35f98dbbcd133f2a10cdee"
     },
     "Functions/write_table_and_merge.R": {
       "checksum": "d2fe44475be08aa0a2ab588a65069611"
     },
     "global.R": {
-      "checksum": "6c86c2c3f42713917fb8d20c43fdc85c"
+      "checksum": "4732ff26e3b4a19b25a342e59b21fc2e"
     },
     "kls": {
       "checksum": "6f71af8a4a69aecc77b4d477ca15ec5d"
+    },
+    "PatExp/Balanced SC Query Previous Period ED (YTD) Sept 2023.csv": {
+      "checksum": "e3dc767fe0d3996ad358534e62b44344"
+    },
+    "PatExp/Balanced SC Query Previous period Nursing (ytd) Sept 2023.csv": {
+      "checksum": "60fa1561b00e27ad5772dbd6e55e5b99"
+    },
+    "PatExp/Balanced SCPrevious Period Support Services (ytd) Sept 2023.csv": {
+      "checksum": "84a4078008f01ea69e63eb07417e32d8"
     },
     "PatExp/Nursing.csv": {
       "checksum": "84bfc8eb6ab50e2d6b9d27ae76c0105e"
@@ -6403,7 +6521,7 @@
       "checksum": "51d33c54f16f7f61a44a085e7aa24575"
     },
     "server.R": {
-      "checksum": "b4e11271146bfbf1e4ece23dd9da370c"
+      "checksum": "7b5a40f0f3b0594cbb37bf76b39c0601"
     },
     "Staging_Run/BSC_MAPPING_TABLE.csv": {
       "checksum": "6f58beda3be783d0b0b6f48d1b94c659"
@@ -6420,6 +6538,9 @@
     "tests/2022 OT data v2.xlsx": {
       "checksum": "61c1df64942c336e4167e93785c6f0d4"
     },
+    "tests/August Reporting Period Premier.xlsx": {
+      "checksum": "56aa0a97eaf53fc4a40535d189ce0e4f"
+    },
     "tests/Balanced Scorecard Template - Nutrition.xlsx": {
       "checksum": "f0b078c053e01efa68bfa7182212fd00"
     },
@@ -6428,6 +6549,18 @@
     },
     "tests/Balanced Scorecard Update Feb 2023 YTD Financials.xlsx": {
       "checksum": "f40799fa92df6b425b36f1423e599ff1"
+    },
+    "tests/Balanced Scorecard Update November 2023 YTD Financials.xlsx": {
+      "checksum": "d20603a69d4a70dbd20e62b08d4b4d4b"
+    },
+    "tests/Balanced Scorecard Update September 2023 YTD Financials.xlsx": {
+      "checksum": "675ace2834a0a723f541a8d5818bcc79"
+    },
+    "tests/BSC_CN_Test.xlsx": {
+      "checksum": "d2b66e7e13396cb56ef1a50ef72f4def"
+    },
+    "tests/BSC_CN_UPT.xlsx": {
+      "checksum": "9d8b9177ecfb6fba7688c0248c6110b8"
     },
     "tests/BSC_OT_Upload_2023_Jan-May.xlsx": {
       "checksum": "0821ddf3619cac59f119a7ea8be0b5be"
@@ -6438,11 +6571,17 @@
     "tests/Copy of AutoHSO-BalancedScorecard-2022 (16).xlsx": {
       "checksum": "7497f78088b68434c21832d090b6d2df"
     },
+    "tests/Copy of Balanced Scorecard Update October 2023 YTD Financials v2.xlsx": {
+      "checksum": "8beef53aea57309736636b66b0778af6"
+    },
     "tests/Copy of FTI Summary 2 Updated.xlsx": {
       "checksum": "bab2594f3b5fc21d182d2e8a73908fd3"
     },
     "tests/Copy of May 2023 YTD On Time Starts and Turnover - All Epic Sites.xlsx": {
       "checksum": "9816fcdc4fb52b210b71c8ea8c50c797"
+    },
+    "tests/Copy of OT_2023_Jan-Oct.xlsx": {
+      "checksum": "463895bb380a1801e359d86b65cb3128"
     },
     "tests/Dept Report Builder - 2023-07-07 FYTD.xlsx": {
       "checksum": "24c7de0abe37a8937761bcfd0ad1030b"
@@ -6470,6 +6609,9 @@
     },
     "tests/Dept Report Builder (99).xlsx": {
       "checksum": "6d13bebead7fd6ebc375569a48df44ef"
+    },
+    "tests/FInance CC Premier.xlsx": {
+      "checksum": "59dbf89a120cb09d84fb2e36648c4a04"
     },
     "tests/Food Services Test Feb 2023.xlsx": {
       "checksum": "6ffac0b2d94d9104e1d8c5fae41faefd"
@@ -6513,6 +6655,9 @@
     "tests/Scorecards Reporting Period Average.xlsx": {
       "checksum": "90e4ba45c759ad5b1cc291379836713f"
     },
+    "tests/Scorecards Reproting Period Average.xlsx": {
+      "checksum": "1acb101036161abc7305126321fda50a"
+    },
     "tests/Scorecared FYTD Average August Updated.xlsx": {
       "checksum": "be28aaa9c55c7fd7c7fa48feff814d12"
     },
@@ -6552,8 +6697,14 @@
     "tests/Test Files/EVS Test File.xlsx": {
       "checksum": "4bf310f12a819e61e294605f1e6bd314"
     },
+    "tests/Updated Premier FYTD.xlsx": {
+      "checksum": "27199765f3b5adf7224066312e56fd78"
+    },
+    "tests/Updated Premier RP.xlsx": {
+      "checksum": "55c98e8454a0e7cd74b5da0ac3fce909"
+    },
     "ui.R": {
-      "checksum": "2fb460b3432167573be39844938d2007"
+      "checksum": "0e487555985b6b3f37b5cd70b27eb5ad"
     }
   },
   "users": null
