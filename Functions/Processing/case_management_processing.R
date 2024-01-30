@@ -133,7 +133,7 @@ case_management_readmission_processing <- function(raw_readm_data, updated_user)
   raw_readm_data  <- raw_readm_data %>%
     mutate(
       `Month of DSCH_DT_SRC` = as.Date(paste0("01 ",`Month of DSCH_DT_SRC`),format = "%d %B %Y"),
-      #`Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%Y-%m-%d"),
+      # `Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%Y-%m-%d"),
       Readmissions = as.numeric(Readmissions),
       `Total Cases` = as.numeric(sub(",", "", `Total Cases`, fixed = TRUE)),
       "Readmission Rate" = Readmissions/`Total Cases`,
