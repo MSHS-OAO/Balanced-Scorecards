@@ -1,6 +1,6 @@
-datapath <- "Tests/Scorecards_RP_AVG.xlsx"
+#datapath <- "Tests/Scorecards_RP_AVG.xlsx"
 # datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
-raw_data <- read_excel(datapath,skip = 2)
+#raw_data <- read_excel(datapath,skip = 2)
 # raw_data_old <- read_excel(datapath_old)
 # updated_user <- "Test_DNU"
 productivity_processing_system_wide <- function(raw_data, updated_user) {
