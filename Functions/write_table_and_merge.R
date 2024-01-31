@@ -1,7 +1,8 @@
 library(odbc)
 library(DBI)
 library(dbplyr)
-
+library(doParallel)
+library(parallel)
 options(odbc.batch_rows = 1000000)
 
 
