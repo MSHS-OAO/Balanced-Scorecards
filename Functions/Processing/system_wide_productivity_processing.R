@@ -1,18 +1,18 @@
-# datapath <- "Tests/sytemwide_premier.xlsx"
+datapath <- "Tests/sytemwide_premier.xlsx"
 # datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
-# raw_data <- read_excel(datapath,skip = 2)
+raw_data <- read_excel(datapath,skip = 2)
 # raw_data_old <- read_excel(datapath_old)
 # updated_user <- "Test_DNU"
 productivity_processing_system_wide <- function(raw_data, updated_user) {
   
   raw_data_longer <- raw_data %>%
     pivot_longer(cols = -c("Corp Time Period","...2") ,
-                 names_to = "PREMIER_REPORTING_PERIOD", values_to = "VALUE_ROUNDED")
+                 names_to = "PREMIER_REPORTING_PERIOD", values_to = "VALUE")
   
   metrics <- raw_data_longer %>%
     filter(is.na(`...2`)) %>%
-    select(c(PREMIER_REPORTING_PERIOD,VALUE_ROUNDED)) %>%
-    rename("METRIC_NAME_SUBMITTED" = VALUE_ROUNDED)
+    select(c(PREMIER_REPORTING_PERIOD,VALUE)) %>%
+    rename("METRIC_NAME_SUBMITTED" = VALUE)
     
   raw_data_longer <- raw_data_longer %>%
     filter(!is.na(`...2`))  %>%
@@ -89,7 +89,7 @@ productivity_processing_system_wide <- function(raw_data, updated_user) {
                                  SERVICE == "Transport" ~ "Patient Transport",
                                  TRUE ~ SERVICE),
            UPDATED_USER = updated_user,
-           VALUE_ROUNDED = round(as.numeric(VALUE_ROUNDED),2))  %>%
+           VALUE = round(as.numeric(VALUE),2))  %>%
     select(-YTD) %>%
     drop_na()
   
@@ -100,4 +100,4 @@ productivity_processing_system_wide <- function(raw_data, updated_user) {
 
 #Test ----
 
-# processed_new_data <- productivity_processing_system_wide(raw_data, "TEST")
+processed_new_data <- productivity_processing_system_wide(raw_data, "TEST")
