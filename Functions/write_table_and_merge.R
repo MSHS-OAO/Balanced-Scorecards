@@ -27,7 +27,7 @@ get_values <- function(x,table_name){
 
 # function to write the summary repo table to database: ----
 
-write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name, button_name, system_wide = TRUE){
+write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name, button_name, system_wide = FALSE){
   if(nrow(processed_input_data) == 0) {
     if(isRunning()) {
       showModal(modalDialog(
@@ -251,3 +251,8 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   }
   
 }
+
+
+# Test ---
+
+# write_temporary_table_to_database_and_merge(processed_new_data, "SOM",button_name = "NA")
