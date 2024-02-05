@@ -27,7 +27,7 @@ get_values <- function(x,table_name){
 
 # function to write the summary repo table to database: ----
 
-write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name, button_name, system_wide = FALSE){
+write_temporary_table_to_database_and_merge <- function(processed_input_data,table_name, button_name){
   if(nrow(processed_input_data) == 0) {
     if(isRunning()) {
       showModal(modalDialog(
@@ -52,7 +52,11 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
                     UPDATED_USER = "Varchar2(100 CHAR)" )
     
     TABLE_NAME <- paste0("STAGING.MERGE_TABLE")
-    DEST_TABLE <- if(system_wide){
+    
+    
+    system_wide <- unique(processed_input_data$SITE)
+    
+    DEST_TABLE <- if(system_wide == "SYSTEM"){
       paste0("BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
     }else{
       paste0("SUMMARY_REPO")
@@ -127,7 +131,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     
     # Clear the staging data
     tryCatch({
-      ch = dbConnect(odbc(), "OAO Cloud DB Production")
+      ch = dbConnect(odbc(), dsn)
       dbBegin(ch)
       dbExecute(ch,truncate_query)
       dbCommit(ch)
@@ -145,7 +149,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     system.time(
       outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
         #Connecting to database through DBI
-        ch = dbConnect(odbc(), "OAO Cloud DB Production")
+        ch = dbConnect(odbc(), dsn)
         #Test connection
         tryCatch({
           dbBegin(ch)
@@ -198,13 +202,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
     #                   dsn = dsn)
     
-    conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_PRODUCTION",
-                      pwd = "TIGu*3$K22nqLjP")
-    
     # conn <- dbConnect(odbc(), "OracleODBC-21_5",
-    #                   uid = "OAO_DEVELOPMENT",
-    #                   pwd = "HC*tA$4f1qMqVo")
+    #                   uid = "OAO_PRODUCTION",
+    #                   pwd = "TIGu*3$K22nqLjP")
+    
+    conn <- dbConnect(odbc(), "OracleODBC-21_5",
+                      uid = "OAO_DEVELOPMENT",
+                      pwd = "HC*tA$4f1qMqVo")
 
     # conn <- dbConnect(odbc(), dsn)
     print("after conn")
