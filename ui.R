@@ -301,6 +301,8 @@ ui <-
                                          ),
                                          br(),
                                          fileInput("productiviy_data", label = "Please upload Productivity data"), 
+                                         br(),
+                                         fileInput("productivity_system_wide", label = "Please upload System Wide Productivity data"), 
                                          hr(),
                                          actionButton("submit_prod", label = "Submit")
                                         )
