@@ -285,10 +285,8 @@ productivity_processing <- function(raw_data, updated_user) {
   
   prod_df_aggregate <- prod_df_aggregate %>% 
     filter(VALUE != "NaN") %>%
-    mutate(VALUE = round(VALUE,2))
-  
-  
-  
+    mutate(VALUE = round(VALUE,2)) %>%
+    drop_na()
   
 }
 
