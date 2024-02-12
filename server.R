@@ -2295,7 +2295,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updated_user <- input$name_productivity
         productivity_filepath <- inFile$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({data <- read_excel(productivity_filepath)
+        tryCatch({data <- read_excel(productivity_filepath,skip = 2)
         flag <- 1
         }, error = function(err){
           showModal(modalDialog(
