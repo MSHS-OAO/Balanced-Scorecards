@@ -1,9 +1,9 @@
-file_path <- "Tests/CSOR Template - 12 months.xlsx"
-data <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3,
-                   col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
-
-
-exclusions <- read_excel(file_path, sheet = "Exclusions")
+# file_path <- "Tests/CSOR Template - 12 months.xlsx"
+# data <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3,
+#                    col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
+# 
+# 
+# exclusions <- read_excel(file_path, sheet = "Exclusions")
 # budget_to_actual_path_new <- paste0(home_path, "Summary Repos/Budget to Actual New.xlsx")
 # 
 # budget_data_repo <- read_excel(budget_to_actual_path_new)
