@@ -1,4 +1,4 @@
-# datapath <- "Tests/Scorecards Reporting Period Average NEW.xlsx"
+# datapath <- "Tests/Scorecards Reporting Period Average.xlsx"
 # datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
 # raw_data <- read_excel(datapath,skip = 2)
 # raw_data_old <- read_excel(datapath_old)

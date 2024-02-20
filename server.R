@@ -2256,7 +2256,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     #   
     # })
     # 
-    # # Support Services YTD Data Observe Event -------------------
+    # # Support Services YTD Data Observe Event
     # observeEvent(input$submit_ytd_pt_exp, {
     #   button <- "submit_ytd_pt_exp"
     #   # Name Support Services YTD data
@@ -2277,6 +2277,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       button_name <- "submit_prod"
       shinyjs::disable(button_name)
       inFile <- input$productiviy_data
+      productivity_system_wide_file <- input$productivity_system_wide
       flag <- 0
       #data <- read_excel(inFile$datapath)
 
@@ -2294,8 +2295,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       else{
         updated_user <- input$name_productivity
         productivity_filepath <- inFile$datapath
+        productivity_system_wide_filepath <- productivity_system_wide_file$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({data <- read_excel(productivity_filepath,skip = 2)
+        tryCatch({
+          data <- read_excel(productivity_filepath,skip = 2)
+          print("1")
+          productivity_sw_raw <- read_excel(productivity_system_wide_filepath,skip = 2)
+          print("2")
         flag <- 1
         }, error = function(err){
           showModal(modalDialog(
@@ -2311,7 +2317,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       if(flag == 1){
         # Process Imaging data
-        tryCatch({prod_summary <- productivity_processing(data, updated_user)
+        tryCatch({
+          prod_summary <- productivity_processing(data, updated_user)
+          print("3")
+          prod_sw_summary <- productivity_processing_system_wide(productivity_sw_raw, updated_user)
+          print("4")
         flag <- 2
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
@@ -2334,6 +2344,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(productivity_new_data,
                                                     "TEMP_PRODUCTIVITY", button_name)
+        
+        write_temporary_table_to_database_and_merge(prod_sw_summary,
+                                                    "TEMP_PRODUCTIVITY", button_name)
+        
 
         update_picker_choices_sql(session, input$selectedService, input$selectedService2,
                                   input$selectedService3)
