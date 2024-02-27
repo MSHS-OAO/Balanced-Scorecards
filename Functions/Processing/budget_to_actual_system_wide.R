@@ -63,20 +63,20 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
   
   
   
-  list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", 
-                        "Emergency Department","Engineering",
-                        "Environmental Services", "Food Services", 
-                        "Nursing", "Patient & Equipment Transport",
-                        "Security", "Radiology", 
-                        "Perioperative Services", "Clinical Nutrition", 
-                        "Case Management / Social Work","Contracting","Population Health")
+  # list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", 
+  #                       "Emergency Department","Engineering",
+  #                       "Environmental Services", "Food Services", 
+  #                       "Nursing", "Patient & Equipment Transport",
+  #                       "Security", "Radiology", 
+  #                       "Perioperative Services", "Clinical Nutrition", 
+  #                       "Case Management / Social Work","Contracting","Population Health")
   
   
   list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "ISM")
   list_of_exptype <- c("Salaries", "Supplies")
   
   budget_data <- data %>% 
-    filter(Function %in% list_of_services) %>%
+    # filter(Function %in% list_of_services) %>%
     filter(SITE %in% list_of_sites) %>%
     filter(EXPTYPE %in% list_of_exptype) %>%
     mutate(
@@ -141,6 +141,19 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
     # ) %>%
   # budget_data <- budget_data %>% fill(Month) --- Ask Armando
   
+  budget_total_month_sw <- budget_data %>% group_by(Function, Month) %>%
+    summarise(VALUE = sum(as.numeric(`Sum of Month Budget`), na.rm = TRUE)) %>%
+    mutate(Month = paste0(Month,"01")) %>%
+    select(Function, Month, VALUE) %>%
+    mutate(EXPTYPE = "Budget_Total (Monthly)") %>%
+    rename(SERVICE = Function, 
+           METRIC_NAME_SUBMITTED = EXPTYPE) %>%
+    mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
+           SITE = 'System') %>%
+    select(-Month) %>%
+    distinct()
+  
+  
   
   budget_total_month <- budget_data %>% group_by(Function, SITE, Month) %>%
     summarise(VALUE = sum(as.numeric(`Sum of Month Budget`), na.rm = TRUE)) %>%
@@ -154,6 +167,33 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
     select(-Month) %>%
     distinct()
   
+  budget_total_month_exptype_sw <- budget_data %>% group_by(Function, EXPTYPE, Month) %>%
+    summarise(VALUE = sum(as.numeric(`Sum of Month Budget`), na.rm = TRUE)) %>%
+    mutate(Month = paste0(Month,"01")) %>%
+    select(Function, Month, VALUE) %>%
+    # mutate(EXPTYPE = "Budget_Total (YTD)") %>%
+    rename(SERVICE = Function, 
+           METRIC_NAME_SUBMITTED = EXPTYPE) %>%
+    mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
+           SITE = 'System',
+           METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Budget to Actual Variance - Labor", "Budget_Total - Labor (Monthly)" , "Budget_Total - Non Labor (Monthly)")) %>%
+    select(-Month) %>%
+    distinct()
+  
+  
+  budget_total_ytd_sw <- budget_data %>% group_by(Function, Month) %>%
+    summarise(VALUE = sum(as.numeric(`Sum of YTD Budget`), na.rm = TRUE)) %>%
+    mutate(Month = paste0(Month,"01")) %>%
+    select(Function, Month, VALUE) %>%
+    mutate(EXPTYPE = "Budget_Total (YTD)") %>%
+    rename(SERVICE = Function, 
+           METRIC_NAME_SUBMITTED = EXPTYPE) %>%
+    mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
+           SITE = 'System') %>%
+    select(-Month) %>%
+    distinct()
+  
+  
   budget_total_ytd <- budget_data %>% group_by(Function, SITE, Month) %>%
     summarise(VALUE = sum(as.numeric(`Sum of YTD Budget`), na.rm = TRUE)) %>%
     mutate(Month = paste0(Month,"01")) %>%
@@ -165,8 +205,27 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
     mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d")) %>%
     select(-Month) %>%
     distinct()
+
+  budget_total_ytd_exptype_sw <- budget_data %>% group_by(Function, EXPTYPE, Month) %>%
+    summarise(VALUE = sum(as.numeric(`Sum of YTD Budget`), na.rm = TRUE)) %>%
+    mutate(Month = paste0(Month,"01")) %>%
+    select(Function, Month, VALUE) %>%
+    # mutate(EXPTYPE = "Budget_Total (YTD)") %>%
+    rename(SERVICE = Function, 
+           METRIC_NAME_SUBMITTED = EXPTYPE) %>%
+    mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
+           SITE = 'System',
+           METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Budget to Actual Variance - Labor", "Budget_Total - Labor (YTD)" , "Budget_Total - Non Labor (YTD)")) %>%
+    select(-Month) %>%
+    distinct()
+
   
-  budget_total <- bind_rows(budget_total_month, budget_total_ytd)
+  budget_total <- bind_rows(budget_total_month,
+                            budget_total_month_sw,
+                            budget_total_month_exptype_sw,
+                            budget_total_ytd,
+                            budget_total_ytd_sw,
+                            budget_total_ytd_exptype_sw)
   
   
   budget_data_monthly <- budget_data %>%
@@ -178,10 +237,27 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
            SITE = SITE,
            METRIC_NAME_SUBMITTED = EXPTYPE) %>%
     mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
-           METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (Monthly)")) %>%
+           METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (Monthly)"),
+           SITE = 'System') %>%
     ungroup() %>%
     select(-Month) %>%
     distinct()
+  
+  
+  budget_data_monthly_sw <- budget_data %>%
+    group_by(Function, Month, EXPTYPE) %>%
+    summarise(VALUE = sum(`Sum of Month Budget`, na.rm = T) - sum(`Sum of Month Actual`, na.rm = T),
+              Month = paste0(Month,"01")) %>%
+    select(Function, EXPTYPE, Month, VALUE) %>%
+    rename(SERVICE = Function, 
+           METRIC_NAME_SUBMITTED = EXPTYPE) %>%
+    mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
+           METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (Monthly)"),
+           SITE = 'System') %>%
+    ungroup() %>%
+    select(-Month) %>%
+    distinct()
+  
   
   
   budget_data_monthly_percent <- budget_data %>%
@@ -202,7 +278,7 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
   
   budget_data_ytd <- budget_data %>%
     group_by(Function, SITE, Month, EXPTYPE) %>%
-    summarise(VALUE = (sum(`Sum of YTD Budget`, na.rm = T) - sum(`Sum of YTD Actual`, na.rm = T))/sum(`Sum of YTD Budget`, na.rm = T),
+    summarise(VALUE = sum(`Sum of YTD Budget`, na.rm = T) - sum(`Sum of YTD Actual`, na.rm = T),
               Month = paste0(Month,"01")) %>%
     select(Function, SITE, EXPTYPE, Month, VALUE) %>%
     rename(SERVICE = Function, 
@@ -214,9 +290,23 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
     select(-Month) %>%
     distinct()
   
+  budget_data_ytd_sw <- budget_data %>%
+    group_by(Function, Month, EXPTYPE) %>%
+    summarise(VALUE = sum(`Sum of YTD Budget`, na.rm = T) - sum(`Sum of YTD Actual`, na.rm = T),
+              Month = paste0(Month,"01")) %>%
+    select(Function, EXPTYPE, Month, VALUE) %>%
+    rename(SERVICE = Function, 
+           METRIC_NAME_SUBMITTED = EXPTYPE) %>%
+    mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
+           METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (YTD)"),
+           SITE = 'System') %>%
+    ungroup() %>%
+    select(-Month) %>%
+    distinct()
+  
   budget_data_ytd_percent <- budget_data %>%
     group_by(Function, SITE, Month, EXPTYPE) %>%
-    summarise(VALUE = sum(`Sum of YTD Budget`, na.rm = T) - sum(`Sum of YTD Actual`, na.rm = T),
+    summarise(VALUE = (sum(`Sum of YTD Budget`, na.rm = T) - sum(`Sum of YTD Actual`, na.rm = T))/sum(`Sum of YTD Budget`, na.rm = T),
               Month = paste0(Month,"01")) %>%
     select(Function, SITE, EXPTYPE, Month, VALUE) %>%
     rename(SERVICE = Function, 
@@ -231,7 +321,9 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
   
   
   budget_data <- bind_rows(budget_data_ytd, 
+                           budget_data_ytd_sw,
                            budget_data_monthly, 
+                           budget_data_monthly_sw,
                            budget_data_ytd_percent, 
                            budget_data_monthly_percent)
   
@@ -268,21 +360,3 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
   
   
 }
-
-budget_to_actual_metrics_final_df <- function(data){
-  data <- data %>% group_by(Service, Site, Month, Metric_Name_Submitted) %>% summarise(Value = sum(Value, na.rm = T))
-  
-  if(!("Premier_Reporting_Period" %in% names(data))){
-    data <- data %>% mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%Y-%m-%d"),"%b %Y"))
-  }
-  
-  if(!("Reporting_Month" %in% names(data))){
-    data <- data %>% mutate(Reporting_Month = format(as.Date(Month, format = "%Y-%m-%d"),"%m-%Y"))
-  }
-  
-  if(!("value_rounded" %in% names(data))){
-    data <- data %>% rename(value_rounded = Value)
-  }
-  metrics_final_df_subset_and_merge(data)
-}
-
