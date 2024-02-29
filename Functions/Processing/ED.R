@@ -51,7 +51,8 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
                                       "Volume",
                                       "Percentile (90) of ED LOS Discharge",
                                       "Percentile (90) of ED LOS Admit",
-                                      "Percentile (90) of Admit to Depart"), 
+                                      "Percentile (90) of Admit to Depart",
+                                      "Median ED Arrival to Admit Decision"), 
                     KPI=c("Acuity Null",
                           "Acuity 5",
                           "Acuity 4",
@@ -67,12 +68,15 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
                           "Visit Volume (Epic)",
                           "ED LOS T&R Patients (90th Percentile)",
                           "ED LOS Admitted Patients (90th Percentile)",
-                          "Admit to Depart Boarder Hours (90th Percentile)"))
+                          "Admit to Depart Boarder Hours (90th Percentile)",
+                          "Door to Admit (Median)"))
   
-  summary_repo <- rbind(ed_data_ts,ed_data_percentiles)
+  summary_repo <- rbind(ed_data_ts,ed_data_percentiles) %>%
+    mutate(`Measure Names` = trimws(`Measure Names`))
+  
   
   summary_repo <-left_join(summary_repo,
-                           mapping)
+                           mapping) %>% filter(!is.na(KPI)) %>% distinct()
   
   summary_repo <- summary_repo %>%
     rename(`SITE` = `Arrv Dept (group)`,
