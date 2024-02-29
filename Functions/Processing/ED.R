@@ -154,6 +154,7 @@ process_dte_data <- function(raw_data,updated_user){
 # Process data for Door-to-Head CT for Stroke patients ----
 process_dth_data <- function(raw_data,updated_user){
   
+  
   processed_data <- raw_data %>%
     fill(`Month of Date of Encounter`) %>%
     rename(METRIC_NAME_SUBMITTED = `...2`,
@@ -170,6 +171,8 @@ process_dth_data <- function(raw_data,updated_user){
                  names_to='SITE',
                  values_to='VALUE') %>%
   select(SERVICE,SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER)
+  
+  processed_data <- processed_data %>% mutate(VALUE = ifelse(VALUE < 0, 1, VALUE))
   
 }
 
