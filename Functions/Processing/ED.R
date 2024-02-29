@@ -153,14 +153,14 @@ process_dte_data <- function(raw_data,updated_user){
 
 # Process data for Door-to-Head CT for Stroke patients ----
 process_dth_data <- function(raw_data,updated_user){
-  
-  
+
   processed_data <- raw_data %>%
     fill(`Month of Date of Encounter`) %>%
     rename(METRIC_NAME_SUBMITTED = `...2`,
            PREMIER_REPORTING_PERIOD = `Month of Date of Encounter`) %>%
+    mutate(METRIC_NAME_SUBMITTED = gsub(" ", "", METRIC_NAME_SUBMITTED)) %>% 
     filter(PREMIER_REPORTING_PERIOD != "Grand Total") %>%
-    mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Median Door/Discovery to CT", 
+    mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "MedianDoor/DiscoverytoCT", 
                                           "Door to Door CT for Stroke Patients (Median)",
                                           "Door to Door CT for Stroke Patients (95th Percentile)"),
            SERVICE = "ED",
