@@ -51,7 +51,8 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
                                       "Volume",
                                       "Percentile (90) of ED LOS Discharge",
                                       "Percentile (90) of ED LOS Admit",
-                                      "Percentile (90) of Admit to Depart"), 
+                                      "Percentile (90) of Admit to Depart",
+                                      "Median ED Arrival to Admit Decision"), 
                     KPI=c("Acuity Null",
                           "Acuity 5",
                           "Acuity 4",
@@ -67,12 +68,15 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
                           "Visit Volume (Epic)",
                           "ED LOS T&R Patients (90th Percentile)",
                           "ED LOS Admitted Patients (90th Percentile)",
-                          "Admit to Depart Boarder Hours (90th Percentile)"))
+                          "Admit to Depart Boarder Hours (90th Percentile)",
+                          "Door to Admit (Median)"))
   
-  summary_repo <- rbind(ed_data_ts,ed_data_percentiles)
+  summary_repo <- rbind(ed_data_ts,ed_data_percentiles) %>%
+    mutate(`Measure Names` = trimws(`Measure Names`))
+  
   
   summary_repo <-left_join(summary_repo,
-                           mapping)
+                           mapping) %>% filter(!is.na(KPI)) %>% distinct()
   
   summary_repo <- summary_repo %>%
     rename(`SITE` = `Arrv Dept (group)`,
@@ -108,3 +112,70 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
   
   
 }
+
+
+# Code for processing mew metrics  Quality: Door-to-EKG for Chest Pain &  PX: Door-to-Head CT for Stroke patients ----
+
+# datapath <- "Tests/ED Test New.xlsx"
+# updated_user = "TEST"
+# 
+# DTEData <- read_excel(datapath,sheet = "Sheet4",skip=1)
+# DTHData <- read_excel(datapath,sheet = "Sheet3",skip=1)
+# 
+# raw_data_dte <- DTEData
+# raw_data_dth <- DTHData
+
+
+# Process data for Door-to-EKG for Chest Pain ----
+process_dte_data <- function(raw_data,updated_user){
+  
+  processed_data <- raw_data %>%
+    fill(`Month of Arrival_date`) %>%
+    rename(METRIC_NAME_SUBMITTED = `...2`,
+           PREMIER_REPORTING_PERIOD = `Month of Arrival_date`) %>%
+    filter(PREMIER_REPORTING_PERIOD != "Grand Total") %>%
+    mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Median Arrival to Collect", 
+                                          "Door to EKG for Chest Pain (Median)",
+                                          "Door to EKG for Chest Pain (95th Percentile)"),
+           SERVICE = "ED",
+           REPORTING_MONTH = as.Date(paste(PREMIER_REPORTING_PERIOD,"01"),format="%b %Y %d"),
+           REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d")),
+           UPDATED_USER = updated_user) %>%
+    pivot_longer(cols=c("MSB","MSBI","MSH","MSM","MSQ","MSW" ),
+                 names_to='SITE',
+                 values_to='VALUE') %>%
+    mutate(VALUE = ifelse(SITE == "MSQ", 
+                          NA, VALUE)) %>% #Update in the future
+  select(SERVICE,SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER)
+
+}
+
+
+# Process data for Door-to-Head CT for Stroke patients ----
+process_dth_data <- function(raw_data,updated_user){
+  
+  
+  processed_data <- raw_data %>%
+    fill(`Month of Date of Encounter`) %>%
+    rename(METRIC_NAME_SUBMITTED = `...2`,
+           PREMIER_REPORTING_PERIOD = `Month of Date of Encounter`) %>%
+    filter(PREMIER_REPORTING_PERIOD != "Grand Total") %>%
+    mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Median Door/Discovery to CT", 
+                                          "Door to Door CT for Stroke Patients (Median)",
+                                          "Door to Door CT for Stroke Patients (95th Percentile)"),
+           SERVICE = "ED",
+           REPORTING_MONTH = as.Date(paste(PREMIER_REPORTING_PERIOD,"01"),format="%b %Y %d"),
+           REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d")),
+           UPDATED_USER = updated_user) %>%
+    pivot_longer(cols=c("MSB","MSBI","MSH","MSM","MSQ","MSW" ),
+                 names_to='SITE',
+                 values_to='VALUE') %>%
+  select(SERVICE,SITE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER)
+  
+  processed_data <- processed_data %>% mutate(VALUE = ifelse(VALUE < 0, 1, VALUE))
+  
+}
+
+# processed_dte_data <- process_dte_data(raw_data_dte,updated_user)
+# processed_dth_data <- process_dth_data(raw_data_dth,updated_user)
+
