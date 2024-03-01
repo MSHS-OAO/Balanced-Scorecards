@@ -226,6 +226,19 @@ productivity_processing <- function(raw_data, updated_user) {
     filter(Metric_Name %in% c("Overtime Percent of Worked Hours")) %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0))
   
+  ##Overtime percent of paid hours
+  overtime_percent_paid_hours <- prod_df_all %>% filter(Metric_Name %in% c("Overtime Hours", "Total Paid Hours")) %>% 
+    pivot_wider(names_from = Metric_Name,
+                values_from = value
+    ) %>%
+    mutate(`Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid Hours`) %>%
+    select(-`Overtime Hours`, -`Total Paid Hours`) %>%
+    pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
+                 names_to = "Metric_Name",
+                 values_to = "value") %>%
+    filter(Metric_Name %in% c("Overtime Percent of Paid Hours")) %>%
+    mutate_at(vars(value), ~replace(., is.nan(.), 0))
+  
   # check for why volume mapper
   actual_worked_hours_per_unit <- prod_df_all %>% filter(Metric_Name %in% c("Total Worked Hours", "Volume")) %>% 
     pivot_wider(names_from = Metric_Name,
@@ -249,7 +262,7 @@ productivity_processing <- function(raw_data, updated_user) {
     ungroup()
   
   
-  prod_df_aggregate <- rbind(prod_df_all, whpi, overtime_percent_worked_hours, actual_worked_hours_per_unit, ot_agency_fte)
+  prod_df_aggregate <- rbind(prod_df_all, whpi, overtime_percent_worked_hours, actual_worked_hours_per_unit, ot_agency_fte, overtime_percent_paid_hours)
   prod_df_aggregate$Metric_Name <- str_trim(prod_df_aggregate$Metric_Name)
   
   
@@ -268,6 +281,11 @@ productivity_processing <- function(raw_data, updated_user) {
   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Worked Hours")
   prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
   
+  prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours") %>% filter(SITE %in% c("MSB", "MSW"))
+  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
+  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
+  
+  
   prod_df_aggregate_peri <- prod_df_aggregate %>% filter(SERVICE == "Perioperative Services" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM"))
   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Perioperative Services" | METRIC_NAME_SUBMITTED != "Agency FTE")
   prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_peri)
@@ -285,7 +303,7 @@ productivity_processing <- function(raw_data, updated_user) {
   
   prod_df_aggregate <- prod_df_aggregate %>% 
     filter(VALUE != "NaN") %>%
-    mutate(VALUE = round(VALUE,2)) %>%
+    mutate(VALUE = round(VALUE,3)) %>%
     drop_na()
   
 }
