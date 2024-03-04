@@ -301,6 +301,8 @@ ui <-
                                          ),
                                          br(),
                                          fileInput("productiviy_data", label = "Please upload Productivity data"), 
+                                         br(),
+                                         fileInput("productivity_system_wide", label = "Please upload System Wide Productivity data"), 
                                          hr(),
                                          actionButton("submit_prod", label = "Submit")
                                         )
@@ -914,13 +916,26 @@ ui <-
                                offset = 1,
                                DT::dataTableOutput("targetSummary_table"))
                       )
-             ), id = "tabset" # Close tabPanel Summary
+             ), id = "tabset", # Close tabPanel Summary
+             tags$script(
+               HTML("var header = $('.navbar > .container-fluid');
+                              header.append('<div style=\"float:right; padding-top: 8px\"><button id=\"help_button\" type=\"button\" class=\"btn btn-primary action-button\" >Support Request</button></div>')")
+             )
   )
              
           ), # Close NavBar
   
   
-          
+  
+  
+  tags$style(HTML("
+        #help_button {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+  
+  
   tags$style(HTML("
  .handsontable  .htDimmed {
  color: #000;

@@ -126,10 +126,14 @@ case_management_los_processing <- function(raw_los_data,updated_user){
 # Re-admission processing
 # raw_readm_data <- read_excel("Tests/CMSWRev/Readmissions data (3).xlsx")
 
+# raw_readm_data <- read_excel("Tests/Readmission Data for Balanced Scorecard.xlsx")
+
+
 case_management_readmission_processing <- function(raw_readm_data, updated_user){
   raw_readm_data  <- raw_readm_data %>%
     mutate(
-      `Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%Y-%m-%d"),
+      `Month of DSCH_DT_SRC` = as.Date(paste0("01 ",`Month of DSCH_DT_SRC`),format = "%d %B %Y"),
+      # `Month of DSCH_DT_SRC` = as.Date(`Month of DSCH_DT_SRC`,format = "%Y-%m-%d"),
       Readmissions = as.numeric(Readmissions),
       `Total Cases` = as.numeric(sub(",", "", `Total Cases`, fixed = TRUE)),
       "Readmission Rate" = Readmissions/`Total Cases`,
@@ -168,8 +172,10 @@ case_management_readmission_processing <- function(raw_readm_data, updated_user)
                             SITE == "Mount Sinai South Nassau" ~ "MSSN",
                             SITE == "Mount Sinai West" ~ "MSW",
                             TRUE ~ SITE))
+  readm_data %>% drop_na()
   
   
 }
 
-#processed_readm_data <- case_management_readmission_processing(raw_readm_data,updated_user)
+# processed_readmission_data <- case_management_readmission_processing(raw_readm_data,"Test")
+

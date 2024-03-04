@@ -190,8 +190,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Case Management / Social Work'
-      # month_input <- "04-2023"
+      # service_input <- 'Imaging'
+      # month_input <- "09-2023"
+      
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
       
@@ -277,7 +278,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                "Premier_Reporting_Period"))%>% 
         mutate(across('Metric_Name_Submitted', str_replace, "\\(Monthly\\)", ''),
                Metric_Name_Submitted = str_trim(Metric_Name_Submitted))  #Take all most recent data (id = 1) and merge with all data 
-
+      # Adding Additional Check to replace MSW IR Metrics with NA based on service request
+      # if(service_input == "Imaging"){
+      #   current_summary_data <- current_summary_data %>%
+      #     mutate(value_rounded = case_when(Site == "MSW" & 
+      #                                      Metric_Group == "IR- Ops" & 
+      #                                      Premier_Reporting_Period %in% c("Aug 2023", "Sep 2023") ~ NA_real_,
+      #                                      TRUE ~ value_rounded))
+      #   
+      # }
+      
       current_summary <- current_summary_data %>%
         mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
                                          paste0("Rep. Pd. Ending ",
@@ -358,7 +368,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       
-      # Case management / Social Work Remmove Avg LOS and Readmission Rates from period filter data
+      # Case management / Social Work Remove Avg LOS and Readmission Rates from period filter data
       if(service_input == "Case Management / Social Work"){
         
         period_filter <- period_filter %>%
@@ -504,9 +514,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            "Premier_Reporting_Period"),
                                     all = TRUE)
       
+      
       fytd_summary_total <- fytd_summary_all %>%
         # Metrics that need to be summarized by sum (total)
-        filter(Metric_Name_Summary == "Malnutrition Revenue") %>%
+        filter(Metric_Name_Summary %in% c("Malnutrition Revenue",
+                                          "Ambulatory Revenue Variance to Budget- in thousands",
+                                          "Outpatient Volume Variance to Budget")) %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Total")) %>%
         group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name, `Fiscal Year to Date`) %>%
         summarise(value_rounded = round(sum(value_rounded, na.rm = TRUE))) %>%
@@ -628,13 +641,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         pt_exp_ytd_reformat <- NULL
       }
       
-                    
       # FYTD Summary Table - for average 
       '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
         filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance", "Productivity")) %>% # Metrics that need to be summarized by sum (total)
-        filter(Metric_Name_Summary %!in% c("Malnutrition Revenue")) %>%
+        filter(Metric_Name_Summary %!in% c("Malnutrition Revenue",
+                                           "Ambulatory Revenue Variance to Budget- in thousands",
+                                           "Outpatient Volume Variance to Budget")) %>%
         filter(Metric_Name != "Overtime Hours - % (Premier)") %>%
         mutate(`Fiscal Year to Date` = paste(`Fiscal Year to Date`," Average")) %>%
         group_by(Site,
@@ -708,6 +722,36 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            TRUE ~ value_rounded))
         
       }
+      
+      # Adding Check to replace MSW IR Metrics with NA based on service request
+      
+      if(service_input == "Imaging"){
+        if(month_input  %in% c("08-2023","09-2023")){
+          fytd_summary <- fytd_summary %>%
+            mutate(value_rounded = case_when(Site == "MSW" & 
+                                               Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
+                                                                  "Outpatient Volume Variance to Budget") ~ NA_real_,
+                                             TRUE ~ value_rounded))
+          
+        }
+        
+        MSWIRMask <- (as.POSIXct("2023-08-01")  %--% as.POSIXct("2023-12-01"))
+        
+        if(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") %within% MSWIRMask){
+          
+          fytd_summary <- fytd_summary %>%
+            mutate(value_rounded = case_when(Site == "MSW" & 
+                                               Metric_Name %in% c("Outpatient Volume Variance to Budget") ~ NA_real_,
+                                             TRUE ~ value_rounded))
+          
+          
+        }
+        
+      }
+      
+  
+      
+      
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
         select(-Metric_Group, -Metric_Name) %>%
@@ -1208,6 +1252,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         summary_tab_tb[index, 3] <- updated
       }     
+
       
       if(service_input == "Imaging"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
@@ -1323,9 +1368,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
 # 
-#       service_input <- "Case Management / Social Work"
-#       month_input <- "03-2023"
-#       site_input <- "MSH"
+      # service_input <- 'Imaging'
+      # month_input <- "09-2023"
+      #       site_input <- "MSH"
 
       
       validate(
@@ -1682,12 +1727,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
       
+
+      # service_input <- 'Imaging'
+      # month_input <- "08-2023"
+      # site_input <- "MSW"
+      
       metrics_final_df <- mdf_from_db(service_input, month_input)
-
-      # service_input <- "Engineering"
-      # month_input <- "12-2021"
-      # site_input <- "MSB"
-
+      
 
       # Code Starts ---------------------------------------------------------------------------------     
       breakout_tab_metrics <- metric_mapping_breakout %>%
@@ -1727,6 +1773,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         arrange(Site, Metric_Group, Metric_Name,
                 desc(Reporting_Month_Ref)) %>%
         distinct()
+      
+      # Adding Additional Check to replace MSW IR Metrics with NA based on service request
+
+      if(service_input == "Imaging" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
+        data <- data %>%
+          mutate(value_rounded = case_when(Site == "MSW" & 
+                                             Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
+                                                                "Outpatient Volume Variance to Budget") ~ NA_real_,
+                                           TRUE ~ value_rounded))
+        
+      }
+      
+      
       
       # Do we need this?
       # This will be needed until duplicate monthly entries are corrected in metrics_final_df
@@ -2250,7 +2309,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     #   
     # })
     # 
-    # # Support Services YTD Data Observe Event -------------------
+    # # Support Services YTD Data Observe Event
     # observeEvent(input$submit_ytd_pt_exp, {
     #   button <- "submit_ytd_pt_exp"
     #   # Name Support Services YTD data
@@ -2271,6 +2330,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       button_name <- "submit_prod"
       shinyjs::disable(button_name)
       inFile <- input$productiviy_data
+      productivity_system_wide_file <- input$productivity_system_wide
       flag <- 0
       #data <- read_excel(inFile$datapath)
 
@@ -2288,8 +2348,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       else{
         updated_user <- input$name_productivity
         productivity_filepath <- inFile$datapath
+        productivity_system_wide_filepath <- productivity_system_wide_file$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({data <- read_excel(productivity_filepath)
+        tryCatch({
+          data <- read_excel(productivity_filepath,skip = 2)
+          print("1")
+          productivity_sw_raw <- read_excel(productivity_system_wide_filepath,skip = 2)
+          print("2")
         flag <- 1
         }, error = function(err){
           showModal(modalDialog(
@@ -2305,7 +2370,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       if(flag == 1){
         # Process Imaging data
-        tryCatch({prod_summary <- productivity_processing(data, updated_user)
+        tryCatch({
+          prod_summary <- productivity_processing(data, updated_user)
+          print("3")
+          prod_sw_summary <- productivity_processing_system_wide(productivity_sw_raw, updated_user)
+          print("4")
         flag <- 2
         }, error = function(err){  showModal(modalDialog(
           title = "Error",
@@ -2328,6 +2397,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(productivity_new_data,
                                                     "TEMP_PRODUCTIVITY", button_name)
+        
+        write_temporary_table_to_database_and_merge(prod_sw_summary,
+                                                    "TEMP_PRODUCTIVITY", button_name)
+        
 
         update_picker_choices_sql(session, input$selectedService, input$selectedService2,
                                   input$selectedService3)
@@ -4278,6 +4351,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
             data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
             
+            dte_data <- read_excel(file_path,sheet = "Sheet4",skip=1)
+            dth_data <- read_excel(file_path,sheet = "Sheet3",skip=1)
+            
             ed_data_ts <- data[[1]]
             ed_data_percentiles <- data[[2]]
             
@@ -4304,6 +4380,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ed_summary_data <-
               ed_dept_summary(ed_data_ts,ed_data_percentiles,updated_user)
             
+            dte_summary_data <- process_dte_data(dte_data,updated_user)
+            dth_summary_data <- process_dth_data(dth_data,updated_user)
+            
+            ed_summary_data <- rbind(ed_summary_data,
+                                     dte_summary_data,
+                                     dth_summary_data)
+            
             flag <- 2
           },
           error = function(err){
@@ -4321,10 +4404,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if(flag == 2){
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           ed_summary_data <- file_return_updated_rows(ed_summary_data)
+          # dte_summary_data <- file_return_updated_rows(dte_summary_data)
+          # dth_summary_data <- file_return_updated_rows(dth_summary_data)
+          
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(ed_summary_data,
                                                       "TEMP_ED", button_name)
+          # write_temporary_table_to_database_and_merge(dte_summary_data,
+          #                                             "TEMP_ED_DTE", button_name)
+          # write_temporary_table_to_database_and_merge(dth_summary_data,
+          #                                             "TEMP_ED_DTH", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
@@ -4811,6 +4901,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         shinyjs::enable(button_name)
         
       })
+      
+      onclick("help_button", runjs("window.open('https://docs.google.com/forms/d/e/1FAIpQLSd7cCghKA9GyX3FpUArkfaZ4R6qi6NtOhRI9WhZuSLPd0fQBg/viewform', '_blank')"))
       
 
 } # Close Server

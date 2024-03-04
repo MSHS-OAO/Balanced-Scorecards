@@ -23,6 +23,9 @@ budget_raw_file_process <- function(data, updated_user){
   
   data <- bind_rows(data, data_ed, data_rad, data_cn)
   data <- data %>% mutate(Function = ifelse(Function == "Case Management", "Case Management / Social Work", Function))
+  data <- data %>% mutate(Function = ifelse(Function == "Lab", "Lab and Blood Bank", Function))
+  data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab and Blood Bank", Function))
+  
   
   list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", "Emergency Department",
                         "Engineering", "Environmental Services", "Food Services", 
@@ -30,13 +33,16 @@ budget_raw_file_process <- function(data, updated_user){
                         "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management / Social Work")
   
   
-  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ")
+  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "MS NYEE")
   list_of_exptype <- c("Salaries", "Supplies")
   
   budget_data <- data %>% filter(Function %in% list_of_services) %>%
                   filter(SITE %in% list_of_sites) %>%
                   filter(EXPTYPE %in% list_of_exptype) %>%
                   mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS BI", "MSBI", 
+                                                     SITE)
+                            ) %>%
+                    mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS NYEE", "NYEE", 
                                                      SITE)
                             ) %>%
                   mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS BIB", "MSB", 

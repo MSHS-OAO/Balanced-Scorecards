@@ -98,7 +98,7 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     
     
     # glue() query to merge data from temporary table to summary_repo table
-    query = glue('MERGE INTO BSC_PATIENT_EXPERIENCE_REPO_MERGE SR
+    query = glue('MERGE INTO BSC_PATIENT_EXPERIENCE_REPO SR
                     USING "{TABLE_NAME}" SOURCE_TABLE
                     ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
                           SR."QUESTION_CLEAN" = SOURCE_TABLE."QUESTION_CLEAN" AND
@@ -107,10 +107,13 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
                           SR."REPORTING_DATE_END" = SOURCE_TABLE."REPORTING_DATE_END" AND
                           SR."SERVICE" = SOURCE_TABLE."SERVICE")
                     WHEN MATCHED THEN 
-                    UPDATE  SET SR."VALUE" = SOURCE_TABLE."VALUE",
+                    UPDATE  SET SR."SITE_MEAN" = SOURCE_TABLE."SITE_MEAN",
+                                SR."SITE_N" = SOURCE_TABLE."SITE_N",
+                                SR."ALL_PG_DATABASE_MEAN" = SOURCE_TABLE."ALL_PG_DATABASE_MEAN",
+                                SR."ALL_PG_DATABASE_N" = SOURCE_TABLE."ALL_PG_DATABASE_N",
+                                SR."ALL_PG_DATABASE_RANK" = SOURCE_TABLE."ALL_PG_DATABASE_RANK",
                                 SR."UPDATED_TIME" = SOURCE_TABLE."UPDATED_TIME",
-                                SR."UPDATED_USER" = SOURCE_TABLE."UPDATED_USER",
-                                SR."PREMIER_REPORTING_PERIOD" = SOURCE_TABLE."PREMIER_REPORTING_PERIOD"
+                                SR."UPDATED_USER" = SOURCE_TABLE."UPDATED_USER"
                     WHEN NOT MATCHED THEN
                     INSERT( SR."SERVICE",
                             SR."SITE",
@@ -125,19 +128,19 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
                             SR."ALL_PG_DATABASE_RANK",
                             SR."UPDATED_USER",
                             SR."UPDATED_TIME")  
-                    VALUES( SOURCE_TABLE"SERVICE",
-                            SOURCE_TABLE"SITE",
-                            SOURCE_TABLE"QUESTION_CLEAN",
-                            SOURCE_TABLE"REPORTINGTYPE",
-                            SOURCE_TABLE"REPORTING_DATE_START", 
-                            SOURCE_TABLE"REPORTING_DATE_END", 
-                            SOURCE_TABLE"SITE_MEAN",
-                            SOURCE_TABLE"SITE_N",
-                            SOURCE_TABLE"ALL_PG_DATABASE_MEAN",
-                            SOURCE_TABLE"ALL_PG_DATABASE_N",
-                            SOURCE_TABLE"ALL_PG_DATABASE_RANK",
-                            SOURCE_TABLE"UPDATED_USER",
-                            SOURCE_TABLE"UPDATED_TIME";')
+                    VALUES( SOURCE_TABLE."SERVICE",
+                            SOURCE_TABLE."SITE",
+                            SOURCE_TABLE."QUESTION_CLEAN",
+                            SOURCE_TABLE."REPORTINGTYPE",
+                            SOURCE_TABLE."REPORTING_DATE_START", 
+                            SOURCE_TABLE."REPORTING_DATE_END", 
+                            SOURCE_TABLE."SITE_MEAN",
+                            SOURCE_TABLE."SITE_N",
+                            SOURCE_TABLE."ALL_PG_DATABASE_MEAN",
+                            SOURCE_TABLE."ALL_PG_DATABASE_N",
+                            SOURCE_TABLE."ALL_PG_DATABASE_RANK",
+                            SOURCE_TABLE."UPDATED_USER",
+                            SOURCE_TABLE."UPDATED_TIME");')
     
     # glue query for dropping the table
     truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
