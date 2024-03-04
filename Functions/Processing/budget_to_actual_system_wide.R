@@ -1,9 +1,9 @@
-# file_path <- "Tests/CSOR Template - 12 months.xlsx"
-# data <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3,
-#                    col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
-# 
-# 
-# exclusions <- read_excel(file_path, sheet = "Exclusions")
+file_path <- "Tests/CSOR Template - 12 months.xlsx"
+data <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3,
+                   col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
+
+
+exclusions <- read_excel(file_path, sheet = "Exclusions")
 # budget_to_actual_path_new <- paste0(home_path, "Summary Repos/Budget to Actual New.xlsx")
 # 
 # budget_data_repo <- read_excel(budget_to_actual_path_new)
@@ -226,7 +226,7 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
                             budget_total_ytd,
                             budget_total_ytd_sw,
                             budget_total_ytd_exptype_sw)
-  
+
   
   budget_data_monthly <- budget_data %>%
     group_by(Function, SITE, Month, EXPTYPE) %>%
@@ -237,8 +237,7 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
            SITE = SITE,
            METRIC_NAME_SUBMITTED = EXPTYPE) %>%
     mutate(REPORTING_MONTH = as.Date(Month, format = "%b%Y%d"),
-           METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (Monthly)"),
-           SITE = 'System') %>%
+           METRIC_NAME_SUBMITTED = paste0(METRIC_NAME_SUBMITTED, " (Monthly)")) %>%
     ungroup() %>%
     select(-Month) %>%
     distinct()
@@ -326,7 +325,7 @@ budget_raw_file_process_sw <- function(data, exclusions, updated_user){
                            budget_data_monthly_sw,
                            budget_data_ytd_percent, 
                            budget_data_monthly_percent)
-  
+
   
   total_monthly <- budget_data %>% group_by(SERVICE, SITE, REPORTING_MONTH) %>%
     filter(grepl("(Monthly)", METRIC_NAME_SUBMITTED)) %>%
