@@ -401,7 +401,50 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           mutate(id = row_number())
         
         
-        }
+      }
+      
+      if(service_input == "Food Services"){
+        
+        period_filter <- period_filter %>%
+          filter(!Metric_Name %in% c("Net Cost of Case per Patient Day"))
+        
+        data <- data %>%
+          filter(!Metric_Name %in% c("Net Cost of Case per Patient Day"))
+        
+        food_operational_ytd <- get_food_ytd(month_input)
+        
+        
+        food_operational_ytd_data <- food_operational_ytd %>%
+          mutate(Metric_Name_Submitted = Metric_Name,
+                 Metric_Unit = case_when(Metric_Name_Submitted == "Net Cost of Case per Patient Day" ~ NA),
+                 Metric_Name_Summary = case_when(Metric_Name == "Net Cost of Case per Patient Day" ~ "Net Cost of Case per Patient Day"),
+                 Target = NA,
+                 Green_Start = NA,             
+                 Green_End = NA,
+                 Yellow_Start =  NA,
+                 Yellow_End = NA,
+                 Red_Start = NA,
+                 Red_End = NA,
+                 Status = NA) %>%
+          select(names(data))
+        
+        data <- rbind(data,food_operational_ytd_data)
+        
+        period_filter <- data %>% 
+          group_by(Metric_Group,
+                   Metric_Name_Summary,
+                   Metric_Name,
+                   Reporting_Month_Ref,
+                   Premier_Reporting_Period) %>% 
+          #distinct() %>%
+          summarise(total = n()) %>%                                                            #
+          arrange(Metric_Group, Metric_Name_Summary,
+                  Metric_Name, desc(Reporting_Month_Ref)) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(id = row_number())
+        
+        
+      }
 
       
       if(!is.null(ytd_join)){
@@ -1155,7 +1198,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       names(header_above) <- c(" ", "Year to Date", " ", "Current Period")
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
-     
+      
+      metric_name <- unique(summary_tab_tb$`Metric Name`)
+      if(service_input == "Food Services" & c("Net Cost of Case per Patient Day") %in% metric_name) {
+        index <- which(summary_tab_tb$`Metric Name` == "Net Cost of Case per Patient Day" & summary_tab_tb$Section == "Metrics", arr.ind = TRUE)
+        
+        extract <- summary_tab_tb[index,3]
+        updated <- gsub("Average", "Total", extract)
+        
+        summary_tab_tb[index, 3] <- updated
+      }     
       
       if(service_input == "Imaging"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
