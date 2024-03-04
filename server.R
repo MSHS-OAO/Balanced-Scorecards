@@ -148,6 +148,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       input_service <- input$selectedService
       
@@ -187,6 +188,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -1322,6 +1324,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1360,6 +1363,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       
       service_input <- input$selectedService2
@@ -1683,6 +1687,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1722,6 +1727,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
             
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
