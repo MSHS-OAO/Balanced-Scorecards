@@ -411,7 +411,50 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           mutate(id = row_number())
         
         
-        }
+      }
+      
+      if(service_input == "Food Services"){
+        
+        period_filter <- period_filter %>%
+          filter(!Metric_Name %in% c("Net Cost of Case per Patient Day"))
+        
+        data <- data %>%
+          filter(!Metric_Name %in% c("Net Cost of Case per Patient Day"))
+        
+        food_operational_ytd <- get_food_ytd(month_input)
+        
+        
+        food_operational_ytd_data <- food_operational_ytd %>%
+          mutate(Metric_Name_Submitted = Metric_Name,
+                 Metric_Unit = case_when(Metric_Name_Submitted == "Net Cost of Case per Patient Day" ~ NA),
+                 Metric_Name_Summary = case_when(Metric_Name == "Net Cost of Case per Patient Day" ~ "Net Cost of Case per Patient Day"),
+                 Target = NA,
+                 Green_Start = NA,             
+                 Green_End = NA,
+                 Yellow_Start =  NA,
+                 Yellow_End = NA,
+                 Red_Start = NA,
+                 Red_End = NA,
+                 Status = NA) %>%
+          select(names(data))
+        
+        data <- rbind(data,food_operational_ytd_data)
+        
+        period_filter <- data %>% 
+          group_by(Metric_Group,
+                   Metric_Name_Summary,
+                   Metric_Name,
+                   Reporting_Month_Ref,
+                   Premier_Reporting_Period) %>% 
+          #distinct() %>%
+          summarise(total = n()) %>%                                                            #
+          arrange(Metric_Group, Metric_Name_Summary,
+                  Metric_Name, desc(Reporting_Month_Ref)) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(id = row_number())
+        
+        
+      }
 
       
       if(!is.null(ytd_join)){
@@ -1200,6 +1243,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
       
+      metric_name <- unique(summary_tab_tb$`Metric Name`)
+      if(service_input == "Food Services" & c("Net Cost of Case per Patient Day") %in% metric_name) {
+        index <- which(summary_tab_tb$`Metric Name` == "Net Cost of Case per Patient Day" & summary_tab_tb$Section == "Metrics", arr.ind = TRUE)
+        
+        extract <- summary_tab_tb[index,3]
+        updated <- gsub("Average", "Total", extract)
+        
+        summary_tab_tb[index, 3] <- updated
+      }     
+
       
       if(service_input == "Imaging"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
@@ -2415,6 +2468,67 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #wirte the updated data to the Summary Repo in the server
         write_temporary_table_to_database_and_merge(food_summary_data,
                                                     "TEMP_FOOD", button_name)
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+        shinyjs::enable(button_name)
+        
+      }
+      
+    })
+    # Submit Food Services Net Expenses and Patient Data -----
+    observeEvent(input$submit_food_nccpd,{
+      button_name <- "submit_food_nccpd"
+      shinyjs::disable(button_name)
+      nccpd_file <- input$food_nccpd
+      flag <- 0
+      
+      if(input$name_food_nccpd == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        nccpd_file_path <- nccpd_file$datapath
+        updated_user <- input$name_food_nccpd
+        tryCatch({
+        raw_data <- read.xlsx(nccpd_file_path,startRow  = 3,sheet = "Cost per Patient Day",cols = 1:15)
+        flag <- 1
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if (flag == 1){
+        # Process Cost and Revenue data
+        tryCatch({
+          
+        summary_data <- process_net_cost_per_pd(raw_data,updated_user)
+        flag <- 2
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if (flag == 2){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        summary_data <- file_return_updated_rows(summary_data)
+        
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(summary_data,
+                                                    "TEMP_FOOD_NC", button_name)
         
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                   input$selectedService3)
