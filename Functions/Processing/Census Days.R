@@ -345,7 +345,7 @@ process_net_cost_per_pd <- function(raw_data,updated_user){
   
   site_list <- c("MS MORNINGSIDE",
                  "MS WEST",
-                 "MS BETH ISRAEL",
+                 "MS BETH ISRAEL/BHC",
                  "MS BROOKLYN",
                  "MS QUEENS",
                  "MS NYEE")
