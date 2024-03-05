@@ -26,7 +26,7 @@ productivity_processing <- function(raw_data, updated_user) {
   )
   ) %>%
     filter(!is.na(Service)) %>%
-    filter(FTE.TREND == 1)
+    filter(DEPARTMENT.BREAKDOWN == 1)
   
   raw_data <- raw_data %>%
     rename(`Key Volume` = `Corp Time Period Time Period End Date`,
