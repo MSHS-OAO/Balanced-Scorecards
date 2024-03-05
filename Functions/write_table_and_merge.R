@@ -78,7 +78,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
              VALUE,UPDATED_TIME,
              UPDATED_USER)
     
-    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM", "SYSTEM"))
+    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM", "SYSTEM", "System")) # SYSTEM comes from premier while System comes from Finance
     ##substitue single ' for '' so the query can escape
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
