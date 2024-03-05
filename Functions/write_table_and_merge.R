@@ -55,13 +55,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     
     
     system_wide <- unique(processed_input_data$SITE)
-    
+
     DEST_TABLE <- if("SYSTEM" %in% system_wide){
       paste0("BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
     }else{
       paste0("SUMMARY_REPO")
     }
-    
+
     
     # Add UPDATE_TIME and check for all the fields are characters
     processed_input_data <- processed_input_data %>%
@@ -97,7 +97,6 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     
     chunk_length <- 500
     split_queries <- split(inserts, ceiling(seq_along(inserts)/chunk_length))
-    
     
     split_queries_sql_statements <- list()
     for (i in 1:length(split_queries)) {
@@ -202,13 +201,13 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
     #                   dsn = dsn)
     
-    conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_PRODUCTION",
-                      pwd = "TIGu*3$K22nqLjP")
-    
     # conn <- dbConnect(odbc(), "OracleODBC-21_5",
-    #                   uid = "OAO_DEVELOPMENT",
-    #                   pwd = "HC*tA$4f1qMqVo")
+    #                   uid = "OAO_PRODUCTION",
+    #                   pwd = "TIGu*3$K22nqLjP")
+    
+    conn <- dbConnect(odbc(), "OracleODBC-21_5",
+                      uid = "OAO_DEVELOPMENT",
+                      pwd = "HC*tA$4f1qMqVo")
 
     # conn <- dbConnect(odbc(), dsn)
     print("after conn")
@@ -259,4 +258,4 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
 
 # Test ---
 
-# write_temporary_table_to_database_and_merge(processed_new_data, "SOM",button_name = "NA")
+# write_temporary_table_to_database_and_merge(budget_data_df, "SOM",button_name = "NA")
