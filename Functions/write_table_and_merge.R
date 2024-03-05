@@ -1,7 +1,8 @@
 library(odbc)
 library(DBI)
 library(dbplyr)
-
+library(doParallel)
+library(parallel)
 options(odbc.batch_rows = 1000000)
 
 
@@ -53,6 +54,15 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     TABLE_NAME <- paste0("STAGING.MERGE_TABLE")
     
     
+    system_wide <- unique(processed_input_data$SITE)
+    
+    DEST_TABLE <- if("SYSTEM" %in% system_wide){
+      paste0("BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
+    }else{
+      paste0("SUMMARY_REPO")
+    }
+    
+    
     # Add UPDATE_TIME and check for all the fields are characters
     processed_input_data <- processed_input_data %>%
       mutate(REPORTING_MONTH = as.character(REPORTING_MONTH),
@@ -68,29 +78,97 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
              VALUE,UPDATED_TIME,
              UPDATED_USER)
     
-    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM"))
+    processed_input_data <- processed_input_data %>% filter(SITE %in% c("MSBI", "MSQ", "MSH", "MSW", "MSB", "NYEE", "MSM", "SYSTEM"))
     ##substitue single ' for '' so the query can escape
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("\'", "''", processed_input_data$METRIC_NAME_SUBMITTED)
     processed_input_data$METRIC_NAME_SUBMITTED <- gsub("&", "' || chr(38) || '", processed_input_data$METRIC_NAME_SUBMITTED)
     # Convert the each record/row of tibble to INTO clause of insert statment
-    inserts <- lapply(
-      lapply(
-        lapply(split(processed_input_data , 
-                     1:nrow(processed_input_data)),
-               as.list), 
-        as.character),
-      FUN = get_values ,TABLE_NAME)
     
-    values <- glue_collapse(inserts,sep = "\n\n")
+    data_records <- split(processed_input_data ,1:nrow(processed_input_data))
     
+    
+    registerDoParallel()
+    inserts <- foreach(record = data_records) %dopar% {
+      tmp <- as.list(record)
+      tmp <- as.character(tmp)
+      tmp <- get_values(tmp,TABLE_NAME)
+    }
+    registerDoSEQ()
+    
+    chunk_length <- 500
+    split_queries <- split(inserts, ceiling(seq_along(inserts)/chunk_length))
+    
+    
+    split_queries_sql_statements <- list()
+    for (i in 1:length(split_queries)) {
+      row <- glue_collapse(split_queries[[i]], sep = "\n\n")
+      # row <- gsub('NA', "", row)
+      # row <- gsub("&", " ' || chr(38) || ' ", row)
+      sql <- glue('INSERT ALL {row} SELECT 1 FROM DUAL;')
+      split_queries_sql_statements <- append(split_queries_sql_statements, sql)
+    }
+    
+    
+    # inserts <- lapply(
+    #   lapply(
+    #     lapply(split(processed_input_data , 
+    #                  1:nrow(processed_input_data)),
+    #            as.list), 
+    #     as.character),
+    #   FUN = get_values ,TABLE_NAME)
+    
+    # values <- glue_collapse(inserts,sep = "\n\n")
+    # 
     # Combine into statements from get_values() function and combine with
     # insert statements
-    all_data <- glue('INSERT ALL
-                        {values}
-                      SELECT 1 from DUAL;')
+    # all_data <- glue('INSERT ALL
+    #                     {values}
+    #                   SELECT 1 from DUAL;')
+    
+    
+    # glue statement for dropping table
+    truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
+    
+    # Clear the staging data
+    tryCatch({
+      ch = dbConnect(odbc(), dsn)
+      dbBegin(ch)
+      dbExecute(ch,truncate_query)
+      dbCommit(ch)
+      dbDisconnect(ch)
+    },
+    error = function(err){
+      print("error")
+      dbRollback(ch)
+      dbDisconnect(ch)
+      
+    })
+    
+    
+    registerDoParallel()
+    system.time(
+      outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
+        #Connecting to database through DBI
+        ch = dbConnect(odbc(), dsn)
+        #Test connection
+        tryCatch({
+          dbBegin(ch)
+          dbExecute(ch, split_queries_sql_statements[[i]])
+          dbCommit(ch)
+        },
+        error = function(err){
+          print("error")
+          dbRollback(ch)
+          dbDisconnect(ch)
+          
+        })
+      }
+    )
+    registerDoSEQ()
+    
     
     # glue() query to merge data from temporary table to summary_repo table
-    query = glue('MERGE INTO SUMMARY_REPO SR
+    query = glue('MERGE INTO "{DEST_TABLE}" SR
                     USING "{TABLE_NAME}" SOURCE_TABLE
                     ON (  SR."SITE" = SOURCE_TABLE."SITE" AND
                           SR."REPORTING_MONTH" = SOURCE_TABLE."REPORTING_MONTH" AND
@@ -119,9 +197,7 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
                             SOURCE_TABLE."UPDATED_USER",
                             SOURCE_TABLE."PREMIER_REPORTING_PERIOD");')
     
-    # glue query for dropping the table
-    truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
-    
+
     print("before conn")
     # conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
     #                   dsn = dsn)
@@ -140,14 +216,10 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     # ## Execute staments and if there is an error  with one of them rollback changes
     tryCatch({
           print("1")
-          dbExecute(conn,truncate_query)
-          print("2")
-          dbExecute(conn,all_data)
-          print("3")
           dbExecute(conn,query)
-          print("4")
+          print("2")
           dbExecute(conn,truncate_query)
-          print("5")
+          print("3")
           dbCommit(conn)
           dbDisconnect(conn)
           if(isRunning()) {
@@ -183,3 +255,8 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
   }
   
 }
+
+
+# Test ---
+
+# write_temporary_table_to_database_and_merge(processed_new_data, "SOM",button_name = "NA")
