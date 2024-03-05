@@ -1,5 +1,5 @@
 # Increase allowable file size (Sunquest monthly files are too large for default)
-if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
+if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=200*1024^2)
 
 
   server <- function(input, output, session) {
@@ -2011,6 +2011,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
     
     # 4. Data Tab Output ---------------------------------------------------------------------------------
+    # Finance Processing -----
     observeEvent(input$submit_finance,{
       button_name <- "submit_finance"
       shinyjs::disable(button_name)
@@ -2027,8 +2028,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         file_path <- inFile_budget$datapath
-        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
-                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "text"))
+        tryCatch({data <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3,
+                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
+        exclusions <- read_excel(file_path, sheet = "Exclusions")
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -2043,7 +2045,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 1){
         # Process the data into standar Summary Repo format
-        tryCatch({budget_process <- budget_raw_file_process(data, updated_user)
+        tryCatch({budget_process <- budget_raw_file_process_sw(data,exclusions, updated_user)
         flag <- 2
         
         },
@@ -3479,7 +3481,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     })
     
-      
+    # Ovetime Processing -----  
     observeEvent(input$submit_finance_ot, {
       button_name <- "submit_finance_ot"
       shinyjs::disable(button_name)
