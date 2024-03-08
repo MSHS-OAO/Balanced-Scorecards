@@ -237,7 +237,9 @@ ui <-
                                    h1("Current State"),
                                     tableOutput("current_state_system_table") %>%
                                      withSpinner(type = 8, color = "#dddedd"),
-                                   h1("Future State")
+                                   h1("Future State"),
+                                   tableOutput("future_state_system_table") %>%
+                                     withSpinner(type = 8, color = "#dddedd")
                                    )
                           )
                           
