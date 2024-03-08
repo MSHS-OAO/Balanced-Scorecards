@@ -234,6 +234,7 @@ ui <-
                           ),
                           fluidRow(
                             column(12,
+                                   h1("Current State"),
                                     tableOutput("current_state_system_table") %>%
                                      withSpinner(type = 8, color = "#dddedd")
                                    )
