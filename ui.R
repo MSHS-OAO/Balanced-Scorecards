@@ -202,6 +202,7 @@ ui <-
              ), # Close tabPanel Breakdout
              # Fourth Tab - Operational Metrics
              
+             tabPanel("System", value = "system"),
              
              navbarMenu("Data",
                         # Finance Data Submission ----
