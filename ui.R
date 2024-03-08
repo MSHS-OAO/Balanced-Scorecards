@@ -231,6 +231,12 @@ ui <-
                                                  size = 10),
                                                selected = month_choices)
                                  )
+                          ),
+                          fluidRow(
+                            column(12,
+                                    tableOutput("system_table") %>%
+                                     withSpinner(type = 8, color = "#dddedd")
+                                   )
                           )
                           
                         )
