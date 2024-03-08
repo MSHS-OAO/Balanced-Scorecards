@@ -202,7 +202,39 @@ ui <-
              ), # Close tabPanel Breakdout
              # Fourth Tab - Operational Metrics
              
-             tabPanel("System", value = "system"),
+             tabPanel("System Overview", value = "system",
+                        fluidRow(
+                          column(2,
+                                  box(
+                                    title = NULL, solidHeader = FALSE, width =12,
+                                    pickerInput("selectedService4", label = h4("Select Department:"),
+                                                choices = service_choices, ## Update this
+                                                multiple = FALSE,
+                                                options = pickerOptions(
+                                                  liveSearch = TRUE,
+                                                  actionsBox = TRUE,
+                                                  dropupAuto = FALSE,
+                                                  size = 10),
+                                                selected = default_service)
+                                  )
+                                ),
+                          column(2,
+                                 box(
+                                   title = NULL, solidHeader = FALSE, width =12,
+                                   pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
+                                               choices = month_choices, ## Update this
+                                               multiple = FALSE,
+                                               options = pickerOptions(
+                                                 liveSearch = TRUE,
+                                                 actionsBox = TRUE,
+                                                 dropupAuto = FALSE,
+                                                 size = 10),
+                                               selected = month_choices)
+                                 )
+                          )
+                          
+                        )
+                      ),
              
              navbarMenu("Data",
                         # Finance Data Submission ----
