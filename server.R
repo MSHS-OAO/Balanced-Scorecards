@@ -4810,6 +4810,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       output$future_state_system_table <- function() {
         
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = "OAO Cloud DB Armando")
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+        
+        future_state_data <- future_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
+        
         future_state_dummy <- data.frame(SCOPE = c(rep("Finance",3)),
                                          METRIC = c("Salaries","Supplies",
                                                     "Total Expenses"),
