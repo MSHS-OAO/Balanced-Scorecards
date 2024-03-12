@@ -208,14 +208,14 @@ ui <-
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
                                     pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = service_choices, ## Update this
+                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health'), ## Update this
                                                 multiple = FALSE,
                                                 options = pickerOptions(
                                                   liveSearch = TRUE,
                                                   actionsBox = TRUE,
                                                   dropupAuto = FALSE,
                                                   size = 10),
-                                                selected = default_service)
+                                                selected = c('Emergency Department'))
                                   )
                                 ),
                           column(2,
