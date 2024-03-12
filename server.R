@@ -4810,8 +4810,33 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       output$future_state_system_table <- function() {
         
+        future_state_dummy <- data.frame(SCOPE = c(rep("Finance",3)),
+                                         METRIC = c("Salaries","Supplies",
+                                                    "Total Expenses"),
+                                         YTD_ACTUAL_ANNUALIZED = c(10000, 12000, 11000),
+                                         LAST_12_MONTHS = c(10000, 12000, 11000),
+                                         YTD_ADJUSTED = c(10000, 12000, 11000),
+                                         "2024_BUDGET" = c(10000, 12000, 11000),
+                                         "2023_ADJUSTED_VARIANCE_TO_2024_BUDGET" = c(10000, 12000, 11000),
+                                         PERCENT_VARIANCE = c(10000, 12000, 11000)
+        )
         
-      }
+        future_col_names = c("SCOPE","METRIC","YTD ACTUAL ANNUALIZED",
+                             "LAST 12 MONTHS","YTD ADJUSTED",
+                             "2024 BUDGET", "2023 ADJUSTED VARIANCE TO 2024 BUDGET",
+                             "PERCENT VARIANCE")
+        
+        future_state_table <- kable(future_state_dummy, "html", align = "c",col.names = future_col_names) %>%
+          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
+                        full_width = FALSE, position = "center", 
+                        row_label_position = "c", font_size = 16) %>%
+          column_spec(1:2, background = "#212070", color = "white") %>%
+          column_spec(3:5, background = "#fee7f5") %>%
+          column_spec(6:8, background = "#E6F8FF") %>%
+          row_spec(0, background = "#212070", color = "white") %>%
+          collapse_rows(columns = 1, valign = "middle") 
+        
+        }
       
 
 } # Close Server
