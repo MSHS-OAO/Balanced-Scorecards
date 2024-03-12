@@ -438,7 +438,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  Red_Start = NA,
                  Red_End = NA,
                  Status = NA) %>%
-          select(names(data))
+          select(names(data)) %>% mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))
         
         data <- rbind(data,food_operational_ytd_data)
         
