@@ -207,7 +207,7 @@ ui <-
                           column(2,
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
-                                    pickerInput("selectedService4", label = h4("Select Department:"),
+                                    pickerInput("selectedService5", label = h4("Select Department:"),
                                                 choices = service_choices, ## Update this
                                                 multiple = FALSE,
                                                 options = pickerOptions(
