@@ -146,14 +146,8 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
     truncate_query <- glue('TRUNCATE TABLE "{TABLE_NAME}";')
     
     
-    conn <- dbConnect(odbc(), "OracleODBC-21_5",
-                      uid = "OAO_PRODUCTION",
-                      pwd = "TIGu*3$K22nqLjP")
+    conn <- dbConnect(odbc(), dsn_oracle)
     
-    # conn <- dbConnect(odbc(), "OracleODBC-21_5",
-    #                   uid = "OAO_DEVELOPMENT",
-    #                   pwd = "HC*tA$4f1qMqVo")
-    # 
     print("before conn")
     # conn <- dbConnect(odbc(), dsn)
     print("after conn")
