@@ -112,9 +112,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
                       VALUES({get_source_table_values})
                       ")
   
-  ch = dbConnect(odbc(), "OracleODBC-21_5",
-                 uid = "villea04",
-                 pwd = "qKQvPoSilm21T*qVr")
+  ch = dbConnect(odbc(), dsn_oracle)
   #Test connection
   tryCatch({
     dbBegin(ch)

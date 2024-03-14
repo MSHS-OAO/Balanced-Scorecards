@@ -8,7 +8,8 @@
 #   exclusions <- read_excel(file_path, sheet = "Exclusions") %>%
 #                 select(-`...2`)
   
-process_raw_finance_file <- function(data, updated_user, exclusions) {  
+process_raw_finance_file <- function(data, updated_user, exclusions) {
+  data_all <- data
   data <- data_all %>% filter(!(SITE %in% c("HSO", "MSO")))
   data <- data[!grepl("MSO:", data$Function),]
   
