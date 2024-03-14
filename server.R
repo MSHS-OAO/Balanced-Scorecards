@@ -2086,8 +2086,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         file_path <- inFile_budget$datapath
-        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
-                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "text"))
+        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 4, 
+                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text" ,"numeric","numeric","numeric","numeric","numeric", "text"))
+                  exclusions <- read_excel(file_path, sheet = "Exclusions") %>%
+                                  select(-`...2`)
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -2102,7 +2104,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 1){
         # Process the data into standar Summary Repo format
-        tryCatch({budget_process <- budget_raw_file_process(data, updated_user)
+        tryCatch({budget_process <- process_raw_finance_file(data, updated_user, exclusions)
         flag <- 2
         
         },
@@ -2119,12 +2121,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 2){
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        budget_data <- file_return_updated_rows(budget_process)
+        # budget_data <- file_return_updated_rows(budget_process)
         
         #wirte the updated data to the Summary Repo in the server
-        write_temporary_table_to_database_and_merge(budget_data,
-                                                    "TEMP_BUDGET", button_name)
+        key_columns <- c("FUNCTION", "CATEGORY", "SITE", "CC", "NAME", "EXPTYPE", "SUB_ACCOUNT", "SUB_ACCOUNT_DESCRIPTION", "SUPPLY_MAPPING_FILE_CATEGORY", "MONTH")
+        destination_table_name <- "BSC_FINANCE_TABLE"
+        source_table_name <- "BSC_FINANCE_TABLE_TESTING"
+        update_columns <- c("SUM_OF_MONTH_BUDGET", "SUM_OF_MONTH_ACTUAL", "SUM_OF_YTD_BUDGET", "SUM_OF_YTD_ACTUAL", "SUM_OF_ANNUAL_BUDGET")
         
+        write_temporary_table_to_database_and_merge_updated(budget_process, key_columns, destination_table_name, source_table_name, update_columns)
+
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                   input$selectedService3)
       }
