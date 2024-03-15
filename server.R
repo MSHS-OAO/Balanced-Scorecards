@@ -4775,6 +4775,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       output$current_state_system_table <- function() {
         
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = "OAO Cloud DB Staging")
+        current_state_tbl <- tbl(connection, "BSC_Current_FINANCE_VIEW")
+        
+        current_state_tbl <- current_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
+        
         current_state_dummy <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor", 3),rep("Operations", 3)),
                                           METRIC = c("Total Salaries","Total Supplies",
                                                      "Total Expenses","Productivity Index",
@@ -4811,7 +4817,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       output$future_state_system_table <- function() {
         
         connection <- dbConnect(drv = odbc::odbc(),
-                                dsn = "OAO Cloud DB Armando")
+                                dsn = "OAO Cloud DB Staging")
         future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
         
         future_state_data <- future_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
