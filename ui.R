@@ -202,6 +202,49 @@ ui <-
              ), # Close tabPanel Breakdout
              # Fourth Tab - Operational Metrics
              
+             tabPanel("System Overview", value = "system",
+                        fluidRow(
+                          column(2,
+                                  box(
+                                    title = NULL, solidHeader = FALSE, width =12,
+                                    pickerInput("selectedService5", label = h4("Select Department:"),
+                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health'), ## Update this
+                                                multiple = FALSE,
+                                                options = pickerOptions(
+                                                  liveSearch = TRUE,
+                                                  actionsBox = TRUE,
+                                                  dropupAuto = FALSE,
+                                                  size = 10),
+                                                selected = c('Emergency Department'))
+                                  )
+                                ),
+                          column(2,
+                                 box(
+                                   title = NULL, solidHeader = FALSE, width =12,
+                                   pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
+                                               choices = month_choices, ## Update this
+                                               multiple = FALSE,
+                                               options = pickerOptions(
+                                                 liveSearch = TRUE,
+                                                 actionsBox = TRUE,
+                                                 dropupAuto = FALSE,
+                                                 size = 10),
+                                               selected = month_choices)
+                                 )
+                          ),
+                          fluidRow(
+                            column(12,
+                                   h1("Current State"),
+                                    tableOutput("current_state_system_table") %>%
+                                     withSpinner(type = 8, color = "#dddedd"),
+                                   h1("Future State"),
+                                   tableOutput("future_state_system_table") %>%
+                                     withSpinner(type = 8, color = "#dddedd")
+                                   )
+                          )
+                          
+                        )
+                      ),
              
              navbarMenu("Data",
                         # Finance Data Submission ----
@@ -905,10 +948,6 @@ ui <-
                                DT::dataTableOutput("targetSummary_table"))
                       )
              ), id = "tabset", # Close tabPanel Summary
-             tags$script(
-               HTML("var header = $('.navbar > .container-fluid');
-                              header.append('<div style=\"float:right; padding-top: 8px\"><button id=\"help_button\" type=\"button\" class=\"btn btn-primary action-button\" >Support Request</button></div>')")
-             )
   )
              
           ), # Close NavBar

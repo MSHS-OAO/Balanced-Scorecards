@@ -4773,6 +4773,83 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       onclick("help_button", runjs("window.open('https://docs.google.com/forms/d/e/1FAIpQLSd7cCghKA9GyX3FpUArkfaZ4R6qi6NtOhRI9WhZuSLPd0fQBg/viewform', '_blank')"))
       
+      output$current_state_system_table <- function() {
+        
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = "OAO Cloud DB Staging")
+        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW")
+        
+        current_state_tbl <- current_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
+        
+        current_state_dummy <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor", 3),rep("Operations", 3)),
+                                          METRIC = c("Total Salaries","Total Supplies",
+                                                     "Total Expenses","Productivity Index",
+                                                     "Agency Dollars","OT Dollars",
+                                                     "Metric1","Metric2","Metric3"),
+                                          TIME_PERIOD = rep(c("Jan 2022", "Feb 2022", "Mar 2022"), each = 3),
+                                          MTD_ACTUAL = rep(c(10000, 12000, 11000), 3),
+                                          MTD_Target = rep(c(11000, 11000, 11000), 3),
+                                          MTD_VARIANCE_TO_TARGET = rep(c(-1000, 1000, 0), 3),
+                                          YTD_ACTUAL = rep(c(30000, 35000, 36000), 3),
+                                          YTD_Target = rep(c(33000, 33000, 33000), 3),
+                                          YTD_VARIANCE_TO_TARGET = rep(c(-3000, 2000, 3000), 3)
+        )
+        
+        
+        current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
+                               "MTD ACTUAL","MTD Target","MTD VARIANCE TO TARGET",
+                               "YTD ACTUAL","YTD Target","YTD VARIANCE TO TARGET")
+        
+        
+        current_state_table <- kable(current_state_dummy, "html", align = "c",col.names = current_col_names) %>%
+          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR_TO_DATE" = 3),background = "#212070", color = "white")%>%
+          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
+                        full_width = FALSE, position = "center", 
+                        row_label_position = "c", font_size = 16) %>%
+          column_spec(1:3, background = "#212070", color = "white") %>%
+          column_spec(4:6, background = "#fee7f5") %>%
+          column_spec(7:9, background = "#E6F8FF") %>%
+          row_spec(0, background = "#212070", color = "white") %>%
+          collapse_rows(columns = 1, valign = "middle") 
+        
+      }
+      
+      output$future_state_system_table <- function() {
+        
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = "OAO Cloud DB Staging")
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+        
+        future_state_data <- future_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
+        
+        future_state_dummy <- data.frame(SCOPE = c(rep("Finance",3)),
+                                         METRIC = c("Salaries","Supplies",
+                                                    "Total Expenses"),
+                                         YTD_ACTUAL_ANNUALIZED = c(10000, 12000, 11000),
+                                         LAST_12_MONTHS = c(10000, 12000, 11000),
+                                         YTD_ADJUSTED = c(10000, 12000, 11000),
+                                         "2024_BUDGET" = c(10000, 12000, 11000),
+                                         "2023_ADJUSTED_VARIANCE_TO_2024_BUDGET" = c(10000, 12000, 11000),
+                                         PERCENT_VARIANCE = c(10000, 12000, 11000)
+        )
+        
+        future_col_names = c("SCOPE","METRIC","YTD ACTUAL ANNUALIZED",
+                             "LAST 12 MONTHS","YTD ADJUSTED",
+                             "2024 BUDGET", "2023 ADJUSTED VARIANCE TO 2024 BUDGET",
+                             "PERCENT VARIANCE")
+        
+        future_state_table <- kable(future_state_dummy, "html", align = "c",col.names = future_col_names) %>%
+          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
+                        full_width = FALSE, position = "center", 
+                        row_label_position = "c", font_size = 16) %>%
+          column_spec(1:2, background = "#212070", color = "white") %>%
+          column_spec(3:5, background = "#fee7f5") %>%
+          column_spec(6:8, background = "#E6F8FF") %>%
+          row_spec(0, background = "#212070", color = "white") %>%
+          collapse_rows(columns = 1, valign = "middle") 
+        
+        }
+      
 
 } # Close Server
 
