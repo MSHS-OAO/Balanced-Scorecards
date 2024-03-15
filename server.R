@@ -4777,7 +4777,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         connection <- dbConnect(drv = odbc::odbc(),
                                 dsn = "OAO Cloud DB Staging")
-        current_state_tbl <- tbl(connection, "BSC_Current_FINANCE_VIEW")
+        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW")
         
         current_state_tbl <- current_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
         
