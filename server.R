@@ -2563,7 +2563,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updated_user <- input$imaging_ir_username
         imaging_filepath <- imaging_file$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({imaging_data <- read_excel(imaging_filepath)
+        tryCatch({imaging_data <- read_excel(imaging_filepath, col_types = c('text', 'text', 'text', 'numeric', 'numeric', 'numeric','numeric','numeric','numeric','numeric','numeric','numeric','numeric','numeric','numeric', 'text'))
             flag <- 1
         }, error = function(err){  
           showModal(modalDialog(
