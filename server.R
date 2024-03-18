@@ -192,9 +192,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Imaging'
-      # month_input <- "09-2023"
-      
+      # service_input <- 'Perioperative Services'
+      # month_input <- "02-2024"
+
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
       
@@ -368,7 +368,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       } else{
         ytd_join <- NULL
       }
-      
+      # Peri-OP fet YTD data from summary_repo
+      if(service_input == "Perioperative Services"){
+        
+        period_filter <- period_filter %>%
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+        
+        data <- data %>%
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+        
+        peri_op_operational_ytd <- get_peri_op_ytd(month_input)
+        
+        
+        peri_op_operational_ytd_data <- peri_op_operational_ytd %>%
+          mutate(Metric_Name_Submitted = Metric_Name,
+                 Metric_Unit = case_when(Metric_Name_Submitted == "On Time Start %" ~ "Percent"),
+                 Metric_Name_Summary = case_when(Metric_Name == "Average Turnover (min)" ~ "Average Turn Around Time",
+                                                 Metric_Name == "On Time Start %" ~ "On Time Starts"),
+                 Target = NA,
+                 Green_Start = NA,             
+                 Green_End = NA,
+                 Yellow_Start =  NA,
+                 Yellow_End = NA,
+                 Red_Start = NA,
+                 Red_End = NA,
+                 Status = NA) %>%
+          select(names(data)) %>%
+          mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))
+        
+        data <- rbind(data,peri_op_operational_ytd_data)
+        
+        period_filter <- data %>% 
+          group_by(Metric_Group,
+                   Metric_Name_Summary,
+                   Metric_Name,
+                   Reporting_Month_Ref,
+                   Premier_Reporting_Period) %>% 
+          #distinct() %>%
+          summarise(total = n()) %>%                                                            #
+          arrange(Metric_Group, Metric_Name_Summary,
+                  Metric_Name, desc(Reporting_Month_Ref)) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(id = row_number())
+        
+        
+      }
       
       # Case management / Social Work Remove Avg LOS and Readmission Rates from period filter data
       if(service_input == "Case Management / Social Work"){
@@ -4687,7 +4731,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Perioperative Services data file."),
+              paste0("There seems to be an issue with the Perioperative Services data file.1"),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -4709,7 +4753,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Perioperative Services data file."),
+              paste0("There seems to be an issue with the Perioperative Services data file.2"),
               easyClose = TRUE,
               footer = NULL
             ))
