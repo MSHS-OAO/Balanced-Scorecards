@@ -4731,7 +4731,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Perioperative Services data file.1"),
+              paste0("There seems to be an issue with the Perioperative Services data file."),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -4753,7 +4753,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with the Perioperative Services data file.2"),
+              paste0("There seems to be an issue with the Perioperative Services data file."),
               easyClose = TRUE,
               footer = NULL
             ))
