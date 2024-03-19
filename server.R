@@ -4773,6 +4773,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       onclick("help_button", runjs("window.open('https://docs.google.com/forms/d/e/1FAIpQLSd7cCghKA9GyX3FpUArkfaZ4R6qi6NtOhRI9WhZuSLPd0fQBg/viewform', '_blank')"))
       
+      
+      
+      
+      
+      
       output$current_state_system_table <- function() {
         
         current_state_dummy <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor", 3),rep("Operations", 3)),
@@ -4808,42 +4813,79 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       }
       
-      output$future_state_system_table <- function() {
-        
+      
+      # Initialize default values
+      future_state_data_reactive <- reactiveVal(NULL)
+      
+      # Initialize future_state_data_reactive with data for "Emergency Department"
+      connection <- dbConnect(drv = odbc::odbc(),
+                              dsn = "OAO Cloud DB Armando")
+      future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+      emergency_department_data <- future_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
+      future_state_data_reactive(emergency_department_data)
+      dbDisconnect(connection)
+      
+      # Observer for input$selectedService5
+      observeEvent(input$selectedService5, {
         connection <- dbConnect(drv = odbc::odbc(),
                                 dsn = "OAO Cloud DB Armando")
         future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
         
-        future_state_data <- future_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
+        overview_service_selected <- input$selectedService5
+        future_state_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
         
-        future_state_dummy <- data.frame(SCOPE = c(rep("Finance",3)),
-                                         METRIC = c("Salaries","Supplies",
-                                                    "Total Expenses"),
-                                         YTD_ACTUAL_ANNUALIZED = c(10000, 12000, 11000),
-                                         LAST_12_MONTHS = c(10000, 12000, 11000),
-                                         YTD_ADJUSTED = c(10000, 12000, 11000),
-                                         "2024_BUDGET" = c(10000, 12000, 11000),
-                                         "2023_ADJUSTED_VARIANCE_TO_2024_BUDGET" = c(10000, 12000, 11000),
-                                         PERCENT_VARIANCE = c(10000, 12000, 11000)
+        #picker_choices <- format(sort(unique(future_state_data$MONTH)), "%m-%Y")
+        #updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        #overview_date_selected <- input$selectedMonth4
+        
+        # Store future_state_data in the reactive value
+        future_state_data_reactive(future_state_data)
+        
+        dbDisconnect(connection)
+      }, ignoreInit = TRUE)
+      
+      
+      output$future_state_system_table <- function() {
+        # Get the stored future_state_data from the reactive value
+        future_state_data <- future_state_data_reactive()
+        
+        if (is.null(future_state_data)) {
+          return(NULL)  # Return NULL if future_state_data is not available yet
+        }
+        
+        date_selected <- future_state_data$MONTH
+        year_selected = year(future_state_data$MONTH)[1]
+        
+        future_state_temp <- data.frame(SCOPE = c(rep("Finance",3)),
+                                        MONTH = format(date_selected,"%Y-%m"),
+                                        METRIC = future_state_data$EXPTYPE,
+                                        YTD_ACTUAL_ANNUALIZED = format(future_state_data$YTD_ACTUAL_ANNUALIZED, big.mark = ","),
+                                        LAST_12_MONTHS = format(future_state_data$LAST_12_MONTHS, big.mark = ","),
+                                        YTD_ADJUSTED = format(future_state_data$YTD_ADJUSTED, big.mark = ","),
+                                        YEAR_BUDGET = format(future_state_data$YEAR_BUDGET, big.mark = ","),
+                                        ADJUSTED_VARIANCE_TO_BUDGET = format(future_state_data$ADJUSTED_VARIANCE_TO_BUDGET, big.mark = ","),
+                                        PERCENT_VARIANCE = paste0(future_state_data$PERCENT_VARIANCE, "%")
         )
         
-        future_col_names = c("SCOPE","METRIC","YTD ACTUAL ANNUALIZED",
-                             "LAST 12 MONTHS","YTD ADJUSTED",
-                             "2024 BUDGET", "2023 ADJUSTED VARIANCE TO 2024 BUDGET",
+        future_col_names = c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
+                             "LAST 12 MONTHS", "YTD ADJUSTED",
+                             paste(year_selected, "BUDGET"), paste(year_selected - 1, "ADJUSTED VARIANCE TO", year_selected, "BUDGET"),
                              "PERCENT VARIANCE")
         
-        future_state_table <- kable(future_state_dummy, "html", align = "c",col.names = future_col_names) %>%
+        future_state_table <- kable(future_state_temp, "html", align = "c",col.names = future_col_names) %>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16) %>%
-          column_spec(1:2, background = "#212070", color = "white") %>%
-          column_spec(3:5, background = "#fee7f5") %>%
-          column_spec(6:8, background = "#E6F8FF") %>%
+          column_spec(1:3, background = "#212070", color = "white") %>%
+          column_spec(4:6, background = "#fee7f5") %>%
+          column_spec(7:9, background = "#E6F8FF") %>%
           row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = 1, valign = "middle") 
+          collapse_rows(columns = c(1, 2), valign = "middle") 
         
-        }
+        return(future_state_table)
+      }
       
+
 
 } # Close Server
 
