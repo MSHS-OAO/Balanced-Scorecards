@@ -2593,10 +2593,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2){
         
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        imaging_new_data <- file_return_updated_rows(imaging_summary_data)
+        # imaging_new_data <- file_return_updated_rows(imaging_summary_data)
         
         #wirte the updated data to the Summary Repo in the server
-        write_temporary_table_to_database_and_merge(imaging_new_data,
+        write_temporary_table_to_database_and_merge(imaging_summary_data,
                                                     "TEMP_IMAGING", button_name)
         
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
