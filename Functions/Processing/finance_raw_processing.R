@@ -57,7 +57,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   # data <- data %>% mutate(Function = ifelse(Function == "MSO: Contracting", "Contracting", Function))
   # data <- data %>% mutate(Function = ifelse(Function == "MSO: Population Health", "Population Health", Function))
   
-  site_data <- budget_raw_file_process_updated(data, "TEST_ARMANDO")
+  site_data <- budget_raw_file_process_updated(data, updated_user)
   
   data <- data %>% mutate(Month_Updated = as.Date(paste0(Month, "-01"), "%B %Y-%d")) %>% select(Function, Category, SITE, CC, Name, EXPTYPE, `Sub Account`, `Sub Account Description`, `Supply Mapping File.Category`, Month_Updated, `Sum of Month Budget`, `Sum of Month Actual`, `Sum of YTD Budget`, `Sum of YTD Actual`, `Sum of Annual Budget`) %>%
               filter(Function != "Grand Total") %>%
