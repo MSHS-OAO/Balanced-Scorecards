@@ -59,7 +59,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   
   site_data <- budget_raw_file_process_updated(data, updated_user)
   
-  data <- data %>% mutate(Month_Updated = as.Date(paste0(Month, "-01"), "%B %Y-%d")) %>% select(Function, Category, SITE, CC, Name, EXPTYPE, `Sub Account`, `Sub Account Description`, `Supply Mapping File.Category`, Month_Updated, `Sum of Month Budget`, `Sum of Month Actual`, `Sum of YTD Budget`, `Sum of YTD Actual`, `Sum of Annual Budget`) %>%
+  data <- data %>% mutate(Month_Updated = as.Date(paste0(Month, "-01"), "%B %Y-%d")) %>% select(Function, Category, SITE, CC, Name, EXPTYPE, `Sub Account`, `Sub Account Description`, `Supply Mapping File.Category`, Month_Updated, `Sum of Month Budget`, `Sum of Month Actual`, `Sum of YTD Budget`, `Sum of YTD Actual`, `Sum of Annual Budget`, `Sum of Remaining Budget YTD`) %>%
               filter(Function != "Grand Total") %>%
               mutate(across(where(is.numeric), round, digits=2)) %>%
           rename(Month = Month_Updated)
@@ -68,7 +68,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
     colnames(data) <- gsub("[.]", " ", colnames(data))
     colnames(data) <- gsub(" ", "_", colnames(data))
   
-  data <- data %>% select(FUNCTION, CATEGORY, SITE, CC, NAME, EXPTYPE, SUB_ACCOUNT, SUB_ACCOUNT_DESCRIPTION, SUPPLY_MAPPING_FILE_CATEGORY, MONTH, SUM_OF_MONTH_BUDGET, SUM_OF_MONTH_ACTUAL, SUM_OF_YTD_BUDGET, SUM_OF_YTD_ACTUAL, SUM_OF_ANNUAL_BUDGET)
+  data <- data %>% select(FUNCTION, CATEGORY, SITE, CC, NAME, EXPTYPE, SUB_ACCOUNT, SUB_ACCOUNT_DESCRIPTION, SUPPLY_MAPPING_FILE_CATEGORY, MONTH, SUM_OF_MONTH_BUDGET, SUM_OF_MONTH_ACTUAL, SUM_OF_YTD_BUDGET, SUM_OF_YTD_ACTUAL, SUM_OF_ANNUAL_BUDGET, SUM_OF_REMAINING_BUDGET_YTD)
   
   # file_path_write <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Finance/Finance SystemWide/DNU/CSOR Jan 24.csv"
   # 
