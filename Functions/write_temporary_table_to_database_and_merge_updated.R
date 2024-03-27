@@ -113,7 +113,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
                       ")
   
   if(destination_table_name == "BSC_FINANCE_TABLE"){
-    months_in_data <- paste(paste0("'",unique(data$MONTH), "'"), sep = "", collapse = ",")
+    months_in_data <- paste(paste0("TO_DATE('",unique(data$MONTH), "', 'YYYY-MM-DD')"), sep = "", collapse = ",")
     finance_delete_query <- glue("DELETE FROM {destination_table_name} WHERE MONTH in ({months_in_data})")
   }
     
