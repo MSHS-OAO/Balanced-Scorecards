@@ -80,7 +80,7 @@ suppressMessages({
 
 
 print("0")
-dsn <- "OAO Cloud DB Production"
+dsn <- "OAO Cloud DB Staging"
 dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
 
