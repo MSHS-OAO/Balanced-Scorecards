@@ -112,10 +112,19 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
                       VALUES({get_source_table_values})
                       ")
   
+  if(destination_table_name == "BSC_FINANCE_TABLE"){
+    months_in_data <- paste(paste0("'",unique(data$MONTH), "'"), sep = "", collapse = ",")
+    finance_delete_query <- glue("DELETE FROM {destination_table_name} WHERE MONTH in ({months_in_data})")
+  }
+    
+  
   ch = dbConnect(odbc(), dsn_oracle)
   #Test connection
   tryCatch({
     dbBegin(ch)
+    if(destination_table_name == "BSC_FINANCE_TABLE"){
+      dbExecute(ch, finance_delete_query)
+    }
     dbExecute(ch, merge_query)
     dbCommit(ch)
     dbBegin(ch)
