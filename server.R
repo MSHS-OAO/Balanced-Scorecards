@@ -4836,7 +4836,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       output$current_state_system_table <- function() {
         current_state_data <- current_state_data_reactive()
         
-        metric_order <- c("Salaries", "Supplies", "Total Expenses", "Agency/Temp Help Dollars", "OT Dollars")
+        metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
         
         current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
         
@@ -4852,13 +4852,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          YTD_VARIANCE_TO_TARGET = format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ","),
                                          
                                          #new
-                                         YTD_PERCENT_VARIANCE= format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ",")
+                                         
+                                         YTD_PERCENT_VARIANCE= current_state_data$YTD_PERCENT_VARIANCE * 100
                                          
                                                  )
         
         current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
                                "MTD ACTUAL","MTD Target","MTD VARIANCE TO TARGET",
-                               "YTD ACTUAL","YTD Target","YTD VARIANCE TO TARGET","YTD PERCENT VARIANCE")
+                               "YTD ACTUAL","YTD Target","YTD VARIANCE TO TARGET",
+                               
+                               #new
+                               
+                               "YTD PERCENT VARIANCE")
         
         current_state_table <- kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
           add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR_TO_DATE" = 4),background = "#212070", color = "white")%>%
