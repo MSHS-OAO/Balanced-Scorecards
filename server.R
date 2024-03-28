@@ -4777,76 +4777,112 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       
+      # 5. System Overview Tab Output -------------------------------------------------------------------------------------------
+      
+      
+      #observe entries from the user
+      
+      observeEvent(input$selectedService5, {
+        overview_service_selected <- input$selectedService5
+        
+        
+        # update future_state_table 
+        
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = "OAO Cloud DB Armando")
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+        emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+        future_state_data_reactive(emergency_department_data)
+        dbDisconnect(connection)
+        
+        #update Current_state_table
+        
+        connection_current <- dbConnect(drv = odbc::odbc(), dsn = "OAO Cloud DB Staging")
+        current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+        current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+        
+        picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        observeEvent(input$selectedMonth4, {
+          overview_date_selected <- input$selectedMonth4
+          
+          current_state_data_filtered <- current_state_data %>% 
+            filter(format(MONTH, "%m-%Y") == overview_date_selected) %>% 
+            collect()        
+          
+          current_state_data_reactive(current_state_data_filtered)
+        })
+        
+        dbDisconnect(connection_current)
+      })
+      
+
+      
+      #Current_State table output .........................................................................
+      
+      #Function to reorder the table based on the EXPTYPE column
+      reorder_rows <- function(df, col_name, order_vec) {
+        order_factor <- factor(df[[col_name]], levels = order_vec)
+        df_ordered <- df[order(order_factor), ]
+        return(df_ordered)
+      }
+      
+      
+      #Output function 
+      
+      current_state_data_reactive <- reactiveVal(NULL)
       
       output$current_state_system_table <- function() {
+        current_state_data <- current_state_data_reactive()
         
-        current_state_dummy <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor", 3),rep("Operations", 3)),
-                                          METRIC = c("Total Salaries","Total Supplies",
-                                                     "Total Expenses","Productivity Index",
-                                                     "Agency Dollars","OT Dollars",
-                                                     "Metric1","Metric2","Metric3"),
-                                          TIME_PERIOD = rep(c("Jan 2022", "Feb 2022", "Mar 2022"), each = 3),
-                                          MTD_ACTUAL = rep(c(10000, 12000, 11000), 3),
-                                          MTD_Target = rep(c(11000, 11000, 11000), 3),
-                                          MTD_VARIANCE_TO_TARGET = rep(c(-1000, 1000, 0), 3),
-                                          YTD_ACTUAL = rep(c(30000, 35000, 36000), 3),
-                                          YTD_Target = rep(c(33000, 33000, 33000), 3),
-                                          YTD_VARIANCE_TO_TARGET = rep(c(-3000, 2000, 3000), 3)
-        )
+        metric_order <- c("Salaries", "Supplies", "Total Expenses", "Agency/Temp Help Dollars", "OT Dollars")
         
+        current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
+        
+        
+        current_state_temp <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor",nrow(current_state_data)-3)),
+                                         METRIC = current_state_data$EXPTYPE,
+                                         TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
+                                         MTD_ACTUAL = format(current_state_data$MTD_ACTUAL, big.mark = ","),
+                                         MTD_Target = format(current_state_data$MTD_TARGET, big.mark = ","),
+                                         MTD_VARIANCE_TO_TARGET = format(current_state_data$MTD_VARIANCE_TO_TARGET, big.mark = ","),
+                                         YTD_ACTUAL = format(current_state_data$YTD_ACTUAL, big.mark = ","),
+                                         YTD_Target = format(current_state_data$YTD_TARGET, big.mark = ","),
+                                         YTD_VARIANCE_TO_TARGET = format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ","),
+                                         
+                                         #new
+                                         YTD_PERCENT_VARIANCE= format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ",")
+                                         
+                                                 )
         
         current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
                                "MTD ACTUAL","MTD Target","MTD VARIANCE TO TARGET",
-                               "YTD ACTUAL","YTD Target","YTD VARIANCE TO TARGET")
+                               "YTD ACTUAL","YTD Target","YTD VARIANCE TO TARGET","YTD PERCENT VARIANCE")
         
-        
-        current_state_table <- kable(current_state_dummy, "html", align = "c",col.names = current_col_names) %>%
-          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR_TO_DATE" = 3),background = "#212070", color = "white")%>%
+        current_state_table <- kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
+          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR_TO_DATE" = 4),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#fee7f5") %>%
-          column_spec(7:9, background = "#E6F8FF") %>%
+          column_spec(7:10, background = "#E6F8FF") %>%
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = 1, valign = "middle") 
-        
       }
+
       
       
-      # Initialize default values
+      
+      # Future State table ouput.......................................................................................
+      
+
       future_state_data_reactive <- reactiveVal(NULL)
       
-      # Initialize future_state_data_reactive with data for "Emergency Department"
-      connection <- dbConnect(drv = odbc::odbc(),
-                              dsn = "OAO Cloud DB Armando")
-      future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
-      emergency_department_data <- future_state_tbl %>% filter(FUNCTION == 'Emergency Department') %>% collect()
-      future_state_data_reactive(emergency_department_data)
-      dbDisconnect(connection)
-      
-      # Observer for input$selectedService5
-      observeEvent(input$selectedService5, {
-        connection <- dbConnect(drv = odbc::odbc(),
-                                dsn = "OAO Cloud DB Armando")
-        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
-        
-        overview_service_selected <- input$selectedService5
-        future_state_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
-        
-        #picker_choices <- format(sort(unique(future_state_data$MONTH)), "%m-%Y")
-        #updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        #overview_date_selected <- input$selectedMonth4
-        
-        # Store future_state_data in the reactive value
-        future_state_data_reactive(future_state_data)
-        
-        dbDisconnect(connection)
-      }, ignoreInit = TRUE)
-      
+      #output function of future_state table
       
       output$future_state_system_table <- function() {
-        # Get the stored future_state_data from the reactive value
         future_state_data <- future_state_data_reactive()
         
         if (is.null(future_state_data)) {
@@ -4854,38 +4890,59 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         }
         
         date_selected <- future_state_data$MONTH
-        year_selected = year(future_state_data$MONTH)[1]
+        year_selected <- year(future_state_data$MONTH)[1]
         
-        future_state_temp <- data.frame(SCOPE = c(rep("Finance",3)),
-                                        MONTH = format(date_selected,"%Y-%m"),
+        # Reorder METRIC values
+        metric_order <- c("Salaries", "Supplies", "Total Expenses")
+        future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
+        
+        
+        future_state_temp <- data.frame(SCOPE = c(rep("Finance", 3)),
+                                        MONTH = format(date_selected, "%Y-%m"),
                                         METRIC = future_state_data$EXPTYPE,
                                         YTD_ACTUAL_ANNUALIZED = format(future_state_data$YTD_ACTUAL_ANNUALIZED, big.mark = ","),
                                         LAST_12_MONTHS = format(future_state_data$LAST_12_MONTHS, big.mark = ","),
-                                        YTD_ADJUSTED = format(future_state_data$YTD_ADJUSTED, big.mark = ","),
                                         YEAR_BUDGET = format(future_state_data$YEAR_BUDGET, big.mark = ","),
+                                        
+                                        #new
+                                        YTD_ADJUSTED = format(future_state_data$YTD_ADJUSTED, big.mark = ","),
+                                        ADJUSTED_VARIANCE_TO_BUDGET = format(future_state_data$ADJUSTED_VARIANCE_TO_BUDGET, big.mark = ","),
+                                        YTD_ADJUSTED = format(future_state_data$YTD_ADJUSTED, big.mark = ","),
                                         ADJUSTED_VARIANCE_TO_BUDGET = format(future_state_data$ADJUSTED_VARIANCE_TO_BUDGET, big.mark = ","),
                                         PERCENT_VARIANCE = paste0(future_state_data$PERCENT_VARIANCE, "%")
         )
         
-        future_col_names = c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
-                             "LAST 12 MONTHS", "YTD ADJUSTED",
-                             paste(year_selected, "BUDGET"), paste(year_selected - 1, "ADJUSTED VARIANCE TO", year_selected, "BUDGET"),
-                             "PERCENT VARIANCE")
+        future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
+                              "LAST 12 MONTHS",paste(year_selected, "BUDGET"), 
+                              
+                              
+                              #new
+                              
+                              #"YTD ADJUSTED",
+                              "RETROSPECTIVE OUTLOOK",
+                          
+                               #paste(year_selected - 1, "ADJUSTED VARIANCE TO", year_selected, "BUDGET"),
+                              "RETROSPECTIVE OUTLOOK VARIANCE TO BUDGET",
+                              
+                              "PROSPECTIVE OUTLOOK",
+                              "PROSPECTIVE OUTLOOK VARIANCE TO BUDGET",
+                              "PERCENT VARIANCE")
         
-        future_state_table <- kable(future_state_temp, "html", align = "c",col.names = future_col_names) %>%
+        future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
+          add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#fee7f5") %>%
-          column_spec(7:9, background = "#E6F8FF") %>%
+          column_spec(7:8, background = "#E6F8FF") %>%
+          column_spec(9:11, background = "#fee7f5") %>%
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = c(1, 2), valign = "middle") 
         
         return(future_state_table)
       }
       
-
 
 } # Close Server
 
