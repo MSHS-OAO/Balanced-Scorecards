@@ -6,17 +6,10 @@ library(shinydashboard)
 conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
                   dsn = dsn)
 mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
-sw_table <- tbl(conn, "BSC_CURRENT_FINANCE_VIEW")
 # Get choices of service from db
 service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
 service_choices <- sort(service_choices$SERVICE)
 default_service <- service_choices[1]
-
-
-service_choices_sw <- sw_table %>% select(FUNCTION) %>% summarise(SERVICE = unique(FUNCTION)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
-service_choices_sw <- sort(service_choices_sw$SERVICE)
-default_service_sw <- service_choices_sw[1]
-
 #Get campus choices from db
 default_campus <- mdf_tbl %>% select(SITE) %>% summarise(SITE = unique(SITE)) %>% collect()
 default_campus <- sort(default_campus$SITE)
@@ -30,13 +23,7 @@ default_month <- mdf_tbl %>% filter(SERVICE == default_service) %>% summarise(RE
 default_month <- format(sort(default_month$REPORTING_MONTH), "%m-%Y")
 month_choices <- mdf_tbl %>% filter(SERVICE == default_service) %>% select(REPORTING_MONTH) %>% summarise(REPORTING_MONTH = unique(REPORTING_MONTH)) %>% collect()
 month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
-
-default_month_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% summarise(MONTH = max(MONTH)) %>% collect()
-default_month_sw <- format(sort(default_month_sw$MONTH), "%m-%Y")
-month_choices_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% select(MONTH) %>% summarise(MONTH = unique(MONTH)) %>% collect()
-month_choices_sw <- format(sort(unique(month_choices_sw$MONTH)), "%m-%Y")
 dbDisconnect(conn)
-
 ui <- 
   fluidPage(
     shinyjs::useShinyjs(),
@@ -213,7 +200,7 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Breakdout
-             # Fourth Tab - System Wide Metrics ----
+             # Fourth Tab - Operational Metrics
              
              tabPanel("System Overview", value = "system",
                         fluidRow(
@@ -221,28 +208,28 @@ ui <-
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
                                     pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = service_choices_sw, 
+                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health'), ## Update this
                                                 multiple = FALSE,
                                                 options = pickerOptions(
                                                   liveSearch = TRUE,
                                                   actionsBox = TRUE,
                                                   dropupAuto = FALSE,
                                                   size = 10),
-                                                selected = default_service_sw))
+                                                selected = c('Emergency Department'))
                                   )
                                 ),
                           column(2,
                                  box(
                                    title = NULL, solidHeader = FALSE, width =12,
                                    pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
-                                               choices = month_choices_sw, 
+                                               choices = month_choices, ## Update this
                                                multiple = FALSE,
                                                options = pickerOptions(
                                                  liveSearch = TRUE,
                                                  actionsBox = TRUE,
                                                  dropupAuto = FALSE,
                                                  size = 10),
-                                               selected = default_month_sw)
+                                               selected = month_choices)
                                  )
                           ),
                           fluidRow(
