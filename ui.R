@@ -6,10 +6,17 @@ library(shinydashboard)
 conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
                   dsn = dsn)
 mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+sw_table <- tbl(conn, "BSC_CURRENT_FINANCE_VIEW")
 # Get choices of service from db
 service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
 service_choices <- sort(service_choices$SERVICE)
 default_service <- service_choices[1]
+
+
+service_choices_sw <- sw_table %>% select(FUNCTION) %>% summarise(SERVICE = unique(FUNCTION)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
+service_choices_sw <- sort(service_choices_sw$SERVICE)
+default_service <- service_choices_sw[1]
+
 #Get campus choices from db
 default_campus <- mdf_tbl %>% select(SITE) %>% summarise(SITE = unique(SITE)) %>% collect()
 default_campus <- sort(default_campus$SITE)
