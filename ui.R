@@ -221,7 +221,7 @@ ui <-
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
                                     pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = service_choices_sw, ## Update this
+                                                choices = service_choices_sw, 
                                                 multiple = FALSE,
                                                 options = pickerOptions(
                                                   liveSearch = TRUE,
@@ -235,7 +235,7 @@ ui <-
                                  box(
                                    title = NULL, solidHeader = FALSE, width =12,
                                    pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
-                                               choices = month_choices_sw, ## Update this
+                                               choices = month_choices_sw, 
                                                multiple = FALSE,
                                                options = pickerOptions(
                                                  liveSearch = TRUE,
