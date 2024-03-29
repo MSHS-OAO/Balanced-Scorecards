@@ -15,7 +15,7 @@ default_service <- service_choices[1]
 
 service_choices_sw <- sw_table %>% select(FUNCTION) %>% summarise(SERVICE = unique(FUNCTION)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
 service_choices_sw <- sort(service_choices_sw$SERVICE)
-default_service <- service_choices_sw[1]
+default_service_sw <- service_choices_sw[1]
 
 #Get campus choices from db
 default_campus <- mdf_tbl %>% select(SITE) %>% summarise(SITE = unique(SITE)) %>% collect()
@@ -30,7 +30,13 @@ default_month <- mdf_tbl %>% filter(SERVICE == default_service) %>% summarise(RE
 default_month <- format(sort(default_month$REPORTING_MONTH), "%m-%Y")
 month_choices <- mdf_tbl %>% filter(SERVICE == default_service) %>% select(REPORTING_MONTH) %>% summarise(REPORTING_MONTH = unique(REPORTING_MONTH)) %>% collect()
 month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
+
+default_month_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% summarise(MONTH = max(MONTH)) %>% collect()
+default_month_sw <- format(sort(default_month_sw$MONTH), "%m-%Y")
+month_choices_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% select(MONTH) %>% summarise(MONTH = unique(MONTH)) %>% collect()
+month_choices_sw <- format(sort(unique(month_choices_sw$MONTH)), "%m-%Y")
 dbDisconnect(conn)
+
 ui <- 
   fluidPage(
     shinyjs::useShinyjs(),
