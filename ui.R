@@ -213,7 +213,7 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Breakdout
-             # Fourth Tab - Operational Metrics
+             # Fourth Tab - System Wide Metrics ----
              
              tabPanel("System Overview", value = "system",
                         fluidRow(
@@ -221,28 +221,28 @@ ui <-
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
                                     pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health'), ## Update this
+                                                choices = service_choices_sw, ## Update this
                                                 multiple = FALSE,
                                                 options = pickerOptions(
                                                   liveSearch = TRUE,
                                                   actionsBox = TRUE,
                                                   dropupAuto = FALSE,
                                                   size = 10),
-                                                selected = c('Emergency Department'))
+                                                selected = default_service_sw))
                                   )
                                 ),
                           column(2,
                                  box(
                                    title = NULL, solidHeader = FALSE, width =12,
                                    pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
-                                               choices = month_choices, ## Update this
+                                               choices = month_choices_sw, ## Update this
                                                multiple = FALSE,
                                                options = pickerOptions(
                                                  liveSearch = TRUE,
                                                  actionsBox = TRUE,
                                                  dropupAuto = FALSE,
                                                  size = 10),
-                                               selected = month_choices)
+                                               selected = default_month_sw)
                                  )
                           ),
                           fluidRow(
