@@ -4789,7 +4789,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # update future_state_table 
         
         connection <- dbConnect(drv = odbc::odbc(),
-                                dsn = "OAO Cloud DB Armando")
+                                dsn = "OAO Cloud DB staging")
         future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
         emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
         future_state_data_reactive(emergency_department_data)
@@ -4850,9 +4850,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          YTD_ACTUAL = format(current_state_data$YTD_ACTUAL, big.mark = ","),
                                          YTD_Target = format(current_state_data$YTD_TARGET, big.mark = ","),
                                          YTD_VARIANCE_TO_TARGET = format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ","),
-                                         
-                                         #new
-                                         
                                          YTD_PERCENT_VARIANCE= current_state_data$YTD_PERCENT_VARIANCE * 100
                                          
                                                  )
@@ -4908,28 +4905,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         YTD_ACTUAL_ANNUALIZED = format(future_state_data$YTD_ACTUAL_ANNUALIZED, big.mark = ","),
                                         LAST_12_MONTHS = format(future_state_data$LAST_12_MONTHS, big.mark = ","),
                                         YEAR_BUDGET = format(future_state_data$YEAR_BUDGET, big.mark = ","),
-                                        
-                                        #new
-                                        YTD_ADJUSTED = format(future_state_data$YTD_ADJUSTED, big.mark = ","),
-                                        ADJUSTED_VARIANCE_TO_BUDGET = format(future_state_data$ADJUSTED_VARIANCE_TO_BUDGET, big.mark = ","),
-                                        YTD_ADJUSTED = format(future_state_data$YTD_ADJUSTED, big.mark = ","),
-                                        ADJUSTED_VARIANCE_TO_BUDGET = format(future_state_data$ADJUSTED_VARIANCE_TO_BUDGET, big.mark = ","),
-                                        PERCENT_VARIANCE = paste0(future_state_data$PERCENT_VARIANCE, "%")
+                                        RETROSPECTIVE_OUTLOOK = format(future_state_data$RETROSPECTIVE_OUTLOOK, big.mark = ","),
+                                        RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET = format(future_state_data$RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET, big.mark = ","),
+                                        PROSPECTIVE_OUTLOOK = format(future_state_data$PROSPECTIVE_OUTLOOK, big.mark = ","),
+                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = format(future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ","),
+                                        PERCENT_VARIANCE = paste0(future_state_data$PERCENT_VARIANCE * 100, "%")
         )
         
         future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
-                              "LAST 12 MONTHS",paste(year_selected, "BUDGET"), 
-                              
-                              
-                              #new
-                              
-                              #"YTD ADJUSTED",
-                              "RETROSPECTIVE OUTLOOK",
-                          
-                               #paste(year_selected - 1, "ADJUSTED VARIANCE TO", year_selected, "BUDGET"),
-                              "RETROSPECTIVE OUTLOOK VARIANCE TO BUDGET",
-                              
-                              "PROSPECTIVE OUTLOOK",
+                              "LAST 12 MONTHS",paste(year_selected, "BUDGET"), "RETROSPECTIVE OUTLOOK",
+                              "RETROSPECTIVE OUTLOOK VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
                               "PROSPECTIVE OUTLOOK VARIANCE TO BUDGET",
                               "PERCENT VARIANCE")
         

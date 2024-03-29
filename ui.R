@@ -208,7 +208,7 @@ ui <-
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
                                     pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health'), ## Update this
+                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health','Nursing'), ## Update this
                                                 multiple = FALSE,
                                                 options = pickerOptions(
                                                   liveSearch = TRUE,
