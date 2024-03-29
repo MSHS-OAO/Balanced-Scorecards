@@ -4863,7 +4863,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                "YTD PERCENT VARIANCE")
         
         current_state_table <- kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
-          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR_TO_DATE" = 4),background = "#212070", color = "white")%>%
+          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16) %>%
