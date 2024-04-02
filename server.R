@@ -4850,7 +4850,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          YTD_ACTUAL = format(current_state_data$YTD_ACTUAL, big.mark = ","),
                                          YTD_Target = format(current_state_data$YTD_TARGET, big.mark = ","),
                                          YTD_VARIANCE_TO_TARGET = format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ","),
-                                         YTD_PERCENT_VARIANCE= current_state_data$YTD_PERCENT_VARIANCE * 100
+                                         YTD_PERCENT_VARIANCE= paste0(round(current_state_data$YTD_PERCENT_VARIANCE * 100,1),'%')
                                          
                                                  )
         
@@ -4909,7 +4909,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET = format(future_state_data$RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET, big.mark = ","),
                                         PROSPECTIVE_OUTLOOK = format(future_state_data$PROSPECTIVE_OUTLOOK, big.mark = ","),
                                         PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = format(future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ","),
-                                        PERCENT_VARIANCE = paste0(future_state_data$PERCENT_VARIANCE * 100, "%")
+                                        PERCENT_VARIANCE = paste0(round(future_state_data$PERCENT_VARIANCE * 100), "%")
         )
         
         future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
