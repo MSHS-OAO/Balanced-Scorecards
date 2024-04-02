@@ -6,6 +6,8 @@ library(shinydashboard)
 conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
                   dsn = dsn)
 mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+sw_table <- tbl(conn, "BSC_CURRENT_FINANCE_VIEW")
+
 # Get choices of service from db
 service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
 service_choices <- sort(service_choices$SERVICE)
@@ -23,6 +25,21 @@ default_month <- mdf_tbl %>% filter(SERVICE == default_service) %>% summarise(RE
 default_month <- format(sort(default_month$REPORTING_MONTH), "%m-%Y")
 month_choices <- mdf_tbl %>% filter(SERVICE == default_service) %>% select(REPORTING_MONTH) %>% summarise(REPORTING_MONTH = unique(REPORTING_MONTH)) %>% collect()
 month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
+
+#Choices for System Aggregate
+service_choices_sw <- sw_table %>% select(FUNCTION) %>% summarise(SERVICE = unique(FUNCTION)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
+service_choices_sw <- sort(service_choices_sw$SERVICE)
+default_service_sw <- service_choices_sw[1]
+
+default_month_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% summarise(MONTH = max(MONTH)) %>% collect()
+default_month_sw <- format(sort(default_month_sw$MONTH), "%m-%Y")
+month_choices_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% select(MONTH) %>% summarise(MONTH = unique(MONTH)) %>% collect()
+month_choices_sw <- format(sort(unique(month_choices_sw$MONTH)), "%m-%Y")
+
+month_choice_selected <- sw_table %>% filter(FUNCTION == default_service_sw) %>% select(MONTH) %>% distinct %>% collect()
+month_choice_selected <- format(max(month_choice_selected$MONTH), "%m-%Y")
+
+
 dbDisconnect(conn)
 ui <- 
   fluidPage(
@@ -208,28 +225,28 @@ ui <-
                                   box(
                                     title = NULL, solidHeader = FALSE, width =12,
                                     pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = c('Admitting', 'Emergency Department', 'MSO: Population Health','Nursing'), ## Update this
+                                                choices = service_choices_sw,
                                                 multiple = FALSE,
                                                 options = pickerOptions(
                                                   liveSearch = TRUE,
                                                   actionsBox = TRUE,
                                                   dropupAuto = FALSE,
                                                   size = 10),
-                                                selected = c('Emergency Department'))
+                                                selected = service_choices_sw[1])
                                   )
                                 ),
                           column(2,
                                  box(
                                    title = NULL, solidHeader = FALSE, width =12,
                                    pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
-                                               choices = month_choices, ## Update this
+                                               choices = month_choices_sw,
                                                multiple = FALSE,
                                                options = pickerOptions(
                                                  liveSearch = TRUE,
                                                  actionsBox = TRUE,
                                                  dropupAuto = FALSE,
                                                  size = 10),
-                                               selected = month_choices)
+                                               selected = month_choice_selected)
                                  )
                           ),
                           fluidRow(
@@ -242,10 +259,10 @@ ui <-
                                      withSpinner(type = 8, color = "#dddedd")
                                    )
                           )
-                          
                         )
-                      ),
-             
+
+                        ),
+
              navbarMenu("Data",
                         # Finance Data Submission ----
                         tabPanel("Finance",
