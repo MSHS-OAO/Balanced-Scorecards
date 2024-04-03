@@ -80,7 +80,7 @@ suppressMessages({
 
 
 print("0")
-dsn <- "OAO Cloud DB Production"
+dsn <- "OAO Cloud DB Staging"
 dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
 
@@ -322,6 +322,7 @@ cost_rev_mapping <- tbl(conn, "BSC_COST_REV_MAPPING") %>% collect() %>%
 key_vol_mapping <- read_excel(key_volume_mapping_path,
                               sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
+key_vol_mapping_oracle <- tbl(conn, "BSC_KEY_VOLUME_MAPPING_ORACLE") %>% collect()
 
 processed_df_cols <- c("Service", "Site", "Metric_Group", "Metric_Name",
                        "Premier_Reporting_Period", "Reporting_Month",
