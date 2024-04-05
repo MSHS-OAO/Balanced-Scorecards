@@ -1,19 +1,19 @@
-# datapath <- "Tests/Scorecards Reporting Period Average.xlsx"
-# datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
+# datapath <- "tests/Scorecards Reporting Period Average.xlsx"
+# datapath_old <- "tests/DeptReportBuilderRPAVG.xlsx"
 # raw_data <- read_excel(datapath,skip = 2)
 # raw_data_old <- read_excel(datapath_old)
 # updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
-  key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
-                                                                 ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
-                                                                        ifelse(CORPORATE.SERVICE.LINE == "Support Services - Engineering", "Engineering",
-                                                                               ifelse(CORPORATE.SERVICE.LINE == "Support Services - Environmental Services", "Environmental Services",
-                                                                                      ifelse(CORPORATE.SERVICE.LINE == "Support Services - Food Services", "Food Services",
-                                                                                             ifelse(grepl("Nursing", CORPORATE.SERVICE.LINE), "Nursing",
-                                                                                                    ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient Transport",
-                                                                                                           ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security", 
-                                                                                                                  ifelse(CORPORATE.SERVICE.LINE == "Perioperative Services", "Perioperative Services",
-                                                                                                                         ifelse(CORPORATE.SERVICE.LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
+  key_vol_mapping <- key_vol_mapping_oracle %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE_SERVICE_LINE), "Imaging",
+                                                                 ifelse(grepl("Biomed", CORPORATE_SERVICE_LINE), "Biomed / Clinical Engineering",
+                                                                        ifelse(CORPORATE_SERVICE_LINE == "Support Services - Engineering", "Engineering",
+                                                                               ifelse(CORPORATE_SERVICE_LINE == "Support Services - Environmental Services", "Environmental Services",
+                                                                                      ifelse(CORPORATE_SERVICE_LINE == "Support Services - Food Services", "Food Services",
+                                                                                             ifelse(grepl("Nursing", CORPORATE_SERVICE_LINE), "Nursing",
+                                                                                                    ifelse(CORPORATE_SERVICE_LINE == "Support Services - Patient Transport", "Patient Transport",
+                                                                                                           ifelse(CORPORATE_SERVICE_LINE == "Support Services - Security", "Security", 
+                                                                                                                  ifelse(CORPORATE_SERVICE_LINE == "Perioperative Services", "Perioperative Services",
+                                                                                                                         ifelse(CORPORATE_SERVICE_LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
                                                                                                                          )
                                                                                                                   )
                                                                                                            )
@@ -26,7 +26,7 @@ productivity_processing <- function(raw_data, updated_user) {
   )
   ) %>%
     filter(!is.na(Service)) %>%
-    filter(DEPARTMENT.BREAKDOWN == 1)
+    filter(DEPARTMENT_BREAKDOWN == 1)
   
   raw_data <- raw_data %>%
     rename(`Key Volume` = `Corp Time Period Time Period End Date`,
@@ -79,12 +79,12 @@ productivity_processing <- function(raw_data, updated_user) {
     unique()
   
   ## Map Site and Service Group
-  prod_df_all <- left_join(prod_df_final, key_vol_mapping[, c("DEFINITION.CODE",
-                                                              "KEY.VOLUME", "SITE",
+  prod_df_all <- left_join(prod_df_final, key_vol_mapping[, c("DEFINITION_CODE",
+                                                              "KEY_VOLUME", "SITE",
                                                               "Service")
   ],
-  by = c("Department Reporting Definition ID" = "DEFINITION.CODE",
-         "Key Volume" = "KEY.VOLUME")
+  by = c("Department Reporting Definition ID" = "DEFINITION_CODE",
+         "Key Volume" = "KEY_VOLUME")
   )
   
   #Remove unmapped Services and remove everything after "-"
