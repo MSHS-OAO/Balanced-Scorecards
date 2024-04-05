@@ -4834,7 +4834,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       current_state_data_reactive <- reactiveVal(NULL)
       
       output$current_state_system_table <- function() {
+        
         current_state_data <- current_state_data_reactive()
+        
+        # show 'Worked Hours Productivity Index' as a percentage
+        current_state_data <- transform(current_state_data,
+                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index',paste0(YTD_ACTUAL * 100,'%'), YTD_ACTUAL),
+                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%') , MTD_ACTUAL),
+                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'), YTD_TARGET),
+                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'), MTD_TARGET),
+                                        YTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'), YTD_VARIANCE_TO_TARGET),
+                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'), MTD_VARIANCE_TO_TARGET)
+        )
+        
         
         metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
         
