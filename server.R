@@ -4910,6 +4910,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         metric_order <- c("Salaries", "Supplies", "Total Expenses")
         future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
         
+        future_state_data_test <<- future_state_data
+        
         
         future_state_temp <- data.frame(SCOPE = c(rep("Finance", 3)),
                                         MONTH = format(date_selected, "%Y-%m"),
@@ -4918,10 +4920,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         LAST_12_MONTHS = format(future_state_data$LAST_12_MONTHS, big.mark = ","),
                                         YEAR_BUDGET = format(future_state_data$YEAR_BUDGET, big.mark = ","),
                                         RETROSPECTIVE_OUTLOOK = format(future_state_data$RETROSPECTIVE_OUTLOOK, big.mark = ","),
-                                        RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET = format(future_state_data$RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET, big.mark = ","),
+                                        RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET = format(future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ","),
                                         PROSPECTIVE_OUTLOOK = format(future_state_data$PROSPECTIVE_OUTLOOK, big.mark = ","),
                                         PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = format(future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ","),
-                                        PERCENT_VARIANCE = paste0(round(future_state_data$PERCENT_VARIANCE * 100), "%")
+                                        PERCENT_VARIANCE = paste0(round(future_state_data$PROSPECTIVE_PERCENT_VARIANCE * 100, 1), "%")
         )
         
         future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
