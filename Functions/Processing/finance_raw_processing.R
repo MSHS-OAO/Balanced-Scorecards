@@ -10,8 +10,11 @@
 
 process_raw_finance_file <- function(data, updated_user, exclusions) {
   
-  data_all <- data[,1:19] 
-  data_all <- data_all %>% rename(Month = `Time Period`)
+  if(length(data) > 19) {
+    data_all <- data[,1:19] 
+  }
+
+  data_all <- data_all %>% rename(Month = `Time Period`) %>% filter(!is.na(Month))
   
   cols <- c("Sum of Annual Budget", "Sum of Remaining Budget YTD")
   
