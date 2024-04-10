@@ -9,6 +9,10 @@
   #               select(-`...2`)
 
 process_raw_finance_file <- function(data, updated_user, exclusions) {
+  
+  if("Month" %in% names(data)) {
+    data <- data %>% select(-Month)
+  }
   data_all <- data %>% rename(Month = `Time Period`)
   
   cols <- c("Sum of Annual Budget", "Sum of Remaining Budget YTD")
