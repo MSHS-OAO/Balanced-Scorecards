@@ -1,15 +1,25 @@
-# file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Finance/Finance SystemWide/CSOR Template - 12 months.xlsx"
+# file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail CSOR/CSOR Template - 12 months - Mar 23 - Feb 24.xlsx"
 # data_all <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3, col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
 
 # 
 # file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Finance/Finance SystemWide/Balanced Scorecard Update January 2024 YTD Financials v2.xlsx"
 # data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 4, col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text" ,"numeric","numeric","numeric","numeric","numeric", "numeric" ,"text"))
 # 
-#   exclusions <- read_excel(file_path, sheet = "Exclusions") %>%
-#                 select(-`...2`)
-  
+  # exclusions <- read_excel(file_path, sheet = "Exclusions") %>%
+  #               select(-`...2`)
+
 process_raw_finance_file <- function(data, updated_user, exclusions) {
-  data_all <- data
+  data_all <- data %>% rename(Month = `Time Period`)
+  
+  cols <- c("Sum of Annual Budget", "Sum of Remaining Budget YTD")
+  
+  missing <- setdiff(cols, names(data_all))
+  if(length(missing) > 0) {
+    data_all[missing] <- NA
+  }
+  
+  
+  
   data <- data_all %>% filter(!(SITE %in% c("HSO", "MSO")))
   data <- data[!grepl("MSO:", data$Function),]
   
