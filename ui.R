@@ -82,7 +82,54 @@ ui <-
              ),
 
            tabsetPanel(  
-             # First Tab - Summary - All Sites -----------------------
+             # First Tab - System overview - -----------------------
+             tabPanel("System Overview", value = "system",
+                      fluidRow(
+                        column(2,
+                               box(
+                                 title = NULL, solidHeader = FALSE, width =12,
+                                 pickerInput("selectedService5", label = h4("Select Department:"),
+                                             choices = service_choices_sw,
+                                             multiple = FALSE,
+                                             options = pickerOptions(
+                                               liveSearch = TRUE,
+                                               actionsBox = TRUE,
+                                               dropupAuto = FALSE,
+                                               size = 10),
+                                             selected = service_choices_sw[1])
+                               )
+                        ),
+                        column(2,
+                               box(
+                                 title = NULL, solidHeader = FALSE, width =12,
+                                 pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
+                                             choices = month_choices_sw,
+                                             multiple = FALSE,
+                                             options = pickerOptions(
+                                               liveSearch = TRUE,
+                                               actionsBox = TRUE,
+                                               dropupAuto = FALSE,
+                                               size = 10),
+                                             selected = month_choice_selected)
+                               )
+                        ),
+                        fluidRow(
+                          column(12,
+                                 h1("Current State"),
+                                 tableOutput("current_state_system_table") %>%
+                                   withSpinner(type = 8, color = "#dddedd"),
+                                 h1("Future State"),
+                                 tableOutput("future_state_system_table") %>%
+                                   withSpinner(type = 8, color = "#dddedd")
+                          )
+                        )
+                      )
+                      
+             ),
+             # Close tabpanel System Overview  
+             
+             
+             # Second Tab - Summary - All Sites -----------------------
              tabPanel("Summary", value = "summary",
                       fluidRow(
                         column(2, 
@@ -119,7 +166,7 @@ ui <-
                       )
              ), # Close tabPanel Summary
              
-             # Second Tab - All Sites by KPI -----------------------
+             # Third Tab - All Sites by KPI -----------------------
              tabPanel("Site Comparison", value = "comparison",
                       fluidRow(
                         column(2, 
@@ -168,7 +215,8 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Comparison
-             # Third Tab - Breakout-----------------------
+             
+             # Fourth Tab - Breakout-----------------------
              tabPanel("KPI Breakout", value = "breakout",
                       fluidRow(
                         column(2, 
@@ -217,52 +265,9 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Breakdout
-             # Fourth Tab - Operational Metrics
              
-             tabPanel("System Overview", value = "system",
-                        fluidRow(
-                          column(2,
-                                  box(
-                                    title = NULL, solidHeader = FALSE, width =12,
-                                    pickerInput("selectedService5", label = h4("Select Department:"),
-                                                choices = service_choices_sw,
-                                                multiple = FALSE,
-                                                options = pickerOptions(
-                                                  liveSearch = TRUE,
-                                                  actionsBox = TRUE,
-                                                  dropupAuto = FALSE,
-                                                  size = 10),
-                                                selected = service_choices_sw[1])
-                                  )
-                                ),
-                          column(2,
-                                 box(
-                                   title = NULL, solidHeader = FALSE, width =12,
-                                   pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
-                                               choices = month_choices_sw,
-                                               multiple = FALSE,
-                                               options = pickerOptions(
-                                                 liveSearch = TRUE,
-                                                 actionsBox = TRUE,
-                                                 dropupAuto = FALSE,
-                                                 size = 10),
-                                               selected = month_choice_selected)
-                                 )
-                          ),
-                          fluidRow(
-                            column(12,
-                                   h1("Current State"),
-                                    tableOutput("current_state_system_table") %>%
-                                     withSpinner(type = 8, color = "#dddedd"),
-                                   h1("Future State"),
-                                   tableOutput("future_state_system_table") %>%
-                                     withSpinner(type = 8, color = "#dddedd")
-                                   )
-                          )
-                        )
-
-                        ),
-
+             
+             # Fifth Tab - Operational Metrics
              navbarMenu("Data",
                         # Finance Data Submission ----
                         tabPanel("Finance",
@@ -925,7 +930,7 @@ ui <-
                         )
              ), # Close tabPanel Breakout
              
-             # Fifth tab - Targets & Status Definitions --------
+             # Sixth tab - Targets & Status Definitions --------
              tabPanel("Targets & Status Definitions", value = "targets",
                       fluidRow(
                         column(2, 

@@ -4837,16 +4837,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_data <- current_state_data_reactive()
         
-        # show 'Worked Hours Productivity Index' as a percentage
+        # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
-                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index',paste0(YTD_ACTUAL * 100,'%'), YTD_ACTUAL),
-                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%') , MTD_ACTUAL),
-                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'), YTD_TARGET),
-                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'), MTD_TARGET),
-                                        YTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'), YTD_VARIANCE_TO_TARGET),
-                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'), MTD_VARIANCE_TO_TARGET)
+                                        
+                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%'),ifelse(MTD_ACTUAL>0, paste0('$',format(MTD_ACTUAL, big.mark = ",")),paste0('-$',format(abs(MTD_ACTUAL), big.mark = ",")))),
+                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_ACTUAL * 100,'%'),ifelse(YTD_ACTUAL>0, paste0('$',format(YTD_ACTUAL, big.mark = ",")),paste0('-$',format(abs(YTD_ACTUAL), big.mark = ",")))),
+                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'),ifelse(YTD_TARGET>0, paste0('$',format(YTD_TARGET, big.mark = ",")),paste0('-$',format(abs(YTD_TARGET), big.mark = ",")))),
+                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'),ifelse(MTD_TARGET>0, paste0('$',format(MTD_TARGET, big.mark = ",")),paste0('-$',format(abs(MTD_TARGET), big.mark = ",")))),
+                                        YTD_VARIANCE_TO_TARGET= ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(YTD_VARIANCE_TO_TARGET>0, paste0('$',format(YTD_VARIANCE_TO_TARGET, big.mark = ",")),paste0('-$',format(abs(YTD_VARIANCE_TO_TARGET), big.mark = ",")))),
+                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(MTD_VARIANCE_TO_TARGET>0, paste0('$',format(MTD_VARIANCE_TO_TARGET, big.mark = ",")),paste0('-$',format(abs(MTD_VARIANCE_TO_TARGET), big.mark = ",")))),
+                                        YTD_PERCENT_VARIANCE = paste0(round(YTD_PERCENT_VARIANCE * 100,1),'%')
         )
-        
         
         metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
         
@@ -4856,19 +4857,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_state_temp <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor",nrow(current_state_data)-3)),
                                          METRIC = current_state_data$EXPTYPE,
                                          TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
-                                         MTD_ACTUAL = format(current_state_data$MTD_ACTUAL, big.mark = ","),
-                                         MTD_Target = format(current_state_data$MTD_TARGET, big.mark = ","),
-                                         MTD_VARIANCE_TO_TARGET = format(current_state_data$MTD_VARIANCE_TO_TARGET, big.mark = ","),
-                                         YTD_ACTUAL = format(current_state_data$YTD_ACTUAL, big.mark = ","),
-                                         YTD_Target = format(current_state_data$YTD_TARGET, big.mark = ","),
-                                         YTD_VARIANCE_TO_TARGET = format(current_state_data$YTD_VARIANCE_TO_TARGET, big.mark = ","),
-                                         YTD_PERCENT_VARIANCE= paste0(round(current_state_data$YTD_PERCENT_VARIANCE * 100,1),'%')
+                                         MTD_ACTUAL = current_state_data$MTD_ACTUAL,
+                                         MTD_Target = current_state_data$MTD_TARGET,
+                                         MTD_VARIANCE_TO_TARGET = current_state_data$MTD_VARIANCE_TO_TARGET,
+                                         YTD_ACTUAL = current_state_data$YTD_ACTUAL,
+                                         YTD_Target = current_state_data$YTD_TARGET,
+                                         YTD_VARIANCE_TO_TARGET =current_state_data$YTD_VARIANCE_TO_TARGET,
+                                         YTD_PERCENT_VARIANCE= current_state_data$YTD_PERCENT_VARIANCE
                                          
                                                  )
         
         current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
-                               "MTD ACTUAL","MTD Target","MTD VARIANCE TO TARGET",
-                               "YTD ACTUAL","YTD Target","YTD VARIANCE TO TARGET",
+                               "MTD ACTUAL","MTD TARGET","MTD VARIANCE TO TARGET",
+                               "YTD ACTUAL","YTD TARGET","YTD VARIANCE TO TARGET",
                                
                                #new
                                
@@ -4881,7 +4882,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         row_label_position = "c", font_size = 16) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#fee7f5") %>%
-          column_spec(7:10, background = "#E6F8FF") %>%
+          column_spec(7:9, background = "#E6F8FF") %>%
+          column_spec(10, background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
+                                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = 1, valign = "middle") 
       }
@@ -4910,27 +4913,40 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         metric_order <- c("Salaries", "Supplies", "Total Expenses")
         future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
         
-        future_state_data_test <<- future_state_data
+        # transform dataframe to round percent variance, and add '$' symbol
+        future_state_data <- transform(future_state_data,
+                                       
+                                       YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>0, paste0('$',format(YTD_ACTUAL_ANNUALIZED, big.mark = ",")),paste0('-$',format(abs(YTD_ACTUAL_ANNUALIZED), big.mark = ","))),
+                                       LAST_12_MONTHS = ifelse(LAST_12_MONTHS>0, paste0('$',format(LAST_12_MONTHS, big.mark = ",")),paste0('-$',format(abs(LAST_12_MONTHS), big.mark = ","))),
+                                       YEAR_BUDGET = ifelse(YEAR_BUDGET>0, paste0('$',format(YEAR_BUDGET, big.mark = ",")),paste0('-$',format(abs(YEAR_BUDGET), big.mark = ","))),
+                                       RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>0, paste0('$',format(RETROSPECTIVE_OUTLOOK, big.mark = ",")),paste0('-$',format(abs(RETROSPECTIVE_OUTLOOK), big.mark = ","))),
+                                       RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>0, paste0('$',format(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ",")),paste0('-$',format(abs(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET), big.mark = ","))),
+                                       PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>0, paste0('$',format(PROSPECTIVE_OUTLOOK, big.mark = ",")),paste0('-$',format(abs(PROSPECTIVE_OUTLOOK), big.mark = ","))),
+                                       PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>0, paste0('$',format(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ",")),paste0('-$',format(abs(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET), big.mark = ","))),
+                                       PROSPECTIVE_PERCENT_VARIANCE = paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
+        )
+        
         
         
         future_state_temp <- data.frame(SCOPE = c(rep("Finance", 3)),
                                         MONTH = format(date_selected, "%Y-%m"),
                                         METRIC = future_state_data$EXPTYPE,
-                                        YTD_ACTUAL_ANNUALIZED = format(future_state_data$YTD_ACTUAL_ANNUALIZED, big.mark = ","),
-                                        LAST_12_MONTHS = format(future_state_data$LAST_12_MONTHS, big.mark = ","),
-                                        YEAR_BUDGET = format(future_state_data$YEAR_BUDGET, big.mark = ","),
-                                        RETROSPECTIVE_OUTLOOK = format(future_state_data$RETROSPECTIVE_OUTLOOK, big.mark = ","),
-                                        RETROSPECTIVE_OUTLOOK_VAR_TO_BUDGET = format(future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ","),
-                                        PROSPECTIVE_OUTLOOK = format(future_state_data$PROSPECTIVE_OUTLOOK, big.mark = ","),
-                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = format(future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET, big.mark = ","),
-                                        PERCENT_VARIANCE = paste0(round(future_state_data$PROSPECTIVE_PERCENT_VARIANCE * 100, 1), "%")
+                                        YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
+                                        LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
+                                        YEAR_BUDGET = future_state_data$YEAR_BUDGET,
+                                        RETROSPECTIVE_OUTLOOK = future_state_data$RETROSPECTIVE_OUTLOOK,
+                                        RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
+                                        PROSPECTIVE_OUTLOOK = future_state_data$PROSPECTIVE_OUTLOOK,
+                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
+                                        PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
         )
         
         future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
                               "LAST 12 MONTHS",paste(year_selected, "BUDGET"), "RETROSPECTIVE OUTLOOK",
                               "RETROSPECTIVE OUTLOOK VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
                               "PROSPECTIVE OUTLOOK VARIANCE TO BUDGET",
-                              "PERCENT VARIANCE")
+                              "PROSPECTIVE PERCENT VARIANCE")
+
         
         future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
           add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
@@ -4940,10 +4956,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#fee7f5") %>%
           column_spec(7:8, background = "#E6F8FF") %>%
-          column_spec(9:11, background = "#fee7f5") %>%
+          column_spec(9:10, background = "#fee7f5") %>%    
+          column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -1.5, "#FFC7CE",
+                                              ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = c(1, 2), valign = "middle") 
-        
+          collapse_rows(columns = c(1, 2), valign = "middle")
+
         return(future_state_table)
       }
       
