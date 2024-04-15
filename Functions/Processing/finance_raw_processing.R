@@ -2,9 +2,10 @@
 # data_all <- read_excel(file_path, sheet = "12 Month Pivot", skip = 3, col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric"))
 
 # 
-# file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Finance/Finance SystemWide/Balanced Scorecard Update January 2024 YTD Financials v2.xlsx"
-# data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 4, col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text" ,"numeric","numeric","numeric","numeric","numeric", "numeric" ,"text"))
-# 
+# file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Finance/Finance SystemWide/Balanced Scorecard Update February 2024 YTD Financials.xlsx"
+# data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 4,                                      col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric","numeric", "numeric", "text"))
+
+#
   # exclusions <- read_excel(file_path, sheet = "Exclusions") %>%
   #               select(-`...2`)
 
@@ -223,15 +224,24 @@ budget_raw_file_process_updated <- function(data, updated_user) {
   
   budget_data_df <- budget_data_df %>% 
     mutate(UPDATED_USER = updated_user,
-           PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
+           PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
+           UPDATED_TIME = format(Sys.time(), "%Y-%m-%d %H:%M")) %>%
     select(SERVICE, 
            SITE, 
            REPORTING_MONTH,
            PREMIER_REPORTING_PERIOD, 
            METRIC_NAME_SUBMITTED,
            VALUE,
-           UPDATED_USER)
+           UPDATED_USER,
+           UPDATED_TIME)
   
-  write_temporary_table_to_database_and_merge(budget_data_df,
-                                              "TEMP_BUDGET", NA)
+  # write_temporary_table_to_database_and_merge(budget_data_df,
+  #                                             "TEMP_BUDGET", NA)
+  
+  key_columns <- c("SITE", "REPORTING_MONTH", "SERVICE", "METRIC_NAME_SUBMITTED")
+  destination_table_name <- "SUMMARY_REPO"
+  source_table_name <- "STAGING.MERGE_TABLE"
+  update_columns <- c("VALUE", "UPDATED_TIME", "UPDATED_USER", "PREMIER_REPORTING_PERIOD")
+  
+  write_temporary_table_to_database_and_merge_updated(budget_data_df, key_columns, destination_table_name, source_table_name, update_columns)
 }

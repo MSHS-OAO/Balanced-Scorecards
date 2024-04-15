@@ -11,7 +11,8 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   process_data <- data %>% mutate_if(is.character, function(x) gsub("\'", "''", x)) %>%
                   mutate_if(is.character, function(x) gsub("&", "' || chr(38) || '", x)) %>%
                   mutate_if(is.character, function(x) paste0("'", x, "'")) %>%
-                  mutate_if(is.Date, function(x) paste0("TO_DATE('", x, "', 'YYYY-MM-DD')"))
+                  mutate_if(is.Date, function(x) paste0("TO_DATE('", x, "', 'YYYY-MM-DD')")) %>%
+                  mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')")))
   
   columns <- paste(colnames(process_data), collapse = ",")
   
@@ -41,7 +42,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     # row <- gsub('NA', "", row)
     # row <- gsub("&", " ' || chr(38) || ' ", row)
     sql <- glue('INSERT ALL {row} SELECT 1 FROM DUAL;')
-    split_queries_sql_statements <- append(split_queries_sql_statements, sql)
+    split_queries_sql_statements <- append(split_queries_sql_statements, gsub("\\n", "", sql))
   }
   
 
