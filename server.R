@@ -4812,6 +4812,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             collect()        
           
           current_state_data_reactive(current_state_data_filtered)
+          
+          #retrieve Target and Status metrics data 
+          
+          
+          conn <- dbConnect(odbc(), dsn)
+          status_data <- tbl(conn, "BSC_TARGET_STATUS") %>% 
+            collect() 
+          dbDisconnect(conn)
+          
+          strings_to_check <- c("Overtime Hours", "Productivity Index","Budget to Actual Variance","Overtime Dollars")
+          filtered_df <- status_data %>%
+            filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
+            distinct(METRIC_NAME_SUBMITTED,GREEN_STATUS,YELLOW_STATUS,RED_STATUS, .keep_all = TRUE)
+          
+          target_and_status_metrics_reactive(filtered_df)
+
         })
         
         dbDisconnect(connection_current)
@@ -4832,11 +4848,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       #Output function 
       
       current_state_data_reactive <- reactiveVal(NULL)
+      target_and_status_metrics_reactive <- reactiveVal(NULL)
+      
       
       output$current_state_system_table <- function() {
         
         current_state_data <- current_state_data_reactive()
-        
+        target_and_status_data <- target_and_status_metrics_reactive()
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
                                         
@@ -4870,12 +4888,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
                                "MTD ACTUAL","MTD TARGET","MTD VARIANCE TO TARGET",
                                "YTD ACTUAL","YTD TARGET","YTD VARIANCE TO TARGET",
-                               
-                               #new
-                               
                                "YTD PERCENT VARIANCE")
+
+
         
-        current_state_table <- kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
+     
+        
+        current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
           add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
@@ -4883,10 +4902,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#fee7f5") %>%
           column_spec(7:9, background = "#E6F8FF") %>%
-          column_spec(10, background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
-                                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
+          column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
+                                       ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
+
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = 1, valign = "middle") 
+        
+        
+      
+
+     
       }
 
       
@@ -4901,7 +4926,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       output$future_state_system_table <- function() {
         future_state_data <- future_state_data_reactive()
-        
+        target_and_status_data <- target_and_status_metrics_reactive()
+
         if (is.null(future_state_data)) {
           return(NULL)  # Return NULL if future_state_data is not available yet
         }
@@ -4943,8 +4969,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
                               "LAST 12 MONTHS",paste(year_selected, "BUDGET"), "RETROSPECTIVE OUTLOOK",
-                              "RETROSPECTIVE OUTLOOK VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
-                              "PROSPECTIVE OUTLOOK VARIANCE TO BUDGET",
+                              "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
+                              "VARIANCE TO BUDGET",
                               "PROSPECTIVE PERCENT VARIANCE")
 
         
@@ -4957,8 +4983,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(4:6, background = "#fee7f5") %>%
           column_spec(7:8, background = "#E6F8FF") %>%
           column_spec(9:10, background = "#fee7f5") %>%    
-          column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -1.5, "#FFC7CE",
-                                              ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
+          column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
+                                              ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = c(1, 2), valign = "middle")
 
