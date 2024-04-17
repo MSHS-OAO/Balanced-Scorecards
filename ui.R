@@ -130,7 +130,7 @@ ui <-
              
              
              # Second Tab - Summary - All Sites -----------------------
-             tabPanel("Summary", value = "summary",
+             tabPanel("Site Overview", value = "summary",
                       fluidRow(
                         column(2, 
                                box(
@@ -217,7 +217,7 @@ ui <-
              ), # Close tabPanel Comparison
              
              # Fourth Tab - Breakout-----------------------
-             tabPanel("KPI Breakout", value = "breakout",
+             tabPanel("Site KPI Breakout", value = "breakout",
                       fluidRow(
                         column(2, 
                                box(
