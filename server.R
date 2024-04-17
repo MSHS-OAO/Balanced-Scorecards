@@ -4955,8 +4955,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         future_state_temp <- data.frame(SCOPE = c(rep("Finance", 3)),
-                                        MONTH = format(date_selected, "%Y-%m"),
                                         METRIC = future_state_data$EXPTYPE,
+                                        MONTH = format(date_selected, "%Y-%m"),
                                         YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
                                         LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
                                         YEAR_BUDGET = future_state_data$YEAR_BUDGET,
@@ -4967,7 +4967,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
         )
         
-        future_col_names <- c("SCOPE", "MONTH", "METRIC", "YTD ACTUAL ANNUALIZED",
+        future_col_names <- c("SCOPE", "METRIC", "Time Period", "YTD ACTUAL ANNUALIZED",
                               "LAST 12 MONTHS",paste(year_selected, "BUDGET"), "RETROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET",
