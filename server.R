@@ -4858,13 +4858,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
                                         
-                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%'),ifelse(MTD_ACTUAL>0, paste0('$',format(round(MTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_ACTUAL,0)), big.mark = ",")))),
-                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_ACTUAL * 100,'%'),ifelse(YTD_ACTUAL>0, paste0('$',format(round(YTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL,0)), big.mark = ",")))),
-                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'),ifelse(YTD_TARGET>0, paste0('$',format(round(YTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_TARGET,0)), big.mark = ",")))),
-                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'),ifelse(MTD_TARGET>0, paste0('$',format(round(MTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_TARGET,0)), big.mark = ",")))),
-                                        YTD_VARIANCE_TO_TARGET= ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(YTD_VARIANCE_TO_TARGET>0, paste0('$',format(round(YTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
-                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(MTD_VARIANCE_TO_TARGET>0, paste0('$',format(round(MTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
-                                        YTD_PERCENT_VARIANCE = paste0(round(YTD_PERCENT_VARIANCE * 100,1),'%')
+                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%'),ifelse(MTD_ACTUAL>=0, paste0('$',format(round(MTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_ACTUAL,0)), big.mark = ",")))),
+                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_ACTUAL * 100,'%'),ifelse(YTD_ACTUAL>=0, paste0('$',format(round(YTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL,0)), big.mark = ",")))),
+                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'),ifelse(YTD_TARGET>=0, paste0('$',format(round(YTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_TARGET,0)), big.mark = ",")))),
+                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'),ifelse(MTD_TARGET>=0, paste0('$',format(round(MTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_TARGET,0)), big.mark = ",")))),
+                                        YTD_VARIANCE_TO_TARGET= ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(YTD_VARIANCE_TO_TARGET>=0, paste0('$',format(round(YTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
+                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(MTD_VARIANCE_TO_TARGET>=0, paste0('$',format(round(MTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
+                                        YTD_PERCENT_VARIANCE =  formattable::percent(current_state_data$YTD_PERCENT_VARIANCE, digits = 1)
+                                          #paste0(round(YTD_PERCENT_VARIANCE * 100,1),'%')
         )
         
         metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
@@ -4902,11 +4903,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#fee7f5") %>%
           column_spec(7:9, background = "#E6F8FF") %>%
-          column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
-                                       ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
-
+          # column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
+          #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = 1, valign = "middle") 
+          collapse_rows(columns = 1, valign = "middle") %>%
+          column_spec(10, background = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
+                                                 current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
+                                                 TRUE ~ 'white'),
+                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
+                                       TRUE ~ FALSE)) %>%
+          gsub("\\bNA\\b", "-", .)
+        
         
         
       
@@ -4942,13 +4953,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # transform dataframe to round percent variance, and add '$' symbol
         future_state_data <- transform(future_state_data,
                                        
-                                       YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>0, paste0('$',format(round(YTD_ACTUAL_ANNUALIZED,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL_ANNUALIZED,0)), big.mark = ","))),
-                                       LAST_12_MONTHS = ifelse(LAST_12_MONTHS>0, paste0('$',format(round(LAST_12_MONTHS,0), big.mark = ",")),paste0('-$',format(abs(round(LAST_12_MONTHS,0)), big.mark = ","))),
-                                       YEAR_BUDGET = ifelse(YEAR_BUDGET>0, paste0('$',format(round(YEAR_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(YEAR_BUDGET,0)), big.mark = ","))),
-                                       RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
-                                       RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
-                                       PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
-                                       PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
+                                       YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>=0, paste0('$',format(round(YTD_ACTUAL_ANNUALIZED,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL_ANNUALIZED,0)), big.mark = ","))),
+                                       LAST_12_MONTHS = ifelse(LAST_12_MONTHS>=0, paste0('$',format(round(LAST_12_MONTHS,0), big.mark = ",")),paste0('-$',format(abs(round(LAST_12_MONTHS,0)), big.mark = ","))),
+                                       YEAR_BUDGET = ifelse(YEAR_BUDGET>=0, paste0('$',format(round(YEAR_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(YEAR_BUDGET,0)), big.mark = ","))),
+                                       RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
+                                       RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
+                                       PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
+                                       PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
                                        PROSPECTIVE_PERCENT_VARIANCE = paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
         )
         
@@ -4967,7 +4978,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
         )
         
-        future_col_names <- c("SCOPE", "METRIC", "Time Period", "YTD ACTUAL ANNUALIZED",
+        future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
                               "LAST 12 MONTHS",paste(year_selected, "BUDGET"), "RETROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET",
@@ -4984,7 +4995,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(7:8, background = "#E6F8FF") %>%
           column_spec(9:10, background = "#fee7f5") %>%    
           column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
-                                              ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black") %>%
+                                              ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = c(1, 2), valign = "middle")
 
