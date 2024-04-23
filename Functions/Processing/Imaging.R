@@ -86,6 +86,7 @@ imaging_dept_summary <- function(data, updated_user){
   
   current_month <- as.Date(paste0(format(Sys.Date(), "%Y-%m"), "-01"), "%Y-%m-%d")
 
-  data <- data %>% filter(REPORTING_MONTH < current_month)
+  data <- data %>% filter(REPORTING_MONTH < current_month) %>%
+    mutate(VALUE = format(VALUE, scientific = FALSE)) %>% mutate(VALUE = trimws(VALUE)) %>% filter(VALUE != 'NA')
   data
 }

@@ -148,6 +148,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       input_service <- input$selectedService
       
@@ -187,12 +188,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Imaging'
-      # month_input <- "09-2023"
-      
+      # service_input <- 'Perioperative Services'
+      # month_input <- "02-2024"
+
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
       
@@ -366,7 +368,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       } else{
         ytd_join <- NULL
       }
-      
+      # Peri-OP fet YTD data from summary_repo
+      if(service_input == "Perioperative Services"){
+        
+        period_filter <- period_filter %>%
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+        
+        data <- data %>%
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+        
+        peri_op_operational_ytd <- get_peri_op_ytd(month_input)
+        
+        
+        peri_op_operational_ytd_data <- peri_op_operational_ytd %>%
+          mutate(Metric_Name_Submitted = Metric_Name,
+                 Metric_Unit = case_when(Metric_Name_Submitted == "On Time Start %" ~ "Percent"),
+                 Metric_Name_Summary = case_when(Metric_Name == "Average Turnover (min)" ~ "Average Turn Around Time",
+                                                 Metric_Name == "On Time Start %" ~ "On Time Starts"),
+                 Target = NA,
+                 Green_Start = NA,             
+                 Green_End = NA,
+                 Yellow_Start =  NA,
+                 Yellow_End = NA,
+                 Red_Start = NA,
+                 Red_End = NA,
+                 Status = NA) %>%
+          select(names(data)) %>%
+          mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))
+        
+        data <- rbind(data,peri_op_operational_ytd_data)
+        
+        period_filter <- data %>% 
+          group_by(Metric_Group,
+                   Metric_Name_Summary,
+                   Metric_Name,
+                   Reporting_Month_Ref,
+                   Premier_Reporting_Period) %>% 
+          #distinct() %>%
+          summarise(total = n()) %>%                                                            #
+          arrange(Metric_Group, Metric_Name_Summary,
+                  Metric_Name, desc(Reporting_Month_Ref)) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(id = row_number())
+        
+        
+      }
       
       # Case management / Social Work Remove Avg LOS and Readmission Rates from period filter data
       if(service_input == "Case Management / Social Work"){
@@ -411,7 +457,50 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           mutate(id = row_number())
         
         
-        }
+      }
+      
+      if(service_input == "Food Services"){
+        
+        period_filter <- period_filter %>%
+          filter(!Metric_Name %in% c("Net Cost of Case per Patient Day"))
+        
+        data <- data %>%
+          filter(!Metric_Name %in% c("Net Cost of Case per Patient Day"))
+        
+        food_operational_ytd <- get_food_ytd(month_input)
+        
+        
+        food_operational_ytd_data <- food_operational_ytd %>%
+          mutate(Metric_Name_Submitted = Metric_Name,
+                 Metric_Unit = case_when(Metric_Name_Submitted == "Net Cost of Case per Patient Day" ~ NA),
+                 Metric_Name_Summary = case_when(Metric_Name == "Net Cost of Case per Patient Day" ~ "Net Cost of Case per Patient Day"),
+                 Target = NA,
+                 Green_Start = NA,             
+                 Green_End = NA,
+                 Yellow_Start =  NA,
+                 Yellow_End = NA,
+                 Red_Start = NA,
+                 Red_End = NA,
+                 Status = NA) %>%
+          select(names(data)) %>% mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))
+        
+        data <- rbind(data,food_operational_ytd_data)
+        
+        period_filter <- data %>% 
+          group_by(Metric_Group,
+                   Metric_Name_Summary,
+                   Metric_Name,
+                   Reporting_Month_Ref,
+                   Premier_Reporting_Period) %>% 
+          #distinct() %>%
+          summarise(total = n()) %>%                                                            #
+          arrange(Metric_Group, Metric_Name_Summary,
+                  Metric_Name, desc(Reporting_Month_Ref)) %>%
+          group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
+          mutate(id = row_number())
+        
+        
+      }
 
       
       if(!is.null(ytd_join)){
@@ -1200,6 +1289,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       kable_col_names <- colnames(summary_tab_tb)[2:length(summary_tab_tb)]
       
+      metric_name <- unique(summary_tab_tb$`Metric Name`)
+      if(service_input == "Food Services" & c("Net Cost of Case per Patient Day") %in% metric_name) {
+        index <- which(summary_tab_tb$`Metric Name` == "Net Cost of Case per Patient Day" & summary_tab_tb$Section == "Metrics", arr.ind = TRUE)
+        
+        extract <- summary_tab_tb[index,3]
+        updated <- gsub("Average", "Total", extract)
+        
+        summary_tab_tb[index, 3] <- updated
+      }     
+
       
       if(service_input == "Imaging"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
@@ -1269,6 +1368,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1307,6 +1407,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       
       service_input <- input$selectedService2
@@ -1630,6 +1731,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1669,6 +1771,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_peri_op
       input$submit_case_management
       input$submit_cn
+      input$submit_food_nccpd
             
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
@@ -2423,6 +2526,67 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
     })
+    # Submit Food Services Net Expenses and Patient Data -----
+    observeEvent(input$submit_food_nccpd,{
+      button_name <- "submit_food_nccpd"
+      shinyjs::disable(button_name)
+      nccpd_file <- input$food_nccpd
+      flag <- 0
+      
+      if(input$name_food_nccpd == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        nccpd_file_path <- nccpd_file$datapath
+        updated_user <- input$name_food_nccpd
+        tryCatch({
+        raw_data <- read.xlsx(nccpd_file_path,startRow  = 3,sheet = "Cost per Patient Day",cols = 1:15)
+        flag <- 1
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if (flag == 1){
+        # Process Cost and Revenue data
+        tryCatch({
+          
+        summary_data <- process_net_cost_per_pd(raw_data,updated_user)
+        flag <- 2
+        }, error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with one of the files"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if (flag == 2){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        summary_data <- file_return_updated_rows(summary_data)
+        
+        #wirte the updated data to the Summary Repo in the server
+        write_temporary_table_to_database_and_merge(summary_data,
+                                                    "TEMP_FOOD_NC", button_name)
+        
+        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                  input$selectedService3)
+        shinyjs::enable(button_name)
+        
+      }
+      
+    })
     
     # Submit Interventional Radiology -----
     observeEvent(input$submit_imaging, {
@@ -2443,7 +2607,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updated_user <- input$imaging_ir_username
         imaging_filepath <- imaging_file$datapath
         #imaging_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Imaging/FTI-BalancedScorecard-2021-Jan1-Nov30 (1).xlsx"
-        tryCatch({imaging_data <- read_excel(imaging_filepath)
+        tryCatch({imaging_data <- read_excel(imaging_filepath, col_types = c('text', 'text', 'text', 'numeric', 'numeric', 'numeric','numeric','numeric','numeric','numeric','numeric','numeric','numeric','numeric','numeric', 'text'))
             flag <- 1
         }, error = function(err){  
           showModal(modalDialog(
@@ -2473,10 +2637,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(flag == 2){
         
         ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        imaging_new_data <- file_return_updated_rows(imaging_summary_data)
+        # imaging_new_data <- file_return_updated_rows(imaging_summary_data)
         
         #wirte the updated data to the Summary Repo in the server
-        write_temporary_table_to_database_and_merge(imaging_new_data,
+        write_temporary_table_to_database_and_merge(imaging_summary_data,
                                                     "TEMP_IMAGING", button_name)
         
         update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
@@ -4237,6 +4401,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ed_data_percentiles <- read.xlsx(file_path,sheet = "Sheet1",fillMergedCells=TRUE,colNames = FALSE,startRow = 2)
             data <- ed_data_preprocess(ed_data_ts,ed_data_percentiles)
             
+            dte_data <- read_excel(file_path,sheet = "Sheet4",skip=1)
+            dth_data <- read_excel(file_path,sheet = "Sheet3",skip=1)
+            
             ed_data_ts <- data[[1]]
             ed_data_percentiles <- data[[2]]
             
@@ -4263,6 +4430,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             ed_summary_data <-
               ed_dept_summary(ed_data_ts,ed_data_percentiles,updated_user)
             
+            dte_summary_data <- process_dte_data(dte_data,updated_user)
+            dth_summary_data <- process_dth_data(dth_data,updated_user)
+            
+            ed_summary_data <- rbind(ed_summary_data,
+                                     dte_summary_data,
+                                     dth_summary_data)
+            
             flag <- 2
           },
           error = function(err){
@@ -4280,10 +4454,17 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if(flag == 2){
           ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
           ed_summary_data <- file_return_updated_rows(ed_summary_data)
+          # dte_summary_data <- file_return_updated_rows(dte_summary_data)
+          # dth_summary_data <- file_return_updated_rows(dth_summary_data)
+          
           
           #wirte the updated data to the Summary Repo in the server
           write_temporary_table_to_database_and_merge(ed_summary_data,
                                                       "TEMP_ED", button_name)
+          # write_temporary_table_to_database_and_merge(dte_summary_data,
+          #                                             "TEMP_ED_DTE", button_name)
+          # write_temporary_table_to_database_and_merge(dth_summary_data,
+          #                                             "TEMP_ED_DTH", button_name)
           
           update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
                                     input$selectedService3)
