@@ -4789,7 +4789,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # update future_state_table 
         
         connection <- dbConnect(drv = odbc::odbc(),
-                                dsn = "OAO Cloud DB staging")
+                                dsn = dsn)
         future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
         emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
         future_state_data_reactive(emergency_department_data)
@@ -4797,7 +4797,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         #update Current_state_table
         
-        connection_current <- dbConnect(drv = odbc::odbc(), dsn = "OAO Cloud DB Staging")
+        connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
         current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
         current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
         
