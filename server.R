@@ -5141,7 +5141,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                        RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
                                        PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
-                                       PROSPECTIVE_PERCENT_VARIANCE = paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
+                                       PROSPECTIVE_PERCENT_VARIANCE = formattable::percent(future_state_data$PROSPECTIVE_PERCENT_VARIANCE, digits = 1)
+                                         #paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
         )
         
         
@@ -5176,10 +5177,21 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(4:6, background = "#fee7f5") %>%
           column_spec(7:8, background = "#E6F8FF") %>%
           column_spec(9:10, background = "#fee7f5") %>%    
-          column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
-                                              ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
+          # column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
+          #                                     ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
+          column_spec(11, background = case_when(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= -0.02 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > -0.02 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -0.05 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -0.05 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
+                                                 TRUE ~ 'white'),
+                      bold = case_when(future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
+                                       TRUE ~ FALSE)) %>%
           row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = c(1, 2), valign = "middle")
+          collapse_rows(columns = c(1, 2), valign = "middle") %>%
+          gsub("\\bNA\\b", "-", .) %>%
+          gsub("\\bNA%\\b", "-", .)
 
         return(future_state_table)
       }
