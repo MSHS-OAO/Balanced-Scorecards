@@ -74,6 +74,7 @@ suppressMessages({
   library(DBI)
   library(odbc)
   #library(reshape2)
+  library(formattable)
 })
 
 
