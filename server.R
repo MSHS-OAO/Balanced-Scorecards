@@ -4855,6 +4855,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_data <- current_state_data_reactive()
         target_and_status_data <- target_and_status_metrics_reactive()
+        
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
                                         
@@ -4873,7 +4874,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
         
         
-        current_state_temp <- data.frame(SCOPE = c(rep("Finance",3),rep("Labor",nrow(current_state_data)-3)),
+        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', TRUE ~ 'Labor'),
                                          METRIC = current_state_data$EXPTYPE,
                                          TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
                                          MTD_ACTUAL = current_state_data$MTD_ACTUAL,
@@ -4943,12 +4944,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           return(NULL)  # Return NULL if future_state_data is not available yet
         }
         
-        date_selected <- future_state_data$MONTH
-        year_selected <- year(future_state_data$MONTH)[1]
+        # date_selected <- future_state_data$MONTH
+        # year_selected <- year(future_state_data$MONTH)[1]
         
         # Reorder METRIC values
         metric_order <- c("Salaries", "Supplies", "Total Expenses")
         future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
+        
+        future_state_data_test <<- future_state_data
         
         # transform dataframe to round percent variance, and add '$' symbol
         future_state_data <- transform(future_state_data,
@@ -4965,9 +4968,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         
-        future_state_temp <- data.frame(SCOPE = c(rep("Finance", 3)),
+        future_state_temp <- data.frame(#SCOPE = c(rep("Finance", 3)),
+                                        SCOPE = case_when(future_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance'),
                                         METRIC = future_state_data$EXPTYPE,
-                                        MONTH = format(date_selected, "%Y-%m"),
+                                        MONTH = format(future_state_data$MONTH, "%Y-%m"),
                                         YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
                                         LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
                                         YEAR_BUDGET = future_state_data$YEAR_BUDGET,
@@ -4979,7 +4983,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
         
         future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
-                              "LAST 12 MONTHS",paste(year_selected, "BUDGET"), "RETROSPECTIVE OUTLOOK",
+                              "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET",
                               "PROSPECTIVE PERCENT VARIANCE")
