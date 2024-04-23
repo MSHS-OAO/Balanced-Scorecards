@@ -557,8 +557,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            "Metric_Name_Summary",
                                            "Metric_Name",
                                            "Reporting_Month_Ref",
-                                           "Premier_Reporting_Period"),
-                                    all = TRUE)
+                                           "Premier_Reporting_Period"))
       
       
       fytd_summary_total <- fytd_summary_all %>%
