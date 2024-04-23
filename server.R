@@ -5125,14 +5125,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           return(NULL)  # Return NULL if future_state_data is not available yet
         }
         
-        # date_selected <- future_state_data$MONTH
-        # year_selected <- year(future_state_data$MONTH)[1]
         
         # Reorder METRIC values
         metric_order <- c("Salaries", "Supplies", "Total Expenses")
         future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
         
-        future_state_data_test <<- future_state_data
         
         # transform dataframe to round percent variance, and add '$' symbol
         future_state_data <- transform(future_state_data,
