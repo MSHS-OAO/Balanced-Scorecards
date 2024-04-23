@@ -33,13 +33,16 @@ budget_raw_file_process <- function(data, updated_user){
                         "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management / Social Work")
   
   
-  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ")
+  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "MS NYEE")
   list_of_exptype <- c("Salaries", "Supplies")
   
   budget_data <- data %>% filter(Function %in% list_of_services) %>%
                   filter(SITE %in% list_of_sites) %>%
                   filter(EXPTYPE %in% list_of_exptype) %>%
                   mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS BI", "MSBI", 
+                                                     SITE)
+                            ) %>%
+                    mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS NYEE", "NYEE", 
                                                      SITE)
                             ) %>%
                   mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS BIB", "MSB", 

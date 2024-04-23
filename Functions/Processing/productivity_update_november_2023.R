@@ -1,19 +1,19 @@
-# datapath <- "Tests/Scorecards Reporting Period Average.xlsx"
-# datapath_old <- "Tests/DeptReportBuilderRPAVG.xlsx"
+# datapath <- "tests/Scorecards Reporting Period Average.xlsx"
+# datapath_old <- "tests/DeptReportBuilderRPAVG.xlsx"
 # raw_data <- read_excel(datapath,skip = 2)
 # raw_data_old <- read_excel(datapath_old)
 # updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
-  key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
-                                                                 ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
-                                                                        ifelse(CORPORATE.SERVICE.LINE == "Support Services - Engineering", "Engineering",
-                                                                               ifelse(CORPORATE.SERVICE.LINE == "Support Services - Environmental Services", "Environmental Services",
-                                                                                      ifelse(CORPORATE.SERVICE.LINE == "Support Services - Food Services", "Food Services",
-                                                                                             ifelse(grepl("Nursing", CORPORATE.SERVICE.LINE), "Nursing",
-                                                                                                    ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient Transport",
-                                                                                                           ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security", 
-                                                                                                                  ifelse(CORPORATE.SERVICE.LINE == "Perioperative Services", "Perioperative Services",
-                                                                                                                         ifelse(CORPORATE.SERVICE.LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
+  key_vol_mapping <- key_vol_mapping_oracle %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE_SERVICE_LINE), "Imaging",
+                                                                 ifelse(grepl("Biomed", CORPORATE_SERVICE_LINE), "Biomed / Clinical Engineering",
+                                                                        ifelse(CORPORATE_SERVICE_LINE == "Support Services - Engineering", "Engineering",
+                                                                               ifelse(CORPORATE_SERVICE_LINE == "Support Services - Environmental Services", "Environmental Services",
+                                                                                      ifelse(CORPORATE_SERVICE_LINE == "Support Services - Food Services", "Food Services",
+                                                                                             ifelse(grepl("Nursing", CORPORATE_SERVICE_LINE), "Nursing",
+                                                                                                    ifelse(CORPORATE_SERVICE_LINE == "Support Services - Patient Transport", "Patient Transport",
+                                                                                                           ifelse(CORPORATE_SERVICE_LINE == "Support Services - Security", "Security", 
+                                                                                                                  ifelse(CORPORATE_SERVICE_LINE == "Perioperative Services", "Perioperative Services",
+                                                                                                                         ifelse(CORPORATE_SERVICE_LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
                                                                                                                          )
                                                                                                                   )
                                                                                                            )
@@ -26,7 +26,7 @@ productivity_processing <- function(raw_data, updated_user) {
   )
   ) %>%
     filter(!is.na(Service)) %>%
-    filter(FTE.TREND == 1)
+    filter(DEPARTMENT_BREAKDOWN == 1)
   
   raw_data <- raw_data %>%
     rename(`Key Volume` = `Corp Time Period Time Period End Date`,
@@ -79,12 +79,12 @@ productivity_processing <- function(raw_data, updated_user) {
     unique()
   
   ## Map Site and Service Group
-  prod_df_all <- left_join(prod_df_final, key_vol_mapping[, c("DEFINITION.CODE",
-                                                              "KEY.VOLUME", "SITE",
+  prod_df_all <- left_join(prod_df_final, key_vol_mapping[, c("DEFINITION_CODE",
+                                                              "KEY_VOLUME", "SITE",
                                                               "Service")
   ],
-  by = c("Department Reporting Definition ID" = "DEFINITION.CODE",
-         "Key Volume" = "KEY.VOLUME")
+  by = c("Department Reporting Definition ID" = "DEFINITION_CODE",
+         "Key Volume" = "KEY_VOLUME")
   )
   
   #Remove unmapped Services and remove everything after "-"
@@ -226,6 +226,19 @@ productivity_processing <- function(raw_data, updated_user) {
     filter(Metric_Name %in% c("Overtime Percent of Worked Hours")) %>%
     mutate_at(vars(value), ~replace(., is.nan(.), 0))
   
+  ##Overtime percent of paid hours
+  overtime_percent_paid_hours <- prod_df_all %>% filter(Metric_Name %in% c("Overtime Hours", "Total Paid Hours")) %>% 
+    pivot_wider(names_from = Metric_Name,
+                values_from = value
+    ) %>%
+    mutate(`Overtime Percent of Paid Hours` = `Overtime Hours`/`Total Paid Hours`) %>%
+    select(-`Overtime Hours`, -`Total Paid Hours`) %>%
+    pivot_longer(-c(Service,Site,Reporting_Month_Ref, Premier_Reporting_Period),
+                 names_to = "Metric_Name",
+                 values_to = "value") %>%
+    filter(Metric_Name %in% c("Overtime Percent of Paid Hours")) %>%
+    mutate_at(vars(value), ~replace(., is.nan(.), 0))
+  
   # check for why volume mapper
   actual_worked_hours_per_unit <- prod_df_all %>% filter(Metric_Name %in% c("Total Worked Hours", "Volume")) %>% 
     pivot_wider(names_from = Metric_Name,
@@ -249,7 +262,7 @@ productivity_processing <- function(raw_data, updated_user) {
     ungroup()
   
   
-  prod_df_aggregate <- rbind(prod_df_all, whpi, overtime_percent_worked_hours, actual_worked_hours_per_unit, ot_agency_fte)
+  prod_df_aggregate <- rbind(prod_df_all, whpi, overtime_percent_worked_hours, actual_worked_hours_per_unit, ot_agency_fte, overtime_percent_paid_hours)
   prod_df_aggregate$Metric_Name <- str_trim(prod_df_aggregate$Metric_Name)
   
   
@@ -268,9 +281,14 @@ productivity_processing <- function(raw_data, updated_user) {
   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Worked Hours")
   prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
   
-  prod_df_aggregate_peri <- prod_df_aggregate %>% filter(SERVICE == "Perioperative Services" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM"))
-  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Perioperative Services" | METRIC_NAME_SUBMITTED != "Agency FTE")
-  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_peri)
+  prod_df_aggregate_cn <- prod_df_aggregate %>% filter(SERVICE == "Clinical Nutrition" & METRIC_NAME_SUBMITTED == "Overtime Percent of Paid Hours") %>% filter(SITE %in% c("MSB", "MSW"))
+  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
+  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
+  
+  
+  # prod_df_aggregate_peri <- prod_df_aggregate %>% filter(SERVICE == "Perioperative Services" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM"))
+  # prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Perioperative Services" | METRIC_NAME_SUBMITTED != "Agency FTE")
+  # prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_peri)
   
   prod_df_aggregate_security <- prod_df_aggregate %>% filter(SERVICE == "Security" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM", "MSW"))
   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Security" | METRIC_NAME_SUBMITTED != "Agency FTE")
@@ -285,7 +303,7 @@ productivity_processing <- function(raw_data, updated_user) {
   
   prod_df_aggregate <- prod_df_aggregate %>% 
     filter(VALUE != "NaN") %>%
-    mutate(VALUE = round(VALUE,2)) %>%
+    mutate(VALUE = round(VALUE,3)) %>%
     drop_na()
   
 }

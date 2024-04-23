@@ -643,8 +643,20 @@ ui <-
                                                  ),
                                                  fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
                                                  actionButton("submit_food", label = "Submit")
+                                        ),
+                                        tabPanel("Net Expense and Patient Days", br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_food_nccpd", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 fileInput("food_nccpd", label = "Please upload Net Expense and Patient Days data"),
+                                                 actionButton("submit_food_nccpd", label = "Submit")
                                         )
+                                        
                                  )
+                                 
                                  # shinyjs::hidden(
                                  #   div(
                                  #     id = "thankyou_msg",
@@ -1028,7 +1040,13 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
- 
+  tags$style(HTML("
+        #submit_food_nccpd {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+  
   tags$style(HTML("
         #submit_evs {
           background-color: #d80b8c;
