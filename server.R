@@ -5040,8 +5040,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         '%!in%' <- function(x,y)!('%in%'(x,y))
         
-        current_state_data_test <<- current_state_data
-        
         current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
         
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
