@@ -5088,8 +5088,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
-          column_spec(4:6, background = "#fee7f5") %>%
-          column_spec(7:9, background = "#E6F8FF") %>%
+          column_spec(4:6, background = "#F8F8F8") %>% 
+          column_spec(7:9, background = "#EAEAEA") %>%
           # column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
           #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
@@ -5179,9 +5179,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
-          column_spec(4:6, background = "#fee7f5") %>%
-          column_spec(7:8, background = "#E6F8FF") %>%
-          column_spec(9:10, background = "#fee7f5") %>%    
+          column_spec(4:6, background = "#F8F8F8") %>%
+          column_spec(7:8, background = "#EAEAEA") %>%
+          column_spec(9:10, background = "#F8F8F8") %>%    
           # column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
           #                                     ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
           column_spec(11, background = case_when(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= -0.02 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
