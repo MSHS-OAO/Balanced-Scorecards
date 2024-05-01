@@ -70,7 +70,7 @@ SELECT SERVICE AS Function,
 FROM BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE)
 PIVOT(
  SUM(VALUE)
- FOR EXPTYPE IN ('Worked Hours Productivity Index (FYTD)' MTD_ACTUAL,'Worked Hours Productivity Index' YTD_ACTUAL))) d;
+ FOR EXPTYPE IN ('Worked Hours Productivity Index (FYTD)' YTD_ACTUAL,'Worked Hours Productivity Index' MTD_ACTUAL))) d;
 
 
 
