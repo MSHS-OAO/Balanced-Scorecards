@@ -97,7 +97,7 @@ budget_raw_file_process_updated <- function(data, updated_user) {
   list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", "Emergency Department",
                         "Engineering", "Environmental Services", "Food Services", 
                         "Nursing", "Patient & Equipment Transport", "Security", 
-                        "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management / Social Work")
+                        "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management")
   
   
   list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ")
@@ -129,6 +129,9 @@ budget_raw_file_process_updated <- function(data, updated_user) {
     ) %>%
     mutate_at(vars(c("Function")), ~ifelse(Function == "Biomedical Engineering", 
                                            "Biomed / Clinical Engineering", Function)
+    ) %>%
+    mutate_at(vars(c("Function")), ~ifelse(Function == "Case Management", 
+                                           "Case Management / Social Work", Function)
     ) %>%
     mutate_at(vars(c("Function")), ~ifelse(Function == "Food", 
                                            "Food Services", Function)
