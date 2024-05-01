@@ -67,9 +67,9 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   
   
   
-  data <- data %>% mutate(Function = ifelse(Function == "Case Management", "Case Management / Social Work", Function))
-  data <- data %>% mutate(Function = ifelse(Function == "Lab", "Lab and Blood Bank", Function))
-  data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab and Blood Bank", Function))
+  # data <- data %>% mutate(Function = ifelse(Function == "Case Management", "Case Management / Social Work", Function))
+  # data <- data %>% mutate(Function = ifelse(Function == "Lab", "Lab and Blood Bank", Function))
+  # data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab and Blood Bank", Function))
   # data <- data %>% mutate(Function = ifelse(Function == "MSO: Contracting", "Contracting", Function))
   # data <- data %>% mutate(Function = ifelse(Function == "MSO: Population Health", "Population Health", Function))
   
