@@ -12,7 +12,8 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
                   mutate_if(is.character, function(x) gsub("&", "' || chr(38) || '", x)) %>%
                   mutate_if(is.character, function(x) paste0("'", x, "'")) %>%
                   mutate_if(is.Date, function(x) paste0("TO_DATE('", x, "', 'YYYY-MM-DD')")) %>%
-                  mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')")))
+                  mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')"))) %>%
+                  replace(is.na(.), "''")
   
   columns <- paste(colnames(process_data), collapse = ",")
   
