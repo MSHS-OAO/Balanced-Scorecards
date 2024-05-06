@@ -5081,7 +5081,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
         current_state_temp <- current_state_temp %>% mutate(METRIC = ifelse(METRIC == "Worked Hours Productivity Index", "Productivity Index", METRIC))
         
-        total_expense_row <- which(current_state_temp_test$METRIC == "Total Expenses")
+        total_expense_row <- which(current_state_temp$METRIC == "Total Expenses")
      
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
