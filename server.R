@@ -5080,6 +5080,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
 
         current_state_temp <- current_state_temp %>% mutate(METRIC = ifelse(METRIC == "Worked Hours Productivity Index", "Productivity Index", METRIC))
+        
+        total_expense_row <- which(current_state_temp_test$METRIC == "Total Expenses")
      
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
@@ -5103,7 +5105,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                  TRUE ~ 'white'),
                       bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE, 
                                        TRUE ~ FALSE)) %>%
-          gsub("\\bNA\\b", "-", .)
+          gsub("\\bNA\\b", "-", .) %>%
+          row_spec(total_expense_row, bold = T)
         
         
         
@@ -5172,6 +5175,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                               "VARIANCE TO BUDGET",
                               "% VARIANCE")
 
+        total_expense_row <- which(future_state_temp$METRIC == "Total Expenses")
         
         future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
           add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
@@ -5196,7 +5200,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           row_spec(0, background = "#212070", color = "white") %>%
           collapse_rows(columns = c(1, 2), valign = "middle") %>%
           gsub("\\bNA\\b", "-", .) %>%
-          gsub("\\bNA%\\b", "-", .)
+          gsub("\\bNA%\\b", "-", .) %>%
+          row_spec(total_expense_row, bold = T)
 
         return(future_state_table)
       }
