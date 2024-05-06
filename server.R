@@ -5079,7 +5079,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                "YTD % VARIANCE")
 
 
-        
+        current_state_temp <- current_state_temp %>% mutate(METRIC = ifelse(METRIC == "Worked Hours Productivity Index", "Productivity Index", METRIC))
      
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
@@ -5097,11 +5097,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           column_spec(10, background = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
                                                  current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
                                                  current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFC7CE',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFFFCC',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#C4D79B',
                                                  TRUE ~ 'white'),
-                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
+                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE, 
                                        TRUE ~ FALSE)) %>%
           gsub("\\bNA\\b", "-", .)
         
