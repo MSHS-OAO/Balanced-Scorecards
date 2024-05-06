@@ -5074,9 +5074,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                  )
         
         current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
-                               "MTD ACTUAL","MTD TARGET","MTD VARIANCE TO TARGET",
-                               "YTD ACTUAL","YTD TARGET","YTD VARIANCE TO TARGET",
-                               "YTD PERCENT VARIANCE")
+                               "MTD ACTUAL","MTD TARGET","MTD VARIANCE",
+                               "YTD ACTUAL","YTD TARGET","YTD VARIANCE",
+                               "YTD % VARIANCE")
 
 
         
@@ -5170,7 +5170,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                               "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
                               "VARIANCE TO BUDGET",
-                              "PROSPECTIVE PERCENT VARIANCE")
+                              "% VARIANCE")
 
         
         future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
