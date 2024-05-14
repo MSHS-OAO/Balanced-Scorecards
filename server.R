@@ -5038,6 +5038,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         target_and_status_data <- target_and_status_metrics_reactive()
         
         
+        current_state_data <- current_state_data %>% filter(rowSums(across(where(is.numeric)))!=0)
+        
         '%!in%' <- function(x,y)!('%in%'(x,y))
         
         current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
@@ -5054,6 +5056,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         YTD_PERCENT_VARIANCE =  formattable::percent(current_state_data$YTD_PERCENT_VARIANCE, digits = 1)
                                           #paste0(round(YTD_PERCENT_VARIANCE * 100,1),'%')
         )
+        
+
         
         metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
         
