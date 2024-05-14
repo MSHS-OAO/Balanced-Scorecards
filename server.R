@@ -5092,7 +5092,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
-                        row_label_position = "c", font_size = 16) %>%
+                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#F8F8F8") %>% 
           column_spec(7:9, background = "#EAEAEA") %>%
@@ -5185,7 +5185,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
-                        row_label_position = "c", font_size = 16) %>%
+                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
           column_spec(1:3, background = "#212070", color = "white") %>%
           column_spec(4:6, background = "#F8F8F8") %>%
           column_spec(7:8, background = "#EAEAEA") %>%
