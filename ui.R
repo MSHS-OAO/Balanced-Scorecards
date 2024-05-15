@@ -28,8 +28,18 @@ month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
 
 #Choices for System Aggregate
 service_choices_sw <- sw_table %>% select(FUNCTION) %>% summarise(SERVICE = unique(FUNCTION)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
+exlcuded_system_services <- c("Ambulance", "Ambulatory Nursing", "Ambulatory Other", "Clinical Departments", "COVID-19",
+                              "Development (ASA)", "General Hospital Expense", "Housestaff", "Library", "Medical Education",
+                              "Other", "Removed", "School of Nursing")
+
+service_choices_sw <- service_choices_sw %>% filter(!(SERVICE %in% exlcuded_system_services ))
+
 service_choices_sw <- sort(service_choices_sw$SERVICE)
+  
+
 default_service_sw <- service_choices_sw[1]
+
+
 
 default_month_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% summarise(MONTH = max(MONTH)) %>% collect()
 default_month_sw <- format(sort(default_month_sw$MONTH), "%m-%Y")
