@@ -5037,12 +5037,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_state_data <- current_state_data_reactive()
         target_and_status_data <- target_and_status_metrics_reactive()
         
+        current_state_data_test <<- current_state_data
+        
         
         current_state_data <- current_state_data %>% filter(rowSums(across(where(is.numeric)))!=0)
         
         '%!in%' <- function(x,y)!('%in%'(x,y))
         
-        current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
+        # current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
         
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
@@ -5086,6 +5088,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_state_temp <- current_state_temp %>% mutate(METRIC = ifelse(METRIC == "Worked Hours Productivity Index", "Productivity Index", METRIC))
         
         total_expense_row <- which(current_state_temp$METRIC == "Total Expenses")
+        
+        current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = ifelse(YTD_PERCENT_VARIANCE <= -2, NA, YTD_PERCENT_VARIANCE))
+        current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
      
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
