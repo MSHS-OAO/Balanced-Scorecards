@@ -98,8 +98,8 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   update_on_cols <- paste(paste0("DT.",update_columns, " = ST.",update_columns), sep="", collapse = ",")
 
   
-  get_dest_table_cols <-  paste(paste0("DT.",c(key_columns,update_columns)), sep="", collapse = ",")
-  get_source_table_values <- paste(paste0("ST.",c(key_columns,update_columns)), sep="", collapse = ",")
+  get_dest_table_cols <-  paste(paste0("DT.",unique(c(key_columns,update_columns))), sep="", collapse = ",")
+  get_source_table_values <- paste(paste0("ST.",unique(c(key_columns,update_columns))), sep="", collapse = ",")
     
   # destination_table_name <- "BSC_FINANCE_TABLE"
   # source_table_name <- "BSC_FINANCE_TABLE_TESTING"

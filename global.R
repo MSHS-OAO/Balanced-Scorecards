@@ -80,7 +80,7 @@ suppressMessages({
 
 
 print("0")
-dsn <- "OAO Cloud DB Production"
+dsn <- "OAO Cloud DB Staging"
 dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
 
@@ -524,6 +524,7 @@ function_sources <- list.files("Functions", full.names = T, recursive = T)
 sapply(function_sources, source)
 source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
+source(paste0("Functions/write_temporary_table_to_database_and_merge_updated.R"))
 # source("ClinicalNurtrition.R")
 # source("OvertimeNew.R")
 # source("lab_processing.R")
