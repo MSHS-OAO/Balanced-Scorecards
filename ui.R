@@ -245,7 +245,7 @@ ui <-
                                                hr(),
                                                fileInput("finance_cost_center_mapping", label = "Please upload Cost Center Mapping data"),
                                                actionButton("submit_finance_mapping", label = "Submit")
-                                 ), value = "finance"
+                                 )), value = "finance"
                         ),
                         # Patient Experience Data Submission ---------
                         tabPanel("Patient Experience",

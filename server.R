@@ -149,6 +149,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_case_management
       input$submit_cn
       input$submit_food_nccpd
+      input$submit_finance_access_data
+      input$submit_finance_mapping
       
       input_service <- input$selectedService
       
@@ -189,6 +191,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_case_management
       input$submit_cn
       input$submit_food_nccpd
+      input$submit_finance_access_data
+      input$submit_finance_mapping
+      
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
@@ -3721,6 +3726,220 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
         
     })
+    # Finance Access Data Processing ----
+    observeEvent(input$submit_finance_access_data, {
+      button_name <- "submit_finance_access_data"
+      shinyjs::disable(button_name)
+      
+      flag <- 0
+      access_data_file <- input$finance_access_data
+      
+      if(input$name_finance == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        updated_user <- input$name_finance
+        access_data_file_path <- access_data_file$datapath
+        tryCatch({#overtime_file_path <- paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx")
+          access_data <- read.xlsx(access_data_file_path)
+          flag <- 1
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Access Data file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if(flag == 1){
+        # Process the data into standar Summary Repo format
+        tryCatch({access_data_processed <- process_finance_access_data(access_data, updated_user)
+        flag <- 2
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Access Data file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      
+      if(flag == 2){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
+        
+        #wirte the updated data to the Acces table in the server
+        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD")
+        update_cols = names(access_data_processed)
+        update_cols = update_cols[! update_cols %in% key_cols]
+
+        write_temporary_table_to_database_and_merge_updated(access_data_processed,
+                                                            key_cols,
+                                                            "BSC_FINANCE_ACCESS_DATA",
+                                                            "BSC_FINANCE_ACCESS_DATA_ST",
+                                                            update_cols)
+        
+        # update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+        #                           input$selectedService3)
+      }
+      shinyjs::enable(button_name)
+      
+      
+    })
+    
+    # Supplier and Cost Center Mapping Data Processing ----
+    observeEvent(input$submit_finance_mapping, {
+      button_name <- "submit_finance_mapping"
+      shinyjs::disable(button_name)
+      
+      flag <- 0
+      supplier_mapping_data_file <- input$finance_supplier_mapping
+      cost_center_mapping_data_file <- input$finance_cost_center_mapping
+      
+      
+      if(input$name_finance == ""){
+        showModal(modalDialog(
+          title = "Error",
+          paste0("Please fill in the required fields"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+      }else{
+        updated_user <- input$name_finance
+        supplier_mapping_data_file_path <- supplier_mapping_data_file$datapath
+        tryCatch({
+          supplier_mapping_data <- read.xlsx(supplier_mapping_data_file_path)
+          flag <- 1
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Supplier Mapping file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if(flag == 1){
+        cost_center_mapping_data_file_path <- cost_center_mapping_data_file$datapath
+        tryCatch({
+          cost_center_mapping_data <- read.xlsx(cost_center_mapping_data_file_path,sheet=2)
+          flag <- 2
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Cost Center Mapping file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      if(flag == 2){
+        tryCatch({supplier_mapping_data_processed <- process_finance_supplier_mapping_data(supplier_mapping_data, updated_user)
+        flag <- 3
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Suuplier Data file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+
+      if(flag == 3){
+        tryCatch({cost_center_mapping_data_processed <- process_finance_cost_center_data(cost_center_mapping_data, updated_user)
+        flag <- 4
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the Cost Center Data file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+      
+      
+      
+      if(flag == 4){
+        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+        #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
+        
+        #wirte the updated data to the Supplier Mapping table in the server
+        tryCatch({
+          write_temporary_table_to_database_and_merge_updated(supplier_mapping_data_processed,
+                                                              "ACCTNAME",
+                                                              "BSC_FINANCE_SUPPLIER_MAPPING",
+                                                              "BSC_FINANCE_SUPPLIER_MAPPING_ST",
+                                                              c("CATEGORY","UPDATED_USER"))
+          flag <- 5
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an storing the Supplier Mapping Data"),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
+      }
+
+        if(flag == 5){
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
+          
+          #wirte the updated data to the Supplier Mapping table in the server
+          tryCatch({
+            
+            col_names_new  <- names(cost_center_mapping_data_processed)
+            update_cols <- col_names_new[col_names_new != "COST_CENTER"]
+            update_cols <- update_cols[update_cols != "NAME"]
+            
+            write_temporary_table_to_database_and_merge_updated(cost_center_mapping_data_processed,
+                                                                c("COST_CENTER", "NAME"),
+                                                                "BSC_FINANCE_COST_CENTER_MAPPING",
+                                                                "BSC_FINANCE_COST_CENTER_MAPPING_ST",
+                                                                update_cols)
+            
+          },
+          error = function(err){  showModal(modalDialog(
+            title = "Error",
+            paste0("There seems to be an storing the Cost Center Mapping Data"),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+            shinyjs::enable(button_name)
+          })
+        
+        
+        # update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+        #                           input$selectedService3)
+      }
+      shinyjs::enable(button_name)
+      
+      
+    })
+    
     
     
     # })

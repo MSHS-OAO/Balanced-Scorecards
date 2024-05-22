@@ -31,15 +31,15 @@ process_finance_access_data <- function(data, updated_user){
     mutate(UPDATED_USER =  updated_user) %>%
     ungroup()
   
-  key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD")
-  update_cols = names(data)
-  update_cols = update_cols[! update_cols %in% key_cols]
-  
-  write_temporary_table_to_database_and_merge_updated(data,
-                                                      c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD"),
-                                                      "BSC_FINANCE_ACCESS_DATA",
-                                                      "BSC_FINANCE_ACCESS_DATA_ST",
-                                                      update_cols)
+  # key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD")
+  # update_cols = names(data)
+  # update_cols = update_cols[! update_cols %in% key_cols]
+  # 
+  # write_temporary_table_to_database_and_merge_updated(data,
+  #                                                     c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD"),
+  #                                                     "BSC_FINANCE_ACCESS_DATA",
+  #                                                     "BSC_FINANCE_ACCESS_DATA_ST",
+  #                                                     update_cols)
   
   
 }

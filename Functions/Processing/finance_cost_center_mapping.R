@@ -19,15 +19,6 @@ process_finance_cost_center_data <-  function(data, updated_user) {
            CLOUD_CC = Cloud.CC) %>%
     mutate(UPDATED_USER = updated_user)
   
-  col_names_new  <- names(data)
-  update_cols <- col_names_new[col_names_new != "COST_CENTER"]
-  update_cols <- update_cols[update_cols != "NAME"]
-  
-  write_temporary_table_to_database_and_merge_updated(data,
-                                                      c("COST_CENTER", "NAME"),
-                                                      "BSC_FINANCE_COST_CENTER_MAPPING",
-                                                      "BSC_FINANCE_COST_CENTER_MAPPING_ST",
-                                                      update_cols)
   
 }
 
