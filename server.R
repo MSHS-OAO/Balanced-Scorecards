@@ -128,7 +128,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       input$submit_prod
       input$submit_engineering
-      input$submit_finance
+      #input$submit_finance
       input$submit_food
       input$submit_evs
       input$submit_imaging
@@ -1374,6 +1374,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_case_management
       input$submit_cn
       input$submit_food_nccpd
+      input$submit_finance_access_data
+      input$submit_finance_mapping
       
       input_service <- input$selectedService2
       conn <- dbConnect(odbc(), dsn)  
@@ -1413,6 +1415,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_case_management
       input$submit_cn
       input$submit_food_nccpd
+      input$submit_finance_access_data
+      input$submit_finance_mapping
       
       
       service_input <- input$selectedService2
@@ -1737,6 +1741,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_case_management
       input$submit_cn
       input$submit_food_nccpd
+      input$submit_finance_access_data
+      input$submit_finance_mapping
       
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
@@ -1777,7 +1783,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_case_management
       input$submit_cn
       input$submit_food_nccpd
-            
+      input$submit_finance_access_data
+      input$submit_finance_mapping
+      
       service_input <- input$selectedService3
       month_input <- input$selectedMonth3
       site_input <- input$selectedCampus3
@@ -3563,104 +3571,104 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
 
     # 5. Overtime - Data Input ---------------------------------------------------------------------------------
-    observeEvent(input$submit_finance, {
-      button_name <- "submit_finance"
-      shinyjs::disable(button_name)
-      census_file <- input$finance_census
-      flag <- 0
-      
-      if(is.null(census_file)){
-        return(NULL)
-      }else{
-        census_filepath <- census_file$datapath
-        #census_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"
-        #Read in census file
-        tryCatch({census_data <- read_excel(census_filepath)
-        flag <- 1
-        showModal(modalDialog(
-          title = "Success",
-          paste0("The census data has been imported succesfully"),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        }, error = function(err){  showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an issue with the census file"),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-          shinyjs::enable(button_name)
-          
-          })
-      }
-      
-
-      ## Process Census Data
-      tryCatch({census_summary_data <- census_days_dept_summary(census_data)
-                  flag <- 2
-      
-      showModal(modalDialog(
-        title = "Success",
-        paste0("The census data has been imported succesfully"),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-      }, error = function(err){  showModal(modalDialog(
-        title = "Error",
-        paste0("There seems to be an issue the census file"),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-        shinyjs::enable(button_name)
-        })
-      
-      if (flag == 2){
-
-        # Save prior version of COst and Revenue Summary data
-        write_xlsx(cost_and_revenue_repo,
-                   paste0(hist_archive_path,
-                          "Cost and Revenue ",
-                          format(Sys.time(), "%Y%m%d_%H%M%S"),
-                          ".xlsx"))
-        
-        # Append Lab TAT summary with new data
-        # First, identify the sites, months, and metrics in the new data
-        census_new_data <- unique(
-          census_summary_data[  c("Service", "Site", "Month")]
-        )
-        
-        # Second, remove these sites, months, and metrics from the historical data, if they exist there.
-        # This allows us to ensure no duplicate entries for the same site, metric, and time period
-        cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
-                                            census_new_data,
-                                            by = c("Service" = "Service",
-                                                   "Site" = "Site",
-                                                   "Month" = "Month"))
-        
-        
-        # Third, combine the updated historical data with the new data
-        cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
-                                          census_summary_data)
-        
-        # Lastly, save the updated summary data
-        write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
-        
-        # Update metrics_final_df with latest SCC data using custom function
-        metrics_final_df <<- census_days_metrics_final_df(census_summary_data)
-        
-        # Save updated metrics_final_df
-        saveRDS(metrics_final_df, metrics_final_df_path)
-        
-        # Update "Reporting Month" drop down in each tab
-        picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      }
-      shinyjs::enable(button_name)
-      
-      
-    })
+    # observeEvent(input$submit_finance, {
+    #   button_name <- "submit_finance"
+    #   shinyjs::disable(button_name)
+    #   census_file <- input$finance_census
+    #   flag <- 0
+    #   
+    #   if(is.null(census_file)){
+    #     return(NULL)
+    #   }else{
+    #     census_filepath <- census_file$datapath
+    #     #census_filepath <- "J:/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Input Data Raw/Food/Monthly Stats Summary for benchmarking 20211013.xlsx"
+    #     #Read in census file
+    #     tryCatch({census_data <- read_excel(census_filepath)
+    #     flag <- 1
+    #     showModal(modalDialog(
+    #       title = "Success",
+    #       paste0("The census data has been imported succesfully"),
+    #       easyClose = TRUE,
+    #       footer = NULL
+    #     ))
+    #     }, error = function(err){  showModal(modalDialog(
+    #       title = "Error",
+    #       paste0("There seems to be an issue with the census file"),
+    #       easyClose = TRUE,
+    #       footer = NULL
+    #     ))
+    #       shinyjs::enable(button_name)
+    #       
+    #       })
+    #   }
+    #   
+    # 
+    #   ## Process Census Data
+    #   tryCatch({census_summary_data <- census_days_dept_summary(census_data)
+    #               flag <- 2
+    #   
+    #   showModal(modalDialog(
+    #     title = "Success",
+    #     paste0("The census data has been imported succesfully"),
+    #     easyClose = TRUE,
+    #     footer = NULL
+    #   ))
+    #   }, error = function(err){  showModal(modalDialog(
+    #     title = "Error",
+    #     paste0("There seems to be an issue the census file"),
+    #     easyClose = TRUE,
+    #     footer = NULL
+    #   ))
+    #     shinyjs::enable(button_name)
+    #     })
+    #   
+    #   if (flag == 2){
+    # 
+    #     # Save prior version of COst and Revenue Summary data
+    #     write_xlsx(cost_and_revenue_repo,
+    #                paste0(hist_archive_path,
+    #                       "Cost and Revenue ",
+    #                       format(Sys.time(), "%Y%m%d_%H%M%S"),
+    #                       ".xlsx"))
+    #     
+    #     # Append Lab TAT summary with new data
+    #     # First, identify the sites, months, and metrics in the new data
+    #     census_new_data <- unique(
+    #       census_summary_data[  c("Service", "Site", "Month")]
+    #     )
+    #     
+    #     # Second, remove these sites, months, and metrics from the historical data, if they exist there.
+    #     # This allows us to ensure no duplicate entries for the same site, metric, and time period
+    #     cost_and_revenue_repo <<- anti_join(cost_and_revenue_repo,
+    #                                         census_new_data,
+    #                                         by = c("Service" = "Service",
+    #                                                "Site" = "Site",
+    #                                                "Month" = "Month"))
+    #     
+    #     
+    #     # Third, combine the updated historical data with the new data
+    #     cost_and_revenue_repo <<- full_join(cost_and_revenue_repo,
+    #                                       census_summary_data)
+    #     
+    #     # Lastly, save the updated summary data
+    #     write_xlsx(cost_and_revenue_repo, paste0(home_path, "Summary Repos/Cost and Revenue.xlsx"))
+    #     
+    #     # Update metrics_final_df with latest SCC data using custom function
+    #     metrics_final_df <<- census_days_metrics_final_df(census_summary_data)
+    #     
+    #     # Save updated metrics_final_df
+    #     saveRDS(metrics_final_df, metrics_final_df_path)
+    #     
+    #     # Update "Reporting Month" drop down in each tab
+    #     picker_choices <-  format(sort(unique(metrics_final_df$Reporting_Month_Ref)), "%m-%Y")
+    #     updatePickerInput(session, "selectedMonth", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+    #     updatePickerInput(session, "selectedMonth2", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+    #     updatePickerInput(session, "selectedMonth3", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+    #   }
+    #   shinyjs::enable(button_name)
+    #   
+    #   
+    # })
     
       
     observeEvent(input$submit_finance_ot, {
@@ -3817,124 +3825,127 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       }else{
         updated_user <- input$name_finance
+        supplier_mapping_flag <- !is.null(supplier_mapping_data_file$datapath)
+        cost_center_mapping_flag <- !is.null(cost_center_mapping_data_file$datapath)
+        
         supplier_mapping_data_file_path <- supplier_mapping_data_file$datapath
-        tryCatch({
-          supplier_mapping_data <- read.xlsx(supplier_mapping_data_file_path)
-          flag <- 1
-        },
-        error = function(err){  showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an issue with the Supplier Mapping file."),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-          shinyjs::enable(button_name)
-        })
-      }
-      
-      if(flag == 1){
         cost_center_mapping_data_file_path <- cost_center_mapping_data_file$datapath
-        tryCatch({
-          cost_center_mapping_data <- read.xlsx(cost_center_mapping_data_file_path,sheet=2)
-          flag <- 2
-        },
-        error = function(err){  showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an issue with the Cost Center Mapping file."),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-          shinyjs::enable(button_name)
-        })
-      }
-      
-      if(flag == 2){
-        tryCatch({supplier_mapping_data_processed <- process_finance_supplier_mapping_data(supplier_mapping_data, updated_user)
-        flag <- 3
         
-        },
-        error = function(err){  showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an issue with the Suuplier Data file."),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-          shinyjs::enable(button_name)
-        })
-      }
-
-      if(flag == 3){
-        tryCatch({cost_center_mapping_data_processed <- process_finance_cost_center_data(cost_center_mapping_data, updated_user)
-        flag <- 4
-        
-        },
-        error = function(err){  showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an issue with the Cost Center Data file."),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-          shinyjs::enable(button_name)
-        })
-      }
-      
-      
-      
-      if(flag == 4){
-        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
-        
-        #wirte the updated data to the Supplier Mapping table in the server
-        tryCatch({
-          write_temporary_table_to_database_and_merge_updated(supplier_mapping_data_processed,
-                                                              "ACCTNAME",
-                                                              "BSC_FINANCE_SUPPLIER_MAPPING",
-                                                              "BSC_FINANCE_SUPPLIER_MAPPING_ST",
-                                                              c("CATEGORY","UPDATED_USER"))
-          flag <- 5
-        
-        },
-        error = function(err){  showModal(modalDialog(
-          title = "Error",
-          paste0("There seems to be an storing the Supplier Mapping Data"),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-          shinyjs::enable(button_name)
-        })
-      }
-
-        if(flag == 5){
-          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-          #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
-          
-          #wirte the updated data to the Supplier Mapping table in the server
+        if(supplier_mapping_flag){
           tryCatch({
-            
-            col_names_new  <- names(cost_center_mapping_data_processed)
-            update_cols <- col_names_new[col_names_new != "COST_CENTER"]
-            update_cols <- update_cols[update_cols != "NAME"]
-            
-            write_temporary_table_to_database_and_merge_updated(cost_center_mapping_data_processed,
-                                                                c("COST_CENTER", "NAME"),
-                                                                "BSC_FINANCE_COST_CENTER_MAPPING",
-                                                                "BSC_FINANCE_COST_CENTER_MAPPING_ST",
-                                                                update_cols)
-            
+            supplier_mapping_data <- read.xlsx(supplier_mapping_data_file_path)
+            flag <- 1
           },
           error = function(err){  showModal(modalDialog(
             title = "Error",
-            paste0("There seems to be an storing the Cost Center Mapping Data"),
+            paste0("There seems to be an issue with the Supplier Mapping file."),
             easyClose = TRUE,
             footer = NULL
           ))
             shinyjs::enable(button_name)
           })
-        
-        
-        # update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-        #                           input$selectedService3)
+          
+          if(flag == 1){
+            tryCatch({supplier_mapping_data_processed <- process_finance_supplier_mapping_data(supplier_mapping_data, updated_user)
+            flag <- 2
+            
+            },
+            error = function(err){  showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue processing Supplier Data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+              shinyjs::enable(button_name)
+            })
+          }
+          
+          if(flag == 2){
+            ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+            #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
+            
+            #wirte the updated data to the Supplier Mapping table in the server
+            tryCatch({
+              write_temporary_table_to_database_and_merge_updated(supplier_mapping_data_processed,
+                                                                  "ACCTNAME",
+                                                                  "BSC_FINANCE_SUPPLIER_MAPPING",
+                                                                  "BSC_FINANCE_SUPPLIER_MAPPING_ST",
+                                                                  c("CATEGORY","UPDATED_USER"))
+
+            },
+            error = function(err){  showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an storing the Supplier Mapping Data"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+              shinyjs::enable(button_name)
+            })
+          }
+        }
+          
+        if(cost_center_mapping_flag){
+          
+            tryCatch({cost_center_mapping_data <- read.xlsx(cost_center_mapping_data_file_path,sheet=2)
+            flag <- 1
+            
+            },
+            error = function(err){  showModal(modalDialog(
+              title = "Error",
+              paste0("There seems to be an issue with the Cost Center Data file."),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+              shinyjs::enable(button_name)
+            })
+            
+            if(flag == 1){
+              tryCatch({cost_center_mapping_data_processed <- process_finance_cost_center_data(cost_center_mapping_data, updated_user)
+              flag <- 2
+              
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an issue processing Cost Center Data file."),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+            }
+            
+            if(flag == 2){
+              ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+              #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
+              
+              #wirte the updated data to the Supplier Mapping table in the server
+              tryCatch({
+                
+                col_names_new  <- names(cost_center_mapping_data_processed)
+                update_cols <- col_names_new[col_names_new != "COST_CENTER"]
+                update_cols <- update_cols[update_cols != "NAME"]
+                
+                write_temporary_table_to_database_and_merge_updated(cost_center_mapping_data_processed,
+                                                                    c("COST_CENTER", "NAME"),
+                                                                    "BSC_FINANCE_COST_CENTER_MAPPING",
+                                                                    "BSC_FINANCE_COST_CENTER_MAPPING_ST",
+                                                                    update_cols)
+                
+              },
+              error = function(err){  showModal(modalDialog(
+                title = "Error",
+                paste0("There seems to be an storing the Cost Center Mapping Data"),
+                easyClose = TRUE,
+                footer = NULL
+              ))
+                shinyjs::enable(button_name)
+              })
+              
+          
+            }
+        }
       }
+        
       shinyjs::enable(button_name)
       
       

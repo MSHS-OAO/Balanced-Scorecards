@@ -223,11 +223,11 @@ ui <-
                                           )
                                         ),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = "pills",
-                                        tabPanel("Finance", br(),
-                                                 fileInput("finance_budget", label = "Please upload Budget data"),
-                                                 actionButton("submit_finance", label = "Submit")
-                               
-                                      ),
+                                      #   tabPanel("Finance", br(),
+                                      #            fileInput("finance_budget", label = "Please upload Budget data"),
+                                      #            actionButton("submit_finance", label = "Submit")
+                                      # 
+                                      # ),
                                       # tabPanel("Census Days", br(),
                                       #          fileInput("finance_census", label = "Please upload Census Days data"),
                                       #          actionButton("submit_finance", label = "Submit")

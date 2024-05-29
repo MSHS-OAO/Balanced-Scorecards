@@ -17,6 +17,9 @@ process_finance_access_data <- function(data, updated_user){
            Month.Actual,
            YTD.Actual,
            Annual.Budget,
+           Remaining.Budget.YTD,
+           Mo.Bud.Minus.Act,
+           YTD.Bud.Minus.Act,
            Time.Period)%>%
     rename(NAME = Name,
            SUB_ACCOUNT = Sub.Account,
@@ -27,7 +30,10 @@ process_finance_access_data <- function(data, updated_user){
               MONTH_ACTUAL = sum(Month.Actual),
               YTD_BUDGET = sum(YTD.Budget),
               YTD_ACTUAL = sum(YTD.Actual),
-              ANNUAL_BUDGET = sum(Annual.Budget))%>%
+              ANNUAL_BUDGET = sum(Annual.Budget),
+              REMAINING_BUDGET_YTD = sum(Remaining.Budget.YTD),
+              MONTH_BUDGET_MINUS_ACCT = sum(Mo.Bud.Minus.Act),
+              YTD_BUDGET_MINUS_ACCT = sum(YTD.Bud.Minus.Act))%>%
     mutate(UPDATED_USER =  updated_user) %>%
     ungroup()
   
@@ -43,3 +49,5 @@ process_finance_access_data <- function(data, updated_user){
   
   
 }
+
+# processed_data_access <- process_finance_access_data(data,updated_user)
