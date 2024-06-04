@@ -5025,6 +5025,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         return(df_ordered)
       }
       
+      # Function to create new dataframe 
+      insertRow <- function(data, new_row, r) { 
+        data_new <- rbind(data[1:r, ],             
+                          new_row,                 
+                          data[- (1:r), ])         
+        rownames(data_new) <- 1:nrow(data_new)     
+        return(data_new) 
+      } 
+      
       
       #Output function 
       
@@ -5090,7 +5099,23 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = ifelse(YTD_PERCENT_VARIANCE <= -2, NA, YTD_PERCENT_VARIANCE))
         current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
-     
+        
+        
+        if("Productivity Index" %in% unique(current_state_temp$METRIC)) {
+          prod_index <- which(current_state_temp$METRIC == "Productivity Index") - 1
+          
+          prod_data <- current_state_temp %>% filter(METRIC == "Productivity Index")
+          
+          current_state_temp <- current_state_temp %>% filter(METRIC != "Productivity Index")
+          
+          prod_data <- prod_data %>% mutate(TIME_PERIOD = as.Date(paste0(TIME_PERIOD, "-01")))
+          
+          prod_data <- left_join(prod_data, report_date_mapping[, c("Report Data Updated until", "Dashboard Month")], by = c("TIME_PERIOD" = "Dashboard Month")) %>%
+            select(-TIME_PERIOD) %>% rename(TIME_PERIOD = `Report Data Updated until`) %>% relocate(TIME_PERIOD, .after = METRIC) %>% mutate(TIME_PERIOD = paste0("Rep. Pd. Ending ", format(TIME_PERIOD, "%m/%d/%Y")))
+          
+          current_state_temp <- insertRow(current_state_temp, prod_data, prod_index) 
+          
+        }
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
           add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
