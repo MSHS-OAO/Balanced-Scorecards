@@ -63,7 +63,8 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   data <- bind_rows(data, data_ed, data_rad, data_cn,data_ss,data_mso)
   
   data <- data%>%
-    filter(!Function %in% c('#N/A', '(blank)'))
+    filter(!Function %in% c('#N/A', '(blank)')) %>%
+    mutate(Month = as.Date(Month))
   
   
   
@@ -77,7 +78,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   
   data <- data %>% select(Function, Category, SITE, CC, Name, EXPTYPE, `Sub Account`, `Sub Account Description`, `Supply Mapping File.Category`, Month, `Sum of Month Budget`, `Sum of Month Actual`, `Sum of YTD Budget`, `Sum of YTD Actual`, `Sum of Annual Budget`, `Sum of Remaining Budget YTD`) %>%
               filter(Function != "Grand Total") %>%
-              mutate(across(where(is.numeric), round, digits=2))
+              mutate(across(where(is.numeric), round, digits=2)) 
   
     colnames(data) <- toupper(colnames(data))
     colnames(data) <- gsub("[.]", " ", colnames(data))
