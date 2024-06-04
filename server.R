@@ -5054,6 +5054,46 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
         
+        
+        service_selected <- isolate(input$selectedService5)
+        
+        
+        if("Productivity Index" %!in% unique(current_state_data$METRIC) & service_selected %in% unique(system_productivity$SERVICE)) {
+          
+          connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+          current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE == "Worked Hours Productivity Index")%>% 
+                                arrange(desc(MONTH)) %>% head(1) %>% collect()
+          dbDisconnect(connection_current)
+          
+          current_state_data <- rbind(current_state_data, current_state_data_prod)
+          
+          # prod_index <- which(current_state_temp$METRIC == "Total Expenses")
+          # 
+          # connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+          # current_state_tbl <- tbl(connection_current, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
+          # system_prod <- current_state_tbl %>% select(-UPDATED_TIME, -UPDATED_USER, -SITE, -PREMIER_REPORTING_PERIOD) %>%
+          #   filter(SERVICE == service_selected) %>% arrange(desc(REPORTING_MONTH)) %>% head(2) %>% collect() %>% select(-SERVICE)
+          # dbDisconnect(connection_current)
+          # 
+          # system_prod <- system_prod %>% mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Worked Hours Productivity Index (FYTD)", "YTD_ACTUAL", "MTD_ACTUAL")) %>%
+          #   pivot_wider(names_from = METRIC_NAME_SUBMITTED, values_from = VALUE) %>% mutate(SCOPE = "Labor", METRIC = "Productivity Index", TIME_PERIOD = format(REPORTING_MONTH, "%Y-%m"), 
+          #                                                                                   YTD_Target = 1, MTD_Target = 1) %>%
+          #   select(-REPORTING_MONTH) %>%
+          #   mutate(MTD_VARIANCE_TO_TARGET = MTD_ACTUAL - MTD_Target,  
+          #          YTD_VARIANCE_TO_TARGET = YTD_ACTUAL - YTD_Target, YTD_PERCENT_VARIANCE = YTD_ACTUAL - YTD_Target)
+          # 
+          # 
+          # col_names <- colnames(current_state_temp)
+          # 
+          # system_prod <- system_prod[,col_names]
+          # 
+          # system_prod <- system_prod %>% mutate_if(is.numeric, ~paste0(. * 100, "%"))
+          # 
+          # current_state_temp <- insertRow(current_state_temp, system_prod, prod_index) 
+          
+        }
+        
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
                                         
@@ -5099,8 +5139,35 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = ifelse(YTD_PERCENT_VARIANCE <= -2, NA, YTD_PERCENT_VARIANCE))
         current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
+
         
-        
+        # if("Productivity Index" %!in% unique(current_state_temp$METRIC) & service_selected %in% unique(system_productivity$SERVICE)) {
+        #   prod_index <- which(current_state_temp$METRIC == "Total Expenses")
+        #   
+        #   connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        #   current_state_tbl <- tbl(connection_current, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
+        #   system_prod <- current_state_tbl %>% select(-UPDATED_TIME, -UPDATED_USER, -SITE, -PREMIER_REPORTING_PERIOD) %>%
+        #     filter(SERVICE == service_selected) %>% arrange(desc(REPORTING_MONTH)) %>% head(2) %>% collect() %>% select(-SERVICE)
+        #   dbDisconnect(connection_current)
+        #   
+        #   system_prod <- system_prod %>% mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Worked Hours Productivity Index (FYTD)", "YTD_ACTUAL", "MTD_ACTUAL")) %>%
+        #                   pivot_wider(names_from = METRIC_NAME_SUBMITTED, values_from = VALUE) %>% mutate(SCOPE = "Labor", METRIC = "Productivity Index", TIME_PERIOD = format(REPORTING_MONTH, "%Y-%m"), 
+        #                                                                                                   YTD_Target = 1, MTD_Target = 1) %>%
+        #                                                                                                   select(-REPORTING_MONTH) %>%
+        #     mutate(MTD_VARIANCE_TO_TARGET = MTD_ACTUAL - MTD_Target,  
+        #            YTD_VARIANCE_TO_TARGET = YTD_ACTUAL - YTD_Target, YTD_PERCENT_VARIANCE = YTD_ACTUAL - YTD_Target)
+        #   
+        # 
+        #   col_names <- colnames(current_state_temp)
+        #   
+        #   system_prod <- system_prod[,col_names]
+        #   
+        #   system_prod <- system_prod %>% mutate_if(is.numeric, ~paste0(. * 100, "%"))
+        #   
+        #   current_state_temp <- insertRow(current_state_temp, system_prod, prod_index) 
+        #   
+        # }
+        # 
         if("Productivity Index" %in% unique(current_state_temp$METRIC)) {
           prod_index <- which(current_state_temp$METRIC == "Productivity Index") - 1
           
