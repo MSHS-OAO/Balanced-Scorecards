@@ -12,7 +12,9 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
                   mutate_if(is.character, function(x) gsub("&", "' || chr(38) || '", x)) %>%
                   mutate_if(is.character, function(x) paste0("'", x, "'")) %>%
                   mutate_if(is.Date, function(x) paste0("TO_DATE('", x, "', 'YYYY-MM-DD')")) %>%
-                  mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')"))) #%>%
+                  mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')")),
+                         across(where(is.numeric), ~replace(., is.na(.), 0)),
+                        across(where(is.character), ~replace(., is.na(.), "''"))) #%>%
                   #replace(is.na(.), "''")
   
   columns <- paste(colnames(process_data), collapse = ",")
@@ -20,7 +22,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   values <- process_data %>% mutate(values = paste0("(", col_concat(., sep = ","), ")")) %>%
     select(values)
   
-  values$values <- gsub('NA', "", values$values)
+  # values$values <- gsub('NA', "", values$values)
   
   data_records <- split(values ,1:nrow(values))
   
@@ -33,7 +35,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   }
   registerDoSEQ()
   
-  chunk_length <- 500
+  chunk_length <- 5
   split_queries <- split(inserts, ceiling(seq_along(inserts)/chunk_length))
   
   
@@ -41,6 +43,8 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   for (i in 1:length(split_queries)) {
     row <- glue_collapse(split_queries[[i]], sep = "\n\n")
     row <- gsub("\\bNA\\b", "''", row)
+    #row <- gsub("", "''", row)
+    
     # row <- gsub("&", " ' || chr(38) || ' ", row)
     sql <- glue('INSERT ALL {row} SELECT 1 FROM DUAL;')
     split_queries_sql_statements <- append(split_queries_sql_statements, gsub("\\n", "", sql))
@@ -69,13 +73,15 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   
   registerDoParallel()
   
-    outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
+    #outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
+      
+      for(i in 1:length(split_queries_sql_statements)){
       #Connecting to database through DBI
       ch = dbConnect(odbc(), dsn)
       #Test connection
       tryCatch({
         dbBegin(ch)
-        #print(i)
+        print(i)
         dbExecute(ch, split_queries_sql_statements[[i]])
         dbCommit(ch)
       },
