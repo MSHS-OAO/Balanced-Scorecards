@@ -5037,8 +5037,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_state_data <- current_state_data_reactive()
         target_and_status_data <- target_and_status_metrics_reactive()
         
+        current_state_data_test <<- current_state_data
         
-        current_state_data <- current_state_data %>% filter(rowSums(across(where(is.numeric)))!=0)
+        current_state_data <- current_state_data %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
         
         '%!in%' <- function(x,y)!('%in%'(x,y))
         
