@@ -5058,7 +5058,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         service_selected <- isolate(input$selectedService5)
         
         
-        if("Productivity Index" %!in% unique(current_state_data$METRIC) & service_selected %in% unique(system_productivity$SERVICE)) {
+        if("Worked Hours Productivity Index" %!in% unique(current_state_data$EXPTYPE) & service_selected %in% unique(system_productivity$SERVICE)) {
           
           connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
           current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
