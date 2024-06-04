@@ -73,9 +73,9 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   
   registerDoParallel()
   
-    #outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
+    outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
       
-      for(i in 1:length(split_queries_sql_statements)){
+      #for(i in 1:length(split_queries_sql_statements)){
       #Connecting to database through DBI
       ch = dbConnect(odbc(), dsn)
       #Test connection
