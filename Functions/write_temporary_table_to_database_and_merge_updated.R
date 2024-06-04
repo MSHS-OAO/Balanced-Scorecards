@@ -35,7 +35,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   }
   registerDoSEQ()
   
-  chunk_length <- 5
+  chunk_length <- 500
   split_queries <- split(inserts, ceiling(seq_along(inserts)/chunk_length))
   
   
