@@ -22,7 +22,7 @@
 
 # Import mapping file
 # pt_exp_mapping <- read_excel(target_mapping_path, sheet = "Patient Experience")
-conn <- dbConnect(odbc(), dsn)
+# conn <- dbConnect(odbc(), dsn)
 pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>% 
                   rename(Raw_Pt_Exp_Service = RAW_PT_EXP_SERVICE,
                          Service = SERVICE,
