@@ -544,3 +544,5 @@ source(paste0("Functions/manual_format_check.R"))
 # source("productivity_update.R")
 # source("peri_op_processing.R")
 dbDisconnect(conn)
+
+pool_con <- dbPool(drv = odbc(), dsn = dsn)
