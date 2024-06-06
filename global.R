@@ -521,7 +521,7 @@ print("11")
 
 # Source files for processing service line data -------------------
 function_sources <- list.files("Functions", full.names = T, recursive = T)
-sapply(function_sources, source)
+sapply(function_sources, source, echo = T)
 source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
 # source("ClinicalNurtrition.R")
