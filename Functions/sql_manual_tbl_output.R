@@ -1,12 +1,12 @@
-# poolcon <- dbPool(drv = odbc::odbc(), dsn = dsn, timeout = 30)
-# summary_repo_tbl <- tbl(poolcon, "SUMMARY_REPO")
-# manual_tbl_mapping <- tbl(poolcon, "BSC_MANUAL_TABLE_MAPPING")
+poolcon <- dbPool(drv = odbc::odbc(), dsn = dsn, timeout = 30)
+summary_repo_tbl <- tbl(poolcon, "SUMMARY_REPO")
+manual_tbl_mapping <- tbl(poolcon, "BSC_MANUAL_TABLE_MAPPING")
 
 sql_manual_table_output <- function(service, table_name) {
   
-  conn <- dbConnect(odbc::odbc(), dsn)
-  summary_repo_tbl <- tbl(conn, "SUMMARY_REPO")
-  manual_tbl_mapping <- tbl(conn, "BSC_MANUAL_TABLE_MAPPING")
+  # conn <- dbConnect(odbc::odbc(), dsn)
+  # summary_repo_tbl <- tbl(conn, "SUMMARY_REPO")
+  # manual_tbl_mapping <- tbl(conn, "BSC_MANUAL_TABLE_MAPPING")
   
   max_month <- as.character(Sys.Date() %m-% months(8))
   format <- "YYYY-MM-DD"
@@ -32,7 +32,7 @@ sql_manual_table_output <- function(service, table_name) {
     pivot_wider(names_from = Month,
                 values_from = Value)
   
-  dbDisconnect(conn)
+  # dbDisconnect(conn)
   
   df <- df[order(df$Metric, decreasing = TRUE),]
   
