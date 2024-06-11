@@ -63,6 +63,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     print("error")
     dbRollback(ch)
     dbDisconnect(ch)
+    ErrorUI("ClearStaging")
     
   })
   
@@ -82,7 +83,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
         print("error")
         dbRollback(ch)
         dbDisconnect(ch)
-        
+        ErrorUI("StagingTable")
       })
     }
   )
@@ -134,32 +135,14 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     dbCommit(ch)
     dbDisconnect(ch)
     print("success")
-    if(isRunning()) {
-      showModal(modalDialog(
-        title = "Success",
-        paste0("The data has been submitted successfully."),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-    } else{
-      print(paste0("The data has been submitted successfully."))
-    }
-    
+    SuccessUI("Merge")
+
   },
   error = function(err){
     print("error")
     dbRollback(ch)
     dbDisconnect(ch)
-    if(isRunning()) {
-      showModal(modalDialog(
-        title = "Error",
-        paste0("There was an issue submitting the data."),
-        easyClose = TRUE,
-        footer = NULL
-      ))
-    } else{
-      print(paste0("There was an issue submitting the data."))
-    }
+    ErrorUI("Merge")
     
   })
   
