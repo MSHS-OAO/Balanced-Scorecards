@@ -60,7 +60,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     dbDisconnect(ch)
   },
   error = function(err){
-    print("error")
+    print("error1")
     dbRollback(ch)
     dbDisconnect(ch)
     ErrorUI("ClearStaging")
@@ -80,7 +80,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
         dbCommit(ch)
       },
       error = function(err){
-        print("error")
+        print("error2")
         dbRollback(ch)
         dbDisconnect(ch)
         ErrorUI("StagingTable")
