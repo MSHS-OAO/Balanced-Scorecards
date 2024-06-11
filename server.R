@@ -3828,12 +3828,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         supplier_mapping_flag <- !is.null(supplier_mapping_data_file$datapath)
         cost_center_mapping_flag <- !is.null(cost_center_mapping_data_file$datapath)
         
-        supplier_mapping_data_file_path <- supplier_mapping_data_file$datapath
-        cost_center_mapping_data_file_path <- cost_center_mapping_data_file$datapath
         
         if(supplier_mapping_flag){
           tryCatch({
-            supplier_mapping_data <- read.xlsx(supplier_mapping_data_file_path)
+            supplier_mapping_data_file_path <- supplier_mapping_data_file$datapath
+            # supplier_mapping_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Supply category to Sub-account mapping.xlsx"
+            # updated_user <- "Test"
+            supplier_mapping_data <- read_excel(supplier_mapping_data_file_path,
+                                                col_types = c("text","text"))
             flag <- 1
           },
           error = function(err){  showModal(modalDialog(
@@ -3886,7 +3888,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
         if(cost_center_mapping_flag){
           
-            tryCatch({cost_center_mapping_data <- read.xlsx(cost_center_mapping_data_file_path,sheet=2)
+            tryCatch({
+              cost_center_mapping_data_file_path <- cost_center_mapping_data_file$datapath
+              # cost_center_mapping_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Cost Center Mapping Main File.xlsx"
+              # updated_user <- "Test"
+              types_col <- rep("text",each=20)
+              cost_center_mapping_data <- read_excel(cost_center_mapping_data_file_path,
+                                                     sheet=2,
+                                                     col_types = types_col)
             flag <- 1
             
             },
