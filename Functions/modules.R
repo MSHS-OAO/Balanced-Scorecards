@@ -1,6 +1,7 @@
 
-SuccessUI <- function(id) {
+SuccessUI <- function(id,log) {
   ns <- NS(id)
+  print(paste0(log))
   tagList(
     if(isRunning()) {
       showModal(modalDialog(
@@ -10,14 +11,15 @@ SuccessUI <- function(id) {
         footer = NULL
       ))
     } else{
-      print(paste0("The data has been submitted successfully."))
+      print(paste0(log))
     }
     
   )
 }
 
-ErrorUI <- function(id) {
+ErrorUI <- function(id,log) {
   ns <- NS(id)
+  print(paste0(log))
   tagList(
     if(isRunning()) {
       showModal(modalDialog(
@@ -27,7 +29,7 @@ ErrorUI <- function(id) {
         footer = NULL
       ))
     } else{
-      print(paste0("There was an issue submitting the data."))
+      print(paste0(log))
     }
     
   )
