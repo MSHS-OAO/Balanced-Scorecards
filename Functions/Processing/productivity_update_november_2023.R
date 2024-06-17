@@ -10,7 +10,7 @@ productivity_processing <- function(raw_data, updated_user) {
                                                                                ifelse(CORPORATE_SERVICE_LINE == "Support Services - Environmental Services", "Environmental Services",
                                                                                       ifelse(CORPORATE_SERVICE_LINE == "Support Services - Food Services", "Food Services",
                                                                                              ifelse(grepl("Nursing", CORPORATE_SERVICE_LINE), "Nursing",
-                                                                                                    ifelse(CORPORATE_SERVICE_LINE == "Support Services - Patient Transport", "Patient Transport",
+                                                                                                    ifelse(CORPORATE_SERVICE_LINE == "Support Services - Patient & Equipment Transport", "Patient Transport",
                                                                                                            ifelse(CORPORATE_SERVICE_LINE == "Support Services - Security", "Security", 
                                                                                                                   ifelse(CORPORATE_SERVICE_LINE == "Perioperative Services", "Perioperative Services",
                                                                                                                          ifelse(CORPORATE_SERVICE_LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
