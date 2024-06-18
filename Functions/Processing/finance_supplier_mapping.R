@@ -10,12 +10,6 @@ process_finance_supplier_mapping_data <-  function(data, updated_user) {
     distinct()
   
  
-  write_temporary_table_to_database_and_merge_updated(data,
-                                                      "ACCTNAME",
-                                                      "BSC_FINANCE_SUPPLIER_MAPPING",
-                                                      "BSC_FINANCE_SUPPLIER_MAPPING_ST",
-                                                      c("CATEGORY","UPDATED_USER"))
-  
 }
 
 # process_finance_supplier_mapping_data(data, updated_user)
