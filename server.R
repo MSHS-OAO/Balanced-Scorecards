@@ -3788,7 +3788,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
         
         #wirte the updated data to the Acces table in the server
-        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD")
+        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD", "MONTH")
         update_cols = names(access_data_processed)
         update_cols = update_cols[! update_cols %in% key_cols]
 

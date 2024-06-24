@@ -1,5 +1,5 @@
-# data <- read.xlsx("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Feb 2024 Access Data.xlsx")
-# updated_user = "Dheeraj Test"
+data <- read.xlsx("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Feb 2024 Access Data.xlsx")
+updated_user = "Dheeraj Test"
 
 
 process_finance_access_data <- function(data, updated_user){
@@ -34,7 +34,8 @@ process_finance_access_data <- function(data, updated_user){
               REMAINING_BUDGET_YTD = sum(Remaining.Budget.YTD),
               MONTH_BUDGET_MINUS_ACCT = sum(Mo.Bud.Minus.Act),
               YTD_BUDGET_MINUS_ACCT = sum(YTD.Bud.Minus.Act))%>%
-    mutate(UPDATED_USER =  updated_user) %>%
+    mutate(UPDATED_USER =  updated_user,
+           MONTH = as.Date(paste('01', TIME_PERIOD), format='%d %B %Y')) %>%
     ungroup()
   
   # key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD")
