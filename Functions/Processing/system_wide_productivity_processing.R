@@ -87,7 +87,7 @@ productivity_processing_system_wide <- function(raw_data, updated_user) {
            SERVICE =  case_when( 
                                  # SERVICE == "Biomedical Engineering" ~ "Biomed / Clinical Engineering",
                                  # SERVICE == "Radiology" ~ "Imaging",
-                                 SERVICE == "Transport" ~ "Patient & Equipment Transport",
+                                 # SERVICE == "Transport" ~ "Patient & Equipment Transport",
                                  TRUE ~ SERVICE),
            UPDATED_USER = updated_user,
            VALUE = round(as.numeric(VALUE),2))  %>%
