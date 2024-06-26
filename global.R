@@ -520,6 +520,8 @@ metric_mapping_breakout <- metric_mapping_database %>%
   mutate(General_Group = as.character(General_Group))
 print("11")
 
+
+system_productivity <- tbl(conn, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE") %>% group_by(SERVICE) %>% summarise(max = max(REPORTING_MONTH)) %>% collect()
 # Source files for processing service line data -------------------
 function_sources <- list.files("Functions", full.names = T, recursive = T)
 sapply(function_sources, source, echo = T)
