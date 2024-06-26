@@ -4963,9 +4963,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       #observe entries from the user
       
-      observeEvent(input$selectedService5, {
+      observeEvent(c(input$selectedService5, input$submit_finance), {
         overview_service_selected <- input$selectedService5
         
+        print("observe")
         
         # update future_state_table 
         
