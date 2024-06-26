@@ -557,8 +557,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            "Metric_Name_Summary",
                                            "Metric_Name",
                                            "Reporting_Month_Ref",
-                                           "Premier_Reporting_Period"),
-                                    all = TRUE)
+                                           "Premier_Reporting_Period"))
       
       
       fytd_summary_total <- fytd_summary_all %>%
@@ -848,7 +847,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         ifelse(Metric_Unit %in% "Dollar",
                                dollar(round(x)),
                                ifelse(Metric_Unit %in% "Percent",
-                                      percent(x, 0.1),
+                                      scales::percent(x, 0.1),
                                       prettyNum(round(x, digits = 1),
                                                 big.mark = ",")))
                       }),
@@ -1565,7 +1564,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         ifelse(Metric_Unit %in% "Dollar",
                                dollar(round(x)),
                                ifelse(Metric_Unit %in% "Percent",
-                                      percent(x, 0.1),
+                                      scales::percent(x, 0.1),
                                       prettyNum(round(x, digits = 1),
                                                 big.mark = ",")))
                       }),
@@ -1978,7 +1977,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                    ifelse(Metric_Unit %in% "Dollar",
                           dollar(round(x)),
                           ifelse(Metric_Unit %in% "Percent",
-                                 percent(x, 0.1),
+                                 scales::percent(x, 0.1),
                                  prettyNum(round(x, digits = 1),
                                            big.mark = ",")))
                       }),
@@ -4629,7 +4628,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Update format of metrics as percent
         targets_table_summary$Target[which(
           targets_table_summary$Metric_Unit == "Percent")] <-
-          percent(
+          scales::percent(
             as.numeric(
               targets_table_summary$Target[which(
                 targets_table_summary$Metric_Unit == "Percent")]),
