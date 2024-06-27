@@ -3752,8 +3752,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         access_data_file_path <- access_data_file$datapath
-        tryCatch({#overtime_file_path <- paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx")
-          access_data <- read.xlsx(access_data_file_path)
+        tryCatch({
+          # access_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Feb 2024 Access Data.xlsx"
+          access_data <- read_excel(access_data_file_path,
+                                   col_types = c("text","text","text","text","text",
+                                                 "text","text","numeric","numeric","numeric",
+                                                 "numeric","numeric","numeric","numeric","numeric",
+                                                 "text","text","text","text","text",
+                                                 "text","text","text","text","text"))
           flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -3788,7 +3794,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
         
         #wirte the updated data to the Acces table in the server
-        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD")
+        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD", "MONTH")
         update_cols = names(access_data_processed)
         update_cols = update_cols[! update_cols %in% key_cols]
 
