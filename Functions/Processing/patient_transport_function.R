@@ -10,8 +10,9 @@ process_patient_transport_data <-  function(data, updated_user) {
   
   data <- data %>%
     mutate(UPDATED_USER = updated_user) %>%
-    mutate(PREMIER_REPORTING_PERIOD = format(mdy_hm(REPORTING_MONTH),"%b-%y")) %>%
+    mutate(PREMIER_REPORTING_PERIOD = format(mdy_hm(REPORTING_MONTH),"%b %Y")) %>%
     mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, format = "%m/%d/%Y %H:%M")) %>%
+    mutate(VALUE = round(VALUE, 3)) %>%
     rename(METRIC_NAME_SUBMITTED=METRIC_NAME_SUMMARY) %>%
     select(SERVICE,SITE,REPORTING_MONTH,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER,PREMIER_REPORTING_PERIOD) 
   
