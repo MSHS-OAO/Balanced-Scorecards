@@ -3870,7 +3870,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               updated_user <- input$name_transport_pt
               
               
-              pt_data_raw <- read_excel(file_path, sheet = "PTET")
+              # pt_data_raw <- read_excel(file_path, sheet = "PTET")
+              pt_data_raw <- read.csv(file_path)
               
               
               flag <- 1
@@ -3894,7 +3895,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
           tryCatch({
             # Process Input Data
-            pt_summary_repo <- process_PT_data(pt_data_raw,updated_user)
+            pt_summary_repo <- process_patient_transport_data(pt_data_raw,updated_user)
             flag <- 2
             
           },
