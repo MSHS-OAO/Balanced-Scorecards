@@ -2,8 +2,8 @@ library(dplyr)
 library(magrittr)
 library(lubridate)
 
-data <- read.csv("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Patient Transport Jan-Apr 2024 data.csv")
-updated_user = "Laith Test"
+# data <- read.csv("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Patient Transport Jan-Apr 2024 data.csv")
+# updated_user = "Laith Test"
 
 
 process_patient_transport_data <-  function(data, updated_user) {
@@ -19,5 +19,5 @@ return(data)
   
 }
 
-data <- process_patient_transport_data(data,updated_user)
-head(data)
+# data <- process_patient_transport_data(data,updated_user)
+# head(data)
