@@ -93,49 +93,49 @@ ui <-
 
            tabsetPanel(  
              # First Tab - System overview - -----------------------
-             tabPanel("System Overview", value = "system",
-                      fluidRow(
-                        column(2,
-                               box(
-                                 title = NULL, solidHeader = FALSE, width =12,
-                                 pickerInput("selectedService5", label = h4("Select Department:"),
-                                             choices = service_choices_sw,
-                                             multiple = FALSE,
-                                             options = pickerOptions(
-                                               liveSearch = TRUE,
-                                               actionsBox = TRUE,
-                                               dropupAuto = FALSE,
-                                               size = 10),
-                                             selected = service_choices_sw[1])
-                               )
-                        ),
-                        column(2,
-                               box(
-                                 title = NULL, solidHeader = FALSE, width =12,
-                                 pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
-                                             choices = month_choices_sw,
-                                             multiple = FALSE,
-                                             options = pickerOptions(
-                                               liveSearch = TRUE,
-                                               actionsBox = TRUE,
-                                               dropupAuto = FALSE,
-                                               size = 10),
-                                             selected = month_choice_selected)
-                               )
-                        ),
-                        fluidRow(
-                          column(12,
-                                 h1("Current State"),
-                                 tableOutput("current_state_system_table") %>%
-                                   withSpinner(type = 8, color = "#dddedd"),
-                                 h1("Future State"),
-                                 tableOutput("future_state_system_table") %>%
-                                   withSpinner(type = 8, color = "#dddedd")
-                          )
-                        )
-                      )
-                      
-             ),
+             # tabPanel("System Overview", value = "system",
+             #          fluidRow(
+             #            column(2,
+             #                   box(
+             #                     title = NULL, solidHeader = FALSE, width =12,
+             #                     pickerInput("selectedService5", label = h4("Select Department:"),
+             #                                 choices = service_choices_sw,
+             #                                 multiple = FALSE,
+             #                                 options = pickerOptions(
+             #                                   liveSearch = TRUE,
+             #                                   actionsBox = TRUE,
+             #                                   dropupAuto = FALSE,
+             #                                   size = 10),
+             #                                 selected = service_choices_sw[1])
+             #                   )
+             #            ),
+             #            column(2,
+             #                   box(
+             #                     title = NULL, solidHeader = FALSE, width =12,
+             #                     pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
+             #                                 choices = month_choices_sw,
+             #                                 multiple = FALSE,
+             #                                 options = pickerOptions(
+             #                                   liveSearch = TRUE,
+             #                                   actionsBox = TRUE,
+             #                                   dropupAuto = FALSE,
+             #                                   size = 10),
+             #                                 selected = month_choice_selected)
+             #                   )
+             #            ),
+             #            fluidRow(
+             #              column(12,
+             #                     h1("Current State"),
+             #                     tableOutput("current_state_system_table") %>%
+             #                       withSpinner(type = 8, color = "#dddedd"),
+             #                     h1("Future State"),
+             #                     tableOutput("future_state_system_table") %>%
+             #                       withSpinner(type = 8, color = "#dddedd")
+             #              )
+             #            )
+             #          )
+             #          
+             # ),
              # Close tabpanel System Overview  
              
              
