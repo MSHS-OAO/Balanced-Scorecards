@@ -4993,57 +4993,57 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       #observe entries from the user
       
-      # observeEvent(c(input$selectedService5, input$submit_finance), {
-      #   overview_service_selected <- input$selectedService5
-      #   
-      #   print("observe")
-      #   
-      #   # update future_state_table 
-      #   
-      #   connection <- dbConnect(drv = odbc::odbc(),
-      #                           dsn = dsn)
-      #   future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
-      #   emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
-      #   future_state_data_reactive(emergency_department_data)
-      #   dbDisconnect(connection)
-      #   
-      #   #update Current_state_table
-      #   
-      #   connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-      #   current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
-      #   current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
-      #   
-      #   picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
-      #   updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-      #   
-      #   observeEvent(input$selectedMonth4, {
-      #     overview_date_selected <- input$selectedMonth4
-      #     
-      #     current_state_data_filtered <- current_state_data %>% 
-      #       filter(format(MONTH, "%m-%Y") == overview_date_selected) %>% 
-      #       collect()        
-      #     
-      #     current_state_data_reactive(current_state_data_filtered)
-      #     
-      #     #retrieve Target and Status metrics data 
-      #     
-      #     
-      #     conn <- dbConnect(odbc(), dsn)
-      #     status_data <- tbl(conn, "BSC_TARGET_STATUS") %>% 
-      #       collect() 
-      #     dbDisconnect(conn)
-      #     
-      #     strings_to_check <- c("Overtime Hours", "Productivity Index","Budget to Actual Variance","Overtime Dollars")
-      #     filtered_df <- status_data %>%
-      #       filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
-      #       distinct(METRIC_NAME_SUBMITTED,GREEN_STATUS,YELLOW_STATUS,RED_STATUS, .keep_all = TRUE)
-      #     
-      #     target_and_status_metrics_reactive(filtered_df)
-      # 
-      #   })
-      #   
-      #   dbDisconnect(connection_current)
-      # })
+      observeEvent(c(input$selectedService5, input$submit_finance), {
+        overview_service_selected <- input$selectedService5
+
+        print("observe")
+
+        # update future_state_table
+
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = dsn)
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+        emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+        future_state_data_reactive(emergency_department_data)
+        dbDisconnect(connection)
+
+        #update Current_state_table
+
+        connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+        current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+
+        picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+
+        observeEvent(input$selectedMonth4, {
+          overview_date_selected <- input$selectedMonth4
+
+          current_state_data_filtered <- current_state_data %>%
+            filter(format(MONTH, "%m-%Y") == overview_date_selected) %>%
+            collect()
+
+          current_state_data_reactive(current_state_data_filtered)
+
+          #retrieve Target and Status metrics data
+
+
+          conn <- dbConnect(odbc(), dsn)
+          status_data <- tbl(conn, "BSC_TARGET_STATUS") %>%
+            collect()
+          dbDisconnect(conn)
+
+          strings_to_check <- c("Overtime Hours", "Productivity Index","Budget to Actual Variance","Overtime Dollars")
+          filtered_df <- status_data %>%
+            filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
+            distinct(METRIC_NAME_SUBMITTED,GREEN_STATUS,YELLOW_STATUS,RED_STATUS, .keep_all = TRUE)
+
+          target_and_status_metrics_reactive(filtered_df)
+
+        })
+
+        dbDisconnect(connection_current)
+      })
       
 
       
