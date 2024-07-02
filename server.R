@@ -5301,8 +5301,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
         
         future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
-                              "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK",
-                              "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK",
+                              "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK*",
+                              "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK**",
                               "VARIANCE TO BUDGET",
                               "% VARIANCE")
 
