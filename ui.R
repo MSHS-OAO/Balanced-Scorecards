@@ -123,7 +123,7 @@ ui <-
                                              selected = month_choice_selected)
                                )
                         ),
-                        #fluidRow(
+                        fluidRow(
                           column(12,
                                  h1("Current State"),
                                  tableOutput("current_state_system_table") %>%
@@ -134,7 +134,7 @@ ui <-
                                  p("* The Retrospective Outlook = Salaries Current MTD Actual Annualized + Supplies Last 12 Months", style = "font-size:18px"),
                                  p("** The Prospective Outlook = Total Expense YTD Actual + 2024 Budget For The Remaining Months Of The Year", style = "font-size:18px"),
                           )
-                        #)
+                        )
                       )
 
              ),
