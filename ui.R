@@ -130,7 +130,9 @@ ui <-
                                    withSpinner(type = 8, color = "#dddedd"),
                                  h1("Future State"),
                                  tableOutput("future_state_system_table") %>%
-                                   withSpinner(type = 8, color = "#dddedd")
+                                   withSpinner(type = 8, color = "#dddedd"),
+                                 p("* The Retrospective Outlook = Salaries Current MTD Actual Annualized + Supplies Last 12 Months", style = "font-size:18px"),
+                                 p("** The Prospective Outlook = Total Expense YTD Actual + 2024 Budget For The Remaining Months Of The Year", style = "font-size:18px"),
                           )
                         )
                       )
