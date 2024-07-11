@@ -820,8 +820,8 @@ ui <-
                                  )
                         ),
                         # Patient Transport Data Submission ----
-                        tabPanel("Operational Metrics - Patient Transport",
-                                 span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                        tabPanel("Operational Metrics - Patient & Equipment Transport",
+                                 span("Operational Metrics - Patient & Equipment Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
                                  span("Please only submit data if you have completed training on data submission for this tool.",
@@ -842,7 +842,7 @@ ui <-
                                                  fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
                                                  actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
                                         ),
-                                        tabPanel("Turnaround Time-Patient Transport", hr(),
+                                        tabPanel("Turnaround Time-Patient & Equipment Transport", hr(),
                                                  fluidRow(
                                                    column(2,
                                                           textInput("name_transport_pt", (labelMandatory("1. Please enter Name:")), "")
