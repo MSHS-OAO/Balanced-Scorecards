@@ -4,7 +4,7 @@
 # raw_data_old <- read_excel(datapath_old)
 # updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
-  key_vol_mapping <- key_vol_mapping_oracle %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE_SERVICE_LINE), "Imaging",
+  key_vol_mapping <- key_vol_mapping_oracle %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE_SERVICE_LINE), "Radiology",
                                                                  ifelse(grepl("Biomed", CORPORATE_SERVICE_LINE), "Biomed / Clinical Engineering",
                                                                         ifelse(CORPORATE_SERVICE_LINE == "Support Services - Engineering", "Engineering",
                                                                                ifelse(CORPORATE_SERVICE_LINE == "Support Services - Environmental Services", "Environmental Services",

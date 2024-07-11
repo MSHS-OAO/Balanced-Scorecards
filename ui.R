@@ -679,10 +679,10 @@ ui <-
                                  
                         ),
                         # Imaging DR Ops Data Submission ----
-                        tabPanel("Operational Metrics - Imaging", value = "operational",
+                        tabPanel("Operational Metrics - Radiology", value = "operational",
                                  shinyjs::useShinyjs(),
                                  shinyjs::inlineCSS(appCSS),
-                                 span("Operational Metrics - Imaging", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                 span("Operational Metrics - Radiology", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
                                  span("Please only submit data if you have completed training on data submission for this tool.",
@@ -692,7 +692,7 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
-                                        tabPanel("Imaging - IR", 
+                                        tabPanel("Radiology - IR", 
                                                  br(),
                                                  fluidRow(
                                                    column(2,
@@ -702,10 +702,10 @@ ui <-
                                                      )
                                                    )
                                                  ),
-                                                 fileInput("imaging_IR", label = "Please upload Imaging interventional radiology data"),
+                                                 fileInput("imaging_IR", label = "Please upload interventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
                                         ),
-                                        tabPanel("Imaging - DR ED Chest X-Ray", br(),
+                                        tabPanel("Radiology - DR ED Chest X-Ray", br(),
                                                  fluidRow(
                                                    column(2,
                                                           textInput("imaging_xray_username",
@@ -714,10 +714,10 @@ ui <-
                                                           )
                                                    )
                                                  ),
-                                                 fileInput("imaging_DR_XRay", label = "Please upload Imaging ED Chest X-Ray diagnostic radiology data"),
+                                                 fileInput("imaging_DR_XRay", label = "Please upload ED Chest X-Ray diagnostic radiology data"),
                                                  actionButton("submit_imagingxray", label = "Submit")
                                         ),
-                                        tabPanel("Imaging - DR ED Head CT ", br(),
+                                        tabPanel("Radiology - DR ED Head CT ", br(),
                                                  fluidRow(
                                                    column(2,
                                                           textInput("imaging_ct_username",
@@ -726,7 +726,7 @@ ui <-
                                                           )
                                                    )
                                                  ),
-                                                 fileInput("imaging_DR_ct", label = "Please upload Imaging ED Head CT diagnostic radiology data"),
+                                                 fileInput("imaging_DR_ct", label = "Please upload ED Head CT diagnostic radiology data"),
                                                  actionButton("submit_imagingct", label = "Submit")
                                         )
                                         
@@ -1232,5 +1232,9 @@ ui <-
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
              '.navbar-default .navbar-brand{color: black; font-size: 24px;}'
              )
+ # tags$style(HTML("
+ #        #current_state_system_table {
+ #      width:50%
+ #        }"))
 
   ) # Close navbarPage

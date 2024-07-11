@@ -43,7 +43,7 @@ imaging_dept_summary <- function(data, updated_user){
   
   data <- data %>% fill(Category)
   
-  data$Service <- "Imaging"
+  data$Service <- "Radiology"
   
   data <- data %>% relocate(Site, .before = Category) %>%
                     relocate(Service, .before = (Site))
