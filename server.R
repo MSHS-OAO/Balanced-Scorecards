@@ -2222,11 +2222,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       }else{
         if(!is.null(ed_monthly)){
-          tryCatch( {pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")},
+          tryCatch( {pt_exp_server_function(button, ed_monthly, "Emergency Department", name, "Monthly")},
                     error = function(err){
                       showModal(modalDialog(
                         title = "Error",
-                        paste0("There seems to be an issue processing ED file.Please check the file."),
+                        paste0("There seems to be an issue processing the Emergency Department file.Please check the file."),
                         easyClose = TRUE,
                         footer = NULL
                       ))
@@ -2279,11 +2279,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       }else{
         if(!is.null(ed_ytd)){
-          tryCatch( {pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")},
+          tryCatch( {pt_exp_server_function(button, ed_ytd, "Emergency Department", name, "YTD")},
                     error = function(err){
                       showModal(modalDialog(
                         title = "Error",
-                        paste0("There seems to be an issue processing ED file."),
+                        paste0("There seems to be an issue processing the Emergency Department file."),
                         easyClose = TRUE,
                         footer = NULL
                       ))

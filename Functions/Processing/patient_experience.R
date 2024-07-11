@@ -132,7 +132,7 @@ pt_exp_dept_summary <- function(data) {
     # Remove irrelevant sites and service line combinations
     filter(!(Site %in% c("NYEE") & Service %in% "Patient Transport") &
              # Filter out any NYEE ED data
-             !(Site %in% c("NYEE") & Service %in% "ED") &
+             !(Site %in% c("NYEE") & Service %in% "Emergency Department") &
              # Filter out data for questions that aren't being tracked in the scorecard
              !is.na(Service))
   
