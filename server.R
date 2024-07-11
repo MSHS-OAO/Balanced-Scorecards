@@ -770,7 +770,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Adding Check to replace MSW IR Metrics with NA based on service request
       
-      if(service_input == "Imaging"){
+      if(service_input == "Radiology"){
         if(month_input  %in% c("08-2023","09-2023")){
           fytd_summary <- fytd_summary %>%
             mutate(value_rounded = case_when(Site == "MSW" & 
@@ -1299,7 +1299,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }     
 
       
-      if(service_input == "Imaging"){
+      if(service_input == "Radiology"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
           dr_start <- which(summary_tab_tb$`Metric Name` == "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")[1]
         
@@ -1825,7 +1825,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Adding Additional Check to replace MSW IR Metrics with NA based on service request
 
-      if(service_input == "Imaging" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
+      if(service_input == "Radiology" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
         data <- data %>%
           mutate(value_rounded = case_when(Site == "MSW" & 
                                              Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
