@@ -61,7 +61,7 @@ budget_raw_file_process <- function(data, updated_user){
                                                          "Patient Transport", Function)
                   ) %>%
                 mutate_at(vars(c("Function")), ~ifelse(Function == "Emergency Department", 
-                                                       "ED", Function)
+                                                       "Emergency Department", Function)
                 ) %>%
                 mutate_at(vars(c("Function")), ~ifelse(Function == "Biomedical Engineering", 
                                                        "Biomed / Clinical Engineering", Function)
