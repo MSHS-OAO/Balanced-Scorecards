@@ -3756,8 +3756,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # access_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/May 2024 Functions Pivot v4.xlsx"
           access_data <- read_excel(access_data_file_path,
                                     sheet = "ACCESS DATA",
-                                    n_max = Inf,
-                                    guess_max = min(4000, n_max))
+                                    # n_max = Inf,
+                                    guess_max = 4000)
                                     # col_names = c("FDIV",
                                     #               "SITE",
                                     #               "CC",
