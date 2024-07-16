@@ -3871,7 +3871,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               
               
               # pt_data_raw <- read_excel(file_path, sheet = "PTET")
-              pt_data_raw <- read.csv(file_path)
+              pt_data_raw <- read_excel(file_path)
               
               
               flag <- 1
