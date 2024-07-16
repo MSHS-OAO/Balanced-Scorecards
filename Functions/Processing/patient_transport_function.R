@@ -17,7 +17,12 @@ process_patient_transport_data <-  function(data, updated_user) {
     rename(METRIC_NAME_SUBMITTED=METRIC_NAME_SUMMARY) %>%
     select(SERVICE,SITE,REPORTING_MONTH,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER,PREMIER_REPORTING_PERIOD) 
   
-return(data)
+  pt_transport_mapping <- metric_mapping_database %>% filter(Service == "Patient & Equipment Transport") %>% select(Metric_Name_Submitted, Metric_Name_Summary) %>% distinct()
+  
+  data <- left_join(data, pt_transport_mapping, c("METRIC_NAME_SUBMITTED" = "Metric_Name_Summary"))
+  
+  data <- data %>% select(-METRIC_NAME_SUBMITTED) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
+  return(data)
   
 }
 
