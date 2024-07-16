@@ -9,7 +9,7 @@ library(lubridate)
 process_patient_transport_data <-  function(data, updated_user) {
   
   data <- data %>%
-    mutate(SERVICE = "Patient & Equipment Transport")
+    mutate(SERVICE = "Patient & Equipment Transport") %>%
     mutate(UPDATED_USER = updated_user) %>%
     mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, format = "%Y-%m-%d")) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
