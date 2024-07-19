@@ -97,7 +97,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
 
 
 budget_raw_file_process_updated <- function(data, updated_user) {
-  list_of_services <- c("Lab and Blood Bank", "Biomedical Engineering", "Emergency Department",
+  list_of_services <- c("Lab and Blood Bank", "Biomed / Clinical Engineering", "Emergency Department",
                         "Engineering", "Environmental Services", "Food Services", 
                         "Nursing", "Patient & Equipment Transport", "Security", 
                         "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management")
