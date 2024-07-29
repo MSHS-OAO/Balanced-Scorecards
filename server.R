@@ -3754,52 +3754,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         access_data_file_path <- access_data_file$datapath
         tryCatch({
           # access_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/May 2024 Functions Pivot v4.xlsx"
-          access_data <- read_excel(access_data_file_path,
-                                    sheet = "ACCESS DATA",
-                                    # n_max = Inf,
-                                    guess_max = 4000)
-                                    # col_names = c("FDIV",
-                                    #               "SITE",
-                                    #               "CC",
-                                    #               "Name",
-                                    #               "EXPTYPE",
-                                    #               "Sub Account",
-                                    #               "Sub Account Description",
-                                    #               "Month Budget",
-                                    #               "YTD Budget",
-                                    #               "Month Actual",
-                                    #               "YTD Actual",
-                                    #               "Annual Budget",
-                                    #               "Remaining Budget YTD",
-                                    #               "Mo Bud Minus Act",
-                                    #               "YTD Bud Minus Act",
-                                    #               "Time Period"))
-                                   # col_types = c("FDIV" = "text",
-                                   #               "SITE" = "text",
-                                   #               "CC" = "text",
-                                   #               "Name" = "text",
-                                   #               "EXPTYPE" = "text",
-                                   #               "Sub Account" = "text",
-                                   #               "Sub Account Description" = "text",
-                                   #               "Month Budget" = "numeric",
-                                   #               "YTD Budget" = "numeric",
-                                   #               "Month Actual" = "numeric",
-                                   #               "YTD Actual" = "numeric",
-                                   #               "Annual Budget" = "numeric",
-                                   #               "Remaining Budget YTD" = "numeric",
-                                   #               "Mo Bud Minus Act" = "numeric",
-                                   #               "YTD Bud Minus Act" = "numeric",
-                                   #               "Function" = "text",
-                                   #               "Category" =  "text",
-                                   #               "Service Type" = "text",
-                                   #               "Radiology?" = "text",
-                                   #               "Emergency Department?" = "text",
-                                   #               "Clinical Nutrition?" = "text",
-                                   #               "Supply Mapping File.Category" = "text",
-                                   #               "HSO CC Flag" = "text",
-                                   #               "MSO CC Flag"= "text",
-                                   #               "Time Period" = "text"))
-                                   
+          access_data <- read_excel(access_data_file_path, sheet = "5-BSC Cost Center Detail", skip = 4, 
+                             col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric","numeric", "numeric", "text")) %>%
+            rename(`Time Period` = Month)
+          exclusions <- read_excel(access_data_file_path, sheet = "Exclusions") %>%
+            select(-`...2`)
           flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -3814,7 +3773,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 1){
         # Process the data into standar Summary Repo format
-        tryCatch({access_data_processed <- process_finance_access_data(access_data, updated_user)
+        tryCatch({access_data_processed <- process_raw_finance_file(access_data, updated_user, exclusions)
         flag <- 2
         
         },
