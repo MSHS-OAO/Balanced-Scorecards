@@ -3753,7 +3753,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updated_user <- input$name_finance
         access_data_file_path <- access_data_file$datapath
         tryCatch({
-          # access_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/May 2024 Functions Pivot v4.xlsx"
+          # access_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Planning/Corporate Service Financial Reporting/Monthly supplemental detail - Balanced Scorecards/Balanced Scorecard Template v3.xlsx"
           access_data <- read_excel(access_data_file_path, sheet = "5-BSC Cost Center Detail", skip = 4, 
                              col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric","numeric", "numeric", "text")) %>%
             rename(`Time Period` = Month)
@@ -3793,15 +3793,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #overtime_summary_data <- file_return_updated_rows(overtime_summary_data)
         
         #wirte the updated data to the Acces table in the server
-        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION","TIME_PERIOD", "MONTH")
+        key_cols = c("SITE","CC","SUB_ACCOUNT","SUB_ACCOUNT_DESCRIPTION", "MONTH")
         update_cols = names(access_data_processed)
         update_cols = update_cols[! update_cols %in% key_cols]
 
-        write_temporary_table_to_database_and_merge_updated(access_data_processed,
-                                                            key_cols,
-                                                            "BSC_FINANCE_ACCESS_DATA",
-                                                            "BSC_FINANCE_ACCESS_DATA_ST",
-                                                            update_cols)
+        write_temporary_table_to_database_and_merge_updated(data =access_data_processed,
+                                                            key_columns = key_cols,
+                                                            destination_table_name = "BSC_FINANCE_TABLE",
+                                                            source_table_name = "BSC_FINANCE_TABLE_ST",
+                                                            update_columns = update_cols)
         
         # update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
         #                           input$selectedService3)
