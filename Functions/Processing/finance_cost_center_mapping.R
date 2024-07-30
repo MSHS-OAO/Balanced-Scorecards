@@ -19,7 +19,10 @@ process_finance_cost_center_data <-  function(data, updated_user) {
            COST_CENTER_CODE = `Cost Center...19`,
            CLOUD_CC = `Cloud CC`,
            FUNCTION = `Corporate Service Function`,
-           CATEGORY = `Corporate Service Category`) %>%
+           CATEGORY = `Corporate Service Category`,
+           `Corporate Service Overlap` = OVERLAP,
+           `HSO CC Flag` = HSO_CC_FLAG,
+           `MSO CC Flag` = MSO_CC_FLAG) %>%
     mutate(UPDATED_USER = updated_user)
   
   
