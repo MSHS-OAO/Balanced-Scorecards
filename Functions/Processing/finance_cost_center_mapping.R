@@ -9,14 +9,20 @@ process_finance_cost_center_data <-  function(data, updated_user) {
   # names(data) <- col_names
   
   data <- data %>%
-    select(Site...1,ROLLUP,FSDIVISION,DIVISION,SUBDIV,`Cost Center...6`,NAME,Entity,`Fund Type`,Site...18,`Cost Center...19`,`Cloud CC`)%>%
+    select(Site...1,ROLLUP,FSDIVISION,DIVISION,SUBDIV,`Cost Center...6`,NAME,Entity,`Fund Type`,Site...18,`Cost Center...19`,`Cloud CC`, `Corporate Service Function`, 
+           `Corporate Service Category`, `Corporate Service Overlap`, `HSO CC Flag`, `MSO CC Flag`)%>%
     rename(SITE = Site...1,
            COST_CENTER = `Cost Center...6`,
            ENTITY = Entity,
            FUND_TYPE = `Fund Type`,
            SITE_CODE = Site...18,
            COST_CENTER_CODE = `Cost Center...19`,
-           CLOUD_CC = `Cloud CC`) %>%
+           CLOUD_CC = `Cloud CC`,
+           FUNCTION = `Corporate Service Function`,
+           CATEGORY = `Corporate Service Category`,
+           OVERLAP = `Corporate Service Overlap`,
+           HSO_CC_FLAG = `HSO CC Flag`,
+           MSO_CC_FLAG = `MSO CC Flag`) %>%
     mutate(UPDATED_USER = updated_user)
   
   
