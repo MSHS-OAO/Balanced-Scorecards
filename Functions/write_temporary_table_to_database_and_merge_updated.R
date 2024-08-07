@@ -22,7 +22,6 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   values <- process_data %>% mutate(values = paste0("(", col_concat(., sep = ","), ")")) %>%
     select(values)
   
-  # values$values <- gsub('NA', "", values$values)
   
   data_records <- split(values ,1:nrow(values))
   
@@ -42,6 +41,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   split_queries_sql_statements <- list()
   for (i in 1:length(split_queries)) {
     row <- glue_collapse(split_queries[[i]], sep = "\n\n")
+
     row <- gsub("\\bNA\\b", "''", row)
     #row <- gsub("", "''", row)
     
@@ -55,16 +55,32 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   # glue statement for dropping table
   truncate_query <- glue('TRUNCATE TABLE "{source_table_name}";')
   
+  #glue statement to copy empty table
+  copy_table_query <- glue('CREATE TABLE {source_table_name}
+                      AS
+                      SELECT *
+                      FROM {destination_table_name} WHERE 1=0;')
+  
+  #glue statement to drop table
+  drop_query <- glue('DROP TABLE {source_table_name};')
+  
+  
   # Clear the staging data
   tryCatch({
     ch = dbConnect(odbc(), dsn)
     dbBegin(ch)
+    if(dbExistsTable(ch,source_table_name)){
+      dbExecute(ch,drop_query)
+    }
+    dbExecute(ch,copy_table_query)
     dbExecute(ch,truncate_query)
+    
     dbCommit(ch)
     dbDisconnect(ch)
   },
   error = function(err){
-    print("error")
+    print(err)
+    print("error1")
     dbRollback(ch)
     dbDisconnect(ch)
     
@@ -72,27 +88,25 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   
   
   registerDoParallel()
-  
+  system.time(
     outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
-      
-      #for(i in 1:length(split_queries_sql_statements)){
+
       #Connecting to database through DBI
       ch = dbConnect(odbc(), dsn)
       #Test connection
       tryCatch({
         dbBegin(ch)
-        print(i)
         dbExecute(ch, split_queries_sql_statements[[i]])
         dbCommit(ch)
       },
       error = function(err){
-        print(err)
+        #print("error2")
         dbRollback(ch)
         dbDisconnect(ch)
-        
+        ErrorUI("StagingTable","Staging Data Write Error")
       })
     }
-  
+  )
   registerDoSEQ()
   
   
@@ -105,8 +119,8 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   update_on_cols <- paste(paste0("DT.",update_columns, " = ST.",update_columns), sep="", collapse = ",")
 
   
-  get_dest_table_cols <-  paste(paste0("DT.",c(key_columns,update_columns)), sep="", collapse = ",")
-  get_source_table_values <- paste(paste0("ST.",c(key_columns,update_columns)), sep="", collapse = ",")
+  get_dest_table_cols <-  paste(paste0("DT.",unique(c(key_columns,update_columns))), sep="", collapse = ",")
+  get_source_table_values <- paste(paste0("ST.",unique(c(key_columns,update_columns))), sep="", collapse = ",")
     
   # destination_table_name <- "BSC_FINANCE_TABLE"
   # source_table_name <- "BSC_FINANCE_TABLE_TESTING"
@@ -135,17 +149,19 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
       dbExecute(ch, finance_delete_query)
     }
     dbExecute(ch, merge_query)
-    dbCommit(ch)
-    dbBegin(ch)
-    dbExecute(ch,truncate_query)
+    dbExecute(ch,drop_query)
     dbCommit(ch)
     dbDisconnect(ch)
-    print("success")
+    # print("success")
+    SuccessUI("Merge","Merge Succesfull")
+
   },
   error = function(err){
-    print("error")
+    #print("error")
     dbRollback(ch)
     dbDisconnect(ch)
+    ErrorUI("Merge","Merge Failed")
+
     
   })
   
