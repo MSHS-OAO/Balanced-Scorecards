@@ -51,19 +51,34 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   # glue statement for dropping table
   truncate_query <- glue('TRUNCATE TABLE "{source_table_name}";')
   
+  #glue statement to copy empty table
+  copy_table_query <- glue('CREATE TABLE {source_table_name}
+                      AS
+                      SELECT *
+                      FROM {destination_table_name} WHERE 1=0;')
+  
+  #glue statement to drop table
+  drop_query <- glue('DROP TABLE {source_table_name};')
+  
+  
   # Clear the staging data
   tryCatch({
     ch = dbConnect(odbc(), dsn)
     dbBegin(ch)
+    if(dbExistsTable(ch,source_table_name)){
+      dbExecute(ch,drop_query)
+    }
+    dbExecute(ch,copy_table_query)
     dbExecute(ch,truncate_query)
+    
     dbCommit(ch)
     dbDisconnect(ch)
   },
   error = function(err){
-    #print("error1")
+    print(err)
+    print("error1")
     dbRollback(ch)
     dbDisconnect(ch)
-    ErrorUI("ClearStaging","Staging Data Clearing Error")
     
   })
   
@@ -129,9 +144,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
       dbExecute(ch, finance_delete_query)
     }
     dbExecute(ch, merge_query)
-    dbCommit(ch)
-    dbBegin(ch)
-    dbExecute(ch,truncate_query)
+    dbExecute(ch,drop_query)
     dbCommit(ch)
     dbDisconnect(ch)
     # print("success")
