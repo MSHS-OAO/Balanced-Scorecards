@@ -74,6 +74,7 @@ suppressMessages({
   library(DBI)
   library(odbc)
   #library(reshape2)
+  library(formattable)
 })
 
 
@@ -519,9 +520,11 @@ metric_mapping_breakout <- metric_mapping_database %>%
   mutate(General_Group = as.character(General_Group))
 print("11")
 
+
+system_productivity <- tbl(conn, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE") %>% group_by(SERVICE) %>% summarise(max = max(REPORTING_MONTH)) %>% collect()
 # Source files for processing service line data -------------------
 function_sources <- list.files("Functions", full.names = T, recursive = T)
-sapply(function_sources, source)
+sapply(function_sources, source, echo = T)
 source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
 source(paste0("Functions/write_temporary_table_to_database_and_merge_updated.R"))

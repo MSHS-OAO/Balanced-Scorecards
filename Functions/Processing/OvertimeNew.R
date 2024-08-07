@@ -1,13 +1,13 @@
 
 overtime_file_processs_new <- function(data, updated_user){
   
-      key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
+      key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Radiology",
                                                                      ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
                                                                             ifelse(CORPORATE.SERVICE.LINE == "Support Services - Engineering", "Engineering",
                                                                                    ifelse(CORPORATE.SERVICE.LINE == "Support Services - Environmental Services", "Environmental Services",
                                                                                           ifelse(CORPORATE.SERVICE.LINE == "Support Services - Food Services", "Food Services",
                                                                                                  ifelse(grepl("Nursing", CORPORATE.SERVICE.LINE), "Nursing",
-                                                                                                        ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient Transport",
+                                                                                                        ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient & Equipment Transport",
                                                                                                                ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security",
                                                                                                                       ifelse(CORPORATE.SERVICE.LINE == "Support Services - Clinical Nutrition","Clinical Nutrition",
                                                                                                                              ifelse(CORPORATE.SERVICE.LINE == "Perioperative Services","Perioperative Services", NA))
@@ -22,7 +22,7 @@ overtime_file_processs_new <- function(data, updated_user){
       ) %>%
         filter(!is.na(Service)) %>%
         filter(FTE.TREND == 1) %>%
-        filter(!Service %in% c("Nursing","Imaging"))
+        filter(!Service %in% c("Nursing","Radiology"))
       
       key_vol_mapping <- key_vol_mapping %>% mutate(COST.CENTER = ifelse(nchar(COST.CENTER) == 7, paste0("0", COST.CENTER), COST.CENTER))
       
@@ -38,7 +38,7 @@ overtime_file_processs_new <- function(data, updated_user){
                 `Site Abbr` = SITE_ABBR,
                 Site = SITE,
                 Metric_Name = METRIC_NAME) %>% 
-        filter(Service %in% c("ED","Nursing","Imaging", "Lab")) %>%
+        filter(Service %in% c("ED","Nursing","Radiology", "Lab")) %>%
         collect() %>%
         distinct() %>%
         mutate(`Cost Center Group` =  toupper(`Cost Center Group`),
@@ -56,7 +56,7 @@ overtime_file_processs_new <- function(data, updated_user){
       data <- left_join(data,ot_mapping_db)
         
       eni_data <- data%>%
-        filter(Service %in% c("ED","Nursing","Imaging", "Lab"))
+        filter(Service %in% c("ED","Nursing","Radiology", "Lab"))
       
       #Procesing All Other Service Lines other than ED,Nursing, and Imaging
       

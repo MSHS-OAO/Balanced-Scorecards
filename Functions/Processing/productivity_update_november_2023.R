@@ -4,13 +4,13 @@
 # raw_data_old <- read_excel(datapath_old)
 # updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
-  key_vol_mapping <- key_vol_mapping_oracle %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE_SERVICE_LINE), "Imaging",
+  key_vol_mapping <- key_vol_mapping_oracle %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE_SERVICE_LINE), "Radiology",
                                                                  ifelse(grepl("Biomed", CORPORATE_SERVICE_LINE), "Biomed / Clinical Engineering",
                                                                         ifelse(CORPORATE_SERVICE_LINE == "Support Services - Engineering", "Engineering",
                                                                                ifelse(CORPORATE_SERVICE_LINE == "Support Services - Environmental Services", "Environmental Services",
                                                                                       ifelse(CORPORATE_SERVICE_LINE == "Support Services - Food Services", "Food Services",
                                                                                              ifelse(grepl("Nursing", CORPORATE_SERVICE_LINE), "Nursing",
-                                                                                                    ifelse(CORPORATE_SERVICE_LINE == "Support Services - Patient Transport", "Patient Transport",
+                                                                                                    ifelse(CORPORATE_SERVICE_LINE == "Support Services - Patient & Equipment Transport", "Patient & Equipment Transport",
                                                                                                            ifelse(CORPORATE_SERVICE_LINE == "Support Services - Security", "Security", 
                                                                                                                   ifelse(CORPORATE_SERVICE_LINE == "Perioperative Services", "Perioperative Services",
                                                                                                                          ifelse(CORPORATE_SERVICE_LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA

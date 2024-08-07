@@ -562,8 +562,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            "Metric_Name_Summary",
                                            "Metric_Name",
                                            "Reporting_Month_Ref",
-                                           "Premier_Reporting_Period"),
-                                    all = TRUE)
+                                           "Premier_Reporting_Period"))
       
       
       fytd_summary_total <- fytd_summary_all %>%
@@ -776,7 +775,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Adding Check to replace MSW IR Metrics with NA based on service request
       
-      if(service_input == "Imaging"){
+      if(service_input == "Radiology"){
         if(month_input  %in% c("08-2023","09-2023")){
           fytd_summary <- fytd_summary %>%
             mutate(value_rounded = case_when(Site == "MSW" & 
@@ -853,7 +852,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         ifelse(Metric_Unit %in% "Dollar",
                                dollar(round(x)),
                                ifelse(Metric_Unit %in% "Percent",
-                                      percent(x, 0.1),
+                                      scales::percent(x, 0.1),
                                       prettyNum(round(x, digits = 1),
                                                 big.mark = ",")))
                       }),
@@ -1305,7 +1304,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }     
 
       
-      if(service_input == "Imaging"){
+      if(service_input == "Radiology"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
           dr_start <- which(summary_tab_tb$`Metric Name` == "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")[1]
         
@@ -1574,7 +1573,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                         ifelse(Metric_Unit %in% "Dollar",
                                dollar(round(x)),
                                ifelse(Metric_Unit %in% "Percent",
-                                      percent(x, 0.1),
+                                      scales::percent(x, 0.1),
                                       prettyNum(round(x, digits = 1),
                                                 big.mark = ",")))
                       }),
@@ -1839,7 +1838,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Adding Additional Check to replace MSW IR Metrics with NA based on service request
 
-      if(service_input == "Imaging" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
+      if(service_input == "Radiology" & month_input  %in% c("08-2023","09-2023")){ #(as.POSIXct(paste0("01-",month_input),format = "%d-%m-%Y") >= as.POSIXct("2023-08-01"))){
         data <- data %>%
           mutate(value_rounded = case_when(Site == "MSW" & 
                                              Metric_Name %in% c("Ambulatory Revenue Variance to Budget- in thousands",
@@ -1991,7 +1990,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                    ifelse(Metric_Unit %in% "Dollar",
                           dollar(round(x)),
                           ifelse(Metric_Unit %in% "Percent",
-                                 percent(x, 0.1),
+                                 scales::percent(x, 0.1),
                                  prettyNum(round(x, digits = 1),
                                            big.mark = ",")))
                       }),
@@ -2143,8 +2142,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         file_path <- inFile_budget$datapath
-        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 3,
-                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "numeric", "numeric", "numeric", "numeric", "text"))
+        tryCatch({data <- read_excel(file_path, sheet = "5-BSC Cost Center Detail", skip = 4, 
+                                     col_types = c("text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric","numeric", "numeric"))
+                  exclusions <- read_excel(file_path, sheet = "Exclusions") %>%
+                                  select(-`...2`)
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(
@@ -2159,7 +2160,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       if(flag == 1){
         # Process the data into standar Summary Repo format
-        tryCatch({budget_process <- budget_raw_file_process(data, updated_user)
+        tryCatch({budget_process <- process_raw_finance_file(data, updated_user, exclusions)
         flag <- 2
         
         },
@@ -2175,17 +2176,45 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       if(flag == 2){
-        ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
-        budget_data <- file_return_updated_rows(budget_process)
         
-        #wirte the updated data to the Summary Repo in the server
-        write_temporary_table_to_database_and_merge(budget_data,
-                                                    "TEMP_BUDGET", button_name)
+        tryCatch({
+          ##Compare submitted results to what is in the Summary Repo in db and return only updated rows
+          # budget_data <- file_return_updated_rows(budget_process)
+          
+          #wirte the updated data to the Summary Repo in the server
+          key_columns <- c("FUNCTION", "CATEGORY", "SITE", "CC", "NAME", "EXPTYPE", "SUB_ACCOUNT", "SUB_ACCOUNT_DESCRIPTION", "SUPPLY_MAPPING_FILE_CATEGORY", "MONTH")
+          destination_table_name <- "BSC_FINANCE_TABLE"
+          source_table_name <- "BSC_FINANCE_TABLE_MERGE"
+          update_columns <- c("SUM_OF_MONTH_BUDGET", "SUM_OF_MONTH_ACTUAL", "SUM_OF_YTD_BUDGET", "SUM_OF_YTD_ACTUAL", "SUM_OF_ANNUAL_BUDGET", "SUM_OF_REMAINING_BUDGET_YTD")
+          
+          write_temporary_table_to_database_and_merge_updated(budget_process, key_columns, destination_table_name, source_table_name, update_columns)
+          
+          update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                    input$selectedService3)
         
-        update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                  input$selectedService3)
+        shinyjs::enable(button_name)
+        if(isRunning()) {
+          showModal(modalDialog(
+            title = "Success",
+            paste0("The data has been submitted successfully."),
+            easyClose = TRUE,
+            footer = NULL
+          ))
+        } else{
+          print(paste0("The data has been submitted successfully."))
+        }
+        
+        },
+        error = function(err){  showModal(modalDialog(
+          title = "Error",
+          paste0("There seems to be an issue with the budget file."),
+          easyClose = TRUE,
+          footer = NULL
+        ))
+          shinyjs::enable(button_name)
+        })
       }
-      shinyjs::enable(button_name)
+      
       
     })
     #Monthly Patient Experience Submission ----------------------
@@ -2206,11 +2235,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       }else{
         if(!is.null(ed_monthly)){
-          tryCatch( {pt_exp_server_function(button, ed_monthly, "ED", name, "Monthly")},
+          tryCatch( {pt_exp_server_function(button, ed_monthly, "Emergency Department", name, "Monthly")},
                     error = function(err){
                       showModal(modalDialog(
                         title = "Error",
-                        paste0("There seems to be an issue processing ED file.Please check the file."),
+                        paste0("There seems to be an issue processing the Emergency Department file.Please check the file."),
                         easyClose = TRUE,
                         footer = NULL
                       ))
@@ -2263,11 +2292,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       }else{
         if(!is.null(ed_ytd)){
-          tryCatch( {pt_exp_server_function(button, ed_ytd, "ED", name, "YTD")},
+          tryCatch( {pt_exp_server_function(button, ed_ytd, "Emergency Department", name, "YTD")},
                     error = function(err){
                       showModal(modalDialog(
                         title = "Error",
-                        paste0("There seems to be an issue processing ED file."),
+                        paste0("There seems to be an issue processing the Emergency Department file."),
                         easyClose = TRUE,
                         footer = NULL
                       ))
@@ -4006,7 +4035,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           error = function(err){
             showModal(modalDialog(
               title = "Error",
-              paste0("There seems to be an issue with this Patient Transport Data file."),
+              paste0("There seems to be an issue with this Patient & Equipment Transport data file."),
               easyClose = TRUE,
               footer = NULL
             ))
@@ -4085,8 +4114,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               updated_user <- input$name_transport_pt
               
               
-              pt_data_raw <- read_excel(file_path, sheet = "PTET")
-              
+              # pt_data_raw <- read_excel(file_path, sheet = "PTET")
+              pt_data_raw <- read_excel(file_path)
               
               flag <- 1
               
@@ -4094,7 +4123,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             error = function(err){
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with this Patient Transport Data file."),
+                paste0("There seems to be an issue with this Patient & Equipment Transport data file."),
                 easyClose = TRUE,
                 footer = NULL
               ))
@@ -4109,7 +4138,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
           tryCatch({
             # Process Input Data
-            pt_summary_repo <- process_PT_data(pt_data_raw,updated_user)
+            pt_summary_repo <- process_patient_transport_data(pt_data_raw,updated_user)
             flag <- 2
             
           },
@@ -4873,7 +4902,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # Update format of metrics as percent
         targets_table_summary$Target[which(
           targets_table_summary$Metric_Unit == "Percent")] <-
-          percent(
+          scales::percent(
             as.numeric(
               targets_table_summary$Target[which(
                 targets_table_summary$Metric_Unit == "Percent")]),
@@ -5197,6 +5226,359 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       
       onclick("help_button", runjs("window.open('https://docs.google.com/forms/d/e/1FAIpQLSd7cCghKA9GyX3FpUArkfaZ4R6qi6NtOhRI9WhZuSLPd0fQBg/viewform', '_blank')"))
+      
+      
+      
+      
+      
+      # 5. System Overview Tab Output -------------------------------------------------------------------------------------------
+      
+      
+      #observe entries from the user
+      
+      observeEvent(c(input$selectedService5, input$submit_finance), {
+        overview_service_selected <- input$selectedService5
+
+        print("observe")
+
+        # update future_state_table
+
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = dsn)
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+        emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+        future_state_data_reactive(emergency_department_data)
+        dbDisconnect(connection)
+
+        #update Current_state_table
+
+        connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+        current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+
+        picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+
+        observeEvent(input$selectedMonth4, {
+          overview_date_selected <- input$selectedMonth4
+
+          current_state_data_filtered <- current_state_data %>%
+            filter(format(MONTH, "%m-%Y") == overview_date_selected) %>%
+            collect()
+
+          current_state_data_reactive(current_state_data_filtered)
+
+          #retrieve Target and Status metrics data
+
+
+          conn <- dbConnect(odbc(), dsn)
+          status_data <- tbl(conn, "BSC_TARGET_STATUS") %>%
+            collect()
+          dbDisconnect(conn)
+
+          strings_to_check <- c("Overtime Hours", "Productivity Index","Budget to Actual Variance","Overtime Dollars")
+          filtered_df <- status_data %>%
+            filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
+            distinct(METRIC_NAME_SUBMITTED,GREEN_STATUS,YELLOW_STATUS,RED_STATUS, .keep_all = TRUE)
+
+          target_and_status_metrics_reactive(filtered_df)
+
+        })
+
+        dbDisconnect(connection_current)
+      })
+      
+
+      
+      #Current_State table output .........................................................................
+      
+      #Function to reorder the table based on the EXPTYPE column
+      reorder_rows <- function(df, col_name, order_vec) {
+        order_factor <- factor(df[[col_name]], levels = order_vec)
+        df_ordered <- df[order(order_factor), ]
+        return(df_ordered)
+      }
+      
+      # Function to create new dataframe 
+      insertRow <- function(data, new_row, r) { 
+        data_new <- rbind(data[1:r, ],             
+                          new_row,                 
+                          data[- (1:r), ])         
+        rownames(data_new) <- 1:nrow(data_new)     
+        return(data_new) 
+      } 
+      
+      
+      #Output function 
+      
+      current_state_data_reactive <- reactiveVal(NULL)
+      target_and_status_metrics_reactive <- reactiveVal(NULL)
+      
+      
+      output$current_state_system_table <- function() {
+        
+        current_state_data <- current_state_data_reactive()
+        target_and_status_data <- target_and_status_metrics_reactive()
+        
+        current_state_data_test <<- current_state_data
+        
+        current_state_data <- current_state_data %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
+        
+        '%!in%' <- function(x,y)!('%in%'(x,y))
+        
+        # current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
+        
+        
+        service_selected <- isolate(input$selectedService5)
+        
+        
+        if("Worked Hours Productivity Index" %!in% unique(current_state_data$EXPTYPE) & service_selected %in% unique(system_productivity$SERVICE)) {
+          
+          connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+          current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE == "Worked Hours Productivity Index")%>% 
+                                arrange(desc(MONTH)) %>% head(1) %>% collect()
+          dbDisconnect(connection_current)
+          
+          current_state_data <- rbind(current_state_data, current_state_data_prod)
+          
+          # prod_index <- which(current_state_temp$METRIC == "Total Expenses")
+          # 
+          # connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+          # current_state_tbl <- tbl(connection_current, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
+          # system_prod <- current_state_tbl %>% select(-UPDATED_TIME, -UPDATED_USER, -SITE, -PREMIER_REPORTING_PERIOD) %>%
+          #   filter(SERVICE == service_selected) %>% arrange(desc(REPORTING_MONTH)) %>% head(2) %>% collect() %>% select(-SERVICE)
+          # dbDisconnect(connection_current)
+          # 
+          # system_prod <- system_prod %>% mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Worked Hours Productivity Index (FYTD)", "YTD_ACTUAL", "MTD_ACTUAL")) %>%
+          #   pivot_wider(names_from = METRIC_NAME_SUBMITTED, values_from = VALUE) %>% mutate(SCOPE = "Labor", METRIC = "Productivity Index", TIME_PERIOD = format(REPORTING_MONTH, "%Y-%m"), 
+          #                                                                                   YTD_Target = 1, MTD_Target = 1) %>%
+          #   select(-REPORTING_MONTH) %>%
+          #   mutate(MTD_VARIANCE_TO_TARGET = MTD_ACTUAL - MTD_Target,  
+          #          YTD_VARIANCE_TO_TARGET = YTD_ACTUAL - YTD_Target, YTD_PERCENT_VARIANCE = YTD_ACTUAL - YTD_Target)
+          # 
+          # 
+          # col_names <- colnames(current_state_temp)
+          # 
+          # system_prod <- system_prod[,col_names]
+          # 
+          # system_prod <- system_prod %>% mutate_if(is.numeric, ~paste0(. * 100, "%"))
+          # 
+          # current_state_temp <- insertRow(current_state_temp, system_prod, prod_index) 
+          
+        }
+        
+        # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
+        current_state_data <- transform(current_state_data,
+                                        
+                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%'),ifelse(MTD_ACTUAL>=0, paste0('$',format(round(MTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_ACTUAL,0)), big.mark = ",")))),
+                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_ACTUAL * 100,'%'),ifelse(YTD_ACTUAL>=0, paste0('$',format(round(YTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL,0)), big.mark = ",")))),
+                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'),ifelse(YTD_TARGET>=0, paste0('$',format(round(YTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_TARGET,0)), big.mark = ",")))),
+                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'),ifelse(MTD_TARGET>=0, paste0('$',format(round(MTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_TARGET,0)), big.mark = ",")))),
+                                        YTD_VARIANCE_TO_TARGET= ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(YTD_VARIANCE_TO_TARGET>=0, paste0('$',format(round(YTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
+                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(MTD_VARIANCE_TO_TARGET>=0, paste0('$',format(round(MTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
+                                        YTD_PERCENT_VARIANCE =  formattable::percent(current_state_data$YTD_PERCENT_VARIANCE, digits = 1)
+                                          #paste0(round(YTD_PERCENT_VARIANCE * 100,1),'%')
+        )
+        
+
+        
+        metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
+        
+        current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
+        
+        
+        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', TRUE ~ 'Labor'),
+                                         METRIC = current_state_data$EXPTYPE,
+                                         TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
+                                         MTD_ACTUAL = current_state_data$MTD_ACTUAL,
+                                         MTD_Target = current_state_data$MTD_TARGET,
+                                         MTD_VARIANCE_TO_TARGET = current_state_data$MTD_VARIANCE_TO_TARGET,
+                                         YTD_ACTUAL = current_state_data$YTD_ACTUAL,
+                                         YTD_Target = current_state_data$YTD_TARGET,
+                                         YTD_VARIANCE_TO_TARGET =current_state_data$YTD_VARIANCE_TO_TARGET,
+                                         YTD_PERCENT_VARIANCE= current_state_data$YTD_PERCENT_VARIANCE
+                                         
+                                                 )
+        
+        current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
+                               "MTD ACTUAL","MTD TARGET","MTD VARIANCE",
+                               "YTD ACTUAL","YTD TARGET","YTD VARIANCE",
+                               "YTD % VARIANCE")
+
+
+        current_state_temp <- current_state_temp %>% mutate(METRIC = ifelse(METRIC == "Worked Hours Productivity Index", "Productivity Index", METRIC))
+        
+        total_expense_row <- which(current_state_temp$METRIC == "Total Expenses")
+        
+        current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = ifelse(YTD_PERCENT_VARIANCE <= -2, NA, YTD_PERCENT_VARIANCE))
+        current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
+
+        
+        # if("Productivity Index" %!in% unique(current_state_temp$METRIC) & service_selected %in% unique(system_productivity$SERVICE)) {
+        #   prod_index <- which(current_state_temp$METRIC == "Total Expenses")
+        #   
+        #   connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        #   current_state_tbl <- tbl(connection_current, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
+        #   system_prod <- current_state_tbl %>% select(-UPDATED_TIME, -UPDATED_USER, -SITE, -PREMIER_REPORTING_PERIOD) %>%
+        #     filter(SERVICE == service_selected) %>% arrange(desc(REPORTING_MONTH)) %>% head(2) %>% collect() %>% select(-SERVICE)
+        #   dbDisconnect(connection_current)
+        #   
+        #   system_prod <- system_prod %>% mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Worked Hours Productivity Index (FYTD)", "YTD_ACTUAL", "MTD_ACTUAL")) %>%
+        #                   pivot_wider(names_from = METRIC_NAME_SUBMITTED, values_from = VALUE) %>% mutate(SCOPE = "Labor", METRIC = "Productivity Index", TIME_PERIOD = format(REPORTING_MONTH, "%Y-%m"), 
+        #                                                                                                   YTD_Target = 1, MTD_Target = 1) %>%
+        #                                                                                                   select(-REPORTING_MONTH) %>%
+        #     mutate(MTD_VARIANCE_TO_TARGET = MTD_ACTUAL - MTD_Target,  
+        #            YTD_VARIANCE_TO_TARGET = YTD_ACTUAL - YTD_Target, YTD_PERCENT_VARIANCE = YTD_ACTUAL - YTD_Target)
+        #   
+        # 
+        #   col_names <- colnames(current_state_temp)
+        #   
+        #   system_prod <- system_prod[,col_names]
+        #   
+        #   system_prod <- system_prod %>% mutate_if(is.numeric, ~paste0(. * 100, "%"))
+        #   
+        #   current_state_temp <- insertRow(current_state_temp, system_prod, prod_index) 
+        #   
+        # }
+        # 
+        if("Productivity Index" %in% unique(current_state_temp$METRIC)) {
+          prod_index <- which(current_state_temp$METRIC == "Productivity Index") - 1
+          
+          prod_data <- current_state_temp %>% filter(METRIC == "Productivity Index")
+          
+          current_state_temp <- current_state_temp %>% filter(METRIC != "Productivity Index")
+          
+          prod_data <- prod_data %>% mutate(TIME_PERIOD = as.Date(paste0(TIME_PERIOD, "-01")))
+          
+          prod_data <- left_join(prod_data, report_date_mapping[, c("Report Data Updated until", "Dashboard Month")], by = c("TIME_PERIOD" = "Dashboard Month")) %>%
+            select(-TIME_PERIOD) %>% rename(TIME_PERIOD = `Report Data Updated until`) %>% relocate(TIME_PERIOD, .after = METRIC) %>% mutate(TIME_PERIOD = paste0("Rep. Pd. Ending ", format(TIME_PERIOD, "%m/%d/%Y")))
+          
+          current_state_temp <- insertRow(current_state_temp, prod_data, prod_index) 
+          
+        }
+        
+        current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
+          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
+          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
+                        full_width = FALSE, position = "center", 
+                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
+          column_spec(1:3, background = "#212070", color = "white") %>%
+          column_spec(4:6, background = "#F8F8F8") %>% 
+          column_spec(7:9, background = "#EAEAEA") %>%
+          # column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
+          #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
+          row_spec(0, background = "#212070", color = "white") %>%
+          collapse_rows(columns = 1, valign = "middle") %>%
+          column_spec(10, background = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
+                                                 current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFC7CE',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFFFCC',
+                                                 current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#C4D79B',
+                                                 TRUE ~ 'white'),
+                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE, 
+                                       TRUE ~ FALSE)) %>%
+          gsub("\\bNA\\b", "-", .) %>%
+          row_spec(total_expense_row, bold = T)
+        
+        
+        
+      
+
+     
+      }
+
+      
+      
+      
+      # Future State table ouput.......................................................................................
+      
+
+      future_state_data_reactive <- reactiveVal(NULL)
+      
+      #output function of future_state table
+      
+      output$future_state_system_table <- function() {
+        future_state_data <- future_state_data_reactive()
+        target_and_status_data <- target_and_status_metrics_reactive()
+
+        if (is.null(future_state_data)) {
+          return(NULL)  # Return NULL if future_state_data is not available yet
+        }
+        
+        
+        # Reorder METRIC values
+        metric_order <- c("Salaries", "Supplies", "Total Expenses")
+        future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
+        
+        
+        # transform dataframe to round percent variance, and add '$' symbol
+        future_state_data <- transform(future_state_data,
+                                       
+                                       YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>=0, paste0('$',format(round(YTD_ACTUAL_ANNUALIZED,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL_ANNUALIZED,0)), big.mark = ","))),
+                                       LAST_12_MONTHS = ifelse(LAST_12_MONTHS>=0, paste0('$',format(round(LAST_12_MONTHS,0), big.mark = ",")),paste0('-$',format(abs(round(LAST_12_MONTHS,0)), big.mark = ","))),
+                                       YEAR_BUDGET = ifelse(YEAR_BUDGET>=0, paste0('$',format(round(YEAR_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(YEAR_BUDGET,0)), big.mark = ","))),
+                                       RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
+                                       RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
+                                       PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
+                                       PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
+                                       PROSPECTIVE_PERCENT_VARIANCE = formattable::percent(future_state_data$PROSPECTIVE_PERCENT_VARIANCE, digits = 1)
+                                         #paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
+        )
+        
+        
+        
+        future_state_temp <- data.frame(#SCOPE = c(rep("Finance", 3)),
+                                        SCOPE = case_when(future_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance'),
+                                        METRIC = future_state_data$EXPTYPE,
+                                        MONTH = format(future_state_data$MONTH, "%Y-%m"),
+                                        YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
+                                        LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
+                                        YEAR_BUDGET = future_state_data$YEAR_BUDGET,
+                                        RETROSPECTIVE_OUTLOOK = future_state_data$RETROSPECTIVE_OUTLOOK,
+                                        RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
+                                        PROSPECTIVE_OUTLOOK = future_state_data$PROSPECTIVE_OUTLOOK,
+                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
+                                        PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
+        )
+        
+        future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
+                              "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK*",
+                              "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK**",
+                              "VARIANCE TO BUDGET",
+                              "% VARIANCE")
+
+        total_expense_row <- which(future_state_temp$METRIC == "Total Expenses")
+        
+        future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
+          add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
+          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
+                        full_width = FALSE, position = "center", 
+                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
+          column_spec(1:3, background = "#212070", color = "white") %>%
+          column_spec(4:6, background = "#F8F8F8") %>%
+          column_spec(7:8, background = "#EAEAEA") %>%
+          column_spec(9:10, background = "#F8F8F8") %>%    
+          # column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
+          #                                     ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
+          column_spec(11, background = case_when(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= -0.02 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > -0.02 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -0.05 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
+                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -0.05 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
+                                                 TRUE ~ 'white'),
+                      bold = case_when(future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
+                                       TRUE ~ FALSE)) %>%
+          row_spec(0, background = "#212070", color = "white") %>%
+          collapse_rows(columns = c(1, 2), valign = "middle") %>%
+          gsub("\\bNA\\b", "-", .) %>%
+          gsub("\\bNA%\\b", "-", .) %>%
+          row_spec(total_expense_row, bold = T)
+
+        return(future_state_table)
+      }
       
 
 } # Close Server

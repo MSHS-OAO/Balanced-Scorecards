@@ -22,7 +22,7 @@
 
 # Import mapping file
 # pt_exp_mapping <- read_excel(target_mapping_path, sheet = "Patient Experience")
-conn <- dbConnect(odbc(), dsn)
+# conn <- dbConnect(odbc(), dsn)
 pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>% 
                   rename(Raw_Pt_Exp_Service = RAW_PT_EXP_SERVICE,
                          Service = SERVICE,
@@ -130,9 +130,9 @@ pt_exp_dept_summary <- function(data) {
   # Filter out unused data
   pt_exp_data_split <- pt_exp_data_split %>%
     # Remove irrelevant sites and service line combinations
-    filter(!(Site %in% c("NYEE") & Service %in% "Patient Transport") &
+    filter(!(Site %in% c("NYEE") & Service %in% "Patient & Equipment Transport") &
              # Filter out any NYEE ED data
-             !(Site %in% c("NYEE") & Service %in% "ED") &
+             !(Site %in% c("NYEE") & Service %in% "Emergency Department") &
              # Filter out data for questions that aren't being tracked in the scorecard
              !is.na(Service))
   

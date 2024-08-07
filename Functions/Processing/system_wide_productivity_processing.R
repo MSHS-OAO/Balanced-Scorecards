@@ -84,9 +84,10 @@ productivity_processing_system_wide <- function(raw_data, updated_user) {
            METRIC_NAME_SUBMITTED = case_when( YTD ~ paste0(METRIC_NAME_SUBMITTED, " (FYTD)"),
                                               TRUE ~ METRIC_NAME_SUBMITTED),
            SERVICE = str_to_title(str_squish(str_replace(SERVICE, "SYSTEM",""))),
-           SERVICE =  case_when( SERVICE == "Biomedical Engineering" ~ "Biomed / Clinical Engineering",
-                                 SERVICE == "Radiology" ~ "Imaging",
-                                 SERVICE == "Transport" ~ "Patient Transport",
+           SERVICE =  case_when( 
+                                 # SERVICE == "Biomedical Engineering" ~ "Biomed / Clinical Engineering",
+                                 # SERVICE == "Radiology" ~ "Imaging",
+                                 # SERVICE == "Transport" ~ "Patient & Equipment Transport",
                                  TRUE ~ SERVICE),
            UPDATED_USER = updated_user,
            VALUE = round(as.numeric(VALUE),2))  %>%

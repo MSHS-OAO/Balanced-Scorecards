@@ -50,7 +50,7 @@ process_PT_data <- function(pt_data_raw,updated_user){
                     values_to = "value_rounded") %>%
       mutate(Day =  as.Date(as.numeric(as.character(Day)),origin= "1899-12-30"),
              Site = hospital,
-             Service = "Patient Transport",
+             Service = "Patient & Equipment Transport",
              Premier_Reporting_Period = format(Day,"%b %Y"),
              value_rounded = as.numeric(value_rounded),
              Reporting_Month = as.Date(format(Day,"%Y-%m-%d"))) %>%
@@ -143,7 +143,7 @@ process_NPT_raw_data <- function(data,updated_user){
   data_metrics <- data%>%
     mutate(`% of Trips Over 45 Minutes` = `No of Trips Over 45 Minutes`/`No of Transports`,
            Month = format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y"),
-           Service = "Patient Transport") %>%
+           Service = "Patient & Equipment Transport") %>%
     mutate(Premier_Reporting_Period = format(as.Date(Month, format = "%m/%d/%Y"),"%b %Y"),
            Reporting_Month = as.Date(format(as.Date(Month, format = "%m/%d/%Y"),"%Y-%m-%d"))) %>%
     select(Service,Site,`% of Trips Over 45 Minutes`,`Turnaround Time`,Premier_Reporting_Period,Reporting_Month) %>%

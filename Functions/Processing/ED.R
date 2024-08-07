@@ -104,7 +104,7 @@ ed_dept_summary <- function(ed_data_ts,ed_data_percentiles,updated_user){
     pivot_longer(cols = c(-SITE,-REPORTING_MONTH),
                  names_to = "METRIC_NAME_SUBMITTED",
                  values_to = "VALUE")%>%
-    mutate(SERVICE = "ED",
+    mutate(SERVICE = "Emergency Department",
            UPDATED_USER = updated_user,
            PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
            REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d"))) %>%
@@ -137,7 +137,7 @@ process_dte_data <- function(raw_data,updated_user){
     mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Median Arrival to Collect", 
                                           "Door to EKG for Chest Pain (Median)",
                                           "Door to EKG for Chest Pain (95th Percentile)"),
-           SERVICE = "ED",
+           SERVICE = "Emergency Department",
            REPORTING_MONTH = as.Date(paste(PREMIER_REPORTING_PERIOD,"01"),format="%b %Y %d"),
            REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d")),
            UPDATED_USER = updated_user) %>%
@@ -163,7 +163,7 @@ process_dth_data <- function(raw_data,updated_user){
     mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "MedianDoor/DiscoverytoCT", 
                                           "Door to Door CT for Stroke Patients (Median)",
                                           "Door to Door CT for Stroke Patients (95th Percentile)"),
-           SERVICE = "ED",
+           SERVICE = "Emergency Department",
            REPORTING_MONTH = as.Date(paste(PREMIER_REPORTING_PERIOD,"01"),format="%b %Y %d"),
            REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d")),
            UPDATED_USER = updated_user) %>%
