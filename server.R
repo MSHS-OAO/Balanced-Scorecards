@@ -5245,7 +5245,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
         connection <- dbConnect(drv = odbc::odbc(),
                                 dsn = dsn)
-        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
+        future_state_tbl <- tbl(connection, bsc_future_view)
         emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
         future_state_data_reactive(emergency_department_data)
         dbDisconnect(connection)
@@ -5253,7 +5253,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         #update Current_state_table
 
         connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+        current_state_tbl <- tbl(connection_current, bsc_current_view)
         current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
 
         picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
@@ -5335,7 +5335,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if("Worked Hours Productivity Index" %!in% unique(current_state_data$EXPTYPE) & service_selected %in% unique(system_productivity$SERVICE)) {
           
           connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+          current_state_tbl <- tbl(connection_current, bsc_current_view)
           current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE == "Worked Hours Productivity Index")%>% 
                                 arrange(desc(MONTH)) %>% head(1) %>% collect()
           dbDisconnect(connection_current)

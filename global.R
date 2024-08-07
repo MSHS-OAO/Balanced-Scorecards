@@ -85,6 +85,9 @@ dsn <- "OAO Cloud DB Production"
 dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
 
+bsc_current_view <- "BSC_CURRENT_FINANCE_VIEW"
+bsc_future_view <- "BSC_FUTURE_FINANCE_VIEW"
+
 
 options(shiny.maxRequestSize=500*1024^2)
 
