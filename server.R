@@ -5248,13 +5248,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         future_state_tbl <- tbl(connection, bsc_future_view)
         emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
         future_state_data_reactive(emergency_department_data)
-        dbDisconnect(connection)
+        # dbDisconnect(connection)
 
         #update Current_state_table
 
-        connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection_current, bsc_current_view)
+        # connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        current_state_tbl <- tbl(connection, bsc_current_view)
         current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
+        dbDisconnect(connection)
 
         picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
@@ -5285,7 +5286,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
         })
 
-        dbDisconnect(connection_current)
       })
       
 
