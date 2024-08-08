@@ -3928,7 +3928,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               # updated_user <- "Test"
               types_col <- rep("text",each=20)
               cost_center_mapping_data <- read_excel(cost_center_mapping_data_file_path,
-                                                     sheet=2,
+                                                     sheet="2022 Cost Center Categorization",
                                                      col_types = types_col)
             flag <- 1
             
