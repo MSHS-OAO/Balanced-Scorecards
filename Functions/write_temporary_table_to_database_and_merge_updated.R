@@ -42,7 +42,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   for (i in 1:length(split_queries)) {
     row <- glue_collapse(split_queries[[i]], sep = "\n\n")
 
-    row <- gsub("\\bNA\\b", "''", row)
+    row <- gsub("'NA'", "''", row)
     #row <- gsub("", "''", row)
     
     # row <- gsub("&", " ' || chr(38) || ' ", row)
