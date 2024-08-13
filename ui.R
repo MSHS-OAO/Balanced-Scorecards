@@ -833,22 +833,13 @@ ui <-
                                  
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
                                         
-                                        tabPanel("Turnaround Time-Non Patient Transport", hr(),
+                                        tabPanel("Patient & Equipment Transport Data", hr(),
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_transport_npt", (labelMandatory("1. Please enter Name:")), "")
+                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter name:")), "")
                                                    )
                                                  ),
-                                                 fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
-                                                 actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
-                                        ),
-                                        tabPanel("Turnaround Time-Patient & Equipment Transport", hr(),
-                                                 fluidRow(
-                                                   column(2,
-                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter Name:")), "")
-                                                   )
-                                                 ),
-                                                 fileInput("patient_transport", label = "Please upload PTET Metrics data"),
+                                                 fileInput("patient_transport", label = "Please upload data"),
                                                  actionButton("submit_pt_tat", "Submit", class = "btn-primary")
                                         )
                                         
