@@ -6,16 +6,18 @@ get_values_updated <- function(x, columns,table_name){
   return(values)
 }
 
-write_temporary_table_to_database_and_merge_updated <- function(data, key_columns, destination_table_name, source_table_name, update_columns) {
+
+# Process Data and Inserts ----
+process_data_and_inserts <- function(raw_data, source_table_name){
   
-  process_data <- data %>% mutate_if(is.character, function(x) gsub("\'", "''", x)) %>%
-                  mutate_if(is.character, function(x) gsub("&", "' || chr(38) || '", x)) %>%
-                  mutate_if(is.character, function(x) paste0("'", x, "'")) %>%
-                  mutate_if(is.Date, function(x) paste0("TO_DATE('", x, "', 'YYYY-MM-DD')")) %>%
-                  mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')")),
-                         across(where(is.numeric), ~replace(., is.na(.), 0)),
-                        across(where(is.character), ~replace(., is.na(.), "''"))) #%>%
-                  #replace(is.na(.), "''")
+  process_data <- raw_data %>% mutate_if(is.character, function(x) gsub("\'", "''", x)) %>%
+    mutate_if(is.character, function(x) gsub("&", "' || chr(38) || '", x)) %>%
+    mutate_if(is.character, function(x) paste0("'", x, "'")) %>%
+    mutate_if(is.Date, function(x) paste0("TO_DATE('", x, "', 'YYYY-MM-DD')")) %>%
+    mutate(across(contains('UPDATED_TIME'), function(x) paste0("TO_TIMESTAMP(", x, ", 'YYYY-MM-DD HH24:MI:SS')")),
+           across(where(is.numeric), ~replace(., is.na(.), 0)),
+           across(where(is.character), ~replace(., is.na(.), "''"))) #%>%
+  #replace(is.na(.), "''")
   
   columns <- paste(colnames(process_data), collapse = ",")
   
@@ -41,7 +43,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   split_queries_sql_statements <- list()
   for (i in 1:length(split_queries)) {
     row <- glue_collapse(split_queries[[i]], sep = "\n\n")
-
+    
     row <- gsub("'NA'", "''", row)
     #row <- gsub("", "''", row)
     
@@ -50,6 +52,17 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     split_queries_sql_statements <- append(split_queries_sql_statements, gsub("\\n", "", sql))
   }
   
+  split_queries_sql_statements
+  
+}
+
+
+# Write and Merge ----
+write_temporary_table_to_database_and_merge_updated <- function(data, key_columns, destination_table_name, source_table_name, update_columns) {
+  
+  
+  # process data and generate inserts
+  split_queries_sql_statements <- process_data_and_inserts(data,source_table_name)
 
   
   # glue statement for dropping table
@@ -164,5 +177,88 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
 
     
   })
+  
+}
+
+
+# Copy Table and Write Data ----
+copy_table_and_write_data <- function(data, table_name){
+  
+  # process data and generate inserts
+  split_queries_sql_statements <- process_data_and_inserts(data,table_name)
+  
+  backup_table_name <- paste0(table_name,"_BACKUP")
+  
+  
+  # glue statements for clearning table
+  truncate_query_destination_table <- glue('TRUNCATE TABLE "{table_name}";')
+  truncate_query_backup_table <- glue('TRUNCATE TABLE "{backup_table_name}";')
+  
+  
+  #glue statement to copy empty table
+  copy_data_to_backup_query <- glue('INSERT INTO "{backup_table_name}"
+                                     SELECT *
+                                     FROM "{table_name}";')
+  
+  # Truncate Backup Table and Copy Data
+  tryCatch({
+    ch = dbConnect(odbc(), dsn)
+    dbBegin(ch)
+    dbExecute(ch,truncate_query_backup_table)
+    dbExecute(ch,copy_data_to_backup_query)
+    dbCommit(ch)
+    dbDisconnect(ch)
+  },
+  error = function(err){
+    print(err)
+    print("Error Truncating Backup Table and Copying Data")
+    dbRollback(ch)
+    dbDisconnect(ch)
+    
+  })
+  
+  
+  # Truncate Table
+  tryCatch({
+    ch = dbConnect(odbc(), dsn)
+    dbBegin(ch)
+    dbExecute(ch,truncate_query_destination_table)
+    dbCommit(ch)
+    dbDisconnect(ch)
+  },
+  error = function(err){
+    print(err)
+    print("Error Truncating Table")
+    dbRollback(ch)
+    dbDisconnect(ch)
+    
+  })
+  
+  # Insert Data to table
+  registerDoParallel()
+  system.time(
+    outputPar <- foreach(i = 1:length(split_queries_sql_statements), .packages = c("DBI", "odbc"))%dopar%{
+      
+      #Connecting to database through DBI
+      ch = dbConnect(odbc(), dsn)
+      #Test connection
+      tryCatch({
+        dbBegin(ch)
+        dbExecute(ch, split_queries_sql_statements[[i]])
+        dbCommit(ch)
+      },
+      error = function(err){
+        #print("error2")
+        dbRollback(ch)
+        dbDisconnect(ch)
+        ErrorUI("WriteTable","Data Write Error")
+      })
+    }
+  )
+  registerDoSEQ()
+  
+  
+  
+
   
 }

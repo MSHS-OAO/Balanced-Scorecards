@@ -3867,7 +3867,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             supplier_mapping_data_file_path <- supplier_mapping_data_file$datapath
             # supplier_mapping_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Supply category to Sub-account mapping.xlsx"
-            # updated_user <- "Test"
+            # updated_user <- "Test1234"
             supplier_mapping_data <- read_excel(supplier_mapping_data_file_path,
                                                 col_types = c("text","text"))
             flag <- 1
@@ -3902,11 +3902,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             
             #wirte the updated data to the Supplier Mapping table in the server
             tryCatch({
-              write_temporary_table_to_database_and_merge_updated(supplier_mapping_data_processed,
-                                                                  "ACCTNAME",
-                                                                  "BSC_FINANCE_SUPPLIER_MAPPING",
-                                                                  "BSC_FINANCE_SUPPLIER_MAPPING_ST",
-                                                                  c("CATEGORY","UPDATED_USER"))
+              copy_table_and_write_data(supplier_mapping_data_processed,
+                                        "BSC_FINANCE_SUPPLIER_MAPPING")
 
             },
             error = function(err){  showModal(modalDialog(
@@ -3925,7 +3922,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             tryCatch({
               cost_center_mapping_data_file_path <- cost_center_mapping_data_file$datapath
               # cost_center_mapping_data_file_path <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Cost Center Mapping Main File.xlsx"
-              # updated_user <- "Test"
+              # updated_user <- "Test2342"
               types_col <- rep("text",each=20)
               cost_center_mapping_data <- read_excel(cost_center_mapping_data_file_path,
                                                      sheet="2022 Cost Center Categorization",
@@ -3964,15 +3961,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               #wirte the updated data to the Supplier Mapping table in the server
               tryCatch({
                 
-                col_names_new  <- names(cost_center_mapping_data_processed)
-                update_cols <- col_names_new[col_names_new != "COST_CENTER"]
-                update_cols <- update_cols[update_cols != "NAME"]
+                # col_names_new  <- names(cost_center_mapping_data_processed)
+                # update_cols <- col_names_new[col_names_new != "COST_CENTER"]
+                # update_cols <- update_cols[update_cols != "NAME"]
                 
-                write_temporary_table_to_database_and_merge_updated(cost_center_mapping_data_processed,
-                                                                    c("COST_CENTER", "NAME"),
-                                                                    "BSC_FINANCE_COST_CENTER_MAPPING",
-                                                                    "BSC_FINANCE_COST_CENTER_MAPPING_ST",
-                                                                    update_cols)
+                copy_table_and_write_data(cost_center_mapping_data_processed,
+                                          "BSC_FINANCE_COST_CENTER_MAPPING")
                 
               },
               error = function(err){  showModal(modalDialog(
