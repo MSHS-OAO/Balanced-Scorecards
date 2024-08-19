@@ -300,11 +300,11 @@ ui <-
                                           )
                                         ),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = "pills",
-                                        tabPanel("Finance", br(),
-                                                 fileInput("finance_budget", label = "Please upload Budget data"),
-                                                 actionButton("submit_finance", label = "Submit")
-                               
-                                      ),
+                                      #   tabPanel("Finance", br(),
+                                      #            fileInput("finance_budget", label = "Please upload Budget data"),
+                                      #            actionButton("submit_finance", label = "Submit")
+                                      # 
+                                      # ),
                                       # tabPanel("Census Days", br(),
                                       #          fileInput("finance_census", label = "Please upload Census Days data"),
                                       #          actionButton("submit_finance", label = "Submit")
@@ -312,8 +312,17 @@ ui <-
                                       tabPanel("Overtime", br(),
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
                                                actionButton("submit_finance_ot", label = "Submit")
-                                               )
-                                 ), value = "finance"
+                                               ),
+                                      tabPanel("Access Data", br(),
+                                               fileInput("finance_access_data", label = "Please upload Access Data"),
+                                               actionButton("submit_finance_access_data", label = "Submit")
+                                      ),
+                                      tabPanel("Supplier and Cost Center Mapping", br(),
+                                               fileInput("finance_supplier_mapping", label = "Please upload Supplier Mapping data"),
+                                               hr(),
+                                               fileInput("finance_cost_center_mapping", label = "Please upload Cost Center Mapping data"),
+                                               actionButton("submit_finance_mapping", label = "Submit")
+                                 )), value = "finance"
                         ),
                         # Patient Experience Data Submission ---------
                         tabPanel("Patient Experience",
@@ -1031,6 +1040,18 @@ ui <-
   
   tags$style(HTML("
         #submit_prod {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+  
+  tags$style(HTML("
+        #submit_finance_mapping {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+  
+  tags$style(HTML("
+        #submit_finance_access_data {
           background-color: #d80b8c;
           color: #FFFFFF;
         }")),
