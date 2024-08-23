@@ -78,11 +78,17 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   drop_query <- glue('DROP TABLE {source_table_name};')
   
   
+  ##Query to check if tbale exists
+  check_table <- glue("Select table_Name from user_Tables
+    Where table_name = '{source_table_name}'")
+  
+  
   # Clear the staging data
   tryCatch({
     ch = dbConnect(odbc(), dsn)
     dbBegin(ch)
-    if(dbExistsTable(ch,source_table_name)){
+    table_check <- dbGetQuery(ch, check_table)
+    if(nrow(table_check) == 0){
       dbExecute(ch,drop_query)
     }
     dbExecute(ch,copy_table_query)
