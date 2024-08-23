@@ -242,7 +242,7 @@ budget_raw_file_process_updated <- function(data, updated_user) {
   
   key_columns <- c("SITE", "REPORTING_MONTH", "SERVICE", "METRIC_NAME_SUBMITTED")
   destination_table_name <- "SUMMARY_REPO"
-  source_table_name <- "STAGING.MERGE_TABLE"
+  source_table_name <- "STAGING_MERGE_TABLE"
   update_columns <- c("VALUE", "UPDATED_TIME", "UPDATED_USER", "PREMIER_REPORTING_PERIOD")
   
   write_temporary_table_to_database_and_merge_updated(budget_data_df, key_columns, destination_table_name, source_table_name, update_columns)
