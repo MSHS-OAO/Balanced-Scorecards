@@ -108,7 +108,7 @@ budget_raw_file_process_updated <- function(data, updated_user) {
   
   budget_data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab", Function))
   
-  budget_data <- data %>% filter(Function %in% list_of_services) %>%
+  budget_data <- budget_data %>% filter(Function %in% list_of_services) %>%
     filter(SITE %in% list_of_sites) %>%
     filter(EXPTYPE %in% list_of_exptype) %>%
     mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS BI", "MSBI", 
