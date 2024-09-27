@@ -103,7 +103,7 @@ budget_raw_file_process_updated <- function(data, updated_user) {
                         "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management")
   
   
-  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ")
+  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "MS NYEE")
   list_of_exptype <- c("Salaries", "Supplies")
   
   budget_data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab", Function))
@@ -121,6 +121,9 @@ budget_raw_file_process_updated <- function(data, updated_user) {
                                        SITE)
     ) %>%
     mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS WEST", "MSW", 
+                                       SITE)
+    ) %>%
+    mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS NYEE", "NYEE", 
                                        SITE)
     ) %>%
     mutate_at(vars(c("Function")), ~ifelse(Function == "Radiology", 
