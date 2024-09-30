@@ -5230,34 +5230,53 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       #observe entries from the user
       
-      library(memoise)
+      
+      
+      # Cache functions
       
       memoized_full_future_state_tbl <- memoise(function() {
         connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW") %>%
-          collect()
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW") %>% collect()
         dbDisconnect(connection)
         future_state_tbl
       })
       
       memoized_full_current_state_tbl <- memoise(function() {
         connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>%
-          collect()
+        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
         dbDisconnect(connection)
         current_state_tbl
       })
       
       memoized_full_status_data_tbl <- memoise(function() {
         conn <- dbConnect(odbc::odbc(), dsn = dsn)
-        status_data_tbl <- tbl(conn, "BSC_TARGET_STATUS") %>%
-          collect()
+        status_data_tbl <- tbl(conn, "BSC_TARGET_STATUS") %>% collect()
         dbDisconnect(conn)
         status_data_tbl
       })
       
+      # Refresh function
+      
+      refresh_data <- function() {
+        # Forget memoized functions 
+        forget(memoized_full_future_state_tbl)
+        forget(memoized_full_current_state_tbl)
+        forget(memoized_full_status_data_tbl)
+        
+        # Reload functions
+        full_future_state_data <- memoized_full_future_state_tbl()
+        full_current_state_data <- memoized_full_current_state_tbl()
+        full_status_data <- memoized_full_status_data_tbl()
+        
+        # Return the new cashed data
+        list(
+          future_state_data = full_future_state_data,
+          current_state_data = full_current_state_data,
+          status_data = full_status_data
+        )
+      }
+      
       observeEvent(c(
-        input$selectedService5,
         input$submit_finance,
         input$submit_prod,
         input$submit_engineering,
@@ -5284,16 +5303,30 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         input$submit_finance_access_data,
         input$submit_finance_mapping
       ), {
+        refreshed_data <- refresh_data()
+        
+        full_future_state_data <- refreshed_data$future_state_data
+        full_current_state_data <- refreshed_data$current_state_data
+        full_status_data <- refreshed_data$status_data
+        
         overview_service_selected <- input$selectedService5
         
-        print("observe")
-        
-        full_future_state_data <- memoized_full_future_state_tbl()
         emergency_department_data <- full_future_state_data %>%
           filter(FUNCTION == overview_service_selected)
         future_state_data_reactive(emergency_department_data)
         
+      })
+      
+      observeEvent(input$selectedService5, {
+        overview_service_selected <- input$selectedService5
+        
+        full_future_state_data <- memoized_full_future_state_tbl()
         full_current_state_data <- memoized_full_current_state_tbl()
+        
+        emergency_department_data <- full_future_state_data %>%
+          filter(FUNCTION == overview_service_selected)
+        future_state_data_reactive(emergency_department_data)
+        
         current_state_data <- full_current_state_data %>%
           filter(FUNCTION == overview_service_selected)
         
@@ -5318,6 +5351,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           target_and_status_metrics_reactive(filtered_df)
         })
       })
+      
       
       
       

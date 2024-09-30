@@ -5,6 +5,7 @@ suppressMessages({
   # library(xlsx)
   library(assertr)
   library(readxl)
+  library(memoise)
   library(writexl)
   library(plyr)
   library(dplyr)
