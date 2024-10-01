@@ -54,7 +54,7 @@ rev_budget_dept_summary <- function(data){
                                            ifelse(data$Site == "MS WEST", "MSW",
                                                   ifelse(data$Site == "MS NYEE", "NYEE",
                                                          ifelse(data$Site == "MOUNT SINAI", "MSH", 
-                                                                ifelse(data$Site == "System Roll up", "SYSETEM", NA))))))))
+                                                                ifelse(data$Site == "System Roll up", "SYSTEM", NA))))))))
   
   data <- data %>% relocate(Site, .before = Metric)
   
