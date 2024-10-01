@@ -68,7 +68,7 @@ peri_op_processing <- function(file_path, updated_user) {
   
   
   data <- read_excel(file_path, col_types = c('text', 'text', 'text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric')) %>%
-    mutate(`BSC ROLLUP` = ifelse(grepl("Total", Month), "System", `BSC ROLLUP`))
+    mutate(`BSC ROLLUP` = ifelse(grepl("Total", Month), "SYSTEM", `BSC ROLLUP`))
   
   data$Month <- gsub("Total", "", data$Month)
   data$Month <- trimws(data$Month)
