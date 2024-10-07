@@ -4228,7 +4228,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       observeEvent(input$submit_biomedkpis, {
         button_name <- "submit_biomedkpis"
         shinyjs::disable(button_name)
-        updated_user <- input$name_biomed_kpi
+
+        
+        biomed_file <- input$biomed_data
+        flag <- 0
+        
+        if(is.null(biomed_file)) {
+          
+        } else{
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
@@ -4237,17 +4244,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             footer = NULL
           ))
         }
-        else{
-          tryCatch({
-            
-            # Convert rhandsontable to R object
-            bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
-            
-            # Identify columns with no data in them and remove before further processing
-            # This ensures months with no data do not get added to the department summary
 
-            bme_kpi_manual_updates <- remove_empty_manual_columns(bme_kpi_manual_updates)
-            flag <- 1
+          tryCatch({
+            file_path <- biomed_file$datapath
+            updated_user <- input$name_biomed_kpi
+            
+            biomed_data <- read_excel(file_path)
+                        flag <- 1
           },
           error =function(err){
             
@@ -4263,41 +4266,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
           
           if(flag==1){
-            user_format_error <- manual_format_check(bme_kpi_manual_updates%>%
-                                                        filter(Metric %in% c("PM Compliance - High Risk Equipment",
-                                                                             "PM Compliance - All Medical Equipment",
-                                                                             "Documented Status")))
-            
-            if (user_format_error) {
+            tryCatch({
+              # Process Input Data
+              biomed_data_updated <- biomed_summary_repos_KPI(biomed_data, updated_user)
+              flag <- 2
               
+            },
+            error = function(err){
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
+                paste0("There seems to be an issue with the Support Services file."),
                 easyClose = TRUE,
                 footer = NULL
               ))
+              shinyjs::enable(button_name)
               
-            } 
-            else{
-              ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
-              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
-                                                                "Biomed / Clinical Engineering", 
-                                                                "KPIs", 
-                                                                updated_user,
-                                                                button_name)
-              
-              if(updated_rows$flag == 2) {
-                ##Updated the data on the databse
-                write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                            "TEMP_BIOMEDKPIs", button_name)
-                
-                update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                          input$selectedService3)
-              
-              }
+            }
+            )
+
+          }
+          if(flag == 2) {
+            
+            biomed_data_updated <- file_return_updated_rows(biomed_data_updated)
+            write_temporary_table_to_database_and_merge(biomed_data_updated,
+                                                        "TEMP_BIOMED", button_name)
+            
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                      input$selectedService3)
+          }
+          
         }
-      }
-    }})
+        shinyjs::enable(button_name)
+        })
       
       
       #D&I Biomed Output Table -------
