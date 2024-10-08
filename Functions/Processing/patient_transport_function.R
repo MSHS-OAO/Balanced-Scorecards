@@ -1,18 +1,20 @@
 library(dplyr)
 library(magrittr)
 library(lubridate)
+library(openxlsx)
 
-data <- read.xlsx("~/Balanced-Scorecards/Test/PT Transport All Data - System Template.xlsx")
-updated_user = "Laith Test"
+
+#data <- read.xlsx("~/Balanced-Scorecards/Test/PT Transport All Data - System Template.xlsx")
+#updated_user = "Laith Test"
 
 
 process_patient_transport_data <-  function(data, updated_user) {
   
-  data2 <- data %>%
+  data <- data %>%
     mutate(SERVICE = "Patient & Equipment Transport") %>%
     mutate(UPDATED_USER = updated_user) %>%
     mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, origin = "1899-12-30")) %>%
-    mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b-%Y")) %>%
+    mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
     mutate(VALUE = round(VALUE, 3)) %>%
     rename(METRIC_NAME_SUBMITTED=METRIC_NAME_SUMMARY) %>%
     select(SERVICE,SITE,REPORTING_MONTH,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER,PREMIER_REPORTING_PERIOD) 
