@@ -8,7 +8,8 @@ get_peri_op_ytd <- function(month_input) {
                     dsn = dsn)
   sr_tbl <- tbl(conn, "SUMMARY_REPO")
   ytd_metrics <- sr_tbl %>% filter(SERVICE %in% 'Perioperative Services',
-                                   TO_DATE(min_month, format) <= REPORTING_MONTH) %>%
+                                   TO_DATE(min_month, format) <= REPORTING_MONTH,
+                                   SITE != 'SYSTEM') %>%
     select(-UPDATED_TIME, -UPDATED_USER) %>% collect() %>%
     filter(METRIC_NAME_SUBMITTED %in% c('Average Turnover (min) (FYTD)','On Time Start % (FYTD)')) %>%
     rename(Service = SERVICE,
