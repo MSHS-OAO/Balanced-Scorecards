@@ -54,9 +54,9 @@ write_temporary_table_to_database_and_merge <- function(processed_input_data,tab
     TABLE_NAME <- paste0("STAGING.MERGE_TABLE")
     
     
-    system_wide <- unique(processed_input_data$SITE)
+    productivity_check <- unique(processed_input_data$METRIC_NAME_SUBMITTED)
     
-    DEST_TABLE <- if("SYSTEM" %in% system_wide){
+    DEST_TABLE <- if("Worked Hours Productivity Index" %in% productivity_check){
       paste0("BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
     }else{
       paste0("SUMMARY_REPO")
