@@ -67,27 +67,33 @@ peri_op_processing <- function(file_path, updated_user) {
   # df_final <- df_final %>% filter(SITE %in% c("MSB", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE"))
   
   
-  data <- read_excel(file_path, col_types = c('text', 'text', 'text', 'numeric', 'numeric', 'numeric', 'numeric')) %>%
-    mutate(REPORTING_MONTH = as.Date(paste0(Year, "-", Month, "-01"), format = '%Y-%B-%d'),
+  data <- read_excel(file_path, col_types = c('text', 'text', 'text', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric', 'numeric')) %>%
+    mutate(`BSC ROLLUP` = ifelse(grepl("Total", Month), "SYSTEM", `BSC ROLLUP`))
+  
+  data$Month <- gsub("Total", "", data$Month)
+  data$Month <- trimws(data$Month)
+  
+    data <- data %>% mutate(REPORTING_MONTH = as.Date(paste0(Year, "-", Month, "-01"), format = '%Y-%B-%d'),
            PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
            SERVICE = "Perioperative Services") %>%
-    select(-Month, -Year)
+    select(-Month, -Year) %>%
+      rename(SITE = `BSC ROLLUP`)
   
   
-  site_mapping <- tibble(SITE=c("MOUNT SINAI HOSPITAL", 
-                                "MS BETH ISREAL",
-                                "MS BROOKLYN",
-                                "MS MORNINGSIDE",
-                                "MS QUEENS",
-                                "MS WEST"), 
-                         site_name_process=c("MSH","MSBI", "MSB", "MSM", "MSQ", "MSW"))
+  # site_mapping <- tibble(SITE=c("MOUNT SINAI HOSPITAL", 
+  #                               "MS BETH ISREAL",
+  #                               "MS BROOKLYN",
+  #                               "MS MORNINGSIDE",
+  #                               "MS QUEENS",
+  #                               "MS WEST"), 
+  #                        site_name_process=c("MSH","MSBI", "MSB", "MSM", "MSQ", "MSW"))
   
-  data <- left_join(data, site_mapping) %>% filter(!is.na(site_name_process)) %>% select(-SITE) %>% 
-    rename(SITE = site_name_process)
-  data <- pivot_longer(data, cols = c(`TAT MTD`, `TAT YTD`, `FCOT MTD`, `FCOT YTD`), names_to = "raw_metric", values_to = "VALUE")
+  # data <- left_join(data, site_mapping) %>% filter(!is.na(site_name_process)) %>% select(-SITE) %>% 
+  #   rename(SITE = site_name_process)
+  data <- pivot_longer(data, cols = c(`TAT MTD`, `TAT YTD`, `FCOT MTD`, `FCOT YTD`, Vol, `Vol YTD`, `YOY%`, `YOY% YTD`), names_to = "raw_metric", values_to = "VALUE")
   
-  metric_mapping <- tibble(raw_metric = c("TAT MTD", "TAT YTD", "FCOT MTD", "FCOT YTD"),
-                           METRIC_NAME_SUBMITTED = c("Average Turnover (min)", "Average Turnover (min) (FYTD)", "On Time Start %", "On Time Start % (FYTD)"))
+  metric_mapping <- tibble(raw_metric = c("TAT MTD", "TAT YTD", "FCOT MTD", "FCOT YTD", "Vol", "Vol YTD", "YOY%", "YOY% YTD"),
+                           METRIC_NAME_SUBMITTED = c("Average Turnover (min)", "Average Turnover (min) (FYTD)", "On Time Start %", "On Time Start % (FYTD)", "Volume", "Volume (FYTD)", "Volume YOY%", "Volume YOY% (FYTD)"))
   
   data <- left_join(data, metric_mapping) %>% select(-raw_metric) %>% filter(!is.na(METRIC_NAME_SUBMITTED)) %>% mutate(UPDATED_USER = updated_user) %>%
     select(SERVICE, SITE, REPORTING_MONTH, METRIC_NAME_SUBMITTED, VALUE, UPDATED_USER, PREMIER_REPORTING_PERIOD)
