@@ -22,5 +22,7 @@ mdf_from_db <- function(service_input, month_input) {
     distinct()
   dbDisconnect(conn)
   
+  metrics_final_df <- metrics_final_df %>% filter(Site != 'SYSTEM')
+  
   return(metrics_final_df)
 }

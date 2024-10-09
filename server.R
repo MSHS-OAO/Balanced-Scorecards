@@ -198,7 +198,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       # service_input <- 'Perioperative Services'
-      # month_input <- "02-2024"
+      # month_input <- "08-2024"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
