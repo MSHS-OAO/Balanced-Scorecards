@@ -11,19 +11,20 @@ get_peri_op_ytd <- function(month_input) {
                                    TO_DATE(min_month, format) <= REPORTING_MONTH,
                                    SITE != 'SYSTEM') %>%
     select(-UPDATED_TIME, -UPDATED_USER) %>% collect() %>%
-    filter(METRIC_NAME_SUBMITTED %in% c('Average Turnover (min) (FYTD)','On Time Start % (FYTD)')) %>%
+    filter(grepl('(FYTD)', METRIC_NAME_SUBMITTED)) %>%
+    filter(!grepl("/.*/", PREMIER_REPORTING_PERIOD)) %>%
     rename(Service = SERVICE,
            Site = SITE,
            Premier_Reporting_Period = PREMIER_REPORTING_PERIOD,
            value_rounded = VALUE,
            Reporting_Month_Ref = REPORTING_MONTH
-    ) %>%
-    mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"),
+    ) 
+  
+  ytd_metrics$METRIC_NAME_SUBMITTED <- gsub(' \\(FYTD\\).*', '',ytd_metrics$METRIC_NAME_SUBMITTED)
+  
+  ytd_metrics <- ytd_metrics %>% mutate(Reporting_Month = format(Reporting_Month_Ref, "%m-%Y"),
            Metric_Group = 'Operational',
-           Metric_Name =  case_when(
-             METRIC_NAME_SUBMITTED == "Average Turnover (min) (FYTD)" ~ "Average Turnover (min)",
-             METRIC_NAME_SUBMITTED == "On Time Start % (FYTD)" ~ "On Time Start %",
-             TRUE ~ METRIC_NAME_SUBMITTED))%>% 
+           Metric_Name = METRIC_NAME_SUBMITTED)%>% 
     select(-METRIC_NAME_SUBMITTED) %>%
     distinct() %>%
     group_by(

@@ -403,6 +403,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         data <- rbind(data,peri_op_operational_ytd_data)
         
+        data <- data %>% filter(!is.null(Metric_Name_Summary))
+        
         period_filter <- data %>% 
           group_by(Metric_Group,
                    Metric_Name_Summary,
