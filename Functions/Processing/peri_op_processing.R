@@ -90,7 +90,9 @@ peri_op_processing <- function(file_path, updated_user) {
   
   # data <- left_join(data, site_mapping) %>% filter(!is.na(site_name_process)) %>% select(-SITE) %>% 
   #   rename(SITE = site_name_process)
-  data <- pivot_longer(data, cols = c(`TAT MTD`, `TAT YTD`, `FCOT MTD`, `FCOT YTD`, Vol, `Vol YTD`, `YOY%`, `YOY% YTD`), names_to = "raw_metric", values_to = "VALUE")
+  data <- pivot_longer(data, cols = c(`TAT MTD`, `TAT YTD`, `FCOT MTD`, `FCOT YTD`, Vol, `Vol YTD`, `YOY%`, `YOY% YTD`), names_to = "raw_metric", values_to = "VALUE") %>%
+    mutate(VALUE = round(VALUE, 6))
+  
   
   metric_mapping <- tibble(raw_metric = c("TAT MTD", "TAT YTD", "FCOT MTD", "FCOT YTD", "Vol", "Vol YTD", "YOY%", "YOY% YTD"),
                            METRIC_NAME_SUBMITTED = c("Average Turnover (min)", "Average Turnover (min) (FYTD)", "On Time Start %", "On Time Start % (FYTD)", "Volume", "Volume (FYTD)", "Volume YOY%", "Volume YOY% (FYTD)"))
