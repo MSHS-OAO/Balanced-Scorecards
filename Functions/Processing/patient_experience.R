@@ -34,6 +34,11 @@ pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>%
                   mutate(Incl_N = ifelse(Incl_N == "true", TRUE, FALSE),
                          Incl_AllHosp_Rank = ifelse(Incl_AllHosp_Rank == "true", TRUE, FALSE))
 
+# file_path <- "Test/Balanced SC Query Current Period ED_cs.csv"
+# submitted_data <- read_csv(file_path,
+#                            show_col_types = FALSE)
+
+
 #dbDisconnect(conn)
 
 # # Import current data for testing
@@ -103,9 +108,9 @@ pt_exp_dept_summary <- function(data) {
       str_detect(`My Sites`, "(Beth Israel Medical Center)|(Mount Sinai Beth Israel)") ~ "MSBI",
       str_detect(`My Sites`, "Mount Sinai Brooklyn") ~ "MSB",
       str_detect(`My Sites`, "(Mount Sinai Queens)|(Mount Sinai Hospital of Queens)") ~ "MSQ",
-      str_detect(`My Sites`, "(Mount Sinai Medical Center)|(The Mount Sinai Hospital)") ~ "MSH",
+      str_detect(`My Sites`, "(Mount Sinai Medical Center)|(The Mount Sinai Hospital)|(Mount Sinai Hospital)") ~ "MSH",
       str_detect(`My Sites`, "Mount Sinai South Nassau") ~ "MSSN",
-      str_detect(`My Sites`, "Mount Sinai St. Luke") ~ "MSM",
+      str_detect(`My Sites`, "(Mount Sinai St. Luke)|(Mount Sinai Morningside)") ~ "MSM",
       str_detect(`My Sites`, "West") ~ "MSW",
       str_detect(`My Sites`, "New York Eye & Ear Infirmary") ~ "NYEE",
       str_detect(`My Sites`, "Total") ~ "MSHS"),
