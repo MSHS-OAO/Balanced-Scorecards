@@ -3100,76 +3100,76 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
   #     }
   #   })
   #   
-  #   # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
-  #   # Create reactive data table for manual entry
-  #   data_lab_prof_test <- reactive({
-  #     data <- sql_manual_table_output("Lab", "proficiency_testing")
-  #     # Arrange by sites in alphabetical order
-  #     data <- data %>%
-  #       arrange(Site)
-  # 
-  # 
-  #     data <- manual_table_month_order(data)
-  # 
-  #   }
-  #   )
-  #   
-  #   output$lab_prof_test <- renderRHandsontable({
-  #     
-  # 
-  #     unique_sites <- unique(data_lab_prof_test()$Site)
-  #     
-  #     site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
-  #     site_2 <- which(data_lab_prof_test()$Site == unique_sites[2])
-  #     site_3 <- which(data_lab_prof_test()$Site == unique_sites[3])
-  #     site_4 <- which(data_lab_prof_test()$Site == unique_sites[4])
-  #     site_5 <- which(data_lab_prof_test()$Site == unique_sites[5])
-  #     site_6 <- which(data_lab_prof_test()$Site == unique_sites[6])
-  #     site_7 <- which(data_lab_prof_test()$Site == unique_sites[7])
-  #     
-  #     # # Code for testing manual entry table without reactive data
-  #     # data_lab_prof_test <- data
-  #     # 
-  #     # unique_sites <- unique(data_lab_prof_test$Site)
-  #     # 
-  #     # site_1 <- which(data_lab_prof_test$Site == unique_sites[1])
-  #     # site_2 <- which(data_lab_prof_test$Site == unique_sites[2])
-  #     # site_3 <- which(data_lab_prof_test$Site == unique_sites[3])
-  #     # site_4 <- which(data_lab_prof_test$Site == unique_sites[4])
-  #     # site_5 <- which(data_lab_prof_test$Site == unique_sites[5])
-  #     # site_6 <- which(data_lab_prof_test$Site == unique_sites[6])
-  #     # site_7 <- which(data_lab_prof_test$Site == unique_sites[7])
-  #     # 
-  #     # col_highlight <- ncol(data_lab_prof_test) - 1
-  #     
-  #     renderer_string <- "
-  #   function(instance, td, row, col, prop, value, cellProperties) {
-  #     Handsontable.renderers.NumericRenderer.apply(this, arguments);
-  # 
-  #     if (instance.params) {
-  #           hcols = instance.params.col_highlight;
-  #           hcols = hcols instanceof Array ? hcols : [hcols];
-  #         }
-  # 
-  #     if (instance.params && hcols.includes(col)) {
-  #       td.style.background = '#EEEDE7';
-  #     }
-  # }"
-  #     
-  #     col_highlight <- ncol(data_lab_prof_test()) - 1
-  #     
-  #     rhandsontable(data_lab_prof_test(),
-  #                   # # Dataframe for non-reactive testing
-  #                   # data_lab_prof_test,
-  #                   overflow = 'visible',
-  #                   col_highlight = col_highlight,
-  #                   rowHeaders = FALSE,
-  #                   readOnly = FALSE) %>%
-  #       hot_cols(renderer = renderer_string) %>%
-  #       hot_col(1:2, readOnly = T)
-  #     
-  #   })
-    
+    # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
+    # Create reactive data table for manual entry
+    data_lab_prof_test <- reactive({
+      data <- sql_manual_table_output("Lab", "proficiency_testing")
+      # Arrange by sites in alphabetical order
+      data <- data %>%
+        arrange(Site)
+
+
+      data <- manual_table_month_order(data)
+
+    }
+    )
+
+    output$lab_prof_test <- renderRHandsontable({
+
+
+      unique_sites <- unique(data_lab_prof_test()$Site)
+
+      site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
+      site_2 <- which(data_lab_prof_test()$Site == unique_sites[2])
+      site_3 <- which(data_lab_prof_test()$Site == unique_sites[3])
+      site_4 <- which(data_lab_prof_test()$Site == unique_sites[4])
+      site_5 <- which(data_lab_prof_test()$Site == unique_sites[5])
+      site_6 <- which(data_lab_prof_test()$Site == unique_sites[6])
+      site_7 <- which(data_lab_prof_test()$Site == unique_sites[7])
+
+      # # Code for testing manual entry table without reactive data
+      # data_lab_prof_test <- data
+      #
+      # unique_sites <- unique(data_lab_prof_test$Site)
+      #
+      # site_1 <- which(data_lab_prof_test$Site == unique_sites[1])
+      # site_2 <- which(data_lab_prof_test$Site == unique_sites[2])
+      # site_3 <- which(data_lab_prof_test$Site == unique_sites[3])
+      # site_4 <- which(data_lab_prof_test$Site == unique_sites[4])
+      # site_5 <- which(data_lab_prof_test$Site == unique_sites[5])
+      # site_6 <- which(data_lab_prof_test$Site == unique_sites[6])
+      # site_7 <- which(data_lab_prof_test$Site == unique_sites[7])
+      #
+      col_highlight <- ncol(data_lab_prof_test) - 1
+
+      renderer_string <- "
+    function(instance, td, row, col, prop, value, cellProperties) {
+      Handsontable.renderers.NumericRenderer.apply(this, arguments);
+
+      if (instance.params) {
+            hcols = instance.params.col_highlight;
+            hcols = hcols instanceof Array ? hcols : [hcols];
+          }
+
+      if (instance.params && hcols.includes(col)) {
+        td.style.background = '#EEEDE7';
+      }
+  }"
+
+      col_highlight <- ncol(data_lab_prof_test()) - 1
+
+      rhandsontable(data_lab_prof_test(),
+                    # # Dataframe for non-reactive testing
+                    # data_lab_prof_test,
+                    overflow = 'visible',
+                    col_highlight = col_highlight,
+                    rowHeaders = FALSE,
+                    readOnly = FALSE) %>%
+        hot_cols(renderer = renderer_string) %>%
+        hot_col(1:2, readOnly = T)
+
+    })
+
     
     # Create observe event actions for manual data submission-----
     observeEvent(input$submit_lab_pt, {
