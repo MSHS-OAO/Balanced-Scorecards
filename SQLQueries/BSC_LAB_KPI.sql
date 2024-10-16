@@ -27,7 +27,8 @@ FROM (SELECT b.SITE1 AS SITE ,
                    THEN 'MSBI'
                    ELSE a.SITE
                 END AS SITE1, a.*
-            FROM LAB_KPI_PREPROCESSED_DAILY a) b
+            FROM LAB_KPI_PREPROCESSED_DAILY a
+            WHERE  SITE!= 'MSSN') b
       WHERE (TEST = 'HGB' AND
              DASHBOARDPRIORITY = 'Stat') OR
              (TEST = 'Troponin' AND
