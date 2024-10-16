@@ -715,20 +715,20 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turnaround Time",
-                                                 hr(),
-                                                 textInput("lab_tat_username",
-                                                           labelMandatory(
-                                                             "Please enter name:"
-                                                           )
-                                                           ),
-                                                 hr(),
-                                                 fileInput("lab_scc", label = "Please upload SCC lab data"),
-                                                 hr(),
-                                                 fileInput("lab_sun", label = "Please upload Sunquest lab data"),
-                                                 hr(),
-                                                 actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
-                                                 ),
+                                        # tabPanel("Turnaround Time",
+                                        #          hr(),
+                                        #          textInput("lab_tat_username",
+                                        #                    labelMandatory(
+                                        #                      "Please enter name:"
+                                        #                    )
+                                        #                    ),
+                                        #          hr(),
+                                        #          fileInput("lab_scc", label = "Please upload SCC lab data"),
+                                        #          hr(),
+                                        #          fileInput("lab_sun", label = "Please upload Sunquest lab data"),
+                                        #          hr(),
+                                        #          actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
+                                        #          ),
                                         tabPanel("Proficiency Testing", hr(),
                                                  fluidRow(
                                                    column(12,
