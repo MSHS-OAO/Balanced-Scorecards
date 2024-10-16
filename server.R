@@ -3138,7 +3138,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # site_6 <- which(data_lab_prof_test$Site == unique_sites[6])
       # site_7 <- which(data_lab_prof_test$Site == unique_sites[7])
       #
-      # col_highlight <- ncol(data_lab_prof_test) - 1
+      col_highlight <- ncol(data_lab_prof_test) - 1
 
       renderer_string <- "
     function(instance, td, row, col, prop, value, cellProperties) {
