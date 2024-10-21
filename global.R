@@ -79,6 +79,8 @@ suppressMessages({
 })
 
 
+#cashing trigger after successful submission
+submission_success <- reactiveVal(FALSE)
 
 
 print("0")

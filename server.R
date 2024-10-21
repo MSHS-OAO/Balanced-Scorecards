@@ -3833,7 +3833,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
         #                           input$selectedService3)
+        
+
       }
+      
+
+      
       shinyjs::enable(button_name)
       
       
@@ -5249,26 +5254,26 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       })
       
       memoized_full_status_data_tbl <- memoise(function() {
-        conn <- dbConnect(odbc::odbc(), dsn = dsn)
-        status_data_tbl <- tbl(conn, "BSC_TARGET_STATUS") %>% collect()
-        dbDisconnect(conn)
+        connection <- dbConnect(odbc::odbc(), dsn = dsn)
+        status_data_tbl <- tbl(connection, "BSC_TARGET_STATUS") %>% collect()
+        dbDisconnect(connection)
         status_data_tbl
       })
       
-      # Refresh function
       
+
+      
+      # refresh function
       refresh_data <- function() {
-        # Forget memoized functions 
+
         forget(memoized_full_future_state_tbl)
         forget(memoized_full_current_state_tbl)
         forget(memoized_full_status_data_tbl)
         
-        # Reload functions
         full_future_state_data <- memoized_full_future_state_tbl()
         full_current_state_data <- memoized_full_current_state_tbl()
         full_status_data <- memoized_full_status_data_tbl()
         
-        # Return the new cashed data
         list(
           future_state_data = full_future_state_data,
           current_state_data = full_current_state_data,
@@ -5276,47 +5281,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         )
       }
       
-      observeEvent(c(
-        input$submit_finance,
-        input$submit_prod,
-        input$submit_engineering,
-        input$submit_food,
-        input$submit_evs,
-        input$submit_imaging,
-        input$submit_ytd_pt_exp,
-        input$submit_monthly_pt_exp,
-        input$submit_biomeddi,
-        input$submit_biomedkpis,
-        input$submit_imagingct,
-        input$submit_lab_pt,
-        input$submit_lab_tat,
-        input$submit_pt_tat,
-        input$submit_sec_inc_rpts,
-        input$submit_sec_events,
-        input$submit_ed,
-        input$submit_nursing,
-        input$submit_finance_census,
-        input$submit_peri_op,
-        input$submit_case_management,
-        input$submit_cn,
-        input$submit_food_nccpd,
-        input$submit_finance_access_data,
-        input$submit_finance_mapping
-      ), {
-        refreshed_data <- refresh_data()
-        
-        full_future_state_data <- refreshed_data$future_state_data
-        full_current_state_data <- refreshed_data$current_state_data
-        full_status_data <- refreshed_data$status_data
-        
-        overview_service_selected <- input$selectedService5
-        
-        emergency_department_data <- full_future_state_data %>%
-          filter(FUNCTION == overview_service_selected)
-        future_state_data_reactive(emergency_department_data)
-        
+      
+      # observe submission success
+      observeEvent(submission_success(), {
+        if (submission_success()) {
+          refreshed_data <- refresh_data()
+          
+          full_future_state_data <- refreshed_data$future_state_data
+          full_current_state_data <- refreshed_data$current_state_data
+          full_status_data <- refreshed_data$status_data
+          
+          overview_service_selected <- input$selectedService5
+          
+          emergency_department_data <- full_future_state_data %>%
+            filter(FUNCTION == overview_service_selected)
+          future_state_data_reactive(emergency_department_data)
+          
+          current_state_data <- full_current_state_data %>%
+            filter(FUNCTION == overview_service_selected)
+          
+          picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
+          updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          
+          observeEvent(input$selectedMonth4, {
+            overview_date_selected <- input$selectedMonth4
+            
+            current_state_data_filtered <- current_state_data %>%
+              filter(format(MONTH, "%m-%Y") == overview_date_selected)
+            
+            current_state_data_reactive(current_state_data_filtered)
+            
+            # filter data
+            strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars")
+            filtered_df <- full_status_data %>%
+              filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
+              distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
+            
+            target_and_status_metrics_reactive(filtered_df)
+          })
+          
+          submission_success(FALSE)
+        }
       })
       
+      
+      # observe selected service
       observeEvent(input$selectedService5, {
         overview_service_selected <- input$selectedService5
         
@@ -5333,6 +5342,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
         updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
         
+        
+        
+        
+        # observe selected month
         observeEvent(input$selectedMonth4, {
           overview_date_selected <- input$selectedMonth4
           
@@ -5351,7 +5364,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           target_and_status_metrics_reactive(filtered_df)
         })
       })
-      
       
       
       
