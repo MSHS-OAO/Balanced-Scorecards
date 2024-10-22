@@ -84,7 +84,7 @@ submission_success <- reactiveVal(FALSE)
 
 
 print("0")
-dsn <- "OAO Cloud DB Staging"
+dsn <- "OAO Cloud DB Production"
 dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
 
