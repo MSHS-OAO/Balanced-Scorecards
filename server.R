@@ -3969,6 +3969,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 copy_table_and_write_data(cost_center_mapping_data_processed,
                                           "BSC_FINANCE_COST_CENTER_MAPPING")
                 
+                SuccessUI("Merge Finance","Merge Succesfull")
+                
               },
               error = function(err){  showModal(modalDialog(
                 title = "Error",
