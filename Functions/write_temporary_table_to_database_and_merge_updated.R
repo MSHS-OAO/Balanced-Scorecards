@@ -129,6 +129,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
   registerDoSEQ()
   
   
+  
   ###MErge Statement
   # key_columns <- c("FUNCTION", "CATEGORY", "SITE", "CC", "NAME", "EXPTYPE", "SUB_ACCOUNT", "SUB_ACCOUNT_DESCRIPTION", "SUPPLY_MAPPING_FILE_CATEGORY", "MONTH")
   merge_on_cols <- paste(paste0("DT.",key_columns, " = ST.",key_columns), sep="", collapse = ",")
@@ -171,8 +172,11 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     dbExecute(ch,drop_query)
     dbCommit(ch)
     dbDisconnect(ch)
+    
     # print("success")
     SuccessUI("Merge","Merge Succesfull")
+    
+    submission_success(TRUE)
 
   },
   error = function(err){
@@ -252,6 +256,7 @@ copy_table_and_write_data <- function(data, table_name){
         dbBegin(ch)
         dbExecute(ch, split_queries_sql_statements[[i]])
         dbCommit(ch)
+        
       },
       error = function(err){
         #print("error2")
@@ -262,7 +267,6 @@ copy_table_and_write_data <- function(data, table_name){
     }
   )
   registerDoSEQ()
-  
   
   
 

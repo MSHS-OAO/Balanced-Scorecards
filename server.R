@@ -3835,7 +3835,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
         #                           input$selectedService3)
+        
+
       }
+      
+
+      
       shinyjs::enable(button_name)
       
       
@@ -5231,61 +5236,145 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # 5. System Overview Tab Output -------------------------------------------------------------------------------------------
       
       
+
       #observe entries from the user
       
-      observeEvent(c(input$selectedService5, input$submit_finance), {
-        overview_service_selected <- input$selectedService5
-
-        print("observe")
-
-        # update future_state_table
-
-        connection <- dbConnect(drv = odbc::odbc(),
-                                dsn = dsn)
-        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW")
-        emergency_department_data <- future_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
-        future_state_data_reactive(emergency_department_data)
+      
+      
+      # Cache functions
+      
+      memoized_full_future_state_tbl <- memoise(function() {
+        connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW") %>% collect()
         dbDisconnect(connection)
-
-        #update Current_state_table
-
-        connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
-        current_state_data <- current_state_tbl %>% filter(FUNCTION == overview_service_selected) %>% collect()
-
-        picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-
-        observeEvent(input$selectedMonth4, {
-          overview_date_selected <- input$selectedMonth4
-
-          current_state_data_filtered <- current_state_data %>%
-            filter(format(MONTH, "%m-%Y") == overview_date_selected) %>%
-            collect()
-
-          current_state_data_reactive(current_state_data_filtered)
-
-          #retrieve Target and Status metrics data
-
-
-          conn <- dbConnect(odbc(), dsn)
-          status_data <- tbl(conn, "BSC_TARGET_STATUS") %>%
-            collect()
-          dbDisconnect(conn)
-
-          strings_to_check <- c("Overtime Hours", "Productivity Index","Budget to Actual Variance","Overtime Dollars")
-          filtered_df <- status_data %>%
-            filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
-            distinct(METRIC_NAME_SUBMITTED,GREEN_STATUS,YELLOW_STATUS,RED_STATUS, .keep_all = TRUE)
-
-          target_and_status_metrics_reactive(filtered_df)
-
-        })
-
-        dbDisconnect(connection_current)
+        future_state_tbl
       })
       
+      memoized_full_current_state_tbl <- memoise(function() {
+        connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
+        dbDisconnect(connection)
+        current_state_tbl
+      })
+      
+      memoized_full_status_data_tbl <- memoise(function() {
+        connection <- dbConnect(odbc::odbc(), dsn = dsn)
+        status_data_tbl <- tbl(connection, "BSC_TARGET_STATUS") %>% collect()
+        dbDisconnect(connection)
+        status_data_tbl
+      })
+      
+      
 
+      
+      # refresh function
+      refresh_data <- function() {
+
+        forget(memoized_full_future_state_tbl)
+        forget(memoized_full_current_state_tbl)
+        forget(memoized_full_status_data_tbl)
+        
+        full_future_state_data <- memoized_full_future_state_tbl()
+        full_current_state_data <- memoized_full_current_state_tbl()
+        full_status_data <- memoized_full_status_data_tbl()
+        
+        list(
+          future_state_data = full_future_state_data,
+          current_state_data = full_current_state_data,
+          status_data = full_status_data
+        )
+      }
+      
+      
+      # observe submission success
+      observeEvent(submission_success(), {
+        if (submission_success()) {
+          refreshed_data <- refresh_data()
+          
+          full_future_state_data <- refreshed_data$future_state_data
+          full_current_state_data <- refreshed_data$current_state_data
+          full_status_data <- refreshed_data$status_data
+          
+          overview_service_selected <- input$selectedService5
+          
+          emergency_department_data <- full_future_state_data %>%
+            filter(FUNCTION == overview_service_selected)
+          future_state_data_reactive(emergency_department_data)
+          
+          current_state_data <- full_current_state_data %>%
+            filter(FUNCTION == overview_service_selected)
+          
+          picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
+          updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+          
+          observeEvent(input$selectedMonth4, {
+            overview_date_selected <- input$selectedMonth4
+            
+            current_state_data_filtered <- current_state_data %>%
+              filter(format(MONTH, "%m-%Y") == overview_date_selected)
+            
+            current_state_data_reactive(current_state_data_filtered)
+            
+            # filter data
+            strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars")
+            filtered_df <- full_status_data %>%
+              filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
+              distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
+            
+            target_and_status_metrics_reactive(filtered_df)
+          })
+          
+          submission_success(FALSE)
+        }
+      })
+      
+      
+      # observe selected service
+      observeEvent(input$selectedService5, {
+        overview_service_selected <- input$selectedService5
+        
+        full_future_state_data <- memoized_full_future_state_tbl()
+        full_current_state_data <- memoized_full_current_state_tbl()
+        
+        emergency_department_data <- full_future_state_data %>%
+          filter(FUNCTION == overview_service_selected)
+        future_state_data_reactive(emergency_department_data)
+        
+        current_state_data <- full_current_state_data %>%
+          filter(FUNCTION == overview_service_selected)
+        
+        picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
+        updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
+        
+        
+        
+        
+        # observe selected month
+        observeEvent(input$selectedMonth4, {
+          overview_date_selected <- input$selectedMonth4
+          
+          current_state_data_filtered <- current_state_data %>%
+            filter(format(MONTH, "%m-%Y") == overview_date_selected)
+          
+          current_state_data_reactive(current_state_data_filtered)
+          
+          full_status_data <- memoized_full_status_data_tbl()
+          
+          strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars")
+          filtered_df <- full_status_data %>%
+            filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
+            distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
+          
+          target_and_status_metrics_reactive(filtered_df)
+        })
+      })
+      
+      
+      
+      
+      
+      
+      
       
       #Current_State table output .........................................................................
       
