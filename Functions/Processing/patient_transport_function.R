@@ -16,6 +16,7 @@ process_patient_transport_data <-  function(data, updated_user) {
     mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, origin = "1899-12-30")) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
     mutate(VALUE = round(VALUE, 3)) %>%
+    mutate(SITE = toupper(SITE)) %>%
     rename(METRIC_NAME_SUBMITTED=METRIC_NAME_SUMMARY) %>%
     select(SERVICE,SITE,REPORTING_MONTH,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER,PREMIER_REPORTING_PERIOD) 
   
