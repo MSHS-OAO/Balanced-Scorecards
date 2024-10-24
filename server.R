@@ -5270,7 +5270,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
           conn <- dbConnect(odbc(), dsn)
           status_data <- tbl(conn, "BSC_TARGET_STATUS") %>%
-            collect()
+            collect() %>% filter(SITE!= "SYSTEM")
           dbDisconnect(conn)
 
           strings_to_check <- c("Overtime Hours", "Productivity Index","Budget to Actual Variance","Overtime Dollars")
