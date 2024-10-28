@@ -24,12 +24,18 @@ process_patient_transport_data <-  function(data, updated_user) {
     data$METRIC_NAME_SUBMITTED <- gsub( " *\\(YTD\\) *", " (FYTD)", data$METRIC_NAME_SUBMITTED)
   
   
+  # Get patient transport mappings
   pt_transport_mapping <- metric_mapping_database %>% filter(Service == "Patient & Equipment Transport") %>% select(Metric_Name_Submitted, Metric_Name_Summary) %>% distinct()
+  
+  #Capture Monthly metrics
   data_monthly <- left_join(data, pt_transport_mapping, c("METRIC_NAME_SUBMITTED" = "Metric_Name_Summary")) %>% filter(!is.na(Metric_Name_Submitted))
   data_monthly <- data_monthly %>% select(-METRIC_NAME_SUBMITTED) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
   
+  ##Remake mapping for FYTD metrics
   pt_transport_mapping_fytd <- pt_transport_mapping %>% mutate(Metric_Name_Summary = paste0(Metric_Name_Summary, " (FYTD)"),
                                                                Metric_Name_Submitted = paste0(Metric_Name_Submitted, " (FYTD)"))
+  
+  ## Capture FYTD metrics
   data_fytd <- left_join(data, pt_transport_mapping_fytd, c("METRIC_NAME_SUBMITTED" = "Metric_Name_Summary")) %>% filter(!is.na(Metric_Name_Submitted))
   data_fytd <- data_fytd %>% select(-METRIC_NAME_SUBMITTED) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
   
