@@ -377,19 +377,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(service_input == "Perioperative Services"){
         
         period_filter <- period_filter %>%
-          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %", "Volume", "Volume YOY%"))
         
         data <- data %>%
-          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %", "Volume", "Volume YOY%"))
         
         peri_op_operational_ytd <- get_peri_op_ytd(month_input)
         
         
         peri_op_operational_ytd_data <- peri_op_operational_ytd %>%
           mutate(Metric_Name_Submitted = Metric_Name,
-                 Metric_Unit = case_when(Metric_Name_Submitted == "On Time Start %" ~ "Percent"),
+                 Metric_Unit = case_when(Metric_Name_Submitted == "On Time Start %" ~ "Percent",
+                                        Metric_Name_Submitted == "Volume YOY%" ~ "Percent"),
                  Metric_Name_Summary = case_when(Metric_Name == "Average Turnover (min)" ~ "Average Turn Around Time",
-                                                 Metric_Name == "On Time Start %" ~ "On Time Starts"),
+                                                 Metric_Name == "On Time Start %" ~ "On Time Starts",
+                                                 Metric_Name == "Volume" ~ "Volume",
+                                                 Metric_Name == "Volume YOY%" ~ "Volume YOY%"),
                  Target = NA,
                  Green_Start = NA,             
                  Green_End = NA,
