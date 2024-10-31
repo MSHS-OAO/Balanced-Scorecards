@@ -100,6 +100,8 @@ peri_op_processing <- function(file_path, updated_user) {
   data <- left_join(data, metric_mapping) %>% select(-raw_metric) %>% filter(!is.na(METRIC_NAME_SUBMITTED)) %>% mutate(UPDATED_USER = updated_user) %>%
     select(SERVICE, SITE, REPORTING_MONTH, METRIC_NAME_SUBMITTED, VALUE, UPDATED_USER, PREMIER_REPORTING_PERIOD)
   
+  data <- data %>% mutate(VALUE = case_when(METRIC_NAME_SUBMITTED == "Volume (FYTD)" ~ VALUE/month(REPORTING_MONTH),
+                                                                                                   METRIC_NAME_SUBMITTED != "Volume (FYTD)" ~ VALUE))
   
 }
 
