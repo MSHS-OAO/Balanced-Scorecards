@@ -5,6 +5,7 @@ suppressMessages({
   # library(xlsx)
   library(assertr)
   library(readxl)
+  library(memoise)
   library(writexl)
   library(plyr)
   library(dplyr)
@@ -78,6 +79,8 @@ suppressMessages({
 })
 
 
+#cashing trigger after successful submission
+submission_success <- reactiveVal(FALSE)
 
 
 print("0")
