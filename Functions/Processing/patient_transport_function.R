@@ -1,9 +1,11 @@
 library(dplyr)
 library(magrittr)
 library(lubridate)
+library(openxlsx)
 
-# data <- read.csv("/SharedDrive//deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/Finance Backend/Patient Transport Jan-Apr 2024 data.csv")
-# updated_user = "Laith Test"
+
+#data <- read.xlsx("~/Balanced-Scorecards/Test/PT Transport All Data - System Template.xlsx")
+#updated_user = "Laith Test"
 
 
 process_patient_transport_data <-  function(data, updated_user) {
@@ -11,17 +13,33 @@ process_patient_transport_data <-  function(data, updated_user) {
   data <- data %>%
     mutate(SERVICE = "Patient & Equipment Transport") %>%
     mutate(UPDATED_USER = updated_user) %>%
-    mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, format = "%Y-%m-%d")) %>%
+    mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, origin = "1899-12-30")) %>%
     mutate(PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y")) %>%
     mutate(VALUE = round(VALUE, 3)) %>%
+    mutate(SITE = toupper(SITE)) %>%
     rename(METRIC_NAME_SUBMITTED=METRIC_NAME_SUMMARY) %>%
     select(SERVICE,SITE,REPORTING_MONTH,METRIC_NAME_SUBMITTED,VALUE,UPDATED_USER,PREMIER_REPORTING_PERIOD) 
   
+    data$METRIC_NAME_SUBMITTED <- gsub( " *\\(MTD\\) *", "", data$METRIC_NAME_SUBMITTED)
+    data$METRIC_NAME_SUBMITTED <- gsub( " *\\(YTD\\) *", " (FYTD)", data$METRIC_NAME_SUBMITTED)
+  
+  
+  # Get patient transport mappings
   pt_transport_mapping <- metric_mapping_database %>% filter(Service == "Patient & Equipment Transport") %>% select(Metric_Name_Submitted, Metric_Name_Summary) %>% distinct()
   
-  data <- left_join(data, pt_transport_mapping, c("METRIC_NAME_SUBMITTED" = "Metric_Name_Summary"))
+  #Capture Monthly metrics
+  data_monthly <- left_join(data, pt_transport_mapping, c("METRIC_NAME_SUBMITTED" = "Metric_Name_Summary")) %>% filter(!is.na(Metric_Name_Submitted))
+  data_monthly <- data_monthly %>% select(-METRIC_NAME_SUBMITTED) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
   
-  data <- data %>% select(-METRIC_NAME_SUBMITTED) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
+  ##Remake mapping for FYTD metrics
+  pt_transport_mapping_fytd <- pt_transport_mapping %>% mutate(Metric_Name_Summary = paste0(Metric_Name_Summary, " (FYTD)"),
+                                                               Metric_Name_Submitted = paste0(Metric_Name_Submitted, " (FYTD)"))
+  
+  ## Capture FYTD metrics
+  data_fytd <- left_join(data, pt_transport_mapping_fytd, c("METRIC_NAME_SUBMITTED" = "Metric_Name_Summary")) %>% filter(!is.na(Metric_Name_Submitted))
+  data_fytd <- data_fytd %>% select(-METRIC_NAME_SUBMITTED) %>% rename(METRIC_NAME_SUBMITTED = Metric_Name_Submitted)
+  
+  data <- bind_rows(data_monthly, data_fytd)
   return(data)
   
 }

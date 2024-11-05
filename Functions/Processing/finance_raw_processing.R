@@ -97,16 +97,18 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
 
 
 budget_raw_file_process_updated <- function(data, updated_user) {
-  list_of_services <- c("Lab and Blood Bank", "Biomed / Clinical Engineering", "Emergency Department",
+  list_of_services <- c("Lab","Blood Bank" ,"Biomed / Clinical Engineering", "Emergency Department",
                         "Engineering", "Environmental Services", "Food Services", 
                         "Nursing", "Patient & Equipment Transport", "Security", 
                         "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management")
   
   
-  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ")
+  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "MS NYEE")
   list_of_exptype <- c("Salaries", "Supplies")
   
-  budget_data <- data %>% filter(Function %in% list_of_services) %>%
+  budget_data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab", Function))
+  
+  budget_data <- budget_data %>% filter(Function %in% list_of_services) %>%
     filter(SITE %in% list_of_sites) %>%
     filter(EXPTYPE %in% list_of_exptype) %>%
     mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS BI", "MSBI", 
@@ -119,6 +121,9 @@ budget_raw_file_process_updated <- function(data, updated_user) {
                                        SITE)
     ) %>%
     mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS WEST", "MSW", 
+                                       SITE)
+    ) %>%
+    mutate_at(vars(c("SITE")), ~ifelse(SITE == "MS NYEE", "NYEE", 
                                        SITE)
     ) %>%
     mutate_at(vars(c("Function")), ~ifelse(Function == "Radiology", 
@@ -139,7 +144,7 @@ budget_raw_file_process_updated <- function(data, updated_user) {
     mutate_at(vars(c("Function")), ~ifelse(Function == "Food", 
                                            "Food Services", Function)
     ) %>%
-    mutate_at(vars(c("Function")), ~ifelse(Function == "Lab and Blood Bank", 
+    mutate_at(vars(c("Function")), ~ifelse(Function == "Lab", 
                                            "Lab", Function)
     ) %>%
     mutate_at(vars(c("EXPTYPE")), ~ifelse(EXPTYPE == "Salaries", 

@@ -198,7 +198,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       service_input <- input$selectedService
       month_input <- input$selectedMonth
       # service_input <- 'Perioperative Services'
-      # month_input <- "02-2024"
+      # month_input <- "08-2024"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -377,19 +377,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(service_input == "Perioperative Services"){
         
         period_filter <- period_filter %>%
-          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %", "Volume", "Volume YOY%"))
         
         data <- data %>%
-          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %"))
+          filter(!Metric_Name %in% c("Average Turnover (min)", "On Time Start %", "Volume", "Volume YOY%"))
         
         peri_op_operational_ytd <- get_peri_op_ytd(month_input)
         
         
         peri_op_operational_ytd_data <- peri_op_operational_ytd %>%
           mutate(Metric_Name_Submitted = Metric_Name,
-                 Metric_Unit = case_when(Metric_Name_Submitted == "On Time Start %" ~ "Percent"),
+                 Metric_Unit = case_when(Metric_Name_Submitted == "On Time Start %" ~ "Percent",
+                                        Metric_Name_Submitted == "Volume YOY%" ~ "Percent"),
                  Metric_Name_Summary = case_when(Metric_Name == "Average Turnover (min)" ~ "Average Turn Around Time",
-                                                 Metric_Name == "On Time Start %" ~ "On Time Starts"),
+                                                 Metric_Name == "On Time Start %" ~ "On Time Starts",
+                                                 Metric_Name == "Volume" ~ "Volume",
+                                                 Metric_Name == "Volume YOY%" ~ "Volume YOY%"),
                  Target = NA,
                  Green_Start = NA,             
                  Green_End = NA,
@@ -402,6 +405,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))
         
         data <- rbind(data,peri_op_operational_ytd_data)
+        
+        data <- data %>% filter(!is.na(Metric_Name_Summary))
         
         period_filter <- data %>% 
           group_by(Metric_Group,
@@ -1052,7 +1057,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                        "Metric_Group",
                                        "Metric_Name"))
       fytd_status <- fytd_status %>%
-        mutate(value_rounded = round(value_rounded,3))
+        mutate(value_rounded = ifelse(value_rounded > 1.99,round(value_rounded,1), round(value_rounded, 3)))
       
       # Determine status definitions for FYTD metrics
       fytd_status <- fytd_status %>%
@@ -2910,194 +2915,194 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
    
     # Lab KPI - Turnaround Time ------------
     # SCC Data submission -----------------
-    observeEvent(input$submit_lab_tat,{
-      button_name <- "submit_lab_tat"
-      shinyjs::disable(button_name)
-      
-      flag <- 0
-
-      # Name SCC file
-      scc_file <- input$lab_scc
-      
-      if (is.null(scc_file)) {
-        return(NULL)
-      }else{
-        
-        if(input$lab_tat_username == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        } else {
-          
-          updated_user <- input$lab_tat_username
-          
-          scc_file_path <- scc_file$datapath
-          # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
-          #                         "/Operations Analytics and Optimization",
-          #                         "/Projects/System Operations",
-          #                         "/Balanced Scorecards Automation",
-          #                         "/Data_Dashboard/Input Data Raw",
-          #                         "/Lab & Blood Bank/SCC",
-          #                         "/SCC HGB Report Mar 2022.xlsx")
-
-          # Try catch statement to ensure file type is correct
-          tryCatch({
-            # Read in SCC file
-            scc_data <- read_excel(scc_file_path)
-            
-            flag <- 1
-            
-          },
-          
-          error = function(err){
-            showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this SCC file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-            shinyjs::enable(button_name)
-          }
-          )
-        }
-      }
-      
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        tryCatch({
-          # Process SCC data
-          scc_summary_data <- lab_scc_tat_dept_summary(scc_data, updated_user)
-          
-          flag <- 2
-          
-          # showModal(modalDialog(
-          #   title = "Success",
-          #   paste0("This SCC data has been imported successfully."),
-          #   easyClose = TRUE,
-          #   footer = NULL
-          # ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this SCC file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-          shinyjs::enable(button_name)
-          
-        })
-      }
-      
-      if(flag == 2){
-        
-        write_temporary_table_to_database_and_merge(scc_summary_data,
-                                                    "TEMP_SCC_TAT", button_name)
-        
-        update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
-        
-      }
-      shinyjs::enable(button_name)
-      
-    }
-    )
+    # observeEvent(input$submit_lab_tat,{
+    #   button_name <- "submit_lab_tat"
+    #   shinyjs::disable(button_name)
+    #   
+    #   flag <- 0
+    # 
+    #   # Name SCC file
+    #   scc_file <- input$lab_scc
+    #   
+    #   if (is.null(scc_file)) {
+    #     return(NULL)
+    #   }else{
+    #     
+    #     if(input$lab_tat_username == "") {
+    #       showModal(modalDialog(
+    #         title = "Error",
+    #         "Please fill in the required fields",
+    #         easyClose = TRUE,
+    #         footer = NULL
+    #       ))
+    #     } else {
+    #       
+    #       updated_user <- input$lab_tat_username
+    #       
+    #       scc_file_path <- scc_file$datapath
+    #       # scc_file_path <- paste0("J:/deans/Presidents/HSPI-PM",
+    #       #                         "/Operations Analytics and Optimization",
+    #       #                         "/Projects/System Operations",
+    #       #                         "/Balanced Scorecards Automation",
+    #       #                         "/Data_Dashboard/Input Data Raw",
+    #       #                         "/Lab & Blood Bank/SCC",
+    #       #                         "/SCC HGB Report Mar 2022.xlsx")
+    # 
+    #       # Try catch statement to ensure file type is correct
+    #       tryCatch({
+    #         # Read in SCC file
+    #         scc_data <- read_excel(scc_file_path)
+    #         
+    #         flag <- 1
+    #         
+    #       },
+    #       
+    #       error = function(err){
+    #         showModal(modalDialog(
+    #         title = "Error",
+    #         paste0("There seems to be an issue with this SCC file."),
+    #         easyClose = TRUE,
+    #         footer = NULL
+    #       ))
+    #         shinyjs::enable(button_name)
+    #       }
+    #       )
+    #     }
+    #   }
+    #   
+    #   # Process data if the right file format was submitted
+    #   if(flag == 1) {
+    #     tryCatch({
+    #       # Process SCC data
+    #       scc_summary_data <- lab_scc_tat_dept_summary(scc_data, updated_user)
+    #       
+    #       flag <- 2
+    #       
+    #       # showModal(modalDialog(
+    #       #   title = "Success",
+    #       #   paste0("This SCC data has been imported successfully."),
+    #       #   easyClose = TRUE,
+    #       #   footer = NULL
+    #       # ))
+    #     },
+    #     error = function(err){
+    #       showModal(modalDialog(
+    #         title = "Error",
+    #         paste0("There seems to be an issue with this SCC file."),
+    #         easyClose = TRUE,
+    #         footer = NULL
+    #       ))
+    #       shinyjs::enable(button_name)
+    #       
+    #     })
+    #   }
+    #   
+    #   if(flag == 2){
+    #     
+    #     write_temporary_table_to_database_and_merge(scc_summary_data,
+    #                                                 "TEMP_SCC_TAT", button_name)
+    #     
+    #     update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+    #     
+    #   }
+    #   shinyjs::enable(button_name)
+    #   
+    # }
+    # )
     
     # Sunquest data submission -------------------
-    observeEvent(input$submit_lab_tat,{
-      button_name <- "submit_lab_tat"
-      shinyjs::disable(button_name)
-      
-      flag <- 0
-      
-      # Name Sunquest file
-      sun_file <- input$lab_sun
-
-      if (is.null(sun_file)) {
-        return(NULL)
-      }else{
-        
-        if(input$lab_tat_username == "") {
-          showModal(modalDialog(
-            title = "Error",
-            "Please fill in the required fields",
-            easyClose = TRUE,
-            footer = NULL
-          ))
-        } else {
-          
-          updated_user <- input$lab_tat_username
-          
-          sun_file_path <- sun_file$datapath
-          # sun_file_path <- paste0("/SharedDrive//deans/Presidents/HSPI-PM",
-          #                     "/Operations Analytics and Optimization",
-          #                     "/Projects/System Operations",
-          #                     "/Balanced Scorecards Automation/Data_Dashboard",
-          #                     "/Input Data Raw/Lab & Blood Bank/SUNQUEST",
-          #                     "/SQ Monthly TROP-HGB-June 2022withTROPHS-Kate.xlsx")
-          
-          # Try catch statement to ensure file type is correct
-          tryCatch({
-            # Read in Sunquest file
-            sun_data <- read_excel(sun_file_path)
-            
-            flag <- 1
-          },
-          error = function(err){
-            showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Sunquest file."),
-            easyClose = TRUE,
-            footer = NULL
-            ))
-            shinyjs::enable(button_name)
-            
-          }
-        )
-        }
-      }
-      
-      # Process data if the right file format was submitted
-      if(flag == 1) {
-        tryCatch({
-          # Process Sunquest data
-          sun_summary_data <- lab_sun_tat_dept_summary(sun_data, updated_user)
-          
-          flag <- 2
-          
-          # showModal(modalDialog(
-          #   title = "Success",
-          #   paste0("This Sunquest data has been imported successfully"),
-          #   easyClose = TRUE,
-          #   footer = NULL
-          # ))
-        },
-        error = function(err){
-          showModal(modalDialog(
-            title = "Error",
-            paste0("There seems to be an issue with this Sunquest file."),
-            easyClose = TRUE,
-            footer = NULL
-          ))
-          shinyjs::enable(button_name)
-          
-        })
-      }
-      
-      if(flag == 2) {
-        
-        write_temporary_table_to_database_and_merge(sun_summary_data,
-                                                    "TEMP_SUN_TAT", button_name)
-        
-        update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
-        
-        shinyjs::enable(button_name)
-
-      }
-    })
-    
+  #   observeEvent(input$submit_lab_tat,{
+  #     button_name <- "submit_lab_tat"
+  #     shinyjs::disable(button_name)
+  #     
+  #     flag <- 0
+  #     
+  #     # Name Sunquest file
+  #     sun_file <- input$lab_sun
+  # 
+  #     if (is.null(sun_file)) {
+  #       return(NULL)
+  #     }else{
+  #       
+  #       if(input$lab_tat_username == "") {
+  #         showModal(modalDialog(
+  #           title = "Error",
+  #           "Please fill in the required fields",
+  #           easyClose = TRUE,
+  #           footer = NULL
+  #         ))
+  #       } else {
+  #         
+  #         updated_user <- input$lab_tat_username
+  #         
+  #         sun_file_path <- sun_file$datapath
+  #         # sun_file_path <- paste0("/SharedDrive//deans/Presidents/HSPI-PM",
+  #         #                     "/Operations Analytics and Optimization",
+  #         #                     "/Projects/System Operations",
+  #         #                     "/Balanced Scorecards Automation/Data_Dashboard",
+  #         #                     "/Input Data Raw/Lab & Blood Bank/SUNQUEST",
+  #         #                     "/SQ Monthly TROP-HGB-June 2022withTROPHS-Kate.xlsx")
+  #         
+  #         # Try catch statement to ensure file type is correct
+  #         tryCatch({
+  #           # Read in Sunquest file
+  #           sun_data <- read_excel(sun_file_path)
+  #           
+  #           flag <- 1
+  #         },
+  #         error = function(err){
+  #           showModal(modalDialog(
+  #           title = "Error",
+  #           paste0("There seems to be an issue with this Sunquest file."),
+  #           easyClose = TRUE,
+  #           footer = NULL
+  #           ))
+  #           shinyjs::enable(button_name)
+  #           
+  #         }
+  #       )
+  #       }
+  #     }
+  #     
+  #     # Process data if the right file format was submitted
+  #     if(flag == 1) {
+  #       tryCatch({
+  #         # Process Sunquest data
+  #         sun_summary_data <- lab_sun_tat_dept_summary(sun_data, updated_user)
+  #         
+  #         flag <- 2
+  #         
+  #         # showModal(modalDialog(
+  #         #   title = "Success",
+  #         #   paste0("This Sunquest data has been imported successfully"),
+  #         #   easyClose = TRUE,
+  #         #   footer = NULL
+  #         # ))
+  #       },
+  #       error = function(err){
+  #         showModal(modalDialog(
+  #           title = "Error",
+  #           paste0("There seems to be an issue with this Sunquest file."),
+  #           easyClose = TRUE,
+  #           footer = NULL
+  #         ))
+  #         shinyjs::enable(button_name)
+  #         
+  #       })
+  #     }
+  #     
+  #     if(flag == 2) {
+  #       
+  #       write_temporary_table_to_database_and_merge(sun_summary_data,
+  #                                                   "TEMP_SUN_TAT", button_name)
+  #       
+  #       update_picker_choices_sql(session, input$selectedService, input$selectedService2, input$selectedService3)
+  #       
+  #       shinyjs::enable(button_name)
+  # 
+  #     }
+  #   })
+  #   
     # Lab Metrics - Proficiency Testing (Manual Entry) -----------------------
     # Create reactive data table for manual entry
     data_lab_prof_test <- reactive({
@@ -3111,12 +3116,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
     }
     )
-    
+
     output$lab_prof_test <- renderRHandsontable({
-      
+
 
       unique_sites <- unique(data_lab_prof_test()$Site)
-      
+
       site_1 <- which(data_lab_prof_test()$Site == unique_sites[1])
       site_2 <- which(data_lab_prof_test()$Site == unique_sites[2])
       site_3 <- which(data_lab_prof_test()$Site == unique_sites[3])
@@ -3124,12 +3129,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       site_5 <- which(data_lab_prof_test()$Site == unique_sites[5])
       site_6 <- which(data_lab_prof_test()$Site == unique_sites[6])
       site_7 <- which(data_lab_prof_test()$Site == unique_sites[7])
-      
+
       # # Code for testing manual entry table without reactive data
       # data_lab_prof_test <- data
-      # 
+      #
       # unique_sites <- unique(data_lab_prof_test$Site)
-      # 
+      #
       # site_1 <- which(data_lab_prof_test$Site == unique_sites[1])
       # site_2 <- which(data_lab_prof_test$Site == unique_sites[2])
       # site_3 <- which(data_lab_prof_test$Site == unique_sites[3])
@@ -3137,9 +3142,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # site_5 <- which(data_lab_prof_test$Site == unique_sites[5])
       # site_6 <- which(data_lab_prof_test$Site == unique_sites[6])
       # site_7 <- which(data_lab_prof_test$Site == unique_sites[7])
-      # 
-      # col_highlight <- ncol(data_lab_prof_test) - 1
-      
+      #
+      col_highlight <- ncol(data_lab_prof_test) - 1
+
       renderer_string <- "
     function(instance, td, row, col, prop, value, cellProperties) {
       Handsontable.renderers.NumericRenderer.apply(this, arguments);
@@ -3153,9 +3158,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         td.style.background = '#EEEDE7';
       }
   }"
-      
+
       col_highlight <- ncol(data_lab_prof_test()) - 1
-      
+
       rhandsontable(data_lab_prof_test(),
                     # # Dataframe for non-reactive testing
                     # data_lab_prof_test,
@@ -3165,9 +3170,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                     readOnly = FALSE) %>%
         hot_cols(renderer = renderer_string) %>%
         hot_col(1:2, readOnly = T)
-      
+
     })
-    
+
     
     # Create observe event actions for manual data submission-----
     observeEvent(input$submit_lab_pt, {
@@ -3972,6 +3977,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                 copy_table_and_write_data(cost_center_mapping_data_processed,
                                           "BSC_FINANCE_COST_CENTER_MAPPING")
                 
+                SuccessUI("Merge Finance","Merge Succesfull")
+                
               },
               error = function(err){  showModal(modalDialog(
                 title = "Error",
@@ -4233,7 +4240,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       observeEvent(input$submit_biomedkpis, {
         button_name <- "submit_biomedkpis"
         shinyjs::disable(button_name)
-        updated_user <- input$name_biomed_kpi
+
+        
+        biomed_file <- input$biomed_data
+        flag <- 0
+        
+        if(is.null(biomed_file)) {
+          
+        } else{
         if(input$name_biomed_kpi == "") {
           showModal(modalDialog(
             title = "Error",
@@ -4242,17 +4256,13 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             footer = NULL
           ))
         }
-        else{
-          tryCatch({
-            
-            # Convert rhandsontable to R object
-            bme_kpi_manual_updates <- hot_to_r(input$biomed_kpi)          
-            
-            # Identify columns with no data in them and remove before further processing
-            # This ensures months with no data do not get added to the department summary
 
-            bme_kpi_manual_updates <- remove_empty_manual_columns(bme_kpi_manual_updates)
-            flag <- 1
+          tryCatch({
+            file_path <- biomed_file$datapath
+            updated_user <- input$name_biomed_kpi
+            
+            biomed_data <- read_excel(file_path)
+                        flag <- 1
           },
           error =function(err){
             
@@ -4268,41 +4278,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           })
           
           if(flag==1){
-            user_format_error <- manual_format_check(bme_kpi_manual_updates%>%
-                                                        filter(Metric %in% c("PM Compliance - High Risk Equipment",
-                                                                             "PM Compliance - All Medical Equipment",
-                                                                             "Documented Status")))
-            
-            if (user_format_error) {
+            tryCatch({
+              # Process Input Data
+              biomed_data_updated <- biomed_summary_repos_KPI(biomed_data, updated_user)
+              flag <- 2
               
+            },
+            error = function(err){
               showModal(modalDialog(
                 title = "Error",
-                paste0("There seems to be an issue with the data entered. Data should be entered as a decimal between 0 and 1."),
+                paste0("There seems to be an issue with the Support Services file."),
                 easyClose = TRUE,
                 footer = NULL
               ))
+              shinyjs::enable(button_name)
               
-            } 
-            else{
-              ## Updated rows returns flag and the processed updated rows by comparing what is currently in the summary repo
-              updated_rows <- manual_process_and_return_updates(bme_kpi_manual_updates, 
-                                                                "Biomed / Clinical Engineering", 
-                                                                "KPIs", 
-                                                                updated_user,
-                                                                button_name)
-              
-              if(updated_rows$flag == 2) {
-                ##Updated the data on the databse
-                write_temporary_table_to_database_and_merge(updated_rows$updated_rows,
-                                                            "TEMP_BIOMEDKPIs", button_name)
-                
-                update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
-                                          input$selectedService3)
-              
-              }
+            }
+            )
+
+          }
+          if(flag == 2) {
+            
+            biomed_data_updated <- file_return_updated_rows(biomed_data_updated)
+            write_temporary_table_to_database_and_merge(biomed_data_updated,
+                                                        "TEMP_BIOMED", button_name)
+            
+            update_picker_choices_sql(session, input$selectedService, input$selectedService2, 
+                                      input$selectedService3)
+          }
+          
         }
-      }
-    }})
+        shinyjs::enable(button_name)
+        })
       
       
       #D&I Biomed Output Table -------
@@ -5353,6 +5360,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             filter(format(MONTH, "%m-%Y") == overview_date_selected)
           
           current_state_data_reactive(current_state_data_filtered)
+
           
           full_status_data <- memoized_full_status_data_tbl()
           

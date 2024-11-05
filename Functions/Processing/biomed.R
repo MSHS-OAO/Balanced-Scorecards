@@ -1,6 +1,7 @@
 # function to append the new data to summary repo- KPIs & Disruptions and Issues -----
 biomed_summary_repos_KPI <- function(data,updated_user){
   
+  data <- biomed_file_transform(data)
       summary_repo_kpi_format <- data %>%
       rename(SITE = Site,
              METRIC_NAME_SUBMITTED = Metric ) %>%
@@ -44,4 +45,14 @@ biomed_summary_repos_DI <- function(data,updated_user){
     summary_repo_di_format <- as_tibble(summary_repo_di_format)
     
     
+}
+
+biomed_file_transform <- function(data) {
+  biomed_mapping <- metric_mapping_database %>% filter(Service == 'Biomed / Clinical Engineering') %>%
+    filter(General_Group == 'Operational') %>% select(Metric_Name_Summary, Metric_Name_Submitted) %>% distinct()
+  
+  data <- left_join(data, biomed_mapping, by = c("METRIC_NAME_SUMMARY" = "Metric_Name_Summary")) %>% select(-METRIC_NAME_SUMMARY, -SERVICE) %>% 
+            rename(Site = SITE, Metric = Metric_Name_Submitted) %>%
+            mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%m-%Y")) %>%
+    pivot_wider(names_from = REPORTING_MONTH, values_from = VALUE)
 }

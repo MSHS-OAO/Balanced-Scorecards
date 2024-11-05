@@ -181,7 +181,7 @@ write_temporary_table_to_database_and_merge_pt_exp <- function(processed_input_d
         shinyjs::enable(button_name)
         showModal(modalDialog(
           title = "Error",
-          paste0("There was an issue submitting the data."),
+          paste0("There was an issue submitting the Patient Experience data."),
           easyClose = TRUE,
           footer = NULL
         ))
