@@ -1912,10 +1912,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     
       
-      # metrics_final_df <- mdf_from_db(service_input, month_input)
       
 
       # Past Code Starts ---------------------------------------------------------------------------------     
+      # metrics_final_df <- mdf_from_db(service_input, month_input)
+      
       # breakout_tab_metrics <- metric_mapping_breakout %>%
       #   filter(Service %in% service_input) %>%
       #   select(-General_Group, -Metric_Name_Summary, -Display_Order)
