@@ -5477,8 +5477,38 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
         
+        current_state_data <- current_state_data %>% filter(EXPTYPE %in% metric_order)
         
-        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', TRUE ~ 'Labor'),
+        
+        ##Section for oeprational metrics
+        operational_metrics <- left_join(current_state_data_reactive(), metric_mapping_database[,c("Service", "Metric_Name_Submitted", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Submitted")) %>% filter(Reporting_Tab == "Breakout") %>%
+          filter(General_Group == "Operational") %>% select(-General_Group, -Reporting_Tab)
+        
+        operational_metrics_test <<- operational_metrics
+        
+        operational_metrics <- operational_metrics %>% 
+                              mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 3), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,3) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL, 3)))) %>%
+                              mutate(MTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL - MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL-MTD_TARGET,3) * 100, "%"), round(MTD_ACTUAL - MTD_TARGET))),
+                                     YTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL - YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL-YTD_TARGET,3) * 100, "%"), round(YTD_ACTUAL - YTD_TARGET)))) %>% 
+                              mutate(MTD_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET,3) * 100, "%"), round(MTD_TARGET))),
+                                     MTD_ACTUAL = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL,3) * 100, "%"), round(MTD_ACTUAL))),
+                                     YTD_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET, 3) * 100, "%"), round(YTD_TARGET))),
+                                     YTD_ACTUAL = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL, 3) * 100, "%"), round(YTD_ACTUAL)))
+                                     ) %>% select(-Metric_Unit)
+        
+        operational_metrics <- operational_metrics %>%
+                                mutate(across(c("MTD_ACTUAL", "YTD_ACTUAL", "YTD_TARGET", "MTD_TARGET", "YTD_VARIANCE_TO_TARGET", "MTD_VARIANCE_TO_TARGET"), as.character)) %>%
+                                mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
+
+        if(nrow(operational_metrics > 0)) {
+          tester <<- current_state_data
+          testing <<- operational_metrics
+          current_state_data <- bind_rows(current_state_data, operational_metrics)
+        }
+        
+        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', 
+                                                           current_state_data$EXPTYPE %in% c("Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars") ~ 'Labor',
+                                                           TRUE ~ 'Operational'),
                                          METRIC = current_state_data$EXPTYPE,
                                          TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
                                          MTD_ACTUAL = current_state_data$MTD_ACTUAL,
@@ -5570,7 +5600,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE, 
                                        TRUE ~ FALSE)) %>%
           gsub("\\bNA\\b", "-", .) %>%
-          row_spec(total_expense_row, bold = T)
+          row_spec(total_expense_row, bold = T) #%>%
+          #remove_column(., 1)
         
         
         
