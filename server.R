@@ -5255,7 +5255,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       memoized_full_current_state_tbl <- memoise(function() {
         connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW_TESTING") %>% collect()
+        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
         dbDisconnect(connection)
         current_state_tbl
       })
@@ -5425,7 +5425,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if("Worked Hours Productivity Index" %!in% unique(current_state_data$EXPTYPE) & service_selected %in% unique(system_productivity$SERVICE)) {
           
           connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW_TESTING")
+          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
           current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE == "Worked Hours Productivity Index")%>% 
                                 arrange(desc(MONTH)) %>% head(1) %>% collect()
           dbDisconnect(connection_current)
