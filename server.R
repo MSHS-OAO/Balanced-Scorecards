@@ -5458,6 +5458,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
         }
         
+        if("Total Expenses" %!in%  unique(current_state_data$EXPTYPE)){
+          connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
+          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+          current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses", "Agency/Temp Help Dollars", "OT Dollars"))%>%
+            filter(MONTH == max(MONTH)) %>% collect()
+          dbDisconnect(connection_current)
+
+          current_state_data <- rbind(current_state_data, current_state_data_prod)
+        }
+        
         # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
         current_state_data <- transform(current_state_data,
                                         
