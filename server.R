@@ -1795,9 +1795,117 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       site_input <- input$selectedCampus3
       
 
-      # service_input <- 'Imaging'
-      # month_input <- "08-2023"
-      # site_input <- "MSW"
+      
+      input_service <- 'Radiology'
+      month_input <- "08-2024"
+      site_input <- "MSW"
+      
+      
+      # Get the data from data base
+      conn <- dbConnect(odbc(), dsn)  
+      db_mdf <- tbl(conn, "BSC_METRICS_FINAL_TESTING") %>% filter(SERVICE == input_service,
+                                                                  REPORTING_TAB == "Breakout") %>% collect()
+      dbDisconnect(conn)
+      
+      # format the date
+      month_date <- as.Date(paste0("01-",month_input),"%d-%m-%Y")
+      
+      # filtering for site and getting 11 months data from current month
+      db_mdf_data <- db_mdf %>%
+        filter(REPORTING_MONTH <= month_date,
+               REPORTING_MONTH >= month_date %m-% months(11),
+               SITE == site_input)
+      
+      # processing current month data
+      current_month_data <- db_mdf_data %>%
+        filter(REPORTING_MONTH == month_date) %>%
+        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y")) %>%
+        arrange(DISPLAY_ORDER) %>%
+        select(-SITE,-SERVICE,-CURRENT_PERIOD,-REPORTING_TAB,-DISPLAY_ORDER) %>%
+        pivot_wider(names_from = REPORTING_MONTH,
+                    values_from = VALUE) %>%
+        relocate(TARGET_STATUS, .after = last_col()) %>%
+        relocate(TARGET, .after = last_col())
+        
+      
+      # processing past months data
+      past_months_data <- db_mdf_data %>%
+        filter(REPORTING_MONTH != month_date) %>%
+        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y")) %>%
+        arrange(DISPLAY_ORDER) %>%
+        select(-SITE,-SERVICE,-CURRENT_PERIOD,-REPORTING_TAB,-DISPLAY_ORDER,-TARGET,-TARGET_STATUS) %>%
+        pivot_wider(names_from = REPORTING_MONTH,
+                    values_from = VALUE) %>%
+        mutate("Avg. of Past Months Shown" = rowMeans(.[,3:13],na.rm = TRUE)) %>%
+        select(-METRIC_UNIT)
+      
+      # Data frame for showing on tab
+      tab_out_data <- current_month_data %>% left_join(past_months_data,
+                                       by = c("METRIC_NAME_SUBMITTED")) %>%
+        relocate("Avg. of Past Months Shown", .after = TARGET) %>%
+        mutate(TARGET_STATUS = ifelse(TARGET_STATUS %in% c("Red", "Yellow", "Green"),
+                               paste0('<div style="text-align:center">',
+                                      '<span style="color:',
+                                      TARGET_STATUS,'">',
+                                      fa('fas fa-circle'),
+                                      '</span>',
+                                      '</div>'),
+                               paste0('<div style="text-align:center">',
+                                      '-',
+                                      '</div>'))) %>%
+        mutate(
+          # Format numbers based on metric unit
+          across(where(is.numeric),
+                 .fns = function(x) {
+                   ifelse(METRIC_UNIT %in% "Dollar",
+                          dollar(round(x)),
+                          ifelse(METRIC_UNIT %in% "Percent",
+                                 scales::percent(x, 0.1),
+                                 prettyNum(round(x, digits = 1),
+                                           big.mark = ",")))
+                 }),
+          # Remove metric_unit column
+          METRIC_UNIT = NULL,
+          # Replace NAs
+          across(.cols = everything(),
+                 .fns = function(x) {
+                   str_replace(x,
+                               pattern = paste("NA",
+                                               "NaN",
+                                               "NA%",
+                                               "%NA",
+                                               "NaN%",
+                                               "$NaN",
+                                               sep = "|"),
+                               NA_character_)
+                 })) %>%
+        replace(is.na(.), "-") 
+
+      tab_out_data[, 2:length(tab_out_data)] %>%
+        kable(align = "l", escape = FALSE) %>%
+        pack_rows(label_row_css = "background-color: #212070; color: white;") %>%
+        kable_styling(bootstrap_options = c("hover","bordered","striped"),
+                      full_width = FALSE,
+                      position = "center",
+                      row_label_position = "c",
+                      font_size = 16) %>%
+        add_header_above(c(" " = 1,
+                           "Selected Month-Year" = 2,
+                           " " = 2,
+                           "Monthly Breakout (Shows Previous Periods)" = length(tab_out_data)-6),
+                         font_size = 16,
+                         bold = TRUE,
+                         color = "white",
+                         background = c("white", "#d80b8c", "white", "#00AEEF")) %>% 
+        row_spec(0, background = "#212070", color = "white") %>%
+        column_spec(1, bold = TRUE) %>%
+        column_spec(2:3, background = "#fee7f5", bold = TRUE) %>%
+        column_spec(6:(length(tab_out_data) - 1), 
+                    background = "#E6F8FF")
+      
+      
+      
+    
       
       metrics_final_df <- mdf_from_db(service_input, month_input)
       
