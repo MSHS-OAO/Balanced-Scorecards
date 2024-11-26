@@ -5255,7 +5255,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       memoized_full_current_state_tbl <- memoise(function() {
         connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
+        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW_TESTING") %>% collect()
         dbDisconnect(connection)
         current_state_tbl
       })
@@ -5425,7 +5425,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         if("Worked Hours Productivity Index" %!in% unique(current_state_data$EXPTYPE) & service_selected %in% unique(system_productivity$SERVICE)) {
           
           connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
+          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW_TESTING")
           current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE == "Worked Hours Productivity Index")%>% 
                                 arrange(desc(MONTH)) %>% head(1) %>% collect()
           dbDisconnect(connection_current)
@@ -5477,6 +5477,34 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
         
+        current_state_data <- current_state_data %>% filter(EXPTYPE %in% metric_order)
+        
+        
+        ##Section for oeprational metrics
+        operational_metrics <- left_join(current_state_data_reactive(), metric_mapping_database[,c("Service", "Metric_Name_Submitted", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Submitted")) %>% filter(Reporting_Tab == "Breakout") %>%
+          filter(General_Group == "Operational") %>% select(-General_Group, -Reporting_Tab)
+        
+        operational_metrics_test <<- operational_metrics
+        
+        operational_metrics <- operational_metrics %>% 
+                              mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 3), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,3) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL, 3)))) %>%
+                              mutate(MTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL - MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL-MTD_TARGET,3) * 100, "%"), round(MTD_ACTUAL - MTD_TARGET))),
+                                     YTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL - YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL-YTD_TARGET,3) * 100, "%"), round(YTD_ACTUAL - YTD_TARGET)))) %>% 
+                              mutate(MTD_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET,3) * 100, "%"), round(MTD_TARGET))),
+                                     MTD_ACTUAL = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL,3) * 100, "%"), round(MTD_ACTUAL))),
+                                     YTD_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET, 3) * 100, "%"), round(YTD_TARGET))),
+                                     YTD_ACTUAL = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL, 3) * 100, "%"), round(YTD_ACTUAL)))
+                                     ) %>% select(-Metric_Unit)
+        
+        operational_metrics <- operational_metrics %>%
+                                mutate(across(c("MTD_ACTUAL", "YTD_ACTUAL", "YTD_TARGET", "MTD_TARGET", "YTD_VARIANCE_TO_TARGET", "MTD_VARIANCE_TO_TARGET"), as.character)) %>%
+                                mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
+
+        if(nrow(operational_metrics > 0)) {
+          tester <<- current_state_data
+          testing <<- operational_metrics
+          current_state_data <- bind_rows(current_state_data, operational_metrics)
+        }
         
         current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', TRUE ~ 'Labor'),
                                          METRIC = current_state_data$EXPTYPE,
