@@ -5506,7 +5506,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           current_state_data <- bind_rows(current_state_data, operational_metrics)
         }
         
-        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', TRUE ~ 'Labor'),
+        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', 
+                                                           current_state_data$EXPTYPE %in% c("Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars") ~ 'Labor',
+                                                           TRUE ~ 'Operational'),
                                          METRIC = current_state_data$EXPTYPE,
                                          TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
                                          MTD_ACTUAL = current_state_data$MTD_ACTUAL,
@@ -5598,7 +5600,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                       bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE, 
                                        TRUE ~ FALSE)) %>%
           gsub("\\bNA\\b", "-", .) %>%
-          row_spec(total_expense_row, bold = T)
+          row_spec(total_expense_row, bold = T) #%>%
+          #remove_column(., 1)
         
         
         
