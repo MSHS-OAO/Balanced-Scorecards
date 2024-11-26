@@ -1796,9 +1796,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       
-      # input_service <- 'Radiology'
-      # month_input <- "08-2024"
-      # site_input <- "MSW"
+      service_input <- 'Biomed / Clinical Engineering'
+      month_input <- "10-2024"
+      site_input <- "MSH"
       
       
       # Get the data from data base
@@ -1912,7 +1912,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     
       
-      metrics_final_df <- mdf_from_db(service_input, month_input)
+      # metrics_final_df <- mdf_from_db(service_input, month_input)
       
 
       # Past Code Starts ---------------------------------------------------------------------------------     
