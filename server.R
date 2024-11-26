@@ -1796,14 +1796,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       
-      input_service <- 'Radiology'
-      month_input <- "08-2024"
-      site_input <- "MSW"
+      # input_service <- 'Radiology'
+      # month_input <- "08-2024"
+      # site_input <- "MSW"
       
       
       # Get the data from data base
       conn <- dbConnect(odbc(), dsn)  
-      db_mdf <- tbl(conn, "BSC_METRICS_FINAL_TESTING") %>% filter(SERVICE == input_service,
+      db_mdf <- tbl(conn, "BSC_METRICS_FINAL_TESTING") %>% filter(SERVICE == service_input,
                                                                   REPORTING_TAB == "Breakout") %>% collect()
       dbDisconnect(conn)
       
