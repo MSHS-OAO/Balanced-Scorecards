@@ -1796,15 +1796,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       
-      service_input <- 'Biomed / Clinical Engineering'
-      month_input <- "10-2024"
-      site_input <- "MSH"
+      # service_input <- 'Biomed / Clinical Engineering'
+      # month_input <- "10-2024"
+      # site_input <- "MSH"
       
       
       # Get the data from data base
       conn <- dbConnect(odbc(), dsn)  
-      db_mdf <- tbl(conn, "BSC_METRICS_FINAL_TESTING") %>% filter(SERVICE == service_input,
-                                                                  REPORTING_TAB == "Breakout") %>% collect()
+      db_mdf <- tbl(conn, "BSC_METRICS_FINAL_TESTING") %>% 
+        filter(SERVICE == service_input,
+               REPORTING_TAB == "Breakout")%>% 
+        select(-METRIC_NAME_SUBMITTED) %>%
+        collect()
       dbDisconnect(conn)
       
       # format the date
@@ -1815,36 +1818,51 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(REPORTING_MONTH <= month_date,
                REPORTING_MONTH >= month_date %m-% months(11),
                SITE == site_input)
+
       
+      # display_order <- db_mdf_data %>%
+      #   select(DISPLAY_ORDER,METRIC_GROUP) %>%
+      #   unique()
+        
       # processing current month data
       current_month_data <- db_mdf_data %>%
         filter(REPORTING_MONTH == month_date) %>%
         mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y")) %>%
-        arrange(DISPLAY_ORDER) %>%
-        select(-SITE,-SERVICE,-CURRENT_PERIOD,-REPORTING_TAB,-DISPLAY_ORDER) %>%
+        select(-SITE,-SERVICE,-CURRENT_PERIOD,-REPORTING_TAB) %>%
         pivot_wider(names_from = REPORTING_MONTH,
                     values_from = VALUE) %>%
         relocate(TARGET_STATUS, .after = last_col()) %>%
-        relocate(TARGET, .after = last_col())
+        relocate(TARGET, .after = last_col()) %>%
+        select(-DISPLAY_ORDER)
         
       
       # processing past months data
       past_months_data <- db_mdf_data %>%
         filter(REPORTING_MONTH != month_date) %>%
-        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y")) %>%
-        arrange(DISPLAY_ORDER) %>%
-        select(-SITE,-SERVICE,-CURRENT_PERIOD,-REPORTING_TAB,-DISPLAY_ORDER,-TARGET,-TARGET_STATUS) %>%
+        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y"))
+      
+      # get list of past months 
+      past_month_cols <- unique(past_months_data$REPORTING_MONTH)
+      
+      past_months_data <- past_months_data %>%
+        select(-SITE,-SERVICE,-CURRENT_PERIOD,-REPORTING_TAB,-TARGET,-TARGET_STATUS) %>%
         pivot_wider(names_from = REPORTING_MONTH,
                     values_from = VALUE) %>%
-        mutate("Avg. of Past Months Shown" = rowMeans(.[,3:13],na.rm = TRUE)) %>%
-        select(-METRIC_UNIT)
+        mutate("Avg. of Past Months Shown" = rowMeans(.[,past_month_cols],na.rm = TRUE))
       
       # Data frame for showing on tab
-      tab_out_data <- current_month_data %>% full_join(past_months_data,
-                                       by = c("METRIC_NAME_SUBMITTED")) %>%
+      tab_out_data <- past_months_data %>% left_join(current_month_data,
+                                       by = c("METRIC_NAME_SUMMARY","METRIC_GROUP","METRIC_UNIT")) %>%
+        relocate(TARGET, .after = METRIC_NAME_SUMMARY) %>%
+        relocate(TARGET_STATUS, .before = TARGET) %>%
         relocate("Avg. of Past Months Shown", .after = TARGET) %>%
+        relocate(length(.), .after = METRIC_NAME_SUMMARY) %>%
         rename(Target = TARGET,
                Status = TARGET_STATUS) %>%
+        mutate(DISPLAY_ORDER = as.numeric(DISPLAY_ORDER)) %>%
+        group_by(METRIC_GROUP) %>%
+        arrange(DISPLAY_ORDER,.by_group = TRUE) %>%
+        select(-DISPLAY_ORDER) %>%
         mutate(Status = ifelse(Status %in% c("Red", "Yellow", "Green"),
                                paste0('<div style="text-align:center">',
                                       '<span style="color:',
@@ -1883,12 +1901,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  })) %>%
         replace(is.na(.), "-") 
       
+      
       tab_out_data <- tab_out_data %>%
-        rename(Metric = METRIC_NAME_SUBMITTED)
+        rename(Metric = METRIC_NAME_SUMMARY) %>%
+        mutate(Target = case_when(
+          METRIC_GROUP == "Budget to Actual" ~ "<= Budget",
+          .default = as.character(Target)
+        ))
+      
+      metric_group_index <- match("METRIC_GROUP",names(tab_out_data))
 
       tab_out_data[, 1:length(tab_out_data)] %>%
         kable(align = "l", escape = FALSE) %>%
-        # ack_rows(label_row_css = "background-color: #212070; color: white;") %>%
+        pack_rows(index = table(tab_out_data$METRIC_GROUP),background = "#212070",color = "white") %>%
         kable_styling(bootstrap_options = c("hover","bordered","striped"),
                       full_width = FALSE,
                       position = "center",
@@ -1902,11 +1927,14 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                          bold = TRUE,
                          color = "white",
                          background = c("white", "#d80b8c", "white", "#00AEEF")) %>% 
+        remove_column(metric_group_index) %>%
         row_spec(0, background = "#212070", color = "white") %>%
         column_spec(1, bold = TRUE) %>%
         column_spec(2:3, background = "#fee7f5", bold = TRUE) %>%
         column_spec(6:(length(tab_out_data) - 1), 
                     background = "#E6F8FF")
+      
+
       
       
       
