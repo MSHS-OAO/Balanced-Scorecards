@@ -1796,9 +1796,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       
-      # service_input <- 'Biomed / Clinical Engineering'
-      # month_input <- "10-2024"
-      # site_input <- "MSH"
+      service_input <- 'Biomed / Clinical Engineering'
+      month_input <- "10-2024"
+      site_input <- "MSH"
       
       
       # Get the data from data base
@@ -1901,7 +1901,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  })) %>%
         replace(is.na(.), "-") 
       
-      
+      # Add target to budget metrics
       tab_out_data <- tab_out_data %>%
         rename(Metric = METRIC_NAME_SUMMARY) %>%
         mutate(Target = case_when(
