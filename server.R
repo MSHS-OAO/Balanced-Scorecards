@@ -1796,9 +1796,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       
-      # service_input <- 'Biomed / Clinical Engineering'
-      # month_input <- "10-2024"
-      # site_input <- "MSH"
+      service_input <- 'Biomed / Clinical Engineering'
+      month_input <- "10-2024"
+      site_input <- "MSH"
       
       
       # Get the data from data base
@@ -1818,12 +1818,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         filter(REPORTING_MONTH <= month_date,
                REPORTING_MONTH >= month_date %m-% months(11),
                SITE == site_input)
-
       
-      # display_order <- db_mdf_data %>%
-      #   select(DISPLAY_ORDER,METRIC_GROUP) %>%
-      #   unique()
-        
+      
+      # get display order
+      metric_group_orders <- db_mdf_data %>%
+        select(METRIC_GROUP,DISPLAY_ORDER) %>%
+        group_by(METRIC_GROUP) %>%
+        summarise(DISPLAY_ORDER = min(DISPLAY_ORDER)) %>%
+        distinct()
+      
+
       # processing current month data
       current_month_data <- db_mdf_data %>%
         filter(REPORTING_MONTH == month_date) %>%
@@ -1839,7 +1843,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # processing past months data
       past_months_data <- db_mdf_data %>%
         filter(REPORTING_MONTH != month_date) %>%
-        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y"))
+        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b %Y")) %>%
+        select(-DISPLAY_ORDER)
       
       # get list of past months 
       past_month_cols <- unique(past_months_data$REPORTING_MONTH)
@@ -1859,10 +1864,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         relocate(length(.), .after = METRIC_NAME_SUMMARY) %>%
         rename(Target = TARGET,
                Status = TARGET_STATUS) %>%
-        mutate(DISPLAY_ORDER = as.numeric(DISPLAY_ORDER)) %>%
-        group_by(METRIC_GROUP) %>%
-        arrange(DISPLAY_ORDER,.by_group = TRUE) %>%
-        select(-DISPLAY_ORDER) %>%
         mutate(Status = ifelse(Status %in% c("Red", "Yellow", "Green"),
                                paste0('<div style="text-align:center">',
                                       '<span style="color:',
@@ -1899,7 +1900,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                sep = "|"),
                                NA_character_)
                  })) %>%
-        replace(is.na(.), "-") 
+        replace(is.na(.), "-") %>%
+        left_join(metric_group_orders,
+                  by = "METRIC_GROUP") %>%
+        arrange(DISPLAY_ORDER) %>%
+        mutate(DISPLAY_ORDER = row_number())
+      
+      pack_row_groups <- tab_out_data %>%
+        arrange(DISPLAY_ORDER) %>%
+        group_by(METRIC_GROUP) %>%
+        summarise(rows = n())
       
       # Add target to budget metrics
       tab_out_data <- tab_out_data %>%
@@ -1910,6 +1920,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         ))
       
       metric_group_index <- match("METRIC_GROUP",names(tab_out_data))
+
+      
 
       tab_out_data[, 1:length(tab_out_data)] %>%
         kable(align = "l", escape = FALSE) %>%
