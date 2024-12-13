@@ -1351,10 +1351,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
     }
     
-    
+      
     # 2. Site Comparison Tab Output -------------------------------------------------------------------------------
     output$siteComp_title <- renderText({
-
+      
       input$submit_prod
       input$submit_engineering
       input$submit_finance
@@ -1382,9 +1382,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_finance_mapping
       
       input_service <- input$selectedService2
-      conn <- dbConnect(odbc(), dsn)  
+      
+      
+      
+      #update picker options
+      conn <- dbConnect(odbc(), dsn) 
       time_df <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == input_service) %>% collect()
       dbDisconnect(conn)
+      
+      
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Key Metric Rollup")
       }else{
@@ -1393,6 +1399,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       text
     })
+    
+    
+    
     
     output$siteComp_table <- function(){
       input$submit_prod
@@ -1427,297 +1436,169 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
       
-      metrics_final_df <- mdf_from_db(service_input, month_input)
-# 
-      # service_input <- 'Imaging'
-      # month_input <- "09-2023"
-      #       site_input <- "MSH"
-
+      
+      # service_input <- 'Biomed / Clinical Engineering'
+      # month_input <- "09-2024"
+      # site_input <- "MSH"
+      
+      
+      # Code Starts ---------------------------------------------------------------------------------     
+      
+      #read BSC_METRICS_FINAL_TESTING
+      conn <- dbConnect(odbc(), dsn)
+      query <- "SELECT * FROM BSC_METRICS_FINAL_TESTING WHERE REPORTING_TAB = 'Summary and Site'"
+      Data <- dbGetQuery(conn, query) %>% collect()
+      dbDisconnect(conn)
+      
+      
+      #reshape input month
+      selected_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") 
+      min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(11)
+      
+      #filter based on selected month
+      Data <- Data %>% filter(SERVICE %in% service_input, SITE %in% site_input,
+                              format(min_month, "%Y-%m-%d 00:00:00") <= as.Date(REPORTING_MONTH),
+                              as.Date(REPORTING_MONTH) <= selected_month)
+      
       
       validate(
         need(!(is.na(site_input)), "Please select at least one site")
       )
+      
+      
+      # select latest month Target_Status values 
+      #preprocess Target column in status_data that: '<= Budget' for dollar metrics and multiply percent metrics by 100 
+      status_data <- Data %>%
+        mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, format = "%m-%d-%Y")) %>%
+        filter(REPORTING_MONTH == selected_month) %>%
+        select(SITE, METRIC_NAME_SUMMARY, METRIC_UNIT, TARGET_STATUS, TARGET) %>%
+        mutate(TARGET = case_when(
+          METRIC_UNIT == "Dollar" ~ "<= Budget",
+          METRIC_UNIT == "Percent" ~ ifelse(is.na(TARGET), "-", paste0(as.numeric(TARGET) * 100, "%")),
+          is.na(METRIC_UNIT) ~ as.character(TARGET),
+          TRUE ~ as.character(TARGET)))
+      
+      
+      
+      # select other columns and pivot table into reporting_month columns and then join it with target_status data 
+      Data <- Data %>%
+        arrange(DISPLAY_ORDER) %>%
+        mutate(REPORTING_MONTH = as.Date(REPORTING_MONTH, format = "%m-%d-%Y")) %>%  # Convert to Date format
+        mutate(REPORTING_MONTH = format(REPORTING_MONTH, "%b-%Y")) %>%  # Format as 'Jan-2024'
+        select(SITE, METRIC_NAME_SUMMARY, METRIC_UNIT, VALUE, REPORTING_MONTH) %>%
+        pivot_wider(names_from = REPORTING_MONTH, values_from = VALUE) %>%
+        left_join(status_data, by = c("SITE", "METRIC_NAME_SUMMARY", "METRIC_UNIT")) %>%
+        select(SITE, last_col()-2 , TARGET_STATUS , TARGET,everything())
+      
+      
+      
+      # if # of previous months >= 1 (ncol(Data) > 6) then:
+      if (ncol(Data) > 6)
+      {
+      # remove rows where current month its target are NA
+      # remove rows where all previous months are NA 
+      Data <- Data %>%
+        filter(!is.na(.[[2]]) & !is.na(TARGET_STATUS)  & 
+                 rowSums(is.na(select(., 7:ncol(Data)))) < (ncol(Data) - 6))
 
-      # Code Starts ---------------------------------------------------------------------------------     
-      summary_tab_metrics <- metric_mapping_summary_site %>%
-        filter(Service == service_input) %>%
-        select(-General_Group, -Display_Order)
-      
-      summary_metric_group_order <- unique(summary_tab_metrics$Metric_Group)
-      
-      summary_metric_name_order <- unique(summary_tab_metrics$Metric_Name_Summary)
-      
-      # Target mappings ---------------------
-      # Subset target mapping to select Metric_Group and  Metric_Names to be 
-      # displayed in status indicator section based on the selected service line
-      status_section_metrics <- target_mapping_analysis %>%
-        filter(Service %in% service_input) %>%
-        select(Service, Metric_Group, Metric_Name) %>%
-        distinct()
-      
-      # Subset target mapping to select Targets and Status Definitions for selected service line
-      metric_targets_status <- target_mapping_analysis %>%
-        filter(Service == service_input)
-      
-      current_period <- as.Date(fast_strptime(month_input, "%m-%Y"), "%Y-%m-%d")
-      fiscal_year <- format(current_period,  "%Y")
-      
-      # Subset data for selected servicel line based on metrics to be included in Site tab
-      data <- left_join(summary_tab_metrics,
-                          metrics_final_df,
-                          by = c("Service",
-                                 "Metric_Group",
-                                 "Metric_Name"))
-      
-      # Filter based on selected time period
-      data <- data %>%
-        filter(Site %in% site_input &
-                 Reporting_Month_Ref <= current_period &
-                 Reporting_Month_Ref >= current_period - months(11)) %>%
-        distinct() %>%
-        arrange(Site, Metric_Group, Metric_Name_Summary, Metric_Name, 
-                desc(Reporting_Month_Ref)) %>%
-        group_by(Site, Metric_Group, Metric_Name_Summary, Metric_Name) %>%
-        mutate(id = row_number())
-      
-      # Crosswalk with metric targets and status definitions
-      data <- left_join(data,
-                        metric_targets_status,
-                        by = c("Service",
-                               "Site",
-                               "Metric_Group",
-                               "Metric_Name",
-                               "Metric_Name_Submitted"))
-      
-
-      # Determine status based on status definitions
-      data <- data %>%
-        mutate(Status = ifelse(is.na(Target), NA,
-                               ifelse(between(value_rounded,
-                                              Green_Start, Green_End),
-                                      "Green",
-                                      ifelse(between(value_rounded,
-                                                     Yellow_Start, Yellow_End),
-                                             "Yellow",
-                                             ifelse(between(value_rounded,
-                                                            Red_Start, Red_End),
-                                                    "Red", NA))))) %>%
-        select(-contains(c("_Start", "_End")), -Metric_Name_Submitted,
-               -Service)
+      # calculate average of past months and store in PAST_AVERAGE column
+      Data <- Data %>%
+        mutate(PAST_AVERAGE = rowMeans(select(., 7:ncol(.)), na.rm = TRUE)) %>%
+        relocate(PAST_AVERAGE, .before = "METRIC_NAME_SUMMARY")
+      }
       
       
       
-      # Selected Month/Year Metric
-      # Current Period Table
-      current_breakdown <- data %>%
-        ungroup() %>%
-        filter(Reporting_Month_Ref == current_period) %>%
-        mutate(`Current Period` = ifelse(str_detect(Premier_Reporting_Period,
-                                                    "/"), 
-                                         paste0("Rep. Pd. Ending ",
-                                                Premier_Reporting_Period),
-                                         Premier_Reporting_Period)) %>%
-        select(Metric_Group, Metric_Name_Summary, Site,
-               value_rounded, Status, Target, Metric_Unit)
       
-      # # Not sure if this code is needed anymore
-      # current_breakdown <- as.data.frame(current_breakdown)
-      
-      ## Create target traffic lights for current month metrics
-      current_breakdown <- current_breakdown %>%
-        ungroup() %>%
-        mutate(Status = ifelse(Status %in% c("Red", "Yellow", "Green"),
-                               paste0('<div style="text-align:center">',
-                                      '<span style="color:',
-                                      Status,'">',
-                                      fa('fas fa-circle'),
-                                      '</span>',
-                                      '</div>'),
-                               paste0('<div style="text-align:center">',
-                                      '-',
-                                      '</div>')))
-
-      # Previous Months Summary
-      ## Past 12 months of Summary 
-      past_avg <- data %>%
-        filter(id >= 2) %>%
-        group_by(Metric_Group, Metric_Name_Summary, Site) %>%
-        summarise(`Avg. of Past Months Shown` = round(
-          mean(value_rounded, na.rm = TRUE), 2))
-
-      ## Past 12 months of Breakout
-      past_breakdown <- data %>%
-        filter(id >= 2) %>%
-        group_by(Metric_Group, Metric_Name_Summary,
-                 Site, Reporting_Month_Ref) %>%
-        summarise(value_rounded = round(
-          mean(value_rounded, na.rm = TRUE), 2)) %>%
-        arrange(Reporting_Month_Ref) %>%
-        mutate(Reporting_Month_Ref = format(
-          as.Date(Reporting_Month_Ref, format = "%Y-%m-%d"),"%b-%Y")) %>%
-        pivot_wider(names_from = Reporting_Month_Ref,
-                    values_from = value_rounded)
-      
-      # Merge Current and Previous Months Breakdown
-      breakdown_all <- merge(current_breakdown, past_avg,
-                             by = c("Metric_Group",
-                                    "Metric_Name_Summary",
-                                    "Site"))
-      breakdown_all <- merge(breakdown_all, past_breakdown,
-                             by = c("Metric_Group",
-                                    "Metric_Name_Summary",
-                                    "Site"))
-
-      # Rename column "value rounded" column with current period selected
-      names(breakdown_all)[names(breakdown_all) == 'value_rounded'] <-
-        format(as.Date(current_period, format = "%Y-%m-%d"),"%b-%Y")
-
-      breakdown_all <- breakdown_all %>%
-        mutate(across(where(is.numeric),
-                      .fns = function(x) {
-                        ifelse(Metric_Unit %in% "Dollar",
-                               dollar(round(x)),
-                               ifelse(Metric_Unit %in% "Percent",
-                                      scales::percent(x, 0.1),
-                                      prettyNum(round(x, digits = 1),
-                                                big.mark = ",")))
-                      }),
-               Metric_Unit = NULL)
+      # adding '%' to latest month column and multiplying by 100
+      # rounding dollar rows and adding '$' and multiplying by 100
+      # rounding NA METRIC_UNIT rows and adding (premier) to end of metric names
+      Data <- Data %>%
+        mutate(across(c(2,
+                        any_of("PAST_AVERAGE"),
+                        if (ncol(Data) > 6) (which(names(Data) == "METRIC_UNIT") + 1):ncol(Data)), ~ case_when(
+          METRIC_UNIT == "Percent" ~ 
+            paste0(format(round(replace(., is.na(.), 0) * 100, 1), nsmall = 1), "%"),
+          METRIC_UNIT == "Dollar" & !is.na(.) ~ 
+            paste0(ifelse(. < 0, "-", ""), "$", format(abs(round(as.numeric(replace(., is.na(.), 0)), 1)), nsmall = 1, big.mark = ",")),
+          METRIC_UNIT == "Dollar" & is.na(.) ~ 
+            as.character('-'),
+          is.na(METRIC_UNIT) ~ 
+            format(round(as.numeric(replace(., is.na(.), 0)), 1), nsmall = 1),
+          TRUE ~ as.character(.)
+        )))
       
       
-      # Create and Format Comparison Table
-      # NOTE: Roll this into single dplyr with above
-      breakdown_all <- breakdown_all %>%
-        mutate_all(function(x) str_replace(x,
-                                           pattern = paste("NA",
-                                                           "NaN",
-                                                           "NA%",
-                                                           "%NA",
-                                                           "NaN%",
-                                                           "$NaN",
-                                                           sep = "|"),
-                                           NA_character_)) %>%
-        replace(is.na(.), "-")
       
-     
+      group_indices <- Data %>%
+        group_by(METRIC_NAME_SUMMARY) %>%
+        summarise(n = n(), .groups = "drop") %>%
+        mutate(order = match(METRIC_NAME_SUMMARY, unique(Data$METRIC_NAME_SUMMARY))) %>%
+        arrange(order) %>%
+        pull(n) %>%
+        setNames(unique(Data$METRIC_NAME_SUMMARY))
       
-      breakdown_all <- breakdown_all %>%
+      
+      # dropping METRIC_UNIT as modifications are done and replacing any NA or "NA" (string) with '-'
+      Data <- Data %>%
+        select(-METRIC_UNIT, -METRIC_NAME_SUMMARY) %>%
+        mutate(across(everything(), ~ replace(., is.na(.) | . == "NA", "-")))
+      
+      
+      
+      #changing values of TARGET_STATUS column to reflect colors 
+      Data <- Data %>%
         mutate(
-          # Format budget related metrics
-          Target = ifelse(Metric_Name_Summary %in% c("Total Revenue to Budget Variance"),
-                          ">= Budget",
-                          ifelse(Metric_Name_Summary %in% c("Budget to Actual"),
-                                 "<= Budget", Target)),
-          # Set columns as factors and rearrange dataframe
-          Metric_Name_Summary = factor(
-            Metric_Name_Summary,
-            levels = summary_metric_name_order,
-            ordered = TRUE)) %>%
-        arrange(#Metric_Group,
-                Metric_Name_Summary,
-                Site) %>%
-        mutate(#Metric_Group = as.character(Metric_Group),
-               Metric_Name_Summary = as.character(Metric_Name_Summary))
+          TARGET_STATUS = case_when(
+            TARGET_STATUS == "Green" ~ '<div style="width:10px; height:10px; background-color:green; border-radius:50%; display:inline-block;"></div>',
+            TARGET_STATUS == "Yellow" ~ '<div style="width:10px; height:10px; background-color:yellow; border-radius:50%; display:inline-block;"></div>',
+            TARGET_STATUS == "Red" ~ '<div style="width:10px; height:10px; background-color:red; border-radius:50%; display:inline-block;"></div>',
+            TRUE ~ TARGET_STATUS ))
       
-      factor_ordering <- table(breakdown_all$Metric_Name_Summary)
-      factor_ordering <- factor_ordering[order(factor(names(factor_ordering),
-                                                      levels = summary_metric_name_order))]
+      #modify column names 
+      current_col_names <- colnames(Data) %>%
+        str_replace_all(c(
+          "SITE" = "Site",
+          "TARGET_STATUS" = "Status",
+          "TARGET" = "Target"))
       
-      # NOTE: MAY BE WORTH REVIEWING THE LOGIC IN THESE LINES
-      ## Get the months in the df
-      month_included <- breakdown_all %>%
-        select(-Metric_Name_Summary,
-               -Metric_Group,
-               -Site,
-               -Status,
-               -Target,
-               -`Avg. of Past Months Shown`)
-    
-      original_columns <- as.Date(sprintf("%s-01",colnames(month_included)), format= "%b-%Y-%d")
+      # modify PAST_AVERAGE column name if it exists
+      if ("PAST_AVERAGE" %in% colnames(Data)) {
+        current_col_names <- str_replace_all(current_col_names, "PAST_AVERAGE", "Avg. of Past Months Shown")
+      }
       
-      #Subtract 12 months from the latest month drop the day and add the first of the month back in
-      latest_month_shown <- as.Date(
-        paste0(format(original_columns[1] %m-% months(11), "%Y-%m"), "-01"),
-        format = "%Y-%m-%d")
-      
-      columns_being_removed <- which(original_columns < latest_month_shown)
-      columns_being_removed <- original_columns[columns_being_removed]
-      columns_being_removed <- format(columns_being_removed, "%b-%Y")
-      
-      
-      breakdown_all <- breakdown_all %>%
-        select(-all_of(columns_being_removed))
-      
-      ### Add missing months
-      months_breakdown <- breakdown_all %>%
-        select(-Metric_Name_Summary,
-               -Metric_Group,
-               -Site,
-               -Status,
-               -Target,
-               -`Avg. of Past Months Shown`)
-      
-      months_breakdown <- as.Date(sprintf("%s-01",colnames(months_breakdown)),
-                                  "%b-%Y-%d")
-      
-      complete_months <- seq.Date(min(months_breakdown), max(months_breakdown),
-                                  by= 'month')
-      
-      missing_months <- which(!(complete_months %in% months_breakdown))
-      missing_months <- as.character(format(complete_months[missing_months],
-                                            "%b-%Y"))
-      
-      breakdown_all[,missing_months] <- NA
-      
-      # Do we need any code to account for the order of the dates?
-      
-      #breakdown_all <- breakdown_all %>% relocate(`Aug-2021`, .before = `Mar-2021`) ##to test ordering
-      
-      subset_data <- breakdown_all[,8:ncol(breakdown_all)]
-      
-      date_names <- sprintf("%s-01",colnames(subset_data))
-      colnames(subset_data) <- date_names
-      
-      dates_order <- as.Date(names(subset_data), format = "%b-%Y-%d")
-      subset_data <- subset_data[order(dates_order)]
-      
-      
-      breakdown_all <- breakdown_all[,1:7]
-      breakdown_all <- bind_cols(breakdown_all,subset_data)
-      
-      breakdown_all_cols <- colnames(breakdown_all)[8:ncol(breakdown_all)]
-      breakdown_all_cols <- format(as.Date(breakdown_all_cols, "%b-%Y-%d"), "%b-%Y")
-      colnames(breakdown_all)[8:ncol(breakdown_all)] <- breakdown_all_cols
-      
-      options(knitr.kable.NA = '-')
-      
-      breakdown_all[,3:length(breakdown_all)] %>%
-        kable(align = "l", escape = FALSE) %>%
-         #pack_rows(index = table(breakdown_all$Metric_Group)[metric_group_order], label_row_css = "background-color: #212070; color: white;") %>%
-        #pack_rows(index = table(breakdown_all$Summary_Metric_Name)[metric_name_order], label_row_css = "background-color: #212070; color: white;") %>%
-        pack_rows(index = factor_ordering,
-                  label_row_css = "background-color: #212070; color: white;") %>%
-        kable_styling(bootstrap_options = c("hover","bordered","striped"),
-                      full_width = FALSE,
-                      position = "center",
-                      row_label_position = "c",
-                      font_size = 16) %>%
+
+
+        
+      #Kable function 
+      Data %>% 
+        kable(align = "l", escape = FALSE,  col.names = current_col_names) %>%
+        pack_rows(index = group_indices, background = "#212070", color = "white") %>%
+        kable_styling(
+          bootstrap_options = c("hover", "bordered", "striped"),
+          full_width = TRUE,
+          position = "center",
+          row_label_position = "c",
+          font_size = 16,
+          protect_latex = F
+        ) %>%  
         add_header_above(c(" " = 1,
                            "Selected Month-Year" = 2,
-                           " " = 2,
-                           "Monthly Breakout (Shows Previous Periods)" = length(breakdown_all)-7),
+                           # if statement to handle the case of earliest month in data (no previous months)
+                           if (ncol(Data) > 4) c(" " = 2,"Monthly Breakout (Shows Previous Periods)" = ncol(Data) - 5) else c(" " = 1)), 
                          font_size = 16,
                          bold = TRUE,
                          color = "white",
-                         background = c("white", "#d80b8c", "white", "#00AEEF")) %>% 
-        row_spec(0,  background = "#212070", color = "white") %>%
-        column_spec(1, bold = TRUE) %>%
-        column_spec(2:3, background = "#fee7f5", bold = TRUE) %>%
-        column_spec(6:(length(breakdown_all)-2), 
-                    background = "#E6F8FF")
-
+                         background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
+        row_spec(0, background = "#212070", color = "white", extra_css = "white-space: nowrap;") %>%
+        column_spec(which(colnames(Data) == "SITE"), bold = TRUE) %>%
+        column_spec(which(grepl("^[A-Za-z]{3}-\\d{4}$", colnames(Data))), background = "#E6F8FF") %>% #specify Date shaped column names
+        column_spec(2:3, background = "#fee7f5", bold = TRUE) 
+      #column_spec(6:ncol(Data), background = "#E6F8FF")
+      
+      
+      
     }
-    
     
     # 3. Breakout Tab Output ----------------------------------------------------------------------------------
     output$siteBreakout_title <- renderText({
