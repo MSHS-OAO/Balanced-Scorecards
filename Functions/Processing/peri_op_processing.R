@@ -95,7 +95,7 @@ peri_op_processing <- function(file_path, updated_user) {
   
   
   metric_mapping <- tibble(raw_metric = c("TAT MTD", "TAT YTD", "FCOT MTD", "FCOT YTD", "Vol", "Vol YTD", "YOY%", "YOY% YTD"),
-                           METRIC_NAME_SUBMITTED = c("Average Turnover (min)", "Average Turnover (min) (FYTD)", "On Time Start %", "On Time Start % (FYTD)", "Volume (Monthly)", "Volume (FYTD)", "Volume YOY%", "Volume YOY% (FYTD)"))
+                           METRIC_NAME_SUBMITTED = c("Average Turnover (min)", "Average Turnover (min) (FYTD)", "On Time Start %", "On Time Start % (FYTD)", "Volume", "Volume (FYTD)", "Volume YOY%", "Volume YOY% (FYTD)"))
   
   data <- left_join(data, metric_mapping) %>% select(-raw_metric) %>% filter(!is.na(METRIC_NAME_SUBMITTED)) %>% mutate(UPDATED_USER = updated_user) %>%
     select(SERVICE, SITE, REPORTING_MONTH, METRIC_NAME_SUBMITTED, VALUE, UPDATED_USER, PREMIER_REPORTING_PERIOD)
