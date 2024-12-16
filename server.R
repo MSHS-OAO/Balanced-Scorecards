@@ -5312,9 +5312,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           observeEvent(input$selectedMonth4, {
             overview_date_selected <- input$selectedMonth4
+            overview_date_selected <- as.Date(paste0(overview_date_selected, "-01"), format = '%m-%Y-%d')
             
             current_state_data_filtered <- current_state_data %>%
-              filter(format(MONTH, "%m-%Y") == overview_date_selected)
+              filter(MONTH <= overview_date_selected)
+            
+            current_state_data_filtered <- current_state_data_filtered %>% group_by(EXPTYPE) %>% filter(MONTH == max(MONTH))
             
             current_state_data_reactive(current_state_data_filtered)
             
@@ -5355,9 +5358,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         # observe selected month
         observeEvent(input$selectedMonth4, {
           overview_date_selected <- input$selectedMonth4
+          overview_date_selected <- as.Date(paste0(overview_date_selected, "-01"), format = '%m-%Y-%d') #Create dat to compare with Month columns
           
-          current_state_data_filtered <- current_state_data %>%
-            filter(format(MONTH, "%m-%Y") == overview_date_selected)
+          current_state_data_filtered <- current_state_data %>%  #get latest data up to the date selected
+            filter(MONTH <= overview_date_selected)
+          
+          current_state_data_filtered <- current_state_data_filtered %>% group_by(EXPTYPE) %>% filter(MONTH == max(MONTH)) #Get the most recent data for each metric
           
           current_state_data_reactive(current_state_data_filtered)
 
@@ -5412,7 +5418,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         current_state_data_test <<- current_state_data
         
-        current_state_data <- current_state_data %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
+        current_state_data <- current_state_data %>% ungroup() %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
         
         '%!in%' <- function(x,y)!('%in%'(x,y))
         
@@ -5496,7 +5502,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         operational_metrics_test <<- operational_metrics
         
-        operational_metrics <- operational_metrics %>% 
+        operational_metrics <- operational_metrics %>% ungroup() %>%
                               mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 2), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL, 2)))) %>%
                               mutate(MTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET - MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET - MTD_ACTUAL,2) * 100, "%"), round(MTD_TARGET - MTD_ACTUAL))),
                                      YTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET - YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL)))) %>% 
