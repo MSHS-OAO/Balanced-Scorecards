@@ -1437,7 +1437,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       site_input <- input$selectedCampus2
       
       
-      # service_input <- 'Biomed / Clinical Engineering'
+      # service_input <- 'Clinical Nutrition'
       # month_input <- "09-2024"
       # site_input <- "MSH"
       
@@ -1498,8 +1498,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # remove rows where current month its target are NA
       # remove rows where all previous months are NA 
       Data <- Data %>%
-        filter(!is.na(.[[2]]) & !is.na(TARGET_STATUS)  & 
-                 rowSums(is.na(select(., 7:ncol(Data)))) < (ncol(Data) - 6))
+        filter(rowSums(is.na(select(., 7:ncol(Data)))) < (ncol(Data) - 6))
 
       # calculate average of past months and store in PAST_AVERAGE column
       Data <- Data %>%
@@ -1507,27 +1506,39 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         relocate(PAST_AVERAGE, .before = "METRIC_NAME_SUMMARY")
       }
       
-      
-      
+
       
       # adding '%' to latest month column and multiplying by 100
       # rounding dollar rows and adding '$' and multiplying by 100
       # rounding NA METRIC_UNIT rows and adding (premier) to end of metric names
+      # Data <- Data %>%
+      #   mutate(across(c(2,
+      #                   any_of("PAST_AVERAGE"),
+      #                   if (ncol(Data) > 6) (which(names(Data) == "METRIC_UNIT") + 1):ncol(Data)), ~ case_when(
+      #     METRIC_UNIT == "Percent" ~ 
+      #       paste0(format(round(replace(., is.na(.), 0) * 100, 1), nsmall = 1), "%"),
+      #     METRIC_UNIT == "Dollar" & !is.na(.) ~ 
+      #       paste0(ifelse(. < 0, "-", ""), "$", format(abs(round(as.numeric(replace(., is.na(.), 0)), 1)), nsmall = 1, big.mark = ",")),
+      #     METRIC_UNIT == "Dollar" & is.na(.) ~ 
+      #       as.character('-'),
+      #     is.na(METRIC_UNIT) ~ 
+      #       format(round(as.numeric(replace(., is.na(.), 0)), 1), nsmall = 1),
+      #     TRUE ~ as.character(.)
+      #   )))
+      
       Data <- Data %>%
         mutate(across(c(2,
                         any_of("PAST_AVERAGE"),
                         if (ncol(Data) > 6) (which(names(Data) == "METRIC_UNIT") + 1):ncol(Data)), ~ case_when(
-          METRIC_UNIT == "Percent" ~ 
-            paste0(format(round(replace(., is.na(.), 0) * 100, 1), nsmall = 1), "%"),
-          METRIC_UNIT == "Dollar" & !is.na(.) ~ 
-            paste0(ifelse(. < 0, "-", ""), "$", format(abs(round(as.numeric(replace(., is.na(.), 0)), 1)), nsmall = 1, big.mark = ",")),
-          METRIC_UNIT == "Dollar" & is.na(.) ~ 
-            as.character('-'),
-          is.na(METRIC_UNIT) ~ 
-            format(round(as.numeric(replace(., is.na(.), 0)), 1), nsmall = 1),
-          TRUE ~ as.character(.)
-        )))
-      
+                          is.na(.) ~ "-",
+                          METRIC_UNIT == "Percent" ~ 
+                            paste0(format(round(. * 100, 1), nsmall = 1), "%"),
+                          METRIC_UNIT == "Dollar" ~ 
+                            paste0(ifelse(. < 0, "-", ""), "$", format(abs(round(as.numeric(.), 1)), nsmall = 1, big.mark = ",")),
+                          is.na(METRIC_UNIT) ~ 
+                            format(round(as.numeric(.), 1), nsmall = 1),
+                          TRUE ~ as.character(.)
+                        )))
       
       
       group_indices <- Data %>%
@@ -1628,7 +1639,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_food_nccpd
       input$submit_finance_access_data
       input$submit_finance_mapping
-      
       input_service <- input$selectedService3
       conn <- dbConnect(odbc(), dsn)  
       time_df <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == input_service) %>% collect()
