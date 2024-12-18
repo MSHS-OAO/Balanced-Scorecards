@@ -306,6 +306,10 @@ productivity_processing <- function(raw_data, updated_user) {
     mutate(VALUE = round(VALUE,3)) %>%
     drop_na()
   
+  
+  # Remove Peri Op Volume and Volume (FYTD) metrics as they are submitted every month by Peri Op Service Line
+  prod_df_aggregate <- prod_df_aggregate%>%
+    filter(METRIC_NAME_SUBMITTED  != 'Volume'  |  METRIC_NAME_SUBMITTED  != 'Volume (FYTD)'  & SERVICE != 'Perioperative Services')
 }
 
 

@@ -89,6 +89,9 @@ dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
 
 
+'%!in%' <<- function(x,y)!('%in%'(x,y))
+
+
 options(shiny.maxRequestSize=500*1024^2)
 
 # Maximize R Memory Size 

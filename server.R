@@ -197,8 +197,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Perioperative Services'
-      # month_input <- "08-2024"
+      service_input <- 'Perioperative Services'
+      month_input <- "10-2024"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -697,7 +697,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }
       
       # FYTD Summary Table - for average 
-      '%!in%' <<- function(x,y)!('%in%'(x,y))
       fytd_summary_avg <- fytd_summary_all %>%
         # For consistency, consider do a string detect here
         filter(Metric_Group %!in% c("Budget to Actual", "Total Revenue to Budget Variance", "Productivity")) %>% # Metrics that need to be summarized by sum (total)
