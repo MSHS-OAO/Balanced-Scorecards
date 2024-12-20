@@ -5137,6 +5137,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         target_and_status_data <- target_and_status_metrics_reactive()
         
         current_state_data_test <<- current_state_data
+        current_state_data_operational <- current_state_data
         
         current_state_data <- current_state_data %>% ungroup() %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
         
@@ -5217,7 +5218,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         ##Section for oeprational metrics
-        operational_metrics <- left_join(current_state_data_test, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab == "Breakout") %>%
+        operational_metrics <- left_join(current_state_data_operational, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab == "Breakout") %>%
           filter(General_Group == "Operational") %>% select(-General_Group, -Reporting_Tab)
         
         operational_metrics_test <<- operational_metrics
@@ -5352,8 +5353,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                TRUE ~ 'white')) %>%
           relocate(Status, .before = "SCOPE")
           
-        
-        current_state_temp_test <<- current_state_temp
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names, escape = F) %>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
