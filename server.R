@@ -5332,7 +5332,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
         }
         
-        current_state_temp_test <<- current_state_temp
         current_state_temp <- current_state_temp %>% mutate(Status = NA)
         
         
@@ -5357,7 +5356,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         current_state_temp_test <<- current_state_temp
         
         current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names, escape = F) %>%
-          #add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16, protect_latex = F) %>%
@@ -5368,13 +5366,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
           column_spec(11, 
-                    # background = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE',
-                    #                              current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses") & current_state_temp$SCOPE == "Finance"  ~ '#FFFFCC',
-                    #                              current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses") & current_state_temp$SCOPE == "Finance"  ~ '#C4D79B',
-                    #                              current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFC7CE',
-                    #                              current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFFFCC',
-                    #                              current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#C4D79B',
-                    #                              TRUE ~ 'white'),
                     background = case_when(current_state_temp$Status == "Red" ~ "#FFC7CE",
                                            current_state_temp$Status == "Yellow" ~ "#FFFFCC",
                                            current_state_temp$Status == "Green" ~ "#C4D79B",
@@ -5388,18 +5379,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           remove_column(., 1) %>%
           add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")
           
-        
-        # if("Status" %in% colnames(current_state_temp)) {
-        #   current_state_table <- current_state_table %>% remove_column(., ncol(current_state_table))
-        # }
-        
-        # current_state_table <- current_state_table %>% add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")
-        
-        
-      
-
-     
-      }
+    }
 
       
       
