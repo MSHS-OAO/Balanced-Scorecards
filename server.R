@@ -1308,7 +1308,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }    
       
       if(service_input == "Perioperative Services" & c("Volume YOY%") %in% metric_name) {
-        index <- which(summary_tab_tb$`Metric Name` == "Volume YOY%" & summary_tab_tb$Section == "Metrics", arr.ind = TRUE)
+        index <- which(summary_tab_tb$`Metric Name` == "Volume YOY%", arr.ind = TRUE)
         
         extract <- summary_tab_tb[index,3]
         updated <- gsub("Average", "Total", extract)
