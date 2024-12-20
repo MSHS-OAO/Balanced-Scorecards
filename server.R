@@ -5370,6 +5370,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            current_state_temp$Status == "Green" ~ "#C4D79B",
                                            TRUE ~ 'white'),
                       bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE,
+                                       current_state_temp$SCOPE == "Operational" ~ TRUE,
                                        TRUE ~ FALSE)
                     ) %>%
           gsub("\\bNA\\b", "-", .) %>%
