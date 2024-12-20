@@ -5358,9 +5358,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16, protect_latex = F) %>%
-          column_spec(1:3, background = "#212070", color = "white") %>%
-          column_spec(4:6, background = "#F8F8F8") %>% 
-          column_spec(7:9, background = "#EAEAEA") %>%
+          column_spec(2:4, background = "#212070", color = "white") %>%
+          column_spec(5:7, background = "#F8F8F8") %>% 
+          column_spec(8:10, background = "#EAEAEA") %>%
           # column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
           #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
