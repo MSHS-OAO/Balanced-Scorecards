@@ -391,7 +391,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         Metric_Name_Submitted == "Volume YOY%" ~ "Percent"),
                  Metric_Name_Summary = case_when(Metric_Name == "Average Turnover (min)" ~ "Average Turn Around Time",
                                                  Metric_Name == "On Time Start %" ~ "On Time Starts",
-                                                 Metric_Name == "Volume" ~ "Volume",
+                                                 Metric_Name == "Volume" ~ "Volume (Monthly)",
                                                  Metric_Name == "Volume YOY%" ~ "Volume YOY%"),
                  Target = NA,
                  Green_Start = NA,             
