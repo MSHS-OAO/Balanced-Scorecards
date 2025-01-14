@@ -803,8 +803,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
       }
       
-  
-      
       
       # fytd_summary$Metric_Name <- NULL
       fytd_summary <- fytd_summary %>%
@@ -857,7 +855,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                dollar(round(x)),
                                ifelse(Metric_Unit %in% "Percent",
                                       scales::percent(x, 0.1),
-                                      prettyNum(round(x, digits = 1),
+                                      prettyNum(round(x, digits = 2),
                                                 big.mark = ",")))
                       }),
                Metric_Unit = NULL)

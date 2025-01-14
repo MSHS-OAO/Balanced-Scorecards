@@ -5,7 +5,7 @@ SELECT 'Lab' AS SERVICE,
        TO_CHAR(c.MONTHROLLUP,'Mon YYYY') AS PREMIER_REPORTING_PERIOD,
        CASE
            WHEN c.TEST = 'Troponin' THEN
-                'Troponin (<=50 min)'
+                'Troponin (<=60 min)'
            ELSE
                 'HGB (<=60 min)'
        END AS METRIC_NAME_SUBMITTED,
@@ -35,14 +35,14 @@ FROM (SELECT b.SITE1 AS SITE ,
               MASTERSETTING = 'ED' )
         GROUP BY b.SITE1, b.TEST, b.MONTHROLLUP) c
 WHERE MONTHROLLUP <=   (SELECT ADD_MONTHS(TRUNC(SYSDATE ,'mm'),-1) As Currnt_Time FROM dual)
-UNION
+UNION /* MTD System Wide Lab Metrics */
 SELECT 'Lab' AS SERVICE,
        c.SITE,
        c.MONTHROLLUP AS REPORTING_MONTH,
        TO_CHAR(c.MONTHROLLUP,'Mon YYYY') AS PREMIER_REPORTING_PERIOD,
        CASE
            WHEN c.TEST = 'Troponin' THEN
-                'Troponin (<=50 min)'
+                'Troponin (<=60 min)'
            ELSE
                 'HGB (<=60 min)'
        END AS METRIC_NAME_SUBMITTED,
@@ -65,3 +65,38 @@ FROM (SELECT 'SYSTEM' AS SITE ,
          SITE != 'MSSN'
     GROUP BY  b.TEST, b.MONTHROLLUP) c
 WHERE MONTHROLLUP <=   (SELECT ADD_MONTHS(TRUNC(SYSDATE ,'mm'),-1) As Currnt_Time FROM dual)
+UNION  /* YTD System Wide Lab Metrics */
+SELECT 'Lab' AS SERVICE,
+       c.SITE,
+       c.MONTHROLLUP AS REPORTING_MONTH,
+       TO_CHAR(c.MONTHROLLUP,'Mon YYYY') AS PREMIER_REPORTING_PERIOD,
+       CASE
+           WHEN c.TEST = 'Troponin' THEN
+                'Troponin (<=60 min) (YTD)'
+           ELSE
+                'HGB (<=60 min) (YTD)'
+       END AS METRIC_NAME_SUBMITTED,
+       (c.TotalReceiveResultInTargetYTD/c.TotalResultedYTD) AS VALUE,
+       NULL AS UPDATED_USER,
+       SYSDATE AS UPDATED_TIME
+FROM(   SELECT SITE,
+        TEST,
+        MONTHROLLUP,
+        SUM(TotalResulted) OVER (PARTITION BY EXTRACT(YEAR FROM MONTHROLLUP),TEST ORDER BY MONTHROLLUP) AS TotalResultedYTD,
+        SUM(TotalReceiveResultInTarget) OVER (PARTITION BY EXTRACT(YEAR FROM MONTHROLLUP),TEST ORDER BY MONTHROLLUP) AS TotalReceiveResultInTargetYTD
+        FROM (SELECT 'SYSTEM' AS SITE ,
+                   a.TEST,
+                   a.MONTHROLLUP,
+                   COUNT(*) AS TotalResulted,
+                   SUM(CASE
+                         WHEN RECEIVETIME_TATINCLUDE = 1
+                             THEN RECEIVERESULTINTARGET
+                         END) AS TotalReceiveResultInTarget
+              FROM LAB_KPI_PREPROCESSED_DAILY a
+              WHERE (TEST = 'HGB' AND
+                 DASHBOARDPRIORITY = 'Stat') OR
+                 (TEST = 'Troponin' AND
+                  MASTERSETTING = 'ED' ) AND
+                 SITE != 'MSSN'
+              GROUP BY  a.TEST, a.MONTHROLL
+/
