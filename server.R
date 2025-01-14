@@ -4974,6 +4974,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       memoized_full_current_state_tbl <- memoise(function() {
         connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
         current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
+        current_state_tbl <- current_state_tbl %>%
+          filter(!EXPTYPE %in% c("Troponin (<=60 min)", "HGB (<=60 min)"))
         dbDisconnect(connection)
         current_state_tbl
       })
@@ -5040,11 +5042,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             current_state_data_reactive(current_state_data_filtered)
             
             # filter data
-            strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars")
+            strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars","Troponin (<=60 min)", "HGB (<=60 min)")
             filtered_df <- full_status_data %>%
               filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
               distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
             
+
             target_and_status_metrics_reactive(filtered_df)
           })
           
@@ -5088,7 +5091,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           full_status_data <- memoized_full_status_data_tbl()
           
-          strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars")
+          strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars","Troponin (<=60 min)", "HGB (<=60 min)")
           filtered_df <- full_status_data %>%
             filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
             distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
