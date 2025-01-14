@@ -1,4 +1,3 @@
-
 # Install and load packages ----------------------------------------
 suppressMessages({
   library(pool)
@@ -284,6 +283,24 @@ target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
                          Yellow_End = YELLOW_END,
                          Red_Start = RED_START,
                          Red_End = RED_END)
+system_target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
+  filter(SITE == "SYSTEM") %>%
+  rename(Service = SERVICE,
+         Site = SITE,
+         Metric_Group = METRIC_GROUP,
+         Metric_Name = METRIC_NAME,
+         Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
+         Target = TARGET,
+         Green_Status = GREEN_STATUS,
+         Yellow_Status = YELLOW_STATUS,
+         Red_Status = RED_STATUS,
+         Green_Start = GREEN_START,
+         Green_End = GREEN_END,
+         Yellow_Start = YELLOW_START,
+         Yellow_End = YELLOW_END,
+         Red_Start = RED_START,
+         Red_End = RED_END)
+
 metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
                             rename(Service = SERVICE,
                                    General_Group = GENERAL_GROUP,

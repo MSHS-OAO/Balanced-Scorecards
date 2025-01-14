@@ -391,7 +391,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         Metric_Name_Submitted == "Volume YOY%" ~ "Percent"),
                  Metric_Name_Summary = case_when(Metric_Name == "Average Turnover (min)" ~ "Average Turn Around Time",
                                                  Metric_Name == "On Time Start %" ~ "On Time Starts",
-                                                 Metric_Name == "Volume" ~ "Volume",
+                                                 Metric_Name == "Volume" ~ "Volume (Monthly)",
                                                  Metric_Name == "Volume YOY%" ~ "Volume YOY%"),
                  Target = NA,
                  Green_Start = NA,             
@@ -1298,6 +1298,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       metric_name <- unique(summary_tab_tb$`Metric Name`)
       if(service_input == "Food Services" & c("Net Cost of Case per Patient Day") %in% metric_name) {
         index <- which(summary_tab_tb$`Metric Name` == "Net Cost of Case per Patient Day" & summary_tab_tb$Section == "Metrics", arr.ind = TRUE)
+        
+        extract <- summary_tab_tb[index,3]
+        updated <- gsub("Average", "Total", extract)
+        
+        summary_tab_tb[index, 3] <- updated
+      }    
+      
+      if(service_input == "Perioperative Services" & c("Volume YOY%") %in% metric_name) {
+        index <- which(summary_tab_tb$`Metric Name` == "Volume YOY%", arr.ind = TRUE)
         
         extract <- summary_tab_tb[index,3]
         updated <- gsub("Average", "Total", extract)
@@ -5126,6 +5135,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         target_and_status_data <- target_and_status_metrics_reactive()
         
         current_state_data_test <<- current_state_data
+        current_state_data_operational <- current_state_data
         
         current_state_data <- current_state_data %>% ungroup() %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
         
@@ -5206,10 +5216,28 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         ##Section for oeprational metrics
-        operational_metrics <- left_join(current_state_data_test, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab == "Breakout") %>%
+        operational_metrics <- left_join(current_state_data_operational, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab == "Breakout") %>%
           filter(General_Group == "Operational") %>% select(-General_Group, -Reporting_Tab)
         
         operational_metrics_test <<- operational_metrics
+        
+        system_targets <- left_join(operational_metrics, system_target_mapping[ ,c("Service", "Metric_Name", "Green_Start", "Green_End", "Yellow_Start", "Yellow_End", "Red_Start", "Red_End", "Target")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name"))
+        
+        system_targets <- system_targets %>%
+          # Determine status based on status definitions
+          mutate(Status = ifelse(is.na(Target), NA,
+                                 ifelse(between(YTD_ACTUAL,
+                                                Green_Start,
+                                                Green_End),
+                                        "Green",
+                                        ifelse(between(YTD_ACTUAL,
+                                                       Yellow_Start,
+                                                       Yellow_End),
+                                               "Yellow",
+                                               ifelse(between(YTD_ACTUAL,
+                                                              Red_Start,
+                                                              Red_End),
+                                                      "Red", NA)))))
         
         operational_metrics <- operational_metrics %>% ungroup() %>%
                               mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 2), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL, 2)))) %>%
@@ -5246,7 +5274,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                          
                                                  )
         
-        current_col_names <- c("SCOPE","METRIC","TIME PERIOD",
+        current_col_names <- c("Status","SCOPE","METRIC","TIME PERIOD",
                                "MTD ACTUAL","MTD TARGET","MTD VARIANCE",
                                "YTD ACTUAL","YTD TARGET","YTD VARIANCE",
                                "YTD % VARIANCE")
@@ -5303,37 +5331,53 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
         }
         
-        current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names) %>%
-          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")%>%
+        current_state_temp <- current_state_temp %>% mutate(Status = NA)
+        
+        
+        if(nrow(system_targets) > 0) {
+          current_state_temp <- current_state_temp %>% select(-Status)
+          current_state_temp <- left_join(current_state_temp, system_targets[, c("EXPTYPE", "Status")], by = c("METRIC" = "EXPTYPE"))
+        }
+        
+        current_state_temp <- current_state_temp %>% mutate(Status = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ 'Red',
+                               current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ 'Yellow',
+                               current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses") & current_state_temp$SCOPE == "Finance"  ~ 'Green',
+                               current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Productivity Index")  ~ 'Red',
+                               current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ 'Yellow',
+                               current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ 'Green',
+                               Status == "Red" ~ "Red",
+                               Status == "Yellow" ~ "Yellow",
+                               Status == "Green" ~ "Green",
+                               TRUE ~ 'white')) %>%
+          relocate(Status, .before = "SCOPE")
+          
+        
+        current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names, escape = F) %>%
           kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
                         full_width = FALSE, position = "center", 
                         row_label_position = "c", font_size = 16, protect_latex = F) %>%
-          column_spec(1:3, background = "#212070", color = "white") %>%
-          column_spec(4:6, background = "#F8F8F8") %>% 
-          column_spec(7:9, background = "#EAEAEA") %>%
+          column_spec(2:4, background = "#212070", color = "white") %>%
+          column_spec(5:7, background = "#F8F8F8") %>% 
+          column_spec(8:10, background = "#EAEAEA") %>%
           # column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
           #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
           row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = 1, valign = "middle") %>%
-          column_spec(10, background = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
-                                                 current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFC7CE',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#FFFFCC',
-                                                 current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ '#C4D79B',
-                                                 TRUE ~ 'white'),
-                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE, 
-                                       TRUE ~ FALSE)) %>%
+          column_spec(11, 
+                    background = case_when(current_state_temp$Status == "Red" ~ "#FFC7CE",
+                                           current_state_temp$Status == "Yellow" ~ "#FFFFCC",
+                                           current_state_temp$Status == "Green" ~ "#C4D79B",
+                                           TRUE ~ 'white'),
+                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE,
+                                       current_state_temp$SCOPE == "Operational" ~ TRUE,
+                                       TRUE ~ FALSE)
+                    ) %>%
           gsub("\\bNA\\b", "-", .) %>%
-          row_spec(total_expense_row, bold = T) #%>%
-          #remove_column(., 1)
-        
-        
-        
-      
-
-     
-      }
+          row_spec(total_expense_row, bold = T) %>%
+          collapse_rows(columns = 1, valign = "middle") %>%
+          remove_column(., 1) %>%
+          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")
+          
+    }
 
       
       
