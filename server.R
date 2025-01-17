@@ -4962,517 +4962,118 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       
       
-      # Cache functions
-      
-      memoized_full_future_state_tbl <- memoise(function() {
-        connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW") %>% collect()
-        dbDisconnect(connection)
-        future_state_tbl
-      })
-      
-      memoized_full_current_state_tbl <- memoise(function() {
-        connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
-        current_state_tbl <- current_state_tbl %>%
-          filter(!EXPTYPE %in% c("Troponin (<=60 min)", "HGB (<=60 min)"))
-        dbDisconnect(connection)
-        current_state_tbl
-      })
-      
-      memoized_full_status_data_tbl <- memoise(function() {
-        connection <- dbConnect(odbc::odbc(), dsn = dsn)
-        status_data_tbl <- tbl(connection, "BSC_TARGET_STATUS") %>% collect()
-        dbDisconnect(connection)
-        status_data_tbl
-      })
-      
-      
-
-      
-      # refresh function
-      refresh_data <- function() {
-
-        forget(memoized_full_future_state_tbl)
-        forget(memoized_full_current_state_tbl)
-        forget(memoized_full_status_data_tbl)
-        
-        full_future_state_data <- memoized_full_future_state_tbl()
-        full_current_state_data <- memoized_full_current_state_tbl()
-        full_status_data <- memoized_full_status_data_tbl()
-        
-        list(
-          future_state_data = full_future_state_data,
-          current_state_data = full_current_state_data,
-          status_data = full_status_data
-        )
-      }
-      
-      
-      # observe submission success
-      observeEvent(submission_success(), {
-        if (submission_success()) {
-          refreshed_data <- refresh_data()
-          
-          full_future_state_data <- refreshed_data$future_state_data
-          full_current_state_data <- refreshed_data$current_state_data
-          full_status_data <- refreshed_data$status_data
-          
-          overview_service_selected <- input$selectedService5
-          
-          emergency_department_data <- full_future_state_data %>%
-            filter(FUNCTION == overview_service_selected)
-          future_state_data_reactive(emergency_department_data)
-          
-          current_state_data <- full_current_state_data %>%
-            filter(FUNCTION == overview_service_selected)
-          
-          picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
-          updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-          
-          observeEvent(input$selectedMonth4, {
-            overview_date_selected <- input$selectedMonth4
-            overview_date_selected <- as.Date(paste0(overview_date_selected, "-01"), format = '%m-%Y-%d')
-            
-            current_state_data_filtered <- current_state_data %>%
-              filter(MONTH <= overview_date_selected)
-            
-            current_state_data_filtered <- current_state_data_filtered %>% group_by(EXPTYPE) %>% filter(MONTH == max(MONTH))
-            
-            current_state_data_reactive(current_state_data_filtered)
-            
-            # filter data
-            strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars","Troponin (<=60 min)", "HGB (<=60 min)")
-            filtered_df <- full_status_data %>%
-              filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
-              distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
-            
-
-            target_and_status_metrics_reactive(filtered_df)
-          })
-          
-          submission_success(FALSE)
-        }
-      })
-      
-      
-      # observe selected service
-      observeEvent(input$selectedService5, {
-        overview_service_selected <- input$selectedService5
-        
-        full_future_state_data <- memoized_full_future_state_tbl()
-        full_current_state_data <- memoized_full_current_state_tbl()
-        
-        emergency_department_data <- full_future_state_data %>%
-          filter(FUNCTION == overview_service_selected)
-        future_state_data_reactive(emergency_department_data)
-        
-        current_state_data <- full_current_state_data %>%
-          filter(FUNCTION == overview_service_selected)
-        
-        picker_choices <- format(sort(unique(current_state_data$MONTH)), "%m-%Y")
-        updatePickerInput(session, "selectedMonth4", choices = picker_choices, selected = picker_choices[length(picker_choices)])
-        
-        
-        
-        
-        # observe selected month
-        observeEvent(input$selectedMonth4, {
-          overview_date_selected <- input$selectedMonth4
-          overview_date_selected <- as.Date(paste0(overview_date_selected, "-01"), format = '%m-%Y-%d') #Create dat to compare with Month columns
-          
-          current_state_data_filtered <- current_state_data %>%  #get latest data up to the date selected
-            filter(MONTH <= overview_date_selected)
-          
-          current_state_data_filtered <- current_state_data_filtered %>% group_by(EXPTYPE) %>% filter(MONTH == max(MONTH)) #Get the most recent data for each metric
-          
-          current_state_data_reactive(current_state_data_filtered)
-
-          
-          full_status_data <- memoized_full_status_data_tbl()
-          
-          strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars","Troponin (<=60 min)", "HGB (<=60 min)")
-          filtered_df <- full_status_data %>%
-            filter(grepl(paste(strings_to_check, collapse = "|"), METRIC_NAME_SUBMITTED)) %>%
-            distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
-          
-          target_and_status_metrics_reactive(filtered_df)
-        })
-      })
-      
-      
-      
-      
-      
-      
-      
-      
-      #Current_State table output .........................................................................
-      
-      #Function to reorder the table based on the EXPTYPE column
-      reorder_rows <- function(df, col_name, order_vec) {
-        order_factor <- factor(df[[col_name]], levels = order_vec)
-        df_ordered <- df[order(order_factor), ]
-        return(df_ordered)
-      }
-      
-      # Function to create new dataframe 
-      insertRow <- function(data, new_row, r) { 
-        data_new <- rbind(data[1:r, ],             
-                          new_row,                 
-                          data[- (1:r), ])         
-        rownames(data_new) <- 1:nrow(data_new)     
-        return(data_new) 
-      } 
-      
-      
-      #Output function 
-      
-      current_state_data_reactive <- reactiveVal(NULL)
-      target_and_status_metrics_reactive <- reactiveVal(NULL)
-      
-      
-      output$current_state_system_table <- function() {
-        
-        current_state_data <- current_state_data_reactive()
-        target_and_status_data <- target_and_status_metrics_reactive()
-        
-        current_state_data_test <<- current_state_data
-        current_state_data_operational <- current_state_data
-        
-        current_state_data <- current_state_data %>% ungroup() %>% filter(rowSums(.[, c("MTD_TARGET", "MTD_ACTUAL", "YTD_TARGET", "YTD_ACTUAL")])!=0)
-        
-        '%!in%' <- function(x,y)!('%in%'(x,y))
-        
-        # current_state_data <- current_state_data %>% mutate(EXPTYPE = ifelse((EXPTYPE == "OT Dollars" | EXPTYPE == "Agency/Temp Help Dollars") & !is.na(YTD_PERCENT_VARIANCE) & (YTD_PERCENT_VARIANCE <= -2), "REMOVE", EXPTYPE)) %>% filter(EXPTYPE != "REMOVE")
-        
-        
-        service_selected <- isolate(input$selectedService5)
-        
-        
-        if("Worked Hours Productivity Index" %!in% unique(current_state_data$EXPTYPE) & service_selected %in% unique(system_productivity$SERVICE)) {
-          
-          connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
-          current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE == "Worked Hours Productivity Index")%>% 
-                                arrange(desc(MONTH)) %>% head(1) %>% collect()
-          dbDisconnect(connection_current)
-          
-          current_state_data <- rbind(current_state_data, current_state_data_prod)
-          
-          # prod_index <- which(current_state_temp$METRIC == "Total Expenses")
-          # 
-          # connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-          # current_state_tbl <- tbl(connection_current, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
-          # system_prod <- current_state_tbl %>% select(-UPDATED_TIME, -UPDATED_USER, -SITE, -PREMIER_REPORTING_PERIOD) %>%
-          #   filter(SERVICE == service_selected) %>% arrange(desc(REPORTING_MONTH)) %>% head(2) %>% collect() %>% select(-SERVICE)
-          # dbDisconnect(connection_current)
-          # 
-          # system_prod <- system_prod %>% mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Worked Hours Productivity Index (FYTD)", "YTD_ACTUAL", "MTD_ACTUAL")) %>%
-          #   pivot_wider(names_from = METRIC_NAME_SUBMITTED, values_from = VALUE) %>% mutate(SCOPE = "Labor", METRIC = "Productivity Index", TIME_PERIOD = format(REPORTING_MONTH, "%Y-%m"), 
-          #                                                                                   YTD_Target = 1, MTD_Target = 1) %>%
-          #   select(-REPORTING_MONTH) %>%
-          #   mutate(MTD_VARIANCE_TO_TARGET = MTD_ACTUAL - MTD_Target,  
-          #          YTD_VARIANCE_TO_TARGET = YTD_ACTUAL - YTD_Target, YTD_PERCENT_VARIANCE = YTD_ACTUAL - YTD_Target)
-          # 
-          # 
-          # col_names <- colnames(current_state_temp)
-          # 
-          # system_prod <- system_prod[,col_names]
-          # 
-          # system_prod <- system_prod %>% mutate_if(is.numeric, ~paste0(. * 100, "%"))
-          # 
-          # current_state_temp <- insertRow(current_state_temp, system_prod, prod_index) 
-          
-        }
-        
-        if("Total Expenses" %!in%  unique(current_state_data$EXPTYPE)){
-          connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-          current_state_tbl <- tbl(connection_current, "BSC_CURRENT_FINANCE_VIEW")
-          current_state_data_prod <- current_state_tbl %>% filter(FUNCTION == service_selected) %>% filter(EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses", "Agency/Temp Help Dollars", "OT Dollars"))%>%
-            filter(MONTH == max(MONTH)) %>% collect()
-          dbDisconnect(connection_current)
-
-          current_state_data <- rbind(current_state_data, current_state_data_prod)
-        }
-        
-        # transform dataframe to show 'Worked Hours Productivity Index' as a percentage, round percent variance, and add '$' symbol
-        current_state_data <- transform(current_state_data,
-                                        
-                                        MTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_ACTUAL * 100,'%'),ifelse(MTD_ACTUAL>=0, paste0('$',format(round(MTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_ACTUAL,0)), big.mark = ",")))),
-                                        YTD_ACTUAL = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_ACTUAL * 100,'%'),ifelse(YTD_ACTUAL>=0, paste0('$',format(round(YTD_ACTUAL,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL,0)), big.mark = ",")))),
-                                        YTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_TARGET * 100,'%'),ifelse(YTD_TARGET>=0, paste0('$',format(round(YTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_TARGET,0)), big.mark = ",")))),
-                                        MTD_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_TARGET * 100,'%'),ifelse(MTD_TARGET>=0, paste0('$',format(round(MTD_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_TARGET,0)), big.mark = ",")))),
-                                        YTD_VARIANCE_TO_TARGET= ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(YTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(YTD_VARIANCE_TO_TARGET>=0, paste0('$',format(round(YTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
-                                        MTD_VARIANCE_TO_TARGET = ifelse(EXPTYPE == 'Worked Hours Productivity Index', paste0(MTD_VARIANCE_TO_TARGET * 100,'%'),ifelse(MTD_VARIANCE_TO_TARGET>=0, paste0('$',format(round(MTD_VARIANCE_TO_TARGET,0), big.mark = ",")),paste0('-$',format(abs(round(MTD_VARIANCE_TO_TARGET,0)), big.mark = ",")))),
-                                        YTD_PERCENT_VARIANCE =  formattable::percent(current_state_data$YTD_PERCENT_VARIANCE, digits = 1)
-                                          #paste0(round(YTD_PERCENT_VARIANCE * 100,1),'%')
-        )
-        
-
-        
-        metric_order <- c("Salaries", "Supplies", "Total Expenses","Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars")
-        
-        current_state_data <- reorder_rows(current_state_data, "EXPTYPE", metric_order)
-        
-        current_state_data <- current_state_data %>% filter(EXPTYPE %in% metric_order)
-        
-        
-        ##Section for oeprational metrics
-        operational_metrics <- left_join(current_state_data_operational, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab == "Breakout") %>%
-          filter(General_Group == "Operational") %>% select(-General_Group, -Reporting_Tab)
-        
-        operational_metrics_test <<- operational_metrics
-        
-        system_targets <- left_join(operational_metrics, system_target_mapping[ ,c("Service", "Metric_Name", "Green_Start", "Green_End", "Yellow_Start", "Yellow_End", "Red_Start", "Red_End", "Target")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name"))
-        
-        system_targets <- system_targets %>%
-          # Determine status based on status definitions
-          mutate(Status = ifelse(is.na(Target), NA,
-                                 ifelse(between(YTD_ACTUAL,
-                                                Green_Start,
-                                                Green_End),
-                                        "Green",
-                                        ifelse(between(YTD_ACTUAL,
-                                                       Yellow_Start,
-                                                       Yellow_End),
-                                               "Yellow",
-                                               ifelse(between(YTD_ACTUAL,
-                                                              Red_Start,
-                                                              Red_End),
-                                                      "Red", NA)))))
-        
-        operational_metrics <- operational_metrics %>% ungroup() %>%
-                              mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 2), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL, 2)))) %>%
-                              mutate(MTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET - MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET - MTD_ACTUAL,2) * 100, "%"), round(MTD_TARGET - MTD_ACTUAL))),
-                                     YTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET - YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL)))) %>% 
-                              mutate(MTD_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET,2) * 100, "%"), round(MTD_TARGET))),
-                                     MTD_ACTUAL = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL,2) * 100, "%"), round(MTD_ACTUAL))),
-                                     YTD_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET, 2) * 100, "%"), round(YTD_TARGET))),
-                                     YTD_ACTUAL = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL, 2) * 100, "%"), round(YTD_ACTUAL)))
-                                     ) %>% select(-Metric_Unit)
-        
-        operational_metrics <- operational_metrics %>%
-                                mutate(across(c("MTD_ACTUAL", "YTD_ACTUAL", "YTD_TARGET", "MTD_TARGET", "YTD_VARIANCE_TO_TARGET", "MTD_VARIANCE_TO_TARGET"), as.character)) %>%
-                                mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
-
-        if(nrow(operational_metrics > 0)) {
-          tester <<- current_state_data
-          testing <<- operational_metrics
-          current_state_data <- bind_rows(current_state_data, operational_metrics)
-        }
-        
-        current_state_temp <- data.frame(SCOPE = case_when(current_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance', 
-                                                           current_state_data$EXPTYPE %in% c("Worked Hours Productivity Index", "Agency/Temp Help Dollars", "OT Dollars") ~ 'Labor',
-                                                           TRUE ~ 'Operational'),
-                                         METRIC = current_state_data$EXPTYPE,
-                                         TIME_PERIOD = rep(format(current_state_data$MONTH, "%Y-%m")),
-                                         MTD_ACTUAL = current_state_data$MTD_ACTUAL,
-                                         MTD_Target = current_state_data$MTD_TARGET,
-                                         MTD_VARIANCE_TO_TARGET = current_state_data$MTD_VARIANCE_TO_TARGET,
-                                         YTD_ACTUAL = current_state_data$YTD_ACTUAL,
-                                         YTD_Target = current_state_data$YTD_TARGET,
-                                         YTD_VARIANCE_TO_TARGET =current_state_data$YTD_VARIANCE_TO_TARGET,
-                                         YTD_PERCENT_VARIANCE= current_state_data$YTD_PERCENT_VARIANCE
-                                         
-                                                 )
-        
-        current_col_names <- c("Status","SCOPE","METRIC","TIME PERIOD",
-                               "MTD ACTUAL","MTD TARGET","MTD VARIANCE",
-                               "YTD ACTUAL","YTD TARGET","YTD VARIANCE",
-                               "YTD % VARIANCE")
-
-
-        current_state_temp <- current_state_temp %>% mutate(METRIC = ifelse(METRIC == "Worked Hours Productivity Index", "Productivity Index", METRIC))
-        
-        total_expense_row <- which(current_state_temp$METRIC == "Total Expenses")
-        
-        current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = ifelse(YTD_PERCENT_VARIANCE <= -2, NA, YTD_PERCENT_VARIANCE))
-        current_state_temp <- current_state_temp %>% mutate(YTD_PERCENT_VARIANCE = formattable::percent(YTD_PERCENT_VARIANCE, digits = 1))
-
-        
-        # if("Productivity Index" %!in% unique(current_state_temp$METRIC) & service_selected %in% unique(system_productivity$SERVICE)) {
-        #   prod_index <- which(current_state_temp$METRIC == "Total Expenses")
-        #   
-        #   connection_current <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        #   current_state_tbl <- tbl(connection_current, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE")
-        #   system_prod <- current_state_tbl %>% select(-UPDATED_TIME, -UPDATED_USER, -SITE, -PREMIER_REPORTING_PERIOD) %>%
-        #     filter(SERVICE == service_selected) %>% arrange(desc(REPORTING_MONTH)) %>% head(2) %>% collect() %>% select(-SERVICE)
-        #   dbDisconnect(connection_current)
-        #   
-        #   system_prod <- system_prod %>% mutate(METRIC_NAME_SUBMITTED = ifelse(METRIC_NAME_SUBMITTED == "Worked Hours Productivity Index (FYTD)", "YTD_ACTUAL", "MTD_ACTUAL")) %>%
-        #                   pivot_wider(names_from = METRIC_NAME_SUBMITTED, values_from = VALUE) %>% mutate(SCOPE = "Labor", METRIC = "Productivity Index", TIME_PERIOD = format(REPORTING_MONTH, "%Y-%m"), 
-        #                                                                                                   YTD_Target = 1, MTD_Target = 1) %>%
-        #                                                                                                   select(-REPORTING_MONTH) %>%
-        #     mutate(MTD_VARIANCE_TO_TARGET = MTD_ACTUAL - MTD_Target,  
-        #            YTD_VARIANCE_TO_TARGET = YTD_ACTUAL - YTD_Target, YTD_PERCENT_VARIANCE = YTD_ACTUAL - YTD_Target)
-        #   
-        # 
-        #   col_names <- colnames(current_state_temp)
-        #   
-        #   system_prod <- system_prod[,col_names]
-        #   
-        #   system_prod <- system_prod %>% mutate_if(is.numeric, ~paste0(. * 100, "%"))
-        #   
-        #   current_state_temp <- insertRow(current_state_temp, system_prod, prod_index) 
-        #   
-        # }
-        # 
-        if("Productivity Index" %in% unique(current_state_temp$METRIC)) {
-          prod_index <- which(current_state_temp$METRIC == "Productivity Index") - 1
-          
-          prod_data <- current_state_temp %>% filter(METRIC == "Productivity Index")
-          
-          current_state_temp <- current_state_temp %>% filter(METRIC != "Productivity Index")
-          
-          prod_data <- prod_data %>% mutate(TIME_PERIOD = as.Date(paste0(TIME_PERIOD, "-01")))
-          
-          prod_data <- left_join(prod_data, report_date_mapping[, c("Report Data Updated until", "Dashboard Month")], by = c("TIME_PERIOD" = "Dashboard Month")) %>%
-            select(-TIME_PERIOD) %>% rename(TIME_PERIOD = `Report Data Updated until`) %>% relocate(TIME_PERIOD, .after = METRIC) %>% mutate(TIME_PERIOD = paste0("Rep. Pd. Ending ", format(TIME_PERIOD, "%m/%d/%Y")))
-          
-          current_state_temp <- insertRow(current_state_temp, prod_data, prod_index) 
-          
-        }
-        
-        current_state_temp <- current_state_temp %>% mutate(Status = NA)
-        
-        
-        if(nrow(system_targets) > 0) {
-          current_state_temp <- current_state_temp %>% select(-Status)
-          current_state_temp <- left_join(current_state_temp, system_targets[, c("EXPTYPE", "Status")], by = c("METRIC" = "EXPTYPE"))
-        }
-        
-        current_state_temp <- current_state_temp %>% mutate(Status = case_when(current_state_temp$YTD_PERCENT_VARIANCE <= -0.02 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ 'Red',
-                               current_state_temp$YTD_PERCENT_VARIANCE > -0.02 & current_state_temp$YTD_PERCENT_VARIANCE < 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ 'Yellow',
-                               current_state_temp$YTD_PERCENT_VARIANCE >= 0 & current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses") & current_state_temp$SCOPE == "Finance"  ~ 'Green',
-                               current_state_temp$YTD_PERCENT_VARIANCE < -0.05 & current_state_temp$METRIC %in% c("Productivity Index")  ~ 'Red',
-                               current_state_temp$YTD_PERCENT_VARIANCE > 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ 'Yellow',
-                               current_state_temp$YTD_PERCENT_VARIANCE >= -0.05 & current_state_temp$YTD_PERCENT_VARIANCE <= 0.1 & current_state_temp$METRIC %in% c("Productivity Index")  ~ 'Green',
-                               Status == "Red" ~ "Red",
-                               Status == "Yellow" ~ "Yellow",
-                               Status == "Green" ~ "Green",
-                               TRUE ~ 'white')) %>%
-          relocate(Status, .before = "SCOPE")
-          
-        
-        current_state_table <-  kable(current_state_temp, "html", align = "c",col.names = current_col_names, escape = F) %>%
-          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
-                        full_width = FALSE, position = "center", 
-                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
-          column_spec(2:4, background = "#212070", color = "white") %>%
-          column_spec(5:7, background = "#F8F8F8") %>% 
-          column_spec(8:10, background = "#EAEAEA") %>%
-          # column_spec(10,  background = ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -1.5, "#FFC7CE",
-          #                              ifelse(current_state_temp$YTD_PERCENT_VARIANCE < -2, "#FFFFCC", "#C4D79B")), color = "black") %>%
-          row_spec(0, background = "#212070", color = "white") %>%
-          column_spec(11, 
-                    background = case_when(current_state_temp$Status == "Red" ~ "#FFC7CE",
-                                           current_state_temp$Status == "Yellow" ~ "#FFFFCC",
-                                           current_state_temp$Status == "Green" ~ "#C4D79B",
-                                           TRUE ~ 'white'),
-                      bold = case_when(current_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Productivity Index")  ~ TRUE,
-                                       current_state_temp$SCOPE == "Operational" ~ TRUE,
-                                       TRUE ~ FALSE)
-                    ) %>%
-          gsub("\\bNA\\b", "-", .) %>%
-          row_spec(total_expense_row, bold = T) %>%
-          collapse_rows(columns = 1, valign = "middle") %>%
-          remove_column(., 1) %>%
-          add_header_above(c("  " = 3, "CURRENT PERIOD" = 3, "FISCAL YEAR TO DATE" = 4),background = "#212070", color = "white")
-          
-    }
 
       
       
       
-      # Future State table ouput.......................................................................................
-      
-
-      future_state_data_reactive <- reactiveVal(NULL)
-      
+      # Future State table output -------
       #output function of future_state table
       
-      output$future_state_system_table <- function() {
-        future_state_data <- future_state_data_reactive()
-        target_and_status_data <- target_and_status_metrics_reactive()
+      output$future_state_system_table <- function(){
+        input$submit_prod
+        input$submit_engineering
+        input$submit_finance
+        input$submit_food
+        input$submit_evs
+        input$submit_imaging
+        input$submit_ytd_pt_exp
+        input$submit_monthly_pt_exp
+        input$submit_biomeddi
+        input$submit_biomedkpis
+        input$submit_imagingct
+        input$submit_lab_pt
+        input$submit_lab_tat
+        input$submit_pt_tat
+        input$submit_sec_inc_rpts
+        input$submit_sec_events
+        input$submit_ed
+        input$submit_nursing
+        input$submit_finance_ot
+        input$submit_finance_census
+        input$submit_peri_op
+        input$submit_case_management
+        input$submit_cn
+        input$submit_food_nccpd
+        input$submit_finance_access_data
+        input$submit_finance_mapping
+        
+        
+        service_input <- input$selectedService5
+        month_input <- input$selectedMonth4
+        # service_input <- 'Perioperative Services'
+        # month_input <- "10-2024"
+        min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(6)
+        
+        connection <- dbConnect(drv = odbc::odbc(),
+                                dsn = dsn)
+        data_query <- glue("SELECT b.SCOPE,a.*
+                            FROM BSC_FUTURE_FINANCE_VIEW a
+                            LEFT JOIN BSC_SYSTEM_WIIDE_MAPPING_TABLE b ON a.EXPTYPE = b.EXPTYPE
+                            WHERE a.FUNCTION = '{service_input}' AND
+                                  a.MONTH >= TO_DATE('{min_month}','YYYY-MM-DD')")
+        
+        future_view_data <- dbGetQuery(connection,data_query)
+        future_view_data <- future_view_data %>%
+          select(-FUNCTION) %>%
+          rename(`TIME PERIOD` = MONTH,
+                 METRIC = EXPTYPE)
+        dbDisconnect(connection)
+        
+        # Change, rename the column names and format the cell values
+        col_names <- names(future_view_data)
+        col_names <- str_replace_all(col_names,"_"," ")
+        names(future_view_data) <- col_names
+        
+        budget_name <- paste0(as.character(year(future_view_data$`TIME PERIOD`)[1])," BUDGET")
+        names(future_view_data)[names(future_view_data) == "YEAR BUDGET"] <- budget_name 
+        
+        future_view_data <- future_view_data %>%
+          select(SCOPE,
+                 METRIC,
+                 `TIME PERIOD`,
+                 `YTD ACTUAL ANNUALIZED`,
+                 `LAST 12 MONTHS`,
+                 all_of(budget_name),
+                 `RETROSPECTIVE OUTLOOK`,
+                 `RETROSPECTIVE OUTLOOK VARIANCE TO BUDGET`,
+                 `PROSPECTIVE OUTLOOK`,
+                 `PROSPECTIVE OUTLOOK VARIANCE TO BUDGET`,
+                 `PROSPECTIVE PERCENT VARIANCE`) %>%
+          mutate_at(vars(-`PROSPECTIVE PERCENT VARIANCE`, 
+                          -SCOPE ,
+                          -METRIC,
+                          -`TIME PERIOD`),dollar) %>%
+          rename(`% VARIANCE` = `PROSPECTIVE PERCENT VARIANCE`,
+                 `RETROSPECTIVE OUTLOOK*`=`RETROSPECTIVE OUTLOOK`,
+                 `PROSPECTIVE OUTLOOK**`= `PROSPECTIVE OUTLOOK`)%>%
+          mutate(`% VARIANCE`=  scales::percent(`% VARIANCE`, 0.1))
+        
+        # Change Column Names
+        colnames(future_view_data)[8] <- "VARIANCE TO BUDGET"
+        colnames(future_view_data)[10] <- "VARIANCE TO BUDGET"
+        
+        kable(future_view_data,"html", align = "c") %>%
+                            add_header_above(c(" " = 6,
+                                               "RETROSPECTIVE FORECAST"= 2,
+                                               "PROSPECTIVE FORECAST" = 3),
+                                             background = "#212070",
+                                             color = "white") %>%
+                            row_spec(row=0,
+                                     color = "white",
+                                     background = "#212070") %>%
+                            column_spec(column = 1,
+                                        color = "white",
+                                        background =  "#212070") %>%
+                            column_spec(column = 2,
+                                        color = "white",
+                                        background =  "#212070") %>%
+                            column_spec(column = 2,
+                                        color = "white",
+                                        background =  "#212070")
+          
 
-        if (is.null(future_state_data)) {
-          return(NULL)  # Return NULL if future_state_data is not available yet
-        }
-        
-        
-        # Reorder METRIC values
-        metric_order <- c("Salaries", "Supplies", "Total Expenses")
-        future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
-        
-        
-        # transform dataframe to round percent variance, and add '$' symbol
-        future_state_data <- transform(future_state_data,
-                                       
-                                       YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>=0, paste0('$',format(round(YTD_ACTUAL_ANNUALIZED,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL_ANNUALIZED,0)), big.mark = ","))),
-                                       LAST_12_MONTHS = ifelse(LAST_12_MONTHS>=0, paste0('$',format(round(LAST_12_MONTHS,0), big.mark = ",")),paste0('-$',format(abs(round(LAST_12_MONTHS,0)), big.mark = ","))),
-                                       YEAR_BUDGET = ifelse(YEAR_BUDGET>=0, paste0('$',format(round(YEAR_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(YEAR_BUDGET,0)), big.mark = ","))),
-                                       RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
-                                       RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
-                                       PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
-                                       PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
-                                       PROSPECTIVE_PERCENT_VARIANCE = formattable::percent(future_state_data$PROSPECTIVE_PERCENT_VARIANCE, digits = 1)
-                                         #paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
-        )
-        
-        
-        
-        future_state_temp <- data.frame(#SCOPE = c(rep("Finance", 3)),
-                                        SCOPE = case_when(future_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance'),
-                                        METRIC = future_state_data$EXPTYPE,
-                                        MONTH = format(future_state_data$MONTH, "%Y-%m"),
-                                        YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
-                                        LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
-                                        YEAR_BUDGET = future_state_data$YEAR_BUDGET,
-                                        RETROSPECTIVE_OUTLOOK = future_state_data$RETROSPECTIVE_OUTLOOK,
-                                        RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
-                                        PROSPECTIVE_OUTLOOK = future_state_data$PROSPECTIVE_OUTLOOK,
-                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
-                                        PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
-        )
-        
-        future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
-                              "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK*",
-                              "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK**",
-                              "VARIANCE TO BUDGET",
-                              "% VARIANCE")
-
-        total_expense_row <- which(future_state_temp$METRIC == "Total Expenses")
-        
-        future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
-          add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
-          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
-                        full_width = FALSE, position = "center", 
-                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
-          column_spec(1:3, background = "#212070", color = "white") %>%
-          column_spec(4:6, background = "#F8F8F8") %>%
-          column_spec(7:8, background = "#EAEAEA") %>%
-          column_spec(9:10, background = "#F8F8F8") %>%    
-          # column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
-          #                                     ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
-          column_spec(11, background = case_when(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= -0.02 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > -0.02 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -0.05 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -0.05 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
-                                                 TRUE ~ 'white'),
-                      bold = case_when(future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
-                                       TRUE ~ FALSE)) %>%
-          row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = c(1, 2), valign = "middle") %>%
-          gsub("\\bNA\\b", "-", .) %>%
-          gsub("\\bNA%\\b", "-", .) %>%
-          row_spec(total_expense_row, bold = T)
-
-        return(future_state_table)
       }
-      
+        
 
 } # Close Server
 

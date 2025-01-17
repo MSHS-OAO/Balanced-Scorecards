@@ -126,8 +126,8 @@ ui <-
                         fluidRow(
                           column(12,
                                  h1("Current State"),
-                                 tableOutput("current_state_system_table") %>%
-                                   withSpinner(type = 8, color = "#dddedd"),
+                                 # tableOutput("current_state_system_table") %>%
+                                 #   withSpinner(type = 8, color = "#dddedd"),
                                  h1("Future State"),
                                  tableOutput("future_state_system_table") %>%
                                    withSpinner(type = 8, color = "#dddedd"),
