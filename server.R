@@ -2651,7 +2651,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           # Read data
           data <-  read_excel(prof_testing_file)
           flag <- 1
-          if(sum(data$VALUE > 1)){
+          if(sum(data$VALUE >= 1)){
             showModal(modalDialog(
               title = "Error",
               paste0("Please make sure all values are between 0 and 1"),
