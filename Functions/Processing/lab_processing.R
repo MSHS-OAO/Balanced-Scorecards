@@ -1,6 +1,6 @@
 
 # lab_data <- "Test/ProficiencyTesting.xlsx"
-# updated_user <- "Dheeraj"
+# updated_user <- "Dheeraj01202025"
 # data <-  read_excel(lab_data ,sheet = "Reformatted")
 
 # Proficiency Testing ----------------
@@ -8,7 +8,10 @@
 lab_prof_test_dept_summary <- function(data, updated_user) {
   
   data <- data %>%
-    mutate(PREMEIR_REPORTING_PERIOD = format(as.Date(REPORTING_MONTH),"%b %Y"),
-           UPDATED_USER = updated_user)
+    mutate(PREMIER_REPORTING_PERIOD = format(as.Date(REPORTING_MONTH),"%b %Y"),
+           UPDATED_USER = updated_user) %>%
+    drop_na(VALUE)
+  
+  data
 
 }

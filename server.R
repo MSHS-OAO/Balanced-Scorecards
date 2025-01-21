@@ -2632,6 +2632,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     observeEvent(input$submit_lab_pt, {
       button_name <- "submit_lab_pt"
       prof_testing_file <- input$prof_testing_file
+      # prof_testing_file <- "Test/ProficiencyTesting.xlsx"
       shinyjs::disable(button_name)
       flag <- 0
       
@@ -2648,9 +2649,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         tryCatch({
           # Read data
-          data <-  read_excel(lab_data)
-        
+          data <-  read_excel(prof_testing_file)
           flag <- 1
+          if(sum(data$VALUE > 1)){
+            showModal(modalDialog(
+              title = "Error",
+              paste0("Please make sure all values are between 0 and 1"),
+              easyClose = TRUE,
+              footer = NULL
+            ))
+            shinyjs::enable(button_name)
+            flag <- 0
+          }
         },
         error = function(err){
           showModal(modalDialog(
@@ -2669,7 +2679,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           tryCatch({
             # Proceess data
             processed_data <-  lab_prof_test_dept_summary(data,updated_user)
-            
             flag <- 2
           },
           error = function(err){
