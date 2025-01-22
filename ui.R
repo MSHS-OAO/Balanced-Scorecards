@@ -742,17 +742,9 @@ ui <-
                                                                                )
                                                                      )
                                                             ),
-                                                            h2("2. Please enter data in the tables below."),
                                                             br(),
-                                                            div(id = "header_custom",
-                                                                h4("Please leave cell blank if data has not been received."),
-                                                                br(),
-                                                                h4("Please enter percentages (Proficiency Testing) as a decimal between 0 and 1."),
-                                                              ),
-                                                            h2("3. Please click on Submit when finished."),
-                                                            hr(),
-                                                            h2("Lab & Blood Bank Proficiency Testing"),
-                                                            rHandsontableOutput("lab_prof_test"),
+                                                            fileInput("prof_testing_file",
+                                                                      label = "Please upload & Blood Bank Proficiency Testing data"),
                                                             hr()
                                                           ))
                                                  ),
