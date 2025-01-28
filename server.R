@@ -1452,12 +1452,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Code Starts ---------------------------------------------------------------------------------     
       
-      #read BSC_METRICS_FINAL_TESTING
-      conn <- dbConnect(odbc(), dsn)
-      query <- "SELECT * FROM BSC_METRICS_FINAL_TESTING WHERE REPORTING_TAB = 'Summary and Site'"
-      Data <- dbGetQuery(conn, query) %>% collect()
-      dbDisconnect(conn)
+      # read BSC_METRICS_FINAL_TESTING
+      # conn <- dbConnect(odbc(), dsn)
+      # query <- "SELECT * FROM BSC_METRICS_FINAL_TESTING WHERE REPORTING_TAB = 'Summary and Site'"
+      # Data <- dbGetQuery(conn, query) %>% collect()
+      # dbDisconnect(conn)
+
       
+      ####
+      comparison_data <- memoized_fetch_table("BSC_METRICS_FINAL_TESTING")
+      Data <- comparison_data %>% filter(REPORTING_TAB == 'Summary and Site')
       
       #reshape input month
       selected_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") 
@@ -4958,65 +4962,25 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # 5. System Overview Tab Output -------------------------------------------------------------------------------------------
       
-      
-
-      #observe entries from the user
-      
-      
-      
-      # Cache functions
-      
-      memoized_full_future_state_tbl <- memoise(function() {
-        connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        future_state_tbl <- tbl(connection, "BSC_FUTURE_FINANCE_VIEW") %>% collect()
-        dbDisconnect(connection)
-        future_state_tbl
-      })
-      
-      memoized_full_current_state_tbl <- memoise(function() {
-        connection <- dbConnect(drv = odbc::odbc(), dsn = dsn)
-        current_state_tbl <- tbl(connection, "BSC_CURRENT_FINANCE_VIEW") %>% collect()
-        dbDisconnect(connection)
-        current_state_tbl
-      })
-      
-      memoized_full_status_data_tbl <- memoise(function() {
-        connection <- dbConnect(odbc::odbc(), dsn = dsn)
-        status_data_tbl <- tbl(connection, "BSC_TARGET_STATUS") %>% collect()
-        dbDisconnect(connection)
-        status_data_tbl
-      })
-      
-      
-
-      
-      # refresh function
-      refresh_data <- function() {
-
-        forget(memoized_full_future_state_tbl)
-        forget(memoized_full_current_state_tbl)
-        forget(memoized_full_status_data_tbl)
-        
-        full_future_state_data <- memoized_full_future_state_tbl()
-        full_current_state_data <- memoized_full_current_state_tbl()
-        full_status_data <- memoized_full_status_data_tbl()
-        
-        list(
-          future_state_data = full_future_state_data,
-          current_state_data = full_current_state_data,
-          status_data = full_status_data
-        )
-      }
-      
-      
       # observe submission success
       observeEvent(submission_success(), {
         if (submission_success()) {
+          ####
           refreshed_data <- refresh_data()
           
           full_future_state_data <- refreshed_data$future_state_data
           full_current_state_data <- refreshed_data$current_state_data
           full_status_data <- refreshed_data$status_data
+          
+          
+          ####
+          comparison_data <- refreshed_data$site_comparison
+          input_service_comparison <- input$selectedService2
+          comparison_data_current <- comparison_data %>%
+            filter(SERVICE == input_service_comparison)
+          picker_choices_comp <- format(sort(unique(comparison_data_current$REPORTING_MONTH)), "%m-%Y")
+          updatePickerInput(session, "selectedMonth2", choices = picker_choices_comp, selected = picker_choices_comp[length(picker_choices_comp)])
+          
           
           overview_service_selected <- input$selectedService5
           
@@ -5058,9 +5022,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # observe selected service
       observeEvent(input$selectedService5, {
         overview_service_selected <- input$selectedService5
-        
-        full_future_state_data <- memoized_full_future_state_tbl()
-        full_current_state_data <- memoized_full_current_state_tbl()
+        ####
+        full_future_state_data <- memoized_fetch_table("BSC_FUTURE_FINANCE_VIEW")
+        full_current_state_data <- memoized_fetch_table("BSC_CURRENT_FINANCE_VIEW")
         
         emergency_department_data <- full_future_state_data %>%
           filter(FUNCTION == overview_service_selected)
@@ -5087,8 +5051,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           current_state_data_reactive(current_state_data_filtered)
 
-          
-          full_status_data <- memoized_full_status_data_tbl()
+          ####
+          full_status_data <- memoized_fetch_table("BSC_TARGET_STATUS")
           
           strings_to_check <- c("Overtime Hours", "Productivity Index", "Budget to Actual Variance", "Overtime Dollars")
           filtered_df <- full_status_data %>%
@@ -5099,11 +5063,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         })
       })
       
-      
-      
-      
-      
-      
+
       
       
       #Current_State table output .........................................................................
