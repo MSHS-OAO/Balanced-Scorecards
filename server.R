@@ -1361,6 +1361,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     
       
     # 2. Site Comparison Tab Output -------------------------------------------------------------------------------
+    
+
+
     output$siteComp_title <- renderText({
       
       input$submit_prod
@@ -1391,8 +1394,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       input_service <- input$selectedService2
       
-      
-      
       #update picker options
       conn <- dbConnect(odbc(), dsn) 
       time_df <- tbl(conn, "BSC_METRICS_FINAL_DF") %>% filter(SERVICE == input_service) %>% collect()
@@ -1409,6 +1410,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     })
     
     
+    #reactive value for site_comp data
+    comp_data <- reactiveVal(memoized_fetch_table("BSC_METRICS_FINAL_TESTING"))
+    
+    #update picker choices whenever submissions are made
+    observeEvent(comp_data(), {
+      Data <- as.data.frame(comp_data()) %>% filter(REPORTING_TAB == 'Summary and Site')
+      picker_choices_comp <- sort(unique(Data$SERVICE))
+      updatePickerInput(session, "selectedService2", choices = picker_choices_comp, selected = "Biomed / Clinical Engineering")
+      comparison_data_current <- Data %>%
+        filter(SERVICE == "Biomed / Clinical Engineering")
+      picker_choices_comp <- format(sort(unique(comparison_data_current$REPORTING_MONTH)), "%m-%Y")
+      updatePickerInput(session, "selectedMonth2", choices = picker_choices_comp, selected = picker_choices_comp[length(picker_choices_comp)])
+      })
     
     
     output$siteComp_table <- function(){
@@ -1438,8 +1452,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       input$submit_food_nccpd
       input$submit_finance_access_data
       input$submit_finance_mapping
-      
-      
+
       service_input <- input$selectedService2
       month_input <- input$selectedMonth2
       site_input <- input$selectedCampus2
@@ -1452,16 +1465,15 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       # Code Starts ---------------------------------------------------------------------------------     
       
-      # read BSC_METRICS_FINAL_TESTING
+      #read BSC_METRICS_FINAL_TESTING
       # conn <- dbConnect(odbc(), dsn)
       # query <- "SELECT * FROM BSC_METRICS_FINAL_TESTING WHERE REPORTING_TAB = 'Summary and Site'"
       # Data <- dbGetQuery(conn, query) %>% collect()
       # dbDisconnect(conn)
 
-      
       ####
-      comparison_data <- memoized_fetch_table("BSC_METRICS_FINAL_TESTING")
-      Data <- comparison_data %>% filter(REPORTING_TAB == 'Summary and Site')
+      #refresh comparison data after new submissions
+      Data <-  as.data.frame(comp_data()) %>% filter(REPORTING_TAB == 'Summary and Site')
       
       #reshape input month
       selected_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") 
@@ -4965,7 +4977,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # observe submission success
       observeEvent(submission_success(), {
         if (submission_success()) {
-          ####
           refreshed_data <- refresh_data()
           
           full_future_state_data <- refreshed_data$future_state_data
@@ -4974,12 +4985,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           
           
           ####
-          comparison_data <- refreshed_data$site_comparison
-          input_service_comparison <- input$selectedService2
-          comparison_data_current <- comparison_data %>%
-            filter(SERVICE == input_service_comparison)
-          picker_choices_comp <- format(sort(unique(comparison_data_current$REPORTING_MONTH)), "%m-%Y")
-          updatePickerInput(session, "selectedMonth2", choices = picker_choices_comp, selected = picker_choices_comp[length(picker_choices_comp)])
+          #update site comparison data after submission
+          new_comp_data <- refreshed_data$site_comparison
+          comp_data(new_comp_data)
           
           
           overview_service_selected <- input$selectedService5
@@ -5012,9 +5020,10 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               distinct(METRIC_NAME_SUBMITTED, GREEN_STATUS, YELLOW_STATUS, RED_STATUS, .keep_all = TRUE)
             
             target_and_status_metrics_reactive(filtered_df)
+            
           })
-          
           submission_success(FALSE)
+
         }
       })
       

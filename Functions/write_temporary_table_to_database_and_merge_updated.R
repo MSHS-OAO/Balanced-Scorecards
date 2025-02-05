@@ -178,6 +178,7 @@ write_temporary_table_to_database_and_merge_updated <- function(data, key_column
     
     submission_success(TRUE)
 
+
   },
   error = function(err){
     #print("error")

@@ -414,7 +414,7 @@ ui <-
                                                          
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_biomed_kpi", (labelMandatory("Please enter Name:")), "")
+                                                                     textInput("name_biomed_kpi", (labelMandatory("Please enter name:")), "")
                                                               )
                                                             ),
                                                           br(),
