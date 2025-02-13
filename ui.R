@@ -295,7 +295,7 @@ ui <-
                                 
                                         fluidRow(
                                           column(2,
-                                                 textInput("name_finance", (labelMandatory("1. Please enter name:"))),
+                                                 textInput("name_finance", (labelMandatory("1. Please enter your name:"))),
                                                  
                                           )
                                         ),
@@ -339,7 +339,7 @@ ui <-
                                         tabPanel("Monthly Data",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_monthly_patient_experience", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_monthly_patient_experience", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -353,7 +353,7 @@ ui <-
                                         tabPanel("YTD Data",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_ytd_patient_experience", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_ytd_patient_experience", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -381,7 +381,7 @@ ui <-
                                         tabPanel("Productivity",
                                          fluidRow(
                                            column(2,
-                                                  textInput("name_productivity", (labelMandatory("Please enter name:"))),
+                                                  textInput("name_productivity", (labelMandatory("Please enter your name:"))),
                                                   
                                            )
                                          ),
@@ -414,7 +414,7 @@ ui <-
                                                          
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_biomed_kpi", (labelMandatory("Please enter Name:")), "")
+                                                                     textInput("name_biomed_kpi", (labelMandatory("Please enter your name:")), "")
                                                               )
                                                             ),
                                                           br(),
@@ -444,7 +444,7 @@ ui <-
                                         tabPanel("Operational Metrics",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_case_management", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_case_management", (labelMandatory("Please enter your name:"))),
                                                           
                                                           
                                                    )
@@ -483,7 +483,7 @@ ui <-
                                         tabPanel("Operational Metrics",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_cn", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_cn", (labelMandatory("Please enter your name:"))),
 
                                                           
                                                    )
@@ -519,7 +519,7 @@ ui <-
                                                             id = "form_engineering_kpi",
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_engineering_kpi", (labelMandatory("1. Please enter name:"))),
+                                                                     textInput("name_engineering_kpi", (labelMandatory("1. Please enter your name:"))),
                                                                      
                                                               )
                                                             ),
@@ -557,7 +557,7 @@ ui <-
                                         tabPanel("Turnaround Time",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_evs", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_evs", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -586,7 +586,7 @@ ui <-
                                         tabPanel("ED KPIs", 
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_ed", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_ed", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -618,7 +618,7 @@ ui <-
                                         tabPanel("Cost and Revenue", br(),
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_food", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_food", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -628,7 +628,7 @@ ui <-
                                         tabPanel("Net Expense and Patient Days", br(),
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_food_nccpd", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_food_nccpd", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -667,7 +667,7 @@ ui <-
                                                    column(2,
                                                      textInput("imaging_ir_username",
                                                                labelMandatory(
-                                                                 "Please enter name:")
+                                                                 "Please enter your name:")
                                                      )
                                                    )
                                                  ),
@@ -679,7 +679,7 @@ ui <-
                                                    column(2,
                                                           textInput("imaging_xray_username",
                                                                     labelMandatory(
-                                                                      "Please enter name:")
+                                                                      "Please enter your name:")
                                                           )
                                                    )
                                                  ),
@@ -691,7 +691,7 @@ ui <-
                                                    column(2,
                                                           textInput("imaging_ct_username",
                                                                     labelMandatory(
-                                                                      "Please enter name:")
+                                                                      "Please enter your name:")
                                                           )
                                                    )
                                                  ),
@@ -738,7 +738,7 @@ ui <-
                                                               column(2,
                                                                      textInput("lab_pt_username",
                                                                                labelMandatory(
-                                                                                 "1. Please enter name:")
+                                                                                 "1. Please enter your name:")
                                                                                )
                                                                      )
                                                             ),
@@ -767,7 +767,7 @@ ui <-
                                         tabPanel("Nursing Indicators",
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_nursing", (labelMandatory("Please enter name:"))),
+                                                          textInput("name_nursing", (labelMandatory("Please enter your name:"))),
                                                           
                                                    )
                                                  ),
@@ -797,7 +797,7 @@ ui <-
                                         tabPanel("Patient & Equipment Transport Data", hr(),
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter name:")), "")
+                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter your name:")), "")
                                                    )
                                                  ),
                                                  fileInput("patient_transport", label = "Please upload data"),
@@ -824,7 +824,7 @@ ui <-
                                         tabPanel("On Time Starts and Turnover", hr(),
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_peri_op", (labelMandatory("1. Please enter name:")), "")
+                                                          textInput("name_peri_op", (labelMandatory("1. Please enter your name:")), "")
                                                    )
                                                  ),
                                                  fileInput("peri_op_file", label = "Please upload operational metrics for perioperative services"),
@@ -854,7 +854,7 @@ ui <-
                                                               column(2,
                                                                      textInput("sec_inc_rpts_username",
                                                                                labelMandatory(
-                                                                                 "1. Please enter name:")
+                                                                                 "1. Please enter your name:")
                                                                                 )
                                                                      )
                                                               ),
@@ -882,7 +882,7 @@ ui <-
                                                               column(2,
                                                                      textInput("sec_events_username",
                                                                                labelMandatory(
-                                                                                 "1. Please enter name:")
+                                                                                 "1. Please enter your name:")
                                                                                )
                                                                      )
                                                               ),
