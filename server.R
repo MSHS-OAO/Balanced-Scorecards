@@ -1693,9 +1693,9 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
 
       
-      # service_input <- 'Biomed / Clinical Engineering'
-      # month_input <- "10-2024"
-      # site_input <- "MSH"
+      # service_input <- 'Radiology'
+      # month_input <- "01-2025"
+      # site_input <- "MSBI"
       
       
       # Get the data from data base
@@ -1797,16 +1797,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                sep = "|"),
                                NA_character_)
                  })) %>%
-        replace(is.na(.), "-") %>%
-        left_join(metric_group_orders,
-                  by = "METRIC_GROUP") %>%
-        arrange(DISPLAY_ORDER) %>%
-        mutate(DISPLAY_ORDER = row_number())
+        replace(is.na(.), "-") #%>%
+        # left_join(metric_group_orders,
+        #           by = "METRIC_GROUP") %>%
+        # arrange(DISPLAY_ORDER) %>%
+        # mutate(DISPLAY_ORDER = row_number())
       
-      pack_row_groups <- tab_out_data %>%
-        arrange(DISPLAY_ORDER) %>%
-        group_by(METRIC_GROUP) %>%
-        summarise(rows = n())
+      # pack_row_groups <- tab_out_data %>%
+      #   arrange(DISPLAY_ORDER) %>%
+      #   group_by(METRIC_GROUP) %>%
+      #   summarise(rows = n())
       
       # Add target to budget metrics
       tab_out_data <- tab_out_data %>%
@@ -1818,7 +1818,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       metric_group_index <- match("METRIC_GROUP",names(tab_out_data))
 
-      
+      tab_out_data <- tab_out_data %>%  arrange(METRIC_GROUP)
 
       tab_out_data[, 1:length(tab_out_data)] %>%
         kable(align = "l", escape = FALSE) %>%
