@@ -197,8 +197,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Biomed / Clinical Engineering'
-      # month_input <- "02-2025"
+      # service_input <- 'Food Services'
+      # month_input <- "12-2024"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -479,7 +479,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         food_operational_ytd <- get_food_ytd(month_input)
         
-        
         food_operational_ytd_data <- food_operational_ytd %>%
           mutate(Metric_Name_Submitted = Metric_Name,
                  Metric_Unit = case_when(Metric_Name_Submitted == "Net Cost of Case per Patient Day" ~ NA),
@@ -492,7 +491,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                  Red_Start = NA,
                  Red_End = NA,
                  Status = NA) %>%
-          select(names(data)) %>% mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))
+          select(names(data)) %>%
+          mutate(Premier_Reporting_Period = ifelse(grepl("Jan", Premier_Reporting_Period, fixed = TRUE), Premier_Reporting_Period, paste0("Jan - " ,Premier_Reporting_Period)))        
         
         data <- rbind(data,food_operational_ytd_data)
         
@@ -503,12 +503,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                    Reporting_Month_Ref,
                    Premier_Reporting_Period) %>% 
           #distinct() %>%
-          summarise(total = n()) %>%                                                            #
+          summarise(total = n()) %>%
+          ungroup() %>% 
           arrange(Metric_Group, Metric_Name_Summary,
                   Metric_Name, desc(Reporting_Month_Ref)) %>%
           group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
-          mutate(id = row_number())
-        
+          mutate(id = row_number())        
         
       }
 
@@ -523,12 +523,18 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           #filter(format(Reporting_Month_Ref, "%Y",) == fiscal_year) %>%
           filter(format(Reporting_Month_Ref, "%Y",) == max(format(Reporting_Month_Ref, "%Y"))) %>%
           group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
-          mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
+          mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"),
                                                 paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
-                                                ifelse(which.max(id) == 1,
+                                                ifelse(str_detect(Premier_Reporting_Period, "-"),
                                                        Premier_Reporting_Period[which.min(id)],
-                                                              paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
-                                                                     Premier_Reporting_Period[which.min(id)]))))
+                                                        ifelse(which.max(id) == 1,
+                                                               Premier_Reporting_Period[which.min(id)],
+                                                                      paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ",
+                                                                             Premier_Reporting_Period[which.min(id)])))))
+        
+        
+        
+
         fytd_period <- fytd_period %>%
           mutate(`Fiscal Year to Date` = ifelse(Metric_Name %in% c("Average LOS", "Readmission Rate"),
                                                 paste0("Jan - ",Premier_Reporting_Period[which.min(id)]),
@@ -546,10 +552,12 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           group_by(Metric_Group, Metric_Name_Summary, Metric_Name) %>%
           mutate(`Fiscal Year to Date` = ifelse(str_detect(Premier_Reporting_Period, "/"), 
                                                 paste0("FYTD Ending ", Premier_Reporting_Period[which.min(id)]),
-                                                ifelse(which.max(id) == 1,
-                                                       Premier_Reporting_Period[which.min(id)],
-                                                              paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
-                                                              Premier_Reporting_Period[which.min(id)]))))
+                                                ifelse(str_detect(Premier_Reporting_Period, "-"),
+                                                       Premier_Reporting_Period,
+                                                        ifelse(which.max(id) == 1,
+                                                               Premier_Reporting_Period[which.min(id)],
+                                                                      paste0(substr(Premier_Reporting_Period[which.max(id)], 1, 3), " - ", 
+                                                                      Premier_Reporting_Period[which.min(id)])))))
         
         fytd_period <- fytd_period %>%
           mutate(`Fiscal Year to Date` = ifelse(Metric_Name %in% c("Average LOS", "Readmission Rate"),
@@ -567,7 +575,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                            "Metric_Name_Summary",
                                            "Metric_Name",
                                            "Reporting_Month_Ref",
-                                           "Premier_Reporting_Period"))
+                                           "Premier_Reporting_Period")) 
+      
       
       
       fytd_summary_total <- fytd_summary_all %>%
