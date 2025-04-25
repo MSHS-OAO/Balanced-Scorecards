@@ -4954,15 +4954,16 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         # ---- Commenting the code as currently we have only Lab being reported and doesn't need variance calculations/04/25/2025 ---- #
         
-        operational_metrics <- operational_metrics %>% ungroup()
-                              # mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 2), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL, 2)))) %>%
-                              # mutate(MTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET - MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET - MTD_ACTUAL,2) * 100, "%"), round(MTD_TARGET - MTD_ACTUAL))),
-                              #        YTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET - YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET - YTD_ACTUAL,2) * 100, "%"), round(YTD_TARGET - YTD_ACTUAL)))) %>% 
-                              # mutate(MTD_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET,2) * 100, "%"), round(MTD_TARGET))),
-                              #        MTD_ACTUAL = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL,2) * 100, "%"), round(MTD_ACTUAL))),
-                              #        YTD_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET, 2) * 100, "%"), round(YTD_TARGET))),
-                              #        YTD_ACTUAL = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL, 2) * 100, "%"), round(YTD_ACTUAL)))) 
-        %>% select(-Metric_Unit)
+        operational_metrics <- operational_metrics %>% ungroup()%>% 
+                              mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 2), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL - YTD_TARGET,2) * 100, "%"), round(YTD_ACTUAL - YTD_TARGET, 2)))) %>%
+                              mutate(MTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET - MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL - MTD_TARGET ,2) * 100, "%"), round(MTD_ACTUAL - MTD_TARGET))),
+                                     YTD_VARIANCE_TO_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET - YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL - YTD_TARGET,2) * 100, "%"), round(YTD_ACTUAL - YTD_TARGET)))) %>%
+                              mutate(MTD_TARGET = ifelse(is.na(Metric_Unit), round(MTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(MTD_TARGET,2) * 100, "%"), round(MTD_TARGET))),
+                                     MTD_ACTUAL = ifelse(is.na(Metric_Unit), round(MTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(MTD_ACTUAL,2) * 100, "%"), round(MTD_ACTUAL))),
+                                     YTD_TARGET = ifelse(is.na(Metric_Unit), round(YTD_TARGET), ifelse(Metric_Unit == "Percent", paste0(round(YTD_TARGET, 2) * 100, "%"), round(YTD_TARGET))),
+                                     YTD_ACTUAL = ifelse(is.na(Metric_Unit), round(YTD_ACTUAL), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL, 2) * 100, "%"), round(YTD_ACTUAL)))) %>%
+          select(-Metric_Unit)
+        
         
         operational_metrics <- operational_metrics %>%
                                 mutate(across(c("MTD_ACTUAL", "YTD_ACTUAL", "YTD_TARGET", "MTD_TARGET", "YTD_VARIANCE_TO_TARGET", "MTD_VARIANCE_TO_TARGET"), as.character)) %>%
