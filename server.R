@@ -4929,7 +4929,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         
         
         ##Section for oeprational metrics
-        operational_metrics <- left_join(current_state_data_operational, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab == "Breakout") %>%
+        operational_metrics <- left_join(current_state_data_operational, metric_mapping_database[,c("Service", "Metric_Name_Summary", "General_Group", "Reporting_Tab", "Metric_Unit")], by = c("FUNCTION" = "Service", "EXPTYPE" = "Metric_Name_Summary")) %>% filter(Reporting_Tab  %in% c("Breakout","System")) %>%
           filter(General_Group == "Operational") %>% select(-General_Group, -Reporting_Tab)
         
         operational_metrics_test <<- operational_metrics
