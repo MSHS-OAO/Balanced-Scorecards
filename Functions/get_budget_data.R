@@ -1,6 +1,6 @@
 get_budget_data <- function(service,month_input){
   
-  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(6)
+  min_month <- as.Date(paste0(month_input, "-01"), "%m-%Y-%d") %m-% months(9)
   format <- "YYYY-MM-DD HH24:MI:SS"
   
   conn <- dbConnect(drv = odbc::odbc(),
