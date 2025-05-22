@@ -105,7 +105,6 @@ options(shiny.maxRequestSize=500*1024^2)
 # Color Functions for Graphs =====================================
 theme_set(theme_minimal())
 
-
 # Mount Sinai corporate colors 
 MountSinai_colors <- c(
   `dark purple`  = "#212070",
