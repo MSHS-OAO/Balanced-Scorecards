@@ -33,8 +33,8 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   data <- data[!grepl("MSO:", data$Function),]
   
   ## split ed, radiology, Support Services and clinical nutrition data from the rest 
-  data_rad <- data %>% filter(`Radiology?` == "Radiology")
-  data_rad <- data_rad %>% mutate(Function = "Radiology")
+  # data_rad <- data %>% filter(`Radiology?` == "Radiology")
+  # data_rad <- data_rad %>% mutate(Function = "Radiology")
   
   data_ed <- data %>% mutate(`Emergency Department?` = str_to_title(`Emergency Department?`)) %>% filter(`Emergency Department?` == "Emergency Department")
   data_ed <- data_ed %>% mutate(Function = "Emergency Department")
@@ -63,7 +63,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   data_cn <- data %>% filter(`Clinical Nutrition?` == "Clinical Nutrition") %>%
     mutate(Function = "Clinical Nutrition")
   
-  data <- bind_rows(data, data_ed, data_rad, data_cn,data_ss,data_mso)
+  data <- bind_rows(data, data_ed, data_cn,data_ss,data_mso)
   
   data <- data%>%
     filter(!Function %in% c('#N/A', '(blank)')) %>%
