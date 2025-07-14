@@ -45,8 +45,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
               filter(SITE %in% ('MSO'))
   
   
-  data <- data %>% filter(!(Function %in% c("Radiology", 
-                                            "Emergency Department", 
+  data <- data %>% filter(!(Function %in% c("Emergency Department", 
                                             "Clinical Nutrition",
                                             "System CMO",
                                             "Support Services",
