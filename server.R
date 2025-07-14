@@ -5105,86 +5105,86 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       #output function of future_state table
       
-      output$future_state_system_table <- function() {
-        future_state_data <- future_state_data_reactive()
-        target_and_status_data <- target_and_status_metrics_reactive()
-
-        if (is.null(future_state_data)) {
-          return(NULL)  # Return NULL if future_state_data is not available yet
-        }
-        
-        
-        # Reorder METRIC values
-        metric_order <- c("Salaries", "Supplies", "Total Expenses")
-        future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
-        
-        
-        # transform dataframe to round percent variance, and add '$' symbol
-        future_state_data <- transform(future_state_data,
-                                       
-                                       YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>=0, paste0('$',format(round(YTD_ACTUAL_ANNUALIZED,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL_ANNUALIZED,0)), big.mark = ","))),
-                                       LAST_12_MONTHS = ifelse(LAST_12_MONTHS>=0, paste0('$',format(round(LAST_12_MONTHS,0), big.mark = ",")),paste0('-$',format(abs(round(LAST_12_MONTHS,0)), big.mark = ","))),
-                                       YEAR_BUDGET = ifelse(YEAR_BUDGET>=0, paste0('$',format(round(YEAR_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(YEAR_BUDGET,0)), big.mark = ","))),
-                                       RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
-                                       RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
-                                       PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
-                                       PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
-                                       PROSPECTIVE_PERCENT_VARIANCE = formattable::percent(future_state_data$PROSPECTIVE_PERCENT_VARIANCE, digits = 1)
-                                         #paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
-        )
-        
-        
-        
-        future_state_temp <- data.frame(#SCOPE = c(rep("Finance", 3)),
-                                        SCOPE = case_when(future_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance'),
-                                        METRIC = future_state_data$EXPTYPE,
-                                        MONTH = format(future_state_data$MONTH, "%Y-%m"),
-                                        YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
-                                        LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
-                                        YEAR_BUDGET = future_state_data$YEAR_BUDGET,
-                                        RETROSPECTIVE_OUTLOOK = future_state_data$RETROSPECTIVE_OUTLOOK,
-                                        RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
-                                        PROSPECTIVE_OUTLOOK = future_state_data$PROSPECTIVE_OUTLOOK,
-                                        PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
-                                        PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
-        )
-        
-        future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
-                              "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK*",
-                              "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK**",
-                              "VARIANCE TO BUDGET",
-                              "% VARIANCE")
-
-        total_expense_row <- which(future_state_temp$METRIC == "Total Expenses")
-        
-        future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
-          add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
-          kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
-                        full_width = FALSE, position = "center", 
-                        row_label_position = "c", font_size = 16, protect_latex = F) %>%
-          column_spec(1:3, background = "#212070", color = "white") %>%
-          column_spec(4:6, background = "#F8F8F8") %>%
-          column_spec(7:8, background = "#EAEAEA") %>%
-          column_spec(9:10, background = "#F8F8F8") %>%    
-          # column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
-          #                                     ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
-          column_spec(11, background = case_when(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= -0.02 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > -0.02 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -0.05 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
-                                                 future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -0.05 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
-                                                 TRUE ~ 'white'),
-                      bold = case_when(future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
-                                       TRUE ~ FALSE)) %>%
-          row_spec(0, background = "#212070", color = "white") %>%
-          collapse_rows(columns = c(1, 2), valign = "middle") %>%
-          gsub("\\bNA\\b", "-", .) %>%
-          gsub("\\bNA%\\b", "-", .) %>%
-          row_spec(total_expense_row, bold = T)
-
-        return(future_state_table)
-      }
+      # output$future_state_system_table <- function() {
+      #   future_state_data <- future_state_data_reactive()
+      #   target_and_status_data <- target_and_status_metrics_reactive()
+      # 
+      #   if (is.null(future_state_data)) {
+      #     return(NULL)  # Return NULL if future_state_data is not available yet
+      #   }
+      #   
+      #   
+      #   # Reorder METRIC values
+      #   metric_order <- c("Salaries", "Supplies", "Total Expenses")
+      #   future_state_data <- reorder_rows(future_state_data, "EXPTYPE", metric_order)
+      #   
+      #   
+      #   # transform dataframe to round percent variance, and add '$' symbol
+      #   future_state_data <- transform(future_state_data,
+      #                                  
+      #                                  YTD_ACTUAL_ANNUALIZED = ifelse(YTD_ACTUAL_ANNUALIZED>=0, paste0('$',format(round(YTD_ACTUAL_ANNUALIZED,0), big.mark = ",")),paste0('-$',format(abs(round(YTD_ACTUAL_ANNUALIZED,0)), big.mark = ","))),
+      #                                  LAST_12_MONTHS = ifelse(LAST_12_MONTHS>=0, paste0('$',format(round(LAST_12_MONTHS,0), big.mark = ",")),paste0('-$',format(abs(round(LAST_12_MONTHS,0)), big.mark = ","))),
+      #                                  YEAR_BUDGET = ifelse(YEAR_BUDGET>=0, paste0('$',format(round(YEAR_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(YEAR_BUDGET,0)), big.mark = ","))),
+      #                                  RETROSPECTIVE_OUTLOOK = ifelse(RETROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
+      #                                  RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET= ifelse(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
+      #                                  PROSPECTIVE_OUTLOOK = ifelse(PROSPECTIVE_OUTLOOK>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK,0)), big.mark = ","))),
+      #                                  PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = ifelse(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET>=0, paste0('$',format(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0), big.mark = ",")),paste0('-$',format(abs(round(PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,0)), big.mark = ","))),
+      #                                  PROSPECTIVE_PERCENT_VARIANCE = formattable::percent(future_state_data$PROSPECTIVE_PERCENT_VARIANCE, digits = 1)
+      #                                    #paste0(round(PROSPECTIVE_PERCENT_VARIANCE * 100,1),'%')
+      #   )
+      #   
+      #   
+      #   
+      #   future_state_temp <- data.frame(#SCOPE = c(rep("Finance", 3)),
+      #                                   SCOPE = case_when(future_state_data$EXPTYPE %in% c("Salaries", "Supplies", "Total Expenses") ~ 'Finance'),
+      #                                   METRIC = future_state_data$EXPTYPE,
+      #                                   MONTH = format(future_state_data$MONTH, "%Y-%m"),
+      #                                   YTD_ACTUAL_ANNUALIZED = future_state_data$YTD_ACTUAL_ANNUALIZED,
+      #                                   LAST_12_MONTHS = future_state_data$LAST_12_MONTHS,
+      #                                   YEAR_BUDGET = future_state_data$YEAR_BUDGET,
+      #                                   RETROSPECTIVE_OUTLOOK = future_state_data$RETROSPECTIVE_OUTLOOK,
+      #                                   RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$RETROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
+      #                                   PROSPECTIVE_OUTLOOK = future_state_data$PROSPECTIVE_OUTLOOK,
+      #                                   PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET = future_state_data$PROSPECTIVE_OUTLOOK_VARIANCE_TO_BUDGET,
+      #                                   PROSPECTIVE_PERCENT_VARIANCE = future_state_data$PROSPECTIVE_PERCENT_VARIANCE
+      #   )
+      #   
+      #   future_col_names <- c("SCOPE", "METRIC", "TIME PERIOD", "YTD ACTUAL ANNUALIZED",
+      #                         "LAST 12 MONTHS",paste(format(unique(future_state_data$MONTH), "%Y"), "BUDGET"), "RETROSPECTIVE OUTLOOK*",
+      #                         "VARIANCE TO BUDGET", "PROSPECTIVE OUTLOOK**",
+      #                         "VARIANCE TO BUDGET",
+      #                         "% VARIANCE")
+      # 
+      #   total_expense_row <- which(future_state_temp$METRIC == "Total Expenses")
+      #   
+      #   future_state_table <- kable(future_state_temp, "html", align = "c", col.names = future_col_names) %>%
+      #     add_header_above(c("  " = 6, "RETROSPECTIVE FORECAST" = 2, "PROSPECTIVE FORECAST" = 3),background = "#212070", color = "white")%>%
+      #     kable_styling(bootstrap_options = c("hover", "bordered", "striped"), 
+      #                   full_width = FALSE, position = "center", 
+      #                   row_label_position = "c", font_size = 16, protect_latex = F) %>%
+      #     column_spec(1:3, background = "#212070", color = "white") %>%
+      #     column_spec(4:6, background = "#F8F8F8") %>%
+      #     column_spec(7:8, background = "#EAEAEA") %>%
+      #     column_spec(9:10, background = "#F8F8F8") %>%    
+      #     # column_spec(11, background = ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0, "#C4D79B",
+      #     #                                     ifelse(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -2, "#FFC7CE", "#FFFFCC")), color = "black", bold = T) %>%
+      #     column_spec(11, background = case_when(future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= -0.02 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFC7CE', 
+      #                                            future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > -0.02 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#FFFFCC',
+      #                                            future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= 0 & future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses")  ~ '#C4D79B',
+      #                                            future_state_temp$PROSPECTIVE_PERCENT_VARIANCE < -0.05 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFC7CE',
+      #                                            future_state_temp$PROSPECTIVE_PERCENT_VARIANCE > 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#FFFFCC',
+      #                                            future_state_temp$PROSPECTIVE_PERCENT_VARIANCE >= -0.05 & future_state_temp$PROSPECTIVE_PERCENT_VARIANCE <= 0.1 & future_state_temp$METRIC %in% c("Worked Hours Productivity Index")  ~ '#C4D79B',
+      #                                            TRUE ~ 'white'),
+      #                 bold = case_when(future_state_temp$METRIC %in% c("Salaries", "Supplies", "Total Expenses", "Worked Hours Productivity Index")  ~ TRUE, 
+      #                                  TRUE ~ FALSE)) %>%
+      #     row_spec(0, background = "#212070", color = "white") %>%
+      #     collapse_rows(columns = c(1, 2), valign = "middle") %>%
+      #     gsub("\\bNA\\b", "-", .) %>%
+      #     gsub("\\bNA%\\b", "-", .) %>%
+      #     row_spec(total_expense_row, bold = T)
+      # 
+      #   return(future_state_table)
+      # }
       
 
 } # Close Server
