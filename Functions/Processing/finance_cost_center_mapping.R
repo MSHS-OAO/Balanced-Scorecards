@@ -20,7 +20,8 @@ process_finance_cost_center_data <-  function(data, updated_user) {
            MSO_CC_FLAG = `MSO CC Flag`) %>%
     mutate(UPDATED_USER = updated_user,
            SITE = case_when(MSBHC == 'MSBHC' ~ 'MSBHC',
-                         TRUE ~ SITE)) %>%
+                         TRUE ~ SITE),
+           COST_CENTER = trimws(COST_CENTER)) %>%
     select(-MSBHC)
   
   
