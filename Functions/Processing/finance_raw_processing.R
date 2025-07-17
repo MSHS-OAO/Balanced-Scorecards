@@ -86,7 +86,10 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
     colnames(data) <- gsub("[.]", " ", colnames(data))
     colnames(data) <- gsub(" ", "_", colnames(data))
   
-  data <- data %>% select(FUNCTION, CATEGORY, SITE, CC, NAME, EXPTYPE, SUB_ACCOUNT, SUB_ACCOUNT_DESCRIPTION, SUPPLY_MAPPING_FILE_CATEGORY, MONTH, SUM_OF_MONTH_BUDGET, SUM_OF_MONTH_ACTUAL, SUM_OF_YTD_BUDGET, SUM_OF_YTD_ACTUAL, SUM_OF_ANNUAL_BUDGET, SUM_OF_REMAINING_BUDGET_YTD)
+  data <- data %>% 
+    mutate(SUB_ACCOUNT_DESCRIPTION = toupper(SUB_ACCOUNT_DESCRIPTION),
+           CC=  trimws(CC))%>%
+    select(FUNCTION, CATEGORY, SITE, CC, NAME, EXPTYPE, SUB_ACCOUNT, SUB_ACCOUNT_DESCRIPTION, SUPPLY_MAPPING_FILE_CATEGORY, MONTH, SUM_OF_MONTH_BUDGET, SUM_OF_MONTH_ACTUAL, SUM_OF_YTD_BUDGET, SUM_OF_YTD_ACTUAL, SUM_OF_ANNUAL_BUDGET, SUM_OF_REMAINING_BUDGET_YTD)
   
   # file_path_write <- "/SharedDrive/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/Data_Dashboard/File for Testing 012323/Finance/Finance SystemWide/DNU/CSOR Jan 24.csv"
   # 
