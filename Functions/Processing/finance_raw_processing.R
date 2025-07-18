@@ -27,6 +27,14 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
     data_all[missing] <- NA
   }
   
+  data_all <- data_all %>%
+    mutate(`Sum of Month Budget` = as.numeric(`Sum of Month Budget`),
+           `Sum of Month Actual` = as.numeric(`Sum of Month Actual`),
+           `Sum of YTD Budget` = as.numeric(`Sum of YTD Budget`),
+           `Sum of YTD Actual` = as.numeric(`Sum of YTD Actual`),
+           `Sum of Annual Budget` = as.numeric(`Sum of Annual Budget`),
+           `Sum of Remaining Budget YTD` = as.numeric(`Sum of Remaining Budget YTD`))
+  
   
   
   data <- data_all %>% filter(!(SITE %in% c("HSO", "MSO")))
@@ -36,7 +44,7 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   # data_rad <- data %>% filter(`Radiology?` == "Radiology")
   # data_rad <- data_rad %>% mutate(Function = "Radiology")
   
-  data_ed <- data %>% mutate(`Emergency Department?` = str_to_title(`Emergency Department?`)) %>% filter(`Emergency Department?` == "Emergency Department")
+  data_ed <- data %>% mutate(`Emergency Department?` = str_to_title(`Emergency Department?`)) %>% filter(`Emergency Department?` %in% c("Emergency Department"))
   data_ed <- data_ed %>% mutate(Function = "Emergency Department")
   
   
@@ -50,7 +58,10 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
                                             "System CMO",
                                             "Support Services",
                                             "MSO: Contracting",
-                                            "MSO: Population Health")))
+                                            "MSO: Population Health",
+                                            "MSO: Health Home",
+                                            "MSO: Other",
+                                            "MSO: Mount Sinai Solutions")))
   
   data_ss <- data %>% filter(Category %in% c("System CMO",
                                              "Support Services"))
