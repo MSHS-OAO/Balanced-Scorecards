@@ -197,8 +197,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Lab'
-      # month_input <- "04-2025"
+      service_input <- 'Lab'
+      month_input <- "04-2025"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -208,7 +208,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       # Code Starts ---------------------------------------------------------------------------------     
       summary_tab_metrics <- metric_mapping_summary_site %>%
         filter(Service == service_input,
-               !Metric_Group %in% c('Overtime Hours')) %>%
+               !Metric_Name %in% c('Overtime Dollars - % (Finance)')) %>%
         select(-General_Group, -Display_Order)
       
       summary_metric_group_order <- unique(summary_tab_metrics$Metric_Group)
