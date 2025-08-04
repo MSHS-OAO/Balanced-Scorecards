@@ -3365,7 +3365,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
               # updated_user <- "Test2342"
               types_col <- rep("text",each=16)
               cost_center_mapping_data <- read_excel(cost_center_mapping_data_file_path,
-                                                     sheet="Temporary Import Cost center Ca",
+                                                     sheet="Main Cost Center Mapping",
                                                      col_types = types_col)
             flag <- 1
             
