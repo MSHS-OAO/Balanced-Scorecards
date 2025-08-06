@@ -21,7 +21,8 @@ process_finance_cost_center_data <-  function(data, updated_user) {
     mutate(UPDATED_USER = updated_user,
            SITE = case_when(MSBHC == 'MSBHC' ~ 'MSBHC',
                          TRUE ~ SITE),
-           COST_CENTER = trimws(COST_CENTER)) %>%
+           COST_CENTER = trimws(COST_CENTER),
+           FUNCTION = str_to_title(FUNCTION)) %>%
     select(-MSBHC)
   
   
