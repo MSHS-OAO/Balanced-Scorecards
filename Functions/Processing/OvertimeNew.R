@@ -80,6 +80,7 @@ overtime_file_processs_new <- function(ot_data, updated_user){
             METRIC_NAME_SUBMITTED = 'Overtime Dollars - % (Finance)') %>%
     ungroup() %>%
     select(SITE,SERVICE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE) %>%
+    # filter(VALUE!=0) %>%
     mutate(UPDATED_USER = updated_user)
 }
 

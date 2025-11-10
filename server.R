@@ -3134,7 +3134,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
     #   
     # })
     
-      
+# Ovetime Processing ----
     observeEvent(input$submit_finance_ot, {
       button_name <- "submit_finance_ot"
       shinyjs::disable(button_name)
@@ -4952,7 +4952,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                                               Red_End),
                                                       "Red", NA)))))
         
-        # ---- Commenting the code as currently we have only Lab being reported and doesn't need variance calculations/04/25/2025 ---- #
+        # ---- Commenting the code as currently we have only Lab being reported and doesn't need variance calculations/04/25/2025 ---- 
         
         operational_metrics <- operational_metrics %>% ungroup()%>% 
                               mutate(YTD_PERCENT_VARIANCE = ifelse(is.na(Metric_Unit), round((YTD_TARGET - YTD_ACTUAL)/ YTD_TARGET, 2), ifelse(Metric_Unit == "Percent", paste0(round(YTD_ACTUAL - YTD_TARGET,2) * 100, "%"), round(YTD_ACTUAL - YTD_TARGET, 2)))) %>%
