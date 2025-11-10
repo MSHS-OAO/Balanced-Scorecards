@@ -207,8 +207,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
 
       # Code Starts ---------------------------------------------------------------------------------     
       summary_tab_metrics <- metric_mapping_summary_site %>%
-        filter(Service == service_input,
-               !Metric_Name %in% c('Overtime Dollars - % (Finance)')) %>%
+        filter(Service == service_input) %>%
         select(-General_Group, -Display_Order)
       
       summary_metric_group_order <- unique(summary_tab_metrics$Metric_Group)
@@ -3153,8 +3152,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       }else{
         updated_user <- input$name_finance
         overtime_file_path <- overtime_file$datapath
-        tryCatch({#overtime_file_path <- paste0(home_path,"Input Data Raw/Finance/Overtime Hours/OT_extract_sample_2021_09.xlsx")
-                   overtime_data <- read_excel(overtime_file_path)
+        tryCatch({# overtime_file_path <- "Test/BSC_OT_Upload_202501_202509_Cloud_CC_Mapping.xlsx"
+                   overtime_data <- read_excel(overtime_file_path,sheet = "Summary (2)",skip = 3)
         flag <- 1
         },
         error = function(err){  showModal(modalDialog(

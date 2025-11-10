@@ -73,7 +73,7 @@ suppressMessages({
   library(shinyjs)
   library(DBI)
   library(odbc)
-  #library(reshape2)
+  library(reshape2)
   library(formattable)
 })
 
