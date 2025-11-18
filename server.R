@@ -848,7 +848,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         fytd_data_budget <- fytd_data_budget %>% mutate(`Fiscal Year to Date` = paste0(format(min_date, "%b"), " - ", format(max_date, "%b"), " ", year(max_date), " Total"))
         fytd_summary <- bind_rows(fytd_summary, fytd_data_budget)
       }
-      current_summary_order <- c("Section", "Metric_Name_Summary", "Current Period", "Metric_Unit", "MSB", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE","MSBHC")
+      current_summary_order <- c("Section", "Metric_Name_Summary", "Current Period", "Metric_Unit", "MSB","MSBHC", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE")
       current_summary <- current_summary[, current_summary_order]
       
       # Merge FYTD and Current Period Metrics Summary 
