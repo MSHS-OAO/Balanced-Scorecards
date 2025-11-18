@@ -323,7 +323,7 @@ metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
 # budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
 # Sites included -----------------------------------------------------------------------------------
-sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
+sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE","MSBHC")
 print("4")
 
 dttm <- function(x) {
