@@ -1337,7 +1337,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
             row_spec(0,  background = "#212070", color = "white") %>%
             column_spec(1, bold = TRUE) %>%
-            column_spec(c(2, 10), italic = TRUE) %>%
+            column_spec(c(2, 11), italic = TRUE) %>%
             column_spec(3:10, background = "#fee7f5") %>%
             column_spec(12:19, background = "#E6F8FF") %>%
             group_rows(group_label = "Interventional Radiology", indent = FALSE,
