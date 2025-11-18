@@ -12,17 +12,17 @@ cost_budget_combine <- function(cost,rev){
 
 rev_budget_dept_summary <- function(data){
   data <- data %>% filter(!is.na(`REVENUE BUDGET`))
-  site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[site_index[1]:nrow(data),]
   
   
   data$Site <- data$`REVENUE BUDGET`
   ##Cnhange values other than site names to NA
-  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE")))] <- NA
+  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC")))] <- NA
   
   
   #for loop to fill in the NA cells with the site name
-  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   for(i in site_index){
     data[i:(i+5),c("Site")] <- data[i,c("Site")]
   }
@@ -38,7 +38,7 @@ rev_budget_dept_summary <- function(data){
   data <- data %>% rename(Site = length(.)) 
   
   ##Delete rows that contain the site neams and months
-  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[-site_index,]
   
   
@@ -49,7 +49,7 @@ rev_budget_dept_summary <- function(data){
                                     ifelse(data$Site == "MS MORNINGSIDE", "MSM",
                                            ifelse(data$Site == "MS WEST", "MSW",
                                                   ifelse(data$Site == "MS NYEE", "NYEE",
-                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
+                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", ifelse(data$Site == "MS BHC","MSBHC",NA))))))))
   
   data <- data %>% relocate(Site, .before = Metric)
   
@@ -348,7 +348,8 @@ process_net_cost_per_pd <- function(raw_data,updated_user){
                  "MS BETH ISRAEL/BHC",
                  "MS BROOKLYN",
                  "MS QUEENS",
-                 "MS NYEE")
+                 "MS NYEE",
+                 "MS BHC")
   
   site_map = list(SITE = site_list,
                   SITE_ACT = c("MSM",
@@ -356,7 +357,8 @@ process_net_cost_per_pd <- function(raw_data,updated_user){
                                "MSBI",
                                "MSB",
                                "MSQ",
-                               "NYEE"))
+                               "NYEE",
+                               "MSBHC"))
   
   site_map <- as.data.frame(site_map)
   

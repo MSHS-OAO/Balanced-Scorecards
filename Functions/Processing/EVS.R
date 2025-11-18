@@ -58,13 +58,13 @@ evs_file_process <- function(data, month, updated_user) {
            `Isolation % > 90 mins` = `% > 90 mins...6`)
   
   data$Month <- format(as.Date(paste(month, "01"), "%b %Y %d"), "%m/%d/%Y")
-  data$Site <- ifelse(data$Hospital == "Mount Sinai Bi Brooklyn", "MSB",
-                      ifelse(data$Hospital == "Mount Sinai Bi Petrie", "MSBI",
+  data$Site <- ifelse(data$Hospital == "Mount Sinai BI Brooklyn", "MSB",
+                      ifelse(data$Hospital == "Mount Sinai BI Petrie", "MSBI",
                              ifelse(data$Hospital == "Mount Sinai Queens Hospital", "MSQ",
                                     ifelse(data$Hospital == "Mount Sinai St. Luke's", "MSM",
                                            ifelse(data$Hospital == "Mount Sinai Morningside", "MSM",
                                               ifelse(data$Hospital == "Mount Sinai West", "MSW",
-                                                  ifelse(data$Hospital == "The Mount Sinai Hospital", "MSH", NA)))))))
+                                                  ifelse(data$Hospital == "The Mount Sinai Hospital", "MSH", ifelse(data$Hospital == "Mount Sinai BI Rivington", "MSBHC",NA))))))))
   data$Service <- "Environmental Services"
   
   data <- data %>% 
