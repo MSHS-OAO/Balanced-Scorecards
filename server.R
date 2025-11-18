@@ -197,7 +197,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Lab'
+      # service_input <- 'Biomed / Clinical Engineering'
       # month_input <- "04-2025"
 
 
@@ -848,7 +848,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         fytd_data_budget <- fytd_data_budget %>% mutate(`Fiscal Year to Date` = paste0(format(min_date, "%b"), " - ", format(max_date, "%b"), " ", year(max_date), " Total"))
         fytd_summary <- bind_rows(fytd_summary, fytd_data_budget)
       }
-      current_summary_order <- c("Section", "Metric_Name_Summary", "Current Period", "Metric_Unit", "MSB", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE")
+      current_summary_order <- c("Section", "Metric_Name_Summary", "Current Period", "Metric_Unit", "MSB", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE","MSBHC")
       current_summary <- current_summary[, current_summary_order]
       
       # Merge FYTD and Current Period Metrics Summary 
@@ -1338,8 +1338,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
             row_spec(0,  background = "#212070", color = "white") %>%
             column_spec(1, bold = TRUE) %>%
             column_spec(c(2, 10), italic = TRUE) %>%
-            column_spec(3:9, background = "#fee7f5") %>%
-            column_spec(11:17, background = "#E6F8FF") %>%
+            column_spec(3:10, background = "#fee7f5") %>%
+            column_spec(12:19, background = "#E6F8FF") %>%
             group_rows(group_label = "Interventional Radiology", indent = FALSE,
                        start_row = ir_start,
                        end_row = dr_start-1,
@@ -1359,8 +1359,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
           row_spec(0,  background = "#212070", color = "white") %>%
           column_spec(1, bold = TRUE) %>%
           column_spec(c(2, 10), italic = TRUE) %>%
-          column_spec(3:9, background = "#fee7f5") %>%
-          column_spec(11:17, background = "#E6F8FF") 
+          column_spec(3:10, background = "#fee7f5") %>%
+          column_spec(12:19, background = "#E6F8FF") 
       }
       
       
