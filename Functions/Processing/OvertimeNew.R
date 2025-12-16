@@ -81,7 +81,8 @@ overtime_file_processs_new <- function(ot_data, updated_user){
     ungroup() %>%
     select(SITE,SERVICE,REPORTING_MONTH,PREMIER_REPORTING_PERIOD,METRIC_NAME_SUBMITTED,VALUE) %>%
     # filter(VALUE!=0) %>%
-    mutate(UPDATED_USER = updated_user)
+    mutate(UPDATED_USER = updated_user)  %>%
+    filter(!(SERVICE == "Clinical Nutrition" & VALUE == 0))
 }
 
 # processed_data  <- overtime_file_processs_new(ot_data, updated_user )
