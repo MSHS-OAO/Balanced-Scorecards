@@ -405,9 +405,7 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
-                                 # Biomed D&I Data Submission  -----
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
-                                        # Biomed KPI Data Submission ----
                                         tabPanel("KPIs", hr(),
                                                  fluidRow(
                                                    column(12,
