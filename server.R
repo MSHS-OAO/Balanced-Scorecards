@@ -197,8 +197,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Biomed / Clinical Engineering'
-      # month_input <- "09-2025"
+      # service_input <- 'Emergency Department'
+      # month_input <- "11-2025"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -849,7 +849,11 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         fytd_summary <- bind_rows(fytd_summary, fytd_data_budget)
       }
       current_summary_order <- c("Section", "Metric_Name_Summary", "Current Period", "Metric_Unit", "MSB","MSBHC", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE")
+      fytd_summary_order <- c("Section", "Metric_Name_Summary", "Fiscal Year to Date", "MSB","MSBHC", "MSBI", "MSH", "MSM", "MSQ", "MSW", "NYEE")
+      
       current_summary <- current_summary[, current_summary_order]
+      current_summary <- current_summary[, current_summary_order]
+      fytd_summary <- fytd_summary[, fytd_summary_order]
       
       # Merge FYTD and Current Period Metrics Summary 
       metrics_summary <- merge(fytd_summary, current_summary,
