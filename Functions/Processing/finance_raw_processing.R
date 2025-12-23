@@ -73,7 +73,11 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
   data_cn <- data %>% filter(`Clinical Nutrition?` == "Clinical Nutrition") %>%
     mutate(Function = "Clinical Nutrition")
   
-  data <- bind_rows(data, data_ed, data_cn,data_ss,data_mso)
+  data_bhc <- data %>%
+    filter(MSBHC =='MSBHC') %>%
+    mutate(SITE = 'MSBHC')
+  
+  data <- bind_rows(data, data_ed, data_cn,data_ss,data_mso,data_bhc)
   
   data <- data%>%
     filter(!Function %in% c('#N/A', '(blank)')) %>%
@@ -116,7 +120,7 @@ budget_raw_file_process_updated <- function(data, updated_user) {
                         "Radiology", "Perioperative Services", "Clinical Nutrition", "Case Management")
   
   
-  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "MS NYEE")
+  list_of_sites <- c("MS BI", "MS BIB", "MS STL", "MS WEST", "MSH", "MSQ", "MS NYEE" ,'MSBHC')
   list_of_exptype <- c("Salaries", "Supplies")
   
   budget_data <- data %>% mutate(Function = ifelse(Function == "Blood Bank", "Lab", Function))

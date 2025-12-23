@@ -3217,7 +3217,6 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         updated_user <- input$name_finance
         access_data_file_path <- access_data_file$datapath
         tryCatch({
-          access_data_file_path <- "Test/Balanced Scorecard Update September 2025 YTD Financials v2.xlsx"
           access_data <- read_excel(access_data_file_path, sheet = "5-BSC Cost Center Detail", skip = 4, 
                              col_types = c("text", "text", "text", "text","text","text", "text", "text", "text", "text", "text", "text", "text","numeric","numeric","numeric","numeric","numeric", "text"))
           exclusions <- read_excel(access_data_file_path, sheet = "Exclusions") %>%
