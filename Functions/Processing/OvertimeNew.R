@@ -1,5 +1,5 @@
-# ot_data <- read_excel("Test/BSC_OT_Upload_202501_202509_Cloud_CC_Mapping.xlsx",sheet = "Summary (2)",skip = 3)
-# updated_user <- "Dheeraj"
+ot_data <- read_excel("Test/BSC_OT_Upload_202501_202509_Cloud_CC_Mapping.xlsx",sheet = "Summary (2)",skip = 3)
+updated_user <- "Dheeraj"
 
 
 overtime_file_processs_new <- function(ot_data, updated_user){
@@ -43,7 +43,13 @@ overtime_file_processs_new <- function(ot_data, updated_user){
     filter(`Clinical Nutrition?` == "Clinical Nutrition") %>%
     mutate(Function = `Clinical Nutrition?`)
   
-  ot_data <- rbind(ot_data,ot_cn,ot_emergency)
+  ot_bhc <- ot_data %>%
+    filter(Site == 'BI Rivington')
+  
+  ot_data <- ot_data %>%
+    mutate(Site = ifelse(Site == 'BI Rivington','Mount Sinai Beth Israel',Site))
+  
+  ot_data <- rbind(ot_data,ot_cn,ot_emergency,ot_bhc)
   
   ot_data_summary <- ot_data %>%
     filter(Function %in% c('Biomed / Clinical Engineering',
