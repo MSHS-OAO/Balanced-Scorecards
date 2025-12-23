@@ -197,7 +197,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Emergency Department'
+      # service_input <- 'Radiology'
       # month_input <- "11-2025"
 
 
@@ -1331,27 +1331,42 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(service_input == "Radiology"){
           ir_start <- which(summary_tab_tb$`Metric Name` == "Outpatient Cancellations (All)")[1]
           dr_start <- which(summary_tab_tb$`Metric Name` == "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m")[1]
-        
-          kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
-                col.names = kable_col_names) %>%
-            pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
-            kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
-                          position = "center", row_label_position = "c", font_size = 16) %>%
-            # add_header_above(header_above,
-            #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
-            row_spec(0,  background = "#212070", color = "white") %>%
-            column_spec(1, bold = TRUE) %>%
-            column_spec(c(2, 11), italic = TRUE) %>%
-            column_spec(3:10, background = "#fee7f5") %>%
-            column_spec(12:19, background = "#E6F8FF") %>%
-            group_rows(group_label = "Interventional Radiology", indent = FALSE,
+          if(is.na(ir_start) | is.na(dr_start)){
+            kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
+                  col.names = kable_col_names) %>%
+              pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
+              kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                            position = "center", row_label_position = "c", font_size = 16) %>%
+              # add_header_above(header_above,
+              #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
+              row_spec(0,  background = "#212070", color = "white") %>%
+              column_spec(1, bold = TRUE) %>%
+              column_spec(c(2, 11), italic = TRUE) %>%
+              column_spec(3:10, background = "#fee7f5") %>%
+              column_spec(12:19, background = "#E6F8FF") 
+            
+          }else{
+            kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
+                  col.names = kable_col_names) %>%
+              pack_rows(index = table(summary_tab_tb$Section), label_row_css = "background-color: #212070; color: white;") %>%
+              kable_styling(bootstrap_options = c("hover","bordered","striped"), full_width = FALSE,
+                            position = "center", row_label_position = "c", font_size = 16) %>%
+              # add_header_above(header_above,
+              #                  font_size = 16, bold = TRUE, color = "white", background = c("white", "#d80b8c", "white", "#00AEEF")) %>%
+              row_spec(0,  background = "#212070", color = "white") %>%
+              column_spec(1, bold = TRUE) %>%
+              column_spec(c(2, 11), italic = TRUE) %>%
+              column_spec(3:10, background = "#fee7f5") %>%
+              column_spec(12:19, background = "#E6F8FF") %>%
+              group_rows(group_label = "Interventional Radiology", indent = FALSE,
                        start_row = ir_start,
                        end_row = dr_start-1,
                        label_row_css = "background-color: #212070; color: white;") %>%
-            group_rows(group_label = "Diagnostic Radiology", indent = FALSE,
-                       start_row = dr_start,
-                       end_row = (dr_start + 1),
-                       label_row_css = "background-color: #212070; color: white;")
+              group_rows(group_label = "Diagnostic Radiology", indent = FALSE,
+                         start_row = dr_start,
+                         end_row = (dr_start + 1),
+                         label_row_css = "background-color: #212070; color: white;")
+          }
       }else{
         kable(summary_tab_tb[,2:length(summary_tab_tb)], escape = FALSE,
               col.names = kable_col_names) %>%
