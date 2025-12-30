@@ -77,7 +77,10 @@ process_raw_finance_file <- function(data, updated_user, exclusions) {
     filter(MSBHC =='MSBHC') %>%
     mutate(SITE = 'MSBHC')
   
-  data <- bind_rows(data, data_ed, data_cn,data_ss,data_mso,data_bhc)
+  data_bhc_cn <- data_bhc %>% filter(`Clinical Nutrition?` == "Clinical Nutrition") %>%
+    mutate(Function = "Clinical Nutrition")
+  
+  data <- bind_rows(data, data_ed, data_cn,data_ss,data_mso,data_bhc,data_bhc_cn)
   
   data <- data%>%
     filter(!Function %in% c('#N/A', '(blank)')) %>%
