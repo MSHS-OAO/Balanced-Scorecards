@@ -160,7 +160,7 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       if(nrow(time_df) == 0){
         text = paste0("MSHS ",input_service, " Summary")
       }else{
-        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %I:%M %p")#, tz = "America/New_York")
+        updated <- format(max(time_df$UPDATED_TIME, na.rm = TRUE), "%Y-%m-%d %H:%M %p")#, tz = "America/New_York")
         text = paste0("MSHS ",input_service, " Summary - Updated ",updated)
       }
       text
