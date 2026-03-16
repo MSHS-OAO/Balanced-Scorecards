@@ -197,8 +197,8 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
       
       service_input <- input$selectedService
       month_input <- input$selectedMonth
-      # service_input <- 'Radiology'
-      # month_input <- "11-2025"
+      # service_input <- 'Nursing'
+      # month_input <- "01-2026"
 
 
       metrics_final_df <- mdf_from_db(service_input, month_input) 
@@ -1004,11 +1004,22 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         budget_target_current <- get_budget_data(service = service_input,month_input)
         
         if (as.character(month_selected )%in% month_in_repo) {
-          budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
-            select(-Service, -Month) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+          budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, grepl("Budget_Total", Metric_Name_Submitted, fixed = TRUE)) %>%
+            select(-Service, -Month) %>% 
+            mutate(Metric_Name_Submitted = case_when(
+              Metric_Name_Submitted == 'Budget_Total' ~ "Budget to Actual Variance - Total",
+              Metric_Name_Submitted == 'Budget_Total_Non_Labor' ~ "Budget to Actual Variance - Non Labor",
+              Metric_Name_Submitted == 'Budget_Total_Labor' ~ "Budget to Actual Variance - Labor",
+              TRUE ~ Metric_Name_Submitted ))
+          
         } else {
-          budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget_Total") %>%
-            select(-Service, -Month) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+          budget_target_current <- budget_target_current %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), grepl("Budget_Total", Metric_Name_Submitted, fixed = TRUE)) %>%
+            select(-Service, -Month) %>% 
+            mutate(Metric_Name_Submitted = case_when(
+              Metric_Name_Submitted == 'Budget_Total' ~ "Budget to Actual Variance - Total",
+              Metric_Name_Submitted == 'Budget_Total_Non_Labor' ~ "Budget to Actual Variance - Non Labor",
+              Metric_Name_Submitted == 'Budget_Total_Labor' ~ "Budget to Actual Variance - Labor",
+              TRUE ~ Metric_Name_Submitted ))
         }
         
         
@@ -1106,20 +1117,31 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
                                         "Metric_Group",
                                         "Metric_Name"))
         
-        fytd_status_budget <- fytd_status_budget %>%
-                              filter(Metric_Group == "Budget to Actual") %>%
-                              mutate(Service = service_input,
-                                     Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
-                              select(-value_rounded)
+        
+        if(service_input == "Nursing"){
+          fytd_status_budget <- fytd_status_budget %>%
+            filter(Metric_Group == "Budget to Actual") %>%
+            # mutate(Service = service_input,
+            #        Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+            select(-value_rounded)
+          
+        }else{
+          fytd_status_budget <- fytd_status_budget %>%
+            filter(Metric_Group == "Budget to Actual") %>%
+            mutate(Service = service_input,
+                   Metric_Name_Submitted = "Budget to Actual Variance - Total") %>%
+            select(-value_rounded)
+          
+        }
         
         
         budget_actual <- get_budget_data(service = service_input,month_input)
         
         if (as.character(month_selected )%in% month_in_repo) {
-          budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
+          budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, grepl("Budget to Actual Variance", Metric_Name_Submitted, fixed = TRUE)) %>%
             select(-Service, -Month, -Value) %>% rename(value_rounded = Value_ytd)
         } else {
-          budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget to Actual Variance - Total") %>%
+          budget_actual <- budget_actual %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), grepl("Budget to Actual Variance", Metric_Name_Submitted, fixed = TRUE)) %>%
             select(-Service, -Month, -Value) %>% rename(value_rounded = Value_ytd)
         }
         fytd_status_budget <- left_join(fytd_status_budget, budget_actual)
@@ -1128,11 +1150,19 @@ if(Sys.getenv('SHINY_PORT') == "") options(shiny.maxRequestSize=100*1024^2)
         budget_target <- get_budget_data(service = service_input,month_input)
         
         if (as.character(month_selected )%in% month_in_repo) {
-          budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, Metric_Name_Submitted == "Budget_Total") %>%
-            select(-Service, -Month, -Value) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+          budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == month_selected, grepl("Budget_Total", Metric_Name_Submitted, fixed = TRUE)) %>%
+            select(-Service, -Month, -Value) %>% mutate(Metric_Name_Submitted = case_when(
+              Metric_Name_Submitted == 'Budget_Total' ~ "Budget to Actual Variance - Total",
+              Metric_Name_Submitted == 'Budget_Total_Non_Labor' ~ "Budget to Actual Variance - Non Labor",
+              Metric_Name_Submitted == 'Budget_Total_Labor' ~ "Budget to Actual Variance - Labor",
+              TRUE ~ Metric_Name_Submitted ))
         } else {
-          budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), Metric_Name_Submitted == "Budget_Total") %>%
-            select(-Service, -Month, -Value) %>% mutate(Metric_Name_Submitted = "Budget to Actual Variance - Total")
+          budget_target <- budget_target %>% ungroup() %>% filter(Service %in% service_input, Month == max(Month), grepl("Budget_Total", Metric_Name_Submitted, fixed = TRUE)) %>%
+            select(-Service, -Month, -Value) %>% mutate(Metric_Name_Submitted = case_when(
+              Metric_Name_Submitted == 'Budget_Total' ~ "Budget to Actual Variance - Total",
+              Metric_Name_Submitted == 'Budget_Total_Non_Labor' ~ "Budget to Actual Variance - Non Labor",
+              Metric_Name_Submitted == 'Budget_Total_Labor' ~ "Budget to Actual Variance - Labor",
+              TRUE ~ Metric_Name_Submitted ))
         }
         
         budget_to_actual_target <- left_join(fytd_status_budget, budget_target)
