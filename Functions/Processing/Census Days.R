@@ -11,6 +11,8 @@ cost_budget_combine <- function(cost,rev){
 }
 
 rev_budget_dept_summary <- function(data){
+  # Keep the data only till Dec, sometimes people add some random data beyond tables
+  data <- data[,1:13]
   data <- data %>% filter(!is.na(`REVENUE BUDGET`))
   site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[site_index[1]:nrow(data),]
@@ -132,17 +134,17 @@ cost_and_revenue_dept_summary <- function(data){
   
   ## filter out na rows and delete the empty cells in the beginning of file
   data <- data %>% filter(!is.na(`Current Month`))
-  site_index <- which(data$`Current Month` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Current Month` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[site_index[1]:nrow(data),]
   
   
   data$Site <- data$`Current Month`
-  ##Cnhange values other than site names to NA
-  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE")))] <- NA
+  ##Change values other than site names to NA
+  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE", "MS BHC")))] <- NA
   
   
   #for loop to fill in the NA cells with the site name
-  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE", "MS BHC"))
   for(i in site_index){
     data[i:(i+5),c("Site")] <- data[i,c("Site")]
   }
@@ -157,7 +159,7 @@ cost_and_revenue_dept_summary <- function(data){
   data <- data %>% rename(Site = length(.)) 
   
   ##Delete rows that contain the site neams and months
-  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE", "MS BHC"))
   data <- data[-site_index,]
   
   
@@ -168,7 +170,8 @@ cost_and_revenue_dept_summary <- function(data){
                                     ifelse(data$Site == "MS MORNINGSIDE", "MSM",
                                            ifelse(data$Site == "MS WEST", "MSW",
                                                   ifelse(data$Site == "MS NYEE", "NYEE",
-                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
+                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", 
+                                                                ifelse(data$Site == "MS BHC", "MSBHC", NA))))))))
   
   data <- data %>% relocate(Site, .before = Metric)
   
