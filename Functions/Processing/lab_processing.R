@@ -13,8 +13,10 @@ lab_prof_test_dept_summary <- function(data, updated_user) {
            METRIC_NAME_SUBMITTED = case_when(
              METRIC_NAME_SUBMITTED == 'Proficiency Testing (YTD)' ~ "Proficiency Testing (FYTD)",
              .default = METRIC_NAME_SUBMITTED
-           )) %>%
-    drop_na(VALUE)
+           ),
+           VALUE = round(VALUE,4)) %>%
+    drop_na(VALUE) %>%
+    unique()
   
   data
 
