@@ -209,6 +209,7 @@ if(file.exists("J:/")){
   start_shared <- "/SharedDrive"
   #install.packages("reshape2", repos = "http://cran.us.r-project.org")
   #dsn <- "OAO Cloud DB Staging" 
+  file_saving_location_shared_drive <- paste0(start_shared,'/deans/Presidents/HSPI-PM/Operations Analytics and Optimization/Projects/System Operations/Balanced Scorecards Automation/File Submissions/')
 }
 
 # metrics_final_df_path <- paste0(home_path, "metrics_final_df.rds")
