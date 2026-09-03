@@ -6,6 +6,8 @@ library(shinydashboard)
 conn <- dbConnect(drv = odbc::odbc(),  ## Create connection for updating picker choices
                   dsn = dsn)
 mdf_tbl <- tbl(conn, "BSC_METRICS_FINAL_DF")
+sw_table <- tbl(conn, "BSC_CURRENT_FINANCE_VIEW")
+
 # Get choices of service from db
 service_choices <- mdf_tbl %>% select(SERVICE) %>% summarise(SERVICE = unique(SERVICE)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
 service_choices <- sort(service_choices$SERVICE)
@@ -23,6 +25,31 @@ default_month <- mdf_tbl %>% filter(SERVICE == default_service) %>% summarise(RE
 default_month <- format(sort(default_month$REPORTING_MONTH), "%m-%Y")
 month_choices <- mdf_tbl %>% filter(SERVICE == default_service) %>% select(REPORTING_MONTH) %>% summarise(REPORTING_MONTH = unique(REPORTING_MONTH)) %>% collect()
 month_choices <- format(sort(unique(month_choices$REPORTING_MONTH)), "%m-%Y")
+
+#Choices for System Aggregate
+service_choices_sw <- sw_table %>% select(FUNCTION) %>% summarise(SERVICE = unique(FUNCTION)) %>% collect() #%>% filter(!(SERVICE %in% c("Perioperative Services", "Case Management / Social Work", "Clinical Nutrition")))
+exlcuded_system_services <- c("Ambulance", "Ambulatory Nursing", "Ambulatory Other", "Clinical Departments", "COVID-19",
+                              "Development (ASA)", "General Hospital Expense", "Housestaff", "Library", "Medical Education",
+                              "Other", "Removed", "School of Nursing")
+
+service_choices_sw <- service_choices_sw %>% filter(!(SERVICE %in% exlcuded_system_services ))
+
+service_choices_sw <- sort(service_choices_sw$SERVICE)
+  
+
+default_service_sw <- service_choices_sw[1]
+
+
+
+default_month_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% summarise(MONTH = max(MONTH)) %>% collect()
+default_month_sw <- format(sort(default_month_sw$MONTH), "%m-%Y")
+month_choices_sw <- sw_table %>% filter(FUNCTION == default_service_sw) %>% select(MONTH) %>% summarise(MONTH = unique(MONTH)) %>% collect()
+month_choices_sw <- format(sort(unique(month_choices_sw$MONTH)), "%m-%Y")
+
+month_choice_selected <- sw_table %>% filter(FUNCTION == default_service_sw) %>% select(MONTH) %>% distinct %>% collect()
+month_choice_selected <- format(max(month_choice_selected$MONTH), "%m-%Y")
+
+
 dbDisconnect(conn)
 ui <- 
   fluidPage(
@@ -65,8 +92,57 @@ ui <-
              ),
 
            tabsetPanel(  
-             # First Tab - Summary - All Sites -----------------------
-             tabPanel("Summary", value = "summary",
+             # First Tab - System overview - -----------------------
+             tabPanel("System Overview", value = "system",
+                      fluidRow(
+                        column(2,
+                               box(
+                                 title = NULL, solidHeader = FALSE, width =12,
+                                 pickerInput("selectedService5", label = h4("Select Department:"),
+                                             choices = service_choices_sw,
+                                             multiple = FALSE,
+                                             options = pickerOptions(
+                                               liveSearch = TRUE,
+                                               actionsBox = TRUE,
+                                               dropupAuto = FALSE,
+                                               size = 10),
+                                             selected = service_choices_sw[1])
+                               )
+                        ),
+                        column(2,
+                               box(
+                                 title = NULL, solidHeader = FALSE, width =12,
+                                 pickerInput("selectedMonth4", label = h4("Select Reporting Month:"),
+                                             choices = month_choices_sw,
+                                             multiple = FALSE,
+                                             options = pickerOptions(
+                                               liveSearch = TRUE,
+                                               actionsBox = TRUE,
+                                               dropupAuto = FALSE,
+                                               size = 10),
+                                             selected = month_choice_selected)
+                               )
+                        ),
+                        fluidRow(
+                          column(12,
+                                 h1("Current State"),
+                                 tableOutput("current_state_system_table") %>%
+                                   withSpinner(type = 8, color = "#dddedd"),
+                                 # h1("Future State"),
+                                 # tableOutput("future_state_system_table") %>%
+                                 #   withSpinner(type = 8, color = "#dddedd"),
+                                 # p("* The Retrospective Outlook = Salaries Current MTD Actual Annualized + Supplies Last 12 Months", style = "font-size:18px"),
+                                 # p("** The Prospective Outlook = Total Expense YTD Actual + 2024 Budget For The Remaining Months Of The Year", style = "font-size:18px"),
+                          )
+                        )
+                      )
+
+             ),
+             # Close tabpanel System Overview  
+             
+             
+             # Second Tab - Summary - All Sites -----------------------
+             tabPanel("Site Overview", value = "summary",
                       fluidRow(
                         column(2, 
                                box(
@@ -102,7 +178,7 @@ ui <-
                       )
              ), # Close tabPanel Summary
              
-             # Second Tab - All Sites by KPI -----------------------
+             # Third Tab - All Sites by KPI -----------------------
              tabPanel("Site Comparison", value = "comparison",
                       fluidRow(
                         column(2, 
@@ -151,8 +227,9 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Comparison
-             # Third Tab - Breakout-----------------------
-             tabPanel("KPI Breakout", value = "breakout",
+             
+             # Fourth Tab - Breakout-----------------------
+             tabPanel("Site KPI Breakout", value = "breakout",
                       fluidRow(
                         column(2, 
                                box(
@@ -200,9 +277,9 @@ ui <-
                                  withSpinner(type = 8, color = "#dddedd"))
                       )
              ), # Close tabPanel Breakdout
-             # Fourth Tab - Operational Metrics
              
              
+             # Fifth Tab - Operational Metrics
              navbarMenu("Data",
                         # Finance Data Submission ----
                         tabPanel("Finance",
@@ -223,11 +300,11 @@ ui <-
                                           )
                                         ),
                                  tabBox(title = NULL, id = "tabset8", width = "100%", type = "pills",
-                                        tabPanel("Finance", br(),
-                                                 fileInput("finance_budget", label = "Please upload Budget data"),
-                                                 actionButton("submit_finance", label = "Submit")
-                               
-                                      ),
+                                      #   tabPanel("Finance", br(),
+                                      #            fileInput("finance_budget", label = "Please upload Budget data"),
+                                      #            actionButton("submit_finance", label = "Submit")
+                                      # 
+                                      # ),
                                       # tabPanel("Census Days", br(),
                                       #          fileInput("finance_census", label = "Please upload Census Days data"),
                                       #          actionButton("submit_finance", label = "Submit")
@@ -235,8 +312,17 @@ ui <-
                                       tabPanel("Overtime", br(),
                                                fileInput("finance_overtime", label = "Please upload Overtime data"),
                                                actionButton("submit_finance_ot", label = "Submit")
-                                               )
-                                 ), value = "finance"
+                                               ),
+                                      tabPanel("Access Data", br(),
+                                               fileInput("finance_access_data", label = "Please upload Access Data"),
+                                               actionButton("submit_finance_access_data", label = "Submit")
+                                      ),
+                                      tabPanel("Supplier and Cost Center Mapping", br(),
+                                               fileInput("finance_supplier_mapping", label = "Please upload Supplier Mapping data"),
+                                               hr(),
+                                               fileInput("finance_cost_center_mapping", label = "Please upload Cost Center Mapping data"),
+                                               actionButton("submit_finance_mapping", label = "Submit")
+                                 )), value = "finance"
                         ),
                         # Patient Experience Data Submission ---------
                         tabPanel("Patient Experience",
@@ -301,6 +387,8 @@ ui <-
                                          ),
                                          br(),
                                          fileInput("productiviy_data", label = "Please upload Productivity data"), 
+                                         br(),
+                                         fileInput("productivity_system_wide", label = "Please upload System Wide Productivity data"), 
                                          hr(),
                                          actionButton("submit_prod", label = "Submit")
                                         )
@@ -317,64 +405,22 @@ ui <-
                                       margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(),
                                  hr(),
-                                 # Biomed D&I Data Submission  -----
                                  tabBox(title = NULL, id = "tabset9", width = "100%", type = 'pills', 
-                                        tabPanel("Disruptions and Issues", hr(),
-                                                 fluidRow(
-                                                   column(12,
-                                                          div(
-                                                            id = "form_biomed_disruptions",
-                                                            fluidRow(
-                                                              column(2,
-                                                                     textInput("name_biomed_distruptions", (labelMandatory("1. Please enter Name:")), "")
-                                                              )
-                                                            )
-                                                            ,
-                                                            h2("2. Please enter data in the tables below"),
-                                                            br(),
-                                                            div(id = "header_custom_biomed",
-                                                                h3("Please leave cell blank if data has not been received")
-                                                            ),
-                                                            h2("3. Once finished please click on the button below"),
-                                                            #####Enter datatables here
-                                                            h2("Biomed/Clinical Engineering - Disruptions and Issues"),
-                                                            
-                                                            rHandsontableOutput("bimoed_di"),
-                                                            hr(),
-                                                            actionButton("submit_biomeddi", "Submit", class = "btn-primary")
-                                                          )
-                                                   )
-                                                 )
-                                        ),
-                                        # Biomed KPI Data Submission ----
                                         tabPanel("KPIs", hr(),
                                                  fluidRow(
                                                    column(12,
-                                                          div(
-                                                            id = "form_biomed_kpi",
+                                                         
                                                             fluidRow(
                                                               column(2,
-                                                                     textInput("name_biomed_kpi", (labelMandatory("1. Please enter Name:")), "")
+                                                                     textInput("name_biomed_kpi", (labelMandatory("Please enter Name:")), "")
                                                               )
                                                             ),
-                                                            h2("2. Please enter data in the tables below"),
-                                                            br(),
-                                                            div(id = "header_custom_biomed",
-                                                                h4("Please leave cell blank if data has not been received"),
-                                                                br(),
-                                                                h4("Please enter percentages (Documented Status, PM Compliance - High Risk Equipment, 
-                                                                   and PM Compliance - All Medical Equipment)as 2 digit decimal between 0 and 1.")
-                                                            ),
+                                                          br(),
+                                                          fileInput("biomed_data", label = "Please upload Biomed / Clinical Engineering data"), 
                                                             
-                                                            h2("3. Once finished please click on the button below"),
-                                                            #####Enter datatables here
-                                                            h2("Biomed/Clinical Engineering - KPIs"),
-                                                            
-                                                            rHandsontableOutput("biomed_kpi"),
-                                                            hr(),
                                                             actionButton("submit_biomedkpis", "Submit", class = "btn-primary")
                       
-                                                          )
+                                                          
                                                    )
                                                  ), value = "biomed_kpi")
                                  ), value = "biomed"
@@ -576,8 +622,20 @@ ui <-
                                                  ),
                                                  fileInput("food_cost_and_revenue", label = "Please upload Cost and Revenue data"),
                                                  actionButton("submit_food", label = "Submit")
+                                        ),
+                                        tabPanel("Net Expense and Patient Days", br(),
+                                                 fluidRow(
+                                                   column(2,
+                                                          textInput("name_food_nccpd", (labelMandatory("Please enter name:"))),
+                                                          
+                                                   )
+                                                 ),
+                                                 fileInput("food_nccpd", label = "Please upload Net Expense and Patient Days data"),
+                                                 actionButton("submit_food_nccpd", label = "Submit")
                                         )
+                                        
                                  )
+                                 
                                  # shinyjs::hidden(
                                  #   div(
                                  #     id = "thankyou_msg",
@@ -588,10 +646,10 @@ ui <-
                                  
                         ),
                         # Imaging DR Ops Data Submission ----
-                        tabPanel("Operational Metrics - Imaging", value = "operational",
+                        tabPanel("Operational Metrics - Radiology", value = "operational",
                                  shinyjs::useShinyjs(),
                                  shinyjs::inlineCSS(appCSS),
-                                 span("Operational Metrics - Imaging", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                                 span("Operational Metrics - Radiology", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
                                  span("Please only submit data if you have completed training on data submission for this tool.",
@@ -601,7 +659,7 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = "pills",
-                                        tabPanel("Imaging - IR", 
+                                        tabPanel("Radiology - IR", 
                                                  br(),
                                                  fluidRow(
                                                    column(2,
@@ -611,10 +669,10 @@ ui <-
                                                      )
                                                    )
                                                  ),
-                                                 fileInput("imaging_IR", label = "Please upload Imaging interventional radiology data"),
+                                                 fileInput("imaging_IR", label = "Please upload interventional radiology data"),
                                                  actionButton("submit_imaging", label = "Submit")
                                         ),
-                                        tabPanel("Imaging - DR ED Chest X-Ray", br(),
+                                        tabPanel("Radiology - DR ED Chest X-Ray", br(),
                                                  fluidRow(
                                                    column(2,
                                                           textInput("imaging_xray_username",
@@ -623,10 +681,10 @@ ui <-
                                                           )
                                                    )
                                                  ),
-                                                 fileInput("imaging_DR_XRay", label = "Please upload Imaging ED Chest X-Ray diagnostic radiology data"),
+                                                 fileInput("imaging_DR_XRay", label = "Please upload ED Chest X-Ray diagnostic radiology data"),
                                                  actionButton("submit_imagingxray", label = "Submit")
                                         ),
-                                        tabPanel("Imaging - DR ED Head CT ", br(),
+                                        tabPanel("Radiology - DR ED Head CT ", br(),
                                                  fluidRow(
                                                    column(2,
                                                           textInput("imaging_ct_username",
@@ -635,7 +693,7 @@ ui <-
                                                           )
                                                    )
                                                  ),
-                                                 fileInput("imaging_DR_ct", label = "Please upload Imaging ED Head CT diagnostic radiology data"),
+                                                 fileInput("imaging_DR_ct", label = "Please upload ED Head CT diagnostic radiology data"),
                                                  actionButton("submit_imagingct", label = "Submit")
                                         )
                                         
@@ -655,20 +713,20 @@ ui <-
                                  br(),
                                  hr(),
                                  tabBox(title = NULL, id = "tabset7", width = "100%", type = 'pills',      
-                                        tabPanel("Turnaround Time",
-                                                 hr(),
-                                                 textInput("lab_tat_username",
-                                                           labelMandatory(
-                                                             "Please enter name:"
-                                                           )
-                                                           ),
-                                                 hr(),
-                                                 fileInput("lab_scc", label = "Please upload SCC lab data"),
-                                                 hr(),
-                                                 fileInput("lab_sun", label = "Please upload Sunquest lab data"),
-                                                 hr(),
-                                                 actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
-                                                 ),
+                                        # tabPanel("Turnaround Time",
+                                        #          hr(),
+                                        #          textInput("lab_tat_username",
+                                        #                    labelMandatory(
+                                        #                      "Please enter name:"
+                                        #                    )
+                                        #                    ),
+                                        #          hr(),
+                                        #          fileInput("lab_scc", label = "Please upload SCC lab data"),
+                                        #          hr(),
+                                        #          fileInput("lab_sun", label = "Please upload Sunquest lab data"),
+                                        #          hr(),
+                                        #          actionButton("submit_lab_tat", "Submit", class = "btn-primary"),
+                                        #          ),
                                         tabPanel("Proficiency Testing", hr(),
                                                  fluidRow(
                                                    column(12,
@@ -682,17 +740,9 @@ ui <-
                                                                                )
                                                                      )
                                                             ),
-                                                            h2("2. Please enter data in the tables below."),
                                                             br(),
-                                                            div(id = "header_custom",
-                                                                h4("Please leave cell blank if data has not been received."),
-                                                                br(),
-                                                                h4("Please enter percentages (Proficiency Testing) as a decimal between 0 and 1."),
-                                                              ),
-                                                            h2("3. Please click on Submit when finished."),
-                                                            hr(),
-                                                            h2("Lab & Blood Bank Proficiency Testing"),
-                                                            rHandsontableOutput("lab_prof_test"),
+                                                            fileInput("prof_testing_file",
+                                                                      label = "Please upload & Blood Bank Proficiency Testing data"),
                                                             hr()
                                                           ))
                                                  ),
@@ -729,8 +779,8 @@ ui <-
                                  )
                         ),
                         # Patient Transport Data Submission ----
-                        tabPanel("Operational Metrics - Patient Transport",
-                                 span("Operational Metrics - Patient Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
+                        tabPanel("Operational Metrics - Patient & Equipment Transport",
+                                 span("Operational Metrics - Patient & Equipment Transport", style = "color: #black; font-family:Calibri; font-weight: bold; 
                                            font-size: 30px; margin-top: -0.2em; margin-bottom: 0.5em; margin-left: 0px"),
                                  br(), 
                                  span("Please only submit data if you have completed training on data submission for this tool.",
@@ -742,22 +792,13 @@ ui <-
                                  
                                  tabBox(title = NULL, id = "tabset11", width = "100%", type = 'pills',
                                         
-                                        tabPanel("Turnaround Time-Non Patient Transport", hr(),
+                                        tabPanel("Patient & Equipment Transport Data", hr(),
                                                  fluidRow(
                                                    column(2,
-                                                          textInput("name_transport_npt", (labelMandatory("1. Please enter Name:")), "")
+                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter name:")), "")
                                                    )
                                                  ),
-                                                 fileInput("non_patient_transport", label = "Please upload Non Patient Transport Metrics data"),
-                                                 actionButton("submit_npt_tat", "Submit", class = "btn-primary"),
-                                        ),
-                                        tabPanel("Turnaround Time-Patient Transport", hr(),
-                                                 fluidRow(
-                                                   column(2,
-                                                          textInput("name_transport_pt", (labelMandatory("1. Please enter Name:")), "")
-                                                   )
-                                                 ),
-                                                 fileInput("patient_transport", label = "Please upload PTET Metrics data"),
+                                                 fileInput("patient_transport", label = "Please upload data"),
                                                  actionButton("submit_pt_tat", "Submit", class = "btn-primary")
                                         )
                                         
@@ -863,7 +904,7 @@ ui <-
                         )
              ), # Close tabPanel Breakout
              
-             # Fifth tab - Targets & Status Definitions --------
+             # Sixth tab - Targets & Status Definitions --------
              tabPanel("Targets & Status Definitions", value = "targets",
                       fluidRow(
                         column(2, 
@@ -902,13 +943,26 @@ ui <-
                                offset = 1,
                                DT::dataTableOutput("targetSummary_table"))
                       )
-             ), id = "tabset" # Close tabPanel Summary
+             ), id = "tabset", # Close tabPanel Summary
+             tags$script(
+               HTML("var header = $('.navbar > .container-fluid');
+                              header.append('<div style=\"float:right; padding-top: 8px\"><button id=\"help_button\" type=\"button\" class=\"btn btn-primary action-button\" >Support Request</button></div>')")
+             )
   )
              
           ), # Close NavBar
   
   
-          
+  
+  
+  tags$style(HTML("
+        #help_button {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+  
+  
   tags$style(HTML("
  .handsontable  .htDimmed {
  color: #000;
@@ -941,6 +995,18 @@ ui <-
         }")),
   
   tags$style(HTML("
+        #submit_finance_mapping {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+  
+  tags$style(HTML("
+        #submit_finance_access_data {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+        }")),
+  
+  tags$style(HTML("
         #submit_finance {
           background-color: #d80b8c;
           color: #FFFFFF;
@@ -952,7 +1018,13 @@ ui <-
           color: #FFFFFF;
           border-color: #d80b8c;
         }")),
- 
+  tags$style(HTML("
+        #submit_food_nccpd {
+          background-color: #d80b8c;
+          color: #FFFFFF;
+          border-color: #d80b8c;
+        }")),
+  
   tags$style(HTML("
         #submit_evs {
           background-color: #d80b8c;
@@ -1126,5 +1198,9 @@ ui <-
              '.navbar { background-color: #dddedd; color: black; font-size: 24px; font-weight: bold;}',
              '.navbar-default .navbar-brand{color: black; font-size: 24px;}'
              )
+ # tags$style(HTML("
+ #        #current_state_system_table {
+ #      width:50%
+ #        }"))
 
   ) # Close navbarPage

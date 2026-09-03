@@ -1,10 +1,10 @@
-
 # Install and load packages ----------------------------------------
 suppressMessages({
   library(pool)
   # library(xlsx)
   library(assertr)
   library(readxl)
+  library(memoise)
   library(writexl)
   library(plyr)
   library(dplyr)
@@ -73,15 +73,22 @@ suppressMessages({
   library(shinyjs)
   library(DBI)
   library(odbc)
-  #library(reshape2)
+  library(reshape2)
+  library(formattable)
 })
 
 
+#cashing trigger after successful submission
+submission_success <- reactiveVal(FALSE)
 
 
 print("0")
 dsn <- "OAO Cloud DB Production"
+dsn_oracle <- paste0(dsn, " Oracle")
 print("1")
+
+
+'%!in%' <<- function(x,y)!('%in%'(x,y))
 
 
 options(shiny.maxRequestSize=500*1024^2)
@@ -260,6 +267,7 @@ print("3")
 key_volume_mapping_path <- paste0(start_shared, "/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Universal Data/Mapping/MSHS_Reporting_Definition_Mapping.xlsx")
 
 target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
+                  filter(SITE != "SYSTEM") %>%
                   rename(Service = SERVICE,
                          Site = SITE,
                          Metric_Group = METRIC_GROUP,
@@ -275,6 +283,24 @@ target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
                          Yellow_End = YELLOW_END,
                          Red_Start = RED_START,
                          Red_End = RED_END)
+system_target_mapping <- tbl(conn, "BSC_TARGET_STATUS") %>% collect() %>%
+  filter(SITE == "SYSTEM") %>%
+  rename(Service = SERVICE,
+         Site = SITE,
+         Metric_Group = METRIC_GROUP,
+         Metric_Name = METRIC_NAME,
+         Metric_Name_Submitted = METRIC_NAME_SUBMITTED,
+         Target = TARGET,
+         Green_Status = GREEN_STATUS,
+         Yellow_Status = YELLOW_STATUS,
+         Red_Status = RED_STATUS,
+         Green_Start = GREEN_START,
+         Green_End = GREEN_END,
+         Yellow_Start = YELLOW_START,
+         Yellow_End = YELLOW_END,
+         Red_Start = RED_START,
+         Red_End = RED_END)
+
 metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
                             rename(Service = SERVICE,
                                    General_Group = GENERAL_GROUP,
@@ -297,7 +323,7 @@ metric_mapping_database <- tbl(conn, "BSC_MAPPING_TABLE") %>% collect() %>%
 # budget_mapping <- read_excel(target_mapping_path, sheet = "Budget")
 
 # Sites included -----------------------------------------------------------------------------------
-sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE")
+sites_inc <- c("MSB","MSBI","MSH","MSM","MSQ","MSW","NYEE","MSBHC")
 print("4")
 
 dttm <- function(x) {
@@ -321,6 +347,7 @@ cost_rev_mapping <- tbl(conn, "BSC_COST_REV_MAPPING") %>% collect() %>%
 key_vol_mapping <- read_excel(key_volume_mapping_path,
                               sheet = "Sheet1", col_names = TRUE, na = c("", "NA")) # Premier Reporting ID-Key Volume mapping
 key_vol_mapping <- key_vol_mapping %>% filter(!is.na(DEFINITION.CODE))
+key_vol_mapping_oracle <- tbl(conn, "BSC_KEY_VOLUME_MAPPING_ORACLE") %>% collect()
 
 processed_df_cols <- c("Service", "Site", "Metric_Group", "Metric_Name",
                        "Premier_Reporting_Period", "Reporting_Month",
@@ -517,11 +544,14 @@ metric_mapping_breakout <- metric_mapping_database %>%
   mutate(General_Group = as.character(General_Group))
 print("11")
 
+
+system_productivity <- tbl(conn, "BSC_SYSTEM_WIDE_PRODUCTIVITY_FINANCE") %>% group_by(SERVICE) %>% summarise(max = max(REPORTING_MONTH)) %>% collect()
 # Source files for processing service line data -------------------
 function_sources <- list.files("Functions", full.names = T, recursive = T)
-sapply(function_sources, source)
+sapply(function_sources, source, echo = T)
 source(paste0("Functions/metrics_final_df_subset_and_merge.R"))
 source(paste0("Functions/manual_format_check.R"))
+source(paste0("Functions/write_temporary_table_to_database_and_merge_updated.R"))
 # source("ClinicalNurtrition.R")
 # source("OvertimeNew.R")
 # source("lab_processing.R")

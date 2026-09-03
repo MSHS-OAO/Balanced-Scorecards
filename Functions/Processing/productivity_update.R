@@ -1,11 +1,11 @@
 productivity_dept_summary <- function(raw_data, updated_user){
-  key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Imaging",
+  key_vol_mapping <- key_vol_mapping %>% mutate(Service = ifelse(grepl("Radiology", CORPORATE.SERVICE.LINE), "Radiology",
                                                                  ifelse(grepl("Biomed", CORPORATE.SERVICE.LINE), "Biomed / Clinical Engineering",
                                                                         ifelse(CORPORATE.SERVICE.LINE == "Support Services - Engineering", "Engineering",
                                                                                ifelse(CORPORATE.SERVICE.LINE == "Support Services - Environmental Services", "Environmental Services",
                                                                                       ifelse(CORPORATE.SERVICE.LINE == "Support Services - Food Services", "Food Services",
                                                                                              ifelse(grepl("Nursing", CORPORATE.SERVICE.LINE), "Nursing",
-                                                                                                    ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient Transport",
+                                                                                                    ifelse(CORPORATE.SERVICE.LINE == "Support Services - Patient Transport", "Patient & Equipment Transport",
                                                                                                            ifelse(CORPORATE.SERVICE.LINE == "Support Services - Security", "Security", 
                                                                                                                   ifelse(CORPORATE.SERVICE.LINE == "Perioperative Services", "Perioperative Services",
                                                                                                                     ifelse(CORPORATE.SERVICE.LINE == "Support Services - Clinical Nutrition", "Clinical Nutrition", NA
@@ -154,7 +154,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
     filter(Metric_Name != "Total Target Worked FTE") %>%
     filter(Metric_Name != "Worked Hours Productivity Index") %>%
     filter(Metric_Name != "Overtime Percent of Paid Hours") %>%
-    filter(!(Service %in% c("Nursing","Imaging") & 
+    filter(!(Service %in% c("Nursing","Radiology") & 
                Metric_Name %in% c("Overtime Percent of Paid Hours",
                                   "Worked Hours Productivity Index",
                                   "Actual Worked Hours per Unit"
@@ -191,7 +191,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
       group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
       summarise(value = sum(value, na.rm = TRUE)) %>%
       filter(Metric_Name != "Total Target Worked FTE") %>%
-      filter(!(Service %in% c("Perioperative Services", "Imaging", "Nursing") & 
+      filter(!(Service %in% c("Perioperative Services", "Radiology", "Nursing") & 
                  Metric_Name %in% c("Overtime Percent of Paid Hours",
                                     "Worked Hours Productivity Index",
                                     "Actual Worked Hours per Unit",
@@ -206,10 +206,10 @@ productivity_dept_summary <- function(raw_data, updated_user){
 }
   
   
- if(c("Imaging") %in% unique(prod_df_all$Service) || c("Nursing") %in% unique(prod_df_all$Service)){  
+ if(c("Radiology") %in% unique(prod_df_all$Service) || c("Nursing") %in% unique(prod_df_all$Service)){  
    if(ytd_flag == 0) {
       nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
-        filter(Service %in% c("Nursing","Imaging")) %>%
+        filter(Service %in% c("Nursing","Radiology")) %>%
         filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
                                   "Overtime Hours", "Total Paid hours")) %>%
         group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
@@ -230,7 +230,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
         select(-Metric_Group)
       
       nursing_rad_metric_calc_actual_fte <- prod_df_all %>%
-        filter(Service %in% c("Nursing","Imaging")) %>%
+        filter(Service %in% c("Nursing","Radiology")) %>%
         filter(Metric_Name == "Actual Worked FTE") %>%
         group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
         summarise(value = sum(value, na.rm = TRUE))
@@ -239,7 +239,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
       
    } else {
      nursing_rad_metric_calc <- prod_df_all %>% # Calculate Productivity and Overtime % separately 
-       filter(Service %in% c("Nursing","Imaging")) %>%
+       filter(Service %in% c("Nursing","Radiology")) %>%
        filter(Metric_Name %in% c("Total Target Worked FTE","Actual Worked FTE",
                                  "Overtime Hours", "Total Paid Hours")) %>%
        group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
@@ -260,7 +260,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
        select(-Metric_Group)
      
      nursing_rad_metric_calc_actual_fte <- prod_df_all %>%
-       filter(Service %in% c("Nursing","Imaging")) %>%
+       filter(Service %in% c("Nursing","Radiology")) %>%
        filter(Metric_Name == "Actual Worked FTE") %>%
        group_by(Service, Site, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
        summarise(value = sum(value, na.rm = TRUE))
@@ -272,7 +272,7 @@ productivity_dept_summary <- function(raw_data, updated_user){
   
   #Claulate WHPU
   nursing_rad_whpu <-  prod_df_all %>% 
-    filter(Service %in% c("Nursing","Imaging")) %>%
+    filter(Service %in% c("Nursing","Radiology")) %>%
     filter(Metric_Name %in% c("Total Worked Hours", "Volume")) %>%
     group_by(Service, Site, Metric_Group, Metric_Name, Reporting_Month_Ref, Premier_Reporting_Period) %>%
     summarise(value = sum(value, na.rm = T)) %>%

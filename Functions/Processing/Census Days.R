@@ -11,18 +11,20 @@ cost_budget_combine <- function(cost,rev){
 }
 
 rev_budget_dept_summary <- function(data){
+  # Keep the data only till Dec, sometimes people add some random data beyond tables
+  data <- data[,1:13]
   data <- data %>% filter(!is.na(`REVENUE BUDGET`))
-  site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`REVENUE BUDGET` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[site_index[1]:nrow(data),]
   
   
   data$Site <- data$`REVENUE BUDGET`
   ##Cnhange values other than site names to NA
-  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE")))] <- NA
+  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC")))] <- NA
   
   
   #for loop to fill in the NA cells with the site name
-  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   for(i in site_index){
     data[i:(i+5),c("Site")] <- data[i,c("Site")]
   }
@@ -38,7 +40,7 @@ rev_budget_dept_summary <- function(data){
   data <- data %>% rename(Site = length(.)) 
   
   ##Delete rows that contain the site neams and months
-  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[-site_index,]
   
   
@@ -49,7 +51,7 @@ rev_budget_dept_summary <- function(data){
                                     ifelse(data$Site == "MS MORNINGSIDE", "MSM",
                                            ifelse(data$Site == "MS WEST", "MSW",
                                                   ifelse(data$Site == "MS NYEE", "NYEE",
-                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
+                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", ifelse(data$Site == "MS BHC","MSBHC",NA))))))))
   
   data <- data %>% relocate(Site, .before = Metric)
   
@@ -132,17 +134,17 @@ cost_and_revenue_dept_summary <- function(data){
   
   ## filter out na rows and delete the empty cells in the beginning of file
   data <- data %>% filter(!is.na(`Current Month`))
-  site_index <- which(data$`Current Month` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Current Month` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE","MS BHC"))
   data <- data[site_index[1]:nrow(data),]
   
   
   data$Site <- data$`Current Month`
-  ##Cnhange values other than site names to NA
-  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE")))] <- NA
+  ##Change values other than site names to NA
+  data$Site[which(!(data$Site %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE", "MS BHC")))] <- NA
   
   
   #for loop to fill in the NA cells with the site name
-  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Site` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE", "MS BHC"))
   for(i in site_index){
     data[i:(i+5),c("Site")] <- data[i,c("Site")]
   }
@@ -157,7 +159,7 @@ cost_and_revenue_dept_summary <- function(data){
   data <- data %>% rename(Site = length(.)) 
   
   ##Delete rows that contain the site neams and months
-  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE"))
+  site_index <- which(data$`Metric` %in% c("MOUNT SINAI","MS MORNINGSIDE", "MS WEST", "MS BETH ISRAEL", "MS BROOKLYN", "MS QUEENS", "MS NYEE", "MS BHC"))
   data <- data[-site_index,]
   
   
@@ -168,7 +170,8 @@ cost_and_revenue_dept_summary <- function(data){
                                     ifelse(data$Site == "MS MORNINGSIDE", "MSM",
                                            ifelse(data$Site == "MS WEST", "MSW",
                                                   ifelse(data$Site == "MS NYEE", "NYEE",
-                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", NA)))))))
+                                                         ifelse(data$Site == "MOUNT SINAI", "MSH", 
+                                                                ifelse(data$Site == "MS BHC", "MSBHC", NA))))))))
   
   data <- data %>% relocate(Site, .before = Metric)
   
@@ -278,7 +281,7 @@ food_summary_repo_format <- function(data, updated_user) {
     mutate(
       `Actual Revenue` = as.numeric(`Actual Revenue`),
       #rev_per_census = ifelse(!is.na(`Census Days`), round(`Actual Revenue`/`Census Days`, 2), NA),
-      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Revenue Budget`) - as.numeric(`Actual Revenue`), 2)))) %>%
+      budget_actual_var = as.numeric(ifelse(is.na(`Revenue Budget`), "", round(as.numeric(`Actual Revenue`) - as.numeric(`Revenue Budget`), 2)))) %>%
     #Target = ifelse(Metric == "Revenue from R&C (Includes Foregone)", round(budget_actual_var/`Revenue Budget`,2), ""),
     #Status = ifelse((is.na(Target) | Target == ""), "", ifelse(Target <= 0, "Green", ifelse(Target > 0.02, "Red", "Yellow")))) %>%
     pivot_longer(
@@ -329,3 +332,87 @@ food_summary_repo_format <- function(data, updated_user) {
 
 }
   
+# Cost net of case per patient day Processing ----
+
+# Test Files
+
+# datapath <- "Tests/New Productivity_8.2023.xlsx"
+# raw_data <- read.xlsx(datapath,startRow  = 3,sheet = "Cost per Patient Day",cols = 1:15)
+# updated_user <- "TEST"
+
+
+process_net_cost_per_pd <- function(raw_data,updated_user){
+  
+  year <- tail(names(raw_data), n=1)
+
+  
+  site_list <- c("MS MORNINGSIDE",
+                 "MS WEST",
+                 "MS BETH ISRAEL/BHC",
+                 "MS BROOKLYN",
+                 "MS QUEENS",
+                 "MS NYEE",
+                 "MS BHC")
+  
+  site_map = list(SITE = site_list,
+                  SITE_ACT = c("MSM",
+                               "MSW",
+                               "MSBI",
+                               "MSB",
+                               "MSQ",
+                               "NYEE",
+                               "MSBHC"))
+  
+  site_map <- as.data.frame(site_map)
+  
+  data <- raw_data %>%
+    mutate(SITE = ifelse(MOUNT.SINAI %in% site_list, MOUNT.SINAI, NA)) %>%
+    fill(SITE)  %>%
+    rename(METRIC_NAME_SUBMITTED = MOUNT.SINAI)
+  
+  
+  data <- left_join(data,
+                    site_map) %>%
+    select(-SITE) %>%
+    rename(SITE = SITE_ACT) %>%
+    mutate(SITE = ifelse(is.na(SITE), "MSH",SITE)) %>%
+    filter(!METRIC_NAME_SUBMITTED %in% site_list) %>%
+    filter(METRIC_NAME_SUBMITTED %in% c("Net Expense","Patient Days")) %>%
+    select(-which(names(data) == year)) %>% # Remove column with YEAR
+    pivot_longer(cols = !c(METRIC_NAME_SUBMITTED,SITE),
+                 names_to = "PREMIER_REPORTING_PERIOD",
+                 values_to = "VALUE") %>%
+    filter(VALUE != 0) %>%
+    pivot_wider(names_from = "METRIC_NAME_SUBMITTED", values_from = "VALUE") %>%
+    mutate(PREMIER_REPORTING_PERIOD = paste0(PREMIER_REPORTING_PERIOD," ",year),
+           REPORTING_MONTH = as.Date(paste0("01"," ",PREMIER_REPORTING_PERIOD), format ="%d %b %Y"),
+           `Net Expense` = as.numeric(`Net Expense`),
+           `Patient Days` = as.numeric(`Patient Days`),
+           `Net Cost of Case per Patient Day` = (`Net Expense`)/(`Patient Days`))
+  
+  
+  ytd_net_cost_pp <- data %>%
+    select(SITE,REPORTING_MONTH, `Net Expense`,`Patient Days`) %>%
+    group_by(SITE) %>%
+    arrange(REPORTING_MONTH) %>%
+    mutate(sum_ne = cumsum(`Net Expense`),
+           sum_pd = cumsum(`Patient Days`),
+           `Net Cost of Case per Patient Day (YTD)` = sum_ne/sum_pd) %>%
+    select(-sum_ne,-sum_pd,-`Net Expense`,-`Patient Days`)
+  
+  summary_data <- left_join(data, ytd_net_cost_pp) %>%
+    select(-`Net Expense`,-`Patient Days`) %>%
+    mutate(SERVICE = "Food Services",
+           UPDATED_USER= updated_user)%>%
+    pivot_longer(cols = c("Net Cost of Case per Patient Day","Net Cost of Case per Patient Day (YTD)"),
+                 names_to = "METRIC_NAME_SUBMITTED",
+                 values_to = "VALUE") %>%
+    select(SERVICE, 
+           SITE, 
+           REPORTING_MONTH,
+           PREMIER_REPORTING_PERIOD, 
+           METRIC_NAME_SUBMITTED,
+           VALUE,
+           UPDATED_USER)
+  
+}

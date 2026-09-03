@@ -1,4 +1,4 @@
-# datapath <- "Tests/Dept Report Builder.xlsx"
+# datapath <- "Tests/DeptReportBuilderRPAVG.xlsx"
 # raw_data <- read_excel(datapath)
 # updated_user <- "Test_DNU"
 productivity_processing <- function(raw_data, updated_user) {
@@ -226,9 +226,9 @@ productivity_processing <- function(raw_data, updated_user) {
   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Clinical Nutrition" | METRIC_NAME_SUBMITTED != "Overtime Percent of Paid Hours")
   prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_cn)
   
-  prod_df_aggregate_peri <- prod_df_aggregate %>% filter(SERVICE == "Perioperative Services" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM"))
-  prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Perioperative Services" | METRIC_NAME_SUBMITTED != "Agency FTE")
-  prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_peri)
+  # prod_df_aggregate_peri <- prod_df_aggregate %>% filter(SERVICE == "Perioperative Services" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM"))
+  # prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Perioperative Services" | METRIC_NAME_SUBMITTED != "Agency FTE")
+  # prod_df_aggregate <- rbind(prod_df_aggregate, prod_df_aggregate_peri)
   
   prod_df_aggregate_security <- prod_df_aggregate %>% filter(SERVICE == "Security" & METRIC_NAME_SUBMITTED == "Agency FTE") %>% filter(SITE %in% c("MSM", "MSW"))
   prod_df_aggregate <- prod_df_aggregate %>% filter(SERVICE != "Security" | METRIC_NAME_SUBMITTED != "Agency FTE")
@@ -247,3 +247,7 @@ productivity_processing <- function(raw_data, updated_user) {
 
   
 }
+
+
+#Tests ----
+# processed_old_data <- productivity_processing(raw_data, updated_user)

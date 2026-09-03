@@ -22,7 +22,7 @@
 
 # Import mapping file
 # pt_exp_mapping <- read_excel(target_mapping_path, sheet = "Patient Experience")
-conn <- dbConnect(odbc(), dsn)
+# conn <- dbConnect(odbc(), dsn)
 pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>% 
                   rename(Raw_Pt_Exp_Service = RAW_PT_EXP_SERVICE,
                          Service = SERVICE,
@@ -33,6 +33,11 @@ pt_exp_mapping <- tbl(conn, "BSC_PATIENT_EXPERIENCE_MAPPING") %>%
                   collect() %>%
                   mutate(Incl_N = ifelse(Incl_N == "true", TRUE, FALSE),
                          Incl_AllHosp_Rank = ifelse(Incl_AllHosp_Rank == "true", TRUE, FALSE))
+
+# file_path <- "Test/Balanced SC Query Current Period ED_cs.csv"
+# submitted_data <- read_csv(file_path,
+#                            show_col_types = FALSE)
+
 
 #dbDisconnect(conn)
 
@@ -103,9 +108,9 @@ pt_exp_dept_summary <- function(data) {
       str_detect(`My Sites`, "(Beth Israel Medical Center)|(Mount Sinai Beth Israel)") ~ "MSBI",
       str_detect(`My Sites`, "Mount Sinai Brooklyn") ~ "MSB",
       str_detect(`My Sites`, "(Mount Sinai Queens)|(Mount Sinai Hospital of Queens)") ~ "MSQ",
-      str_detect(`My Sites`, "(Mount Sinai Medical Center)|(The Mount Sinai Hospital)") ~ "MSH",
+      str_detect(`My Sites`, "(Mount Sinai Medical Center)|(The Mount Sinai Hospital)|(Mount Sinai Hospital)") ~ "MSH",
       str_detect(`My Sites`, "Mount Sinai South Nassau") ~ "MSSN",
-      str_detect(`My Sites`, "Mount Sinai St. Luke") ~ "MSM",
+      str_detect(`My Sites`, "(Mount Sinai St. Luke)|(Mount Sinai Morningside)") ~ "MSM",
       str_detect(`My Sites`, "West") ~ "MSW",
       str_detect(`My Sites`, "New York Eye & Ear Infirmary") ~ "NYEE",
       str_detect(`My Sites`, "Total") ~ "MSHS"),
@@ -130,9 +135,9 @@ pt_exp_dept_summary <- function(data) {
   # Filter out unused data
   pt_exp_data_split <- pt_exp_data_split %>%
     # Remove irrelevant sites and service line combinations
-    filter(!(Site %in% c("NYEE") & Service %in% "Patient Transport") &
+    filter(!(Site %in% c("NYEE") & Service %in% "Patient & Equipment Transport") &
              # Filter out any NYEE ED data
-             !(Site %in% c("NYEE") & Service %in% "ED") &
+             !(Site %in% c("NYEE") & Service %in% "Emergency Department") &
              # Filter out data for questions that aren't being tracked in the scorecard
              !is.na(Service))
   

@@ -22,7 +22,7 @@ process_xray_data <- function(xraydata, updated_user){
                  names_to = "SITE",
                  values_to = "VALUE") %>%
     mutate( VALUE = as.numeric(VALUE),
-            SERVICE="Imaging",
+            SERVICE="Radiology",
             METRIC_NAME_SUBMITTED = "ED Chest X-Ray PA & Lateral (Exam Code CH2PAL) - Order to Scan Completed, % <= 60m",
             PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
             REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d"), "%Y-%m-%d"),
@@ -40,7 +40,7 @@ process_xray_data <- function(xraydata, updated_user){
                  names_to = "SITE",
                  values_to = "VALUE") %>%
     mutate( VALUE = as.numeric(VALUE),
-            SERVICE="Imaging",
+            SERVICE="Radiology",
             METRIC_NAME_SUBMITTED = "ED Chest X-Ray PA & Lateral (Exam Code CH2PAL) - Order to Scan Completed, Total Volume",
             PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
             REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d"), "%Y-%m-%d"),
@@ -69,7 +69,7 @@ process_ctdata_data <- function(ctdata, updated_user){
                  names_to = "SITE",
                  values_to = "VALUE") %>%
     mutate( VALUE = as.numeric(VALUE),
-            SERVICE="Imaging",
+            SERVICE="Radiology",
             METRIC_NAME_SUBMITTED = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, % <= 60m",
             PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
             REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d"), "%Y-%m-%d"),
@@ -87,7 +87,7 @@ process_ctdata_data <- function(ctdata, updated_user){
                  names_to = "SITE",
                  values_to = "VALUE") %>%
     mutate( VALUE = as.numeric(VALUE),
-            SERVICE="Imaging",
+            SERVICE="Radiology",
             METRIC_NAME_SUBMITTED = "ED Head CT Without Contrast (Exam Code CTNHEAD0) - Ordered to Scan Completed, Total Volume",
             PREMIER_REPORTING_PERIOD = format(REPORTING_MONTH,"%b %Y"),
             REPORTING_MONTH = as.Date(format(REPORTING_MONTH,"%Y-%m-%d"), "%Y-%m-%d"),
